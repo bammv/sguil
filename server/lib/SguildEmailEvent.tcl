@@ -1,4 +1,4 @@
-# $Id: SguildEmailEvent.tcl,v 1.3 2004/11/04 17:30:43 bamm Exp $ #
+# $Id: SguildEmailEvent.tcl,v 1.4 2004/11/22 19:01:02 bamm Exp $ #
 
 proc EmailEvent { dataList } {
 
@@ -11,6 +11,8 @@ proc EmailEvent { dataList } {
     set t [lindex $dataList 4]
     set sip [lindex $dataList 8]
     set dip [lindex $dataList 9]
+    set shost [GetHostbyAddr $sip]
+    set dhost [GetHostbyAddr $dip]
     set sp [lindex $dataList 11]
     set dp [lindex $dataList 12]
 
