@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.166 2005/03/01 19:51:16 shalligan Exp $ #
+# $Id: sguil.tk,v 1.167 2005/03/03 17:45:24 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -66,6 +66,8 @@ namespace import -force iwidgets::timeentry
 namespace import -force iwidgets::dateentry
 namespace import -force iwidgets::scrolledhtml
 namespace import -force iwidgets::promptdialog
+namespace import -force iwidgets::feedback
+namespace import -force iwidgets::shell
 
 set ACTIVE_EVENT 0
 set MULTI_SELECT 0

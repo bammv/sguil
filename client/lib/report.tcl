@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.32 2005/02/23 17:32:40 shalligan Exp $ #
+# $Id: report.tcl,v 1.33 2005/03/03 17:45:24 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -520,6 +520,11 @@ proc SavePHBReport { reporttextbox } {
 proc HumanText { detail sanitize winname curselection } {
     global DEBUG REPORT_DONE REPORT_RESULTS
     set ReturnString ""
+    set TotalSelections [llength $curselection]
+    set progressShell [shell .progressShell ]
+    set progressBar [feedback $progressShell.progressBar -steps $TotalSelections -labeltext "Exporting Events..." -barcolor red -troughcolor ghostwhite]
+    pack $progressBar -fill y
+    $progressShell activate
     foreach selectedIndex $curselection {
 	if {$DEBUG} {puts "Reporting index: $selectedIndex"}
 	set eventID [split [$winname.eventIDFrame.list get $selectedIndex] .]
@@ -804,7 +809,9 @@ proc HumanText { detail sanitize winname curselection } {
 		set ReturnString "${ReturnString}$psrow\n"
 	    }
 	}
+	$progressBar step 1
     }
+    destroy $progressShell
     return $ReturnString
 }
     
