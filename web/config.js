@@ -70,7 +70,7 @@ FONTSIZE="1";
 FONTSTYLE="" // "": Normal, "B": Bold, "I": Italic
 FONTCOLOR="#000033";
 ROLL_FONTCOLOR="#000000";
-START_CHAR="- "; //Starting Character
+START_CHAR="-"; //Starting Character
 
 
 /**********************************************/
@@ -101,4 +101,3 @@ LayerBorderColor="#000000";
 /**********************************************/
 TOP_OFFSET=0;
 LEFT_OFFSET=0;
-
