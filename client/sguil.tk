@@ -42,12 +42,18 @@ set BUSY 0
 ########################## PROCS ####################################
 
 proc ServerCommandRcvd { socketID } {
-  global DEBUG EMAIL_RESULTS
+  global DEBUG EMAIL_RESULTS CONNECTED
 
   if { [eof $socketID] || [catch {gets $socketID data} errorCheck] } {
     #Close the socket and exit
-    close $socketID
-    exit
+    catch {close $socketID} tmpError
+    if { [info exists errorCheck] } {
+      ErrorMessage "Lost connection to sguild.\nERROR: $errorCheck\nTrying to reconnect."
+    } else {
+      ErrorMessage "Connection to sguild terminated. Trying to reconnect."
+    }
+    set CONNECTED 0
+    ReconnectToSguild
   } else {
     if {$DEBUG} {puts "Server Command Recieved: $data"}
     set serverCmd [lindex $data 0]
@@ -75,6 +81,81 @@ proc ServerCommandRcvd { socketID } {
       default { puts "Unrecognized command from $socketID: $data" }
     }
   } 
+}
+proc ConnectToSguild {} {
+  global SERVERHOST SERVERPORT OPENSSL VERSION TLS_PATH DEBUG CONNECTED
+
+  if [catch {set socketID [socket $SERVERHOST $SERVERPORT]}] {
+    return -code error "Unable to connect to $SERVERHOST on port $SERVERPORT"
+  } else {
+    set CONNECTED 1
+    fconfigure $socketID -buffering line
+    # Version checking
+    if {$OPENSSL} {
+      set tmpVERSION "$VERSION OPENSSL ENABLED"
+    } else {
+      set tmpVERSION "$VERSION OPENSSL DISABLED"
+    }     
+    if [catch {gets $socketID} serverVersion] {
+      puts "ERROR: $serverVersion"
+      return -code error "$serverVersion"
+    }
+    if { $serverVersion != $tmpVERSION } {
+      return -code error "Mismatched versions.\nSERVER: ($serverVersion)\nCLIENT: ($tmpVERSION)"
+    }
+    puts $socketID "$tmpVERSION"
+    if {$OPENSSL} {
+      if { [info exists TLS_PATH] } { load $TLS_PATH }
+      package require tls
+      tls::import $socketID
+    }
+    puts $socketID "PING"
+    set INIT [gets $socketID]
+    if {$DEBUG} {puts "Init successful"}
+    return $socketID
+  }
+}
+proc ReconnectToSguild {} {
+  global CONNECTED USERNAME PASSWD socketID monitorList
+  if [catch {ConnectToSguild} socketID] {
+    ErrorMessage "${socketID}. Will try again in 10 secs."
+    set CONNECTED 0
+    after 10000 ReconnectToSguild
+  } else {
+    set CONNECTED 1
+    InfoMessage "Reconnected to sguild. Reauthenticating client."
+    SendToSguild "ValidateUser $USERNAME $PASSWD"
+    set USERID [lindex [gets $socketID] 1]
+    while { $USERID == "INVALID" } {
+      set PASSWD ""
+      ErrorMessage "Invalid USERNAME and/or PASSWORD"
+      GetUserName 
+      SendToSguild "ValidateUser $USERNAME $PASSWD"
+      set USERID [lindex [gets $socketID] 1]
+    } 
+    set CONNECTED 1
+    ClearAllEventLists
+    fileevent $socketID readable [list ServerCommandRcvd $socketID]
+    SendToSguild "MonitorSensors $monitorList"
+    SendToSguild "SendEscalatedEvents"
+  }
+}
+proc SendToSguild { data } {
+  global socketID CONNECTED
+  if {!$CONNECTED} {
+     ErrorMessage "Not connected to sguild. Unable to process this request."
+  } else {
+    if [catch {puts $socketID $data} errorCheck] {
+      catch {close $socketID} tmpError
+      if { [info exists errorCheck] } {
+        ErrorMessage "Lost connection to sguild.\nERROR: $errorCheck\nTrying to reconnect."
+      } else {
+        ErrorMessage "Connection to sguild terminated. Trying to reconnect."
+      }
+      set CONNECTED 0
+      ReconnectToSguild
+    }
+  }
 }
 proc UpdateClock {} {
   global gmtClock
@@ -243,6 +324,8 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } } {
 }
 proc SsnQueryRequest { whereStatement } {
   global eventTabs SSN_QUERY_NUMBER socketID DEBUG
+  global CONNECTED
+  if {!$CONNECTED} {ErrorMessage "Not connected to sguild. Query aborted"; return}
   set selectQuery "SELECT sensor.hostname, sessions.xid, sessions.start_time, sessions.end_time,\
    INET_NTOA(sessions.src_ip), sessions.src_port, INET_NTOA(sessions.dst_ip), sessions.dst_port,\
    sessions.src_pckts, sessions.src_bytes, sessions.dst_pckts, sessions.dst_bytes\
@@ -270,10 +353,12 @@ proc SsnQueryRequest { whereStatement } {
   pack $queryFrame -side top
   $queryFrame configure -cursor watch
   if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
-  puts $socketID "QueryDB $queryFrame $selectQuery"
+  SendToSguild "QueryDB $queryFrame $selectQuery"
 }
 proc DBQueryRequest { whereStatement {winTitle {none} } } {
   global eventTabs QUERY_NUMBER socketID DEBUG
+  global CONNECTED
+  if {!$CONNECTED} {ErrorMessage "Not connected to sguild. Query aborted."; return}
   set selectQuery "SELECT event.status, event.priority, sensor.hostname, event.timestamp,\
    event.sid, event.cid, event.signature,\ 
    INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto,\
@@ -304,7 +389,7 @@ proc DBQueryRequest { whereStatement {winTitle {none} } } {
   pack $queryFrame -side top
   $queryFrame configure -cursor watch
   if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
-  puts $socketID "QueryDB $queryFrame $selectQuery"
+  SendToSguild "QueryDB $queryFrame $selectQuery"
 }
 proc EditWhere { whereTmp } {
   global RETURN_FLAG
@@ -380,7 +465,11 @@ proc GetComment {} {
 }
 proc ValidateEvent { status {c_flag {0}} } {
   global ACTIVE_EVENT currentSelectedPane eventArray correlateArray socketID DEBUG
-  global MULTI_SELECT
+  global MULTI_SELECT CONNECTED
+  if {!$CONNECTED} {
+    ErrorMessage "Not Connected to sguild. Cannot validate events at this time."
+    return
+  }
   set eventComment none
   if {$ACTIVE_EVENT} {
      if { $status == 2 || $c_flag } {
@@ -406,7 +495,7 @@ proc ValidateEvent { status {c_flag {0}} } {
      if {$DEBUG} {
        puts "Sending Server: DeleteEventIDList $eventComment $status $deleteEventIDList"
      }
-     puts $socketID "DeleteEventIDList $status $eventComment $deleteEventIDList"
+     SendToSguild "DeleteEventIDList $status $eventComment $deleteEventIDList"
      if { [llength [$currentSelectedPane.eventIDFrame.list curselection]] > 1} {
 	 # puts "unslecting multiple events"
 	 UnHighLightListLine $currentSelectedPane
@@ -487,6 +576,11 @@ proc SimpleQueryCmd { host port cmd} {
 }
 proc OptimizeTables {} {
     global socketID DEBUG RETURN_FLAG
+    global CONNECTED
+    if {!$CONNECTED} {
+      ErrorMessage "Not connected to sguild. Unable to send optimize request."
+      return
+    }
     set RETURN_FLAG 0
     set optimizeTables .optimizeTables
     if { [winfo exists $optimizeTables] } {
@@ -534,7 +628,7 @@ proc OptimizeTables {} {
 	  set answer [tk_messageBox -title confirm -type okcancel -icon warning -message "WARNING: Optimization can cause tables to corrupt.  If you don't know how to fix corruption, DO NOT PROCEED."]
 	    if { $answer == "ok" } {
 		if {$DEBUG} { puts "Send Server: ExecDB $optimizeQuery" }
-		puts $socketID "ExecDB $optimizeQuery"
+		SendToSguild "ExecDB $optimizeQuery"
 	    }
 	   
 	}
@@ -546,6 +640,11 @@ proc OptimizeTables {} {
     
 proc DeleteRequest { deletetype } {
     global socketID DEBUG RETURN_FLAG
+    global CONNECTED
+    if {!$CONNECTED} {
+      ErrorMessage "Not Connected to sguild. Unable to delete events."
+      return
+    }
     set RETURN_FLAG 0
     set deleteRequest .deleteRequest
     if { [winfo exists $deleteRequest] } {
@@ -567,7 +666,7 @@ proc DeleteRequest { deletetype } {
 	if { $RETURN_FLAG } {
 	    set deleteQuery "DELETE from sessions WHERE sessions.start_time <= '[$deleteDate get]'"
 	    if {$DEBUG} { puts "Sending Server: ExecDB $deleteQuery" }
-	    puts $socketID "ExecDB $deleteQuery"
+	    SendToSquild "ExecDB $deleteQuery"
 	}
 	destroy $deleteRequest
 	return
@@ -1790,12 +1889,6 @@ proc SelectAllLists { winName index } {
   global SSN_QUERY
 
   set ACTIVE_EVENT 1
-#
-#  removed for multi-select functionality 
-#
-#  if {[info exists currentSelectedPane] } {
-#    UnHighLightListLine $currentSelectedPane
-#  }
   set currentSelectedPane [winfo parent [winfo parent $winName]]
   if { $index < 0 } {
     set ACTIVE_EVENT 0
@@ -1939,12 +2032,17 @@ proc ClearPSLists {} {
 }
 proc DisplayPortscanData {} {
   global ACTIVE_EVENT PSINFO currentSelectedPane DEBUG socketID portscanDataFrame MULTI_SELECT
+  global CONNECTED
   ClearPSLists
   if {$ACTIVE_EVENT && $PSINFO && !$MULTI_SELECT} {
+    if {!$CONNECTED} {
+      ErrorMessage "Not connected to sguild. Cannot request portscan data."
+      return 
+    }
     set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
     set srcIP [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
     set timestamp [lindex [$currentSelectedPane.dateTimeFrame.list get $selectedIndex] 0]
-    puts $socketID "GetPSData $timestamp $srcIP"
+    SendToSguild "GetPSData $timestamp $srcIP"
     $portscanDataFrame configure -cursor watch
   }
 }
@@ -1964,8 +2062,13 @@ proc InsertPSData { data } {
 }
 proc GetPacketInfo {} {
   global ACTIVE_EVENT PACKETINFO currentSelectedPane socketID DEBUG MULTI_SELECT SSN_QUERY
+  global CONNECTED
   ClearPacketData
   if {$ACTIVE_EVENT && $PACKETINFO && !$MULTI_SELECT && !$SSN_QUERY} {
+    if {!$CONNECTED} {
+      ErrorMessage "Not connected to sguild. Cannot make a request for packet data."
+      return
+    }
     Working
     update
     set selectedIndex [$currentSelectedPane.eventIDFrame.list curselection]
@@ -1973,26 +2076,31 @@ proc GetPacketInfo {} {
     set protocol [$currentSelectedPane.protoFrame.list get $selectedIndex]
     set sid [lindex [split $eventID .] 0]
     set cid [lindex [split $eventID .] 1]
-    puts $socketID "GetIPData $sid $cid"
+    SendToSguild "GetIPData $sid $cid"
     if {$protocol == 17 } {
-      puts $socketID "GetUdpData $sid $cid"
+      SendToSguild "GetUdpData $sid $cid"
     } elseif { $protocol == 1 } {
-      puts $socketID "GetIcmpData $sid $cid"
+      SendToSguild "GetIcmpData $sid $cid"
     } else {
-      puts $socketID "GetTcpData $sid $cid"
+      SendToSguild "GetTcpData $sid $cid"
     }
-    puts $socketID "GetPayloadData $sid $cid"
+    SendToSguild "GetPayloadData $sid $cid"
   }
 }
 proc GetRuleInfo {} {
   global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton MULTI_SELECT SSN_QUERY
+  global CONNECTED
   ClearRuleText
   if {$ACTIVE_EVENT && $SHOWRULE && !$MULTI_SELECT && !$SSN_QUERY} {
+    if {!$CONNECTED} {
+      ErrorMessage "Not connected to sguild. Cannot make rule request."
+      return
+    }
     set selectedIndex [$currentSelectedPane.msgFrame.list curselection]
     set message [$currentSelectedPane.msgFrame.list get $selectedIndex]
     set sensorName [$currentSelectedPane.sensorFrame.list get $selectedIndex]
     if {$DEBUG} {puts  "RuleRequest $sensorName $message"}
-    puts $socketID "RuleRequest $sensorName $message"
+    SendToSguild "RuleRequest $sensorName $message"
   } else {
     $referenceButton configure -state disabled
   }
@@ -2612,6 +2720,17 @@ proc CreateEventLists { baseFrame } {
   pack $baseFrame -fill both -expand true
 
 }
+proc ClearAllEventLists {} {
+  global rtPaneArray escalateFrame
+  foreach arrayName [array names rtPaneArray] {
+    foreach childFrame "[winfo children $rtPaneArray($arrayName)] [winfo children $escalateFrame]" {
+      if { [winfo name $childFrame] != "scroll" } {
+        $childFrame.list delete 0 end
+      }
+    }
+    #set eventIDList [$rtPaneArray($arrayName).eventIDFrame.list get 0 end]
+  }
+}
 proc SortListsBy { clickedListWinName { listType {event} } } {
   # Two words. Ug. Ly. But it works.
   # We take all the data from each list and put it into its own list. Then
@@ -2868,13 +2987,14 @@ proc SensorList { sensorList } {
   set MONITORFLAG 1
 }
 proc MonitorSensors { winName } {
-  global sensorSelectArray socketID DEBUG
+  global sensorSelectArray socketID DEBUG monitorList
+  set monitorList ""
   foreach sensorName [array names sensorSelectArray] {
     if {$sensorSelectArray($sensorName)} { lappend monitorList $sensorName }
   }
   if { [info exists monitorList] } {
     if {$DEBUG} { puts "Sending Server: MonitorSensors $monitorList"}
-    puts $socketID "MonitorSensors $monitorList"
+    SendToSguild "MonitorSensors $monitorList"
   } else {
     InfoMessage "You did not select any sensors to monitor and will NOT recieve any events."
   }
@@ -2919,7 +3039,7 @@ proc GetEventHistory {} {
     return
   }
   CreateHistoryWin $historyWinName
-  puts $socketID "EventHistoryRequest $historyWinName $sid $cid"
+  SendToSguild "EventHistoryRequest $historyWinName $sid $cid"
 }
 proc CreateHistoryWin {winName } {
   toplevel $winName
@@ -3029,10 +3149,12 @@ if { [info exists CONF_FILE] } {
       if { [CheckLineFormat $line] } {
         if { [catch {eval $line} evalError] } {
           puts "Error at line $i in $CONF_FILE: $line"
+          ErrorMessage "Error at line $i in $CONF_FILE: $line"
           CleanExit
         }
       } else {
         puts "Error at line $i in $CONF_FILE: $line"
+        ErrorMessage "Error at line $i in $CONF_FILE: $line"
         CleanExit
       }
     }
@@ -3839,50 +3961,26 @@ bind $soundStatus <Button-1> {
 
 #################### Connect To The Server ##############################
 
-if [catch {set socketID [socket $SERVERHOST $SERVERPORT]}] {
-  ErrorMessage "Sguil.tk was unable to connect to the specified sguild server.\
-                ($SERVERHOST on port $SERVERPORT)."
-  exit
+if [catch { ConnectToSguild } socketID] {
+  ErrorMessage $socketID
+  CleanExit
 } else {
-  fconfigure $socketID -buffering line
-  # Version checking
-  if {$OPENSSL} {
-    set VERSION "$VERSION OPENSSL ENABLED"
-  } else {
-    set VERSION "$VERSION OPENSSL DISABLED"
-  }     
-  if [catch {gets $socketID} serverVersion] {
-    puts "ERROR: $serverVersion"
-    CleanExit
-  }
-  if { $serverVersion != $VERSION } {
-    puts "ERROR: Mismatched versions.\nSERVER: ($serverVersion)\nCLIENT: ($VERSION)"
-    CleanExit
-  }
-  puts $socketID "$VERSION"
-  if {$OPENSSL} {
-    if { [info exists TLS_PATH] } { load $TLS_PATH }
-    package require tls
-    tls::import $socketID
-  }
-  puts $socketID "PING"
-  set INIT [gets $socketID]
-  if {$DEBUG} {puts "Init successful"}
+  set CONNECTED 1
   GetUserName
-  puts $socketID "ValidateUser $USERNAME $PASSWD"
+  SendToSguild "ValidateUser $USERNAME $PASSWD"
   set USERID [lindex [gets $socketID] 1]
   while { $USERID == "INVALID" } {
     set PASSWD ""
     ErrorMessage "Invalid USERNAME and/or PASSWORD"
     GetUserName 
-    puts $socketID "ValidateUser $USERNAME $PASSWD"
+    SendToSguild "ValidateUser $USERNAME $PASSWD"
     set USERID [lindex [gets $socketID] 1]
   } 
   fileevent $socketID readable [list ServerCommandRcvd $socketID]
-  puts $socketID "SendDBInfo"
-  puts $socketID "SendSensorList"
+  SendToSguild "SendDBInfo"
+  SendToSguild "SendSensorList"
   tkwait variable MONITORFLAG
   wm deiconify .
   update
-  puts $socketID "SendEscalatedEvents"
+  SendToSguild "SendEscalatedEvents"
 }
