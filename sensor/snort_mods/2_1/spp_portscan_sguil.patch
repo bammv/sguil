@@ -1,0 +1,303 @@
+*** spp_portscan.c.orig	Thu Jan  8 15:01:11 2004
+--- spp_portscan.c	Fri Jan  9 09:24:37 2004
+***************
+*** 22,30 ****
+      by Patrick Mullen <p_mullen@linuxrc.net>
+      Version 0.2.14
+  */
+! 
+  #include <sys/types.h>
+  #include <string.h>
+  #include <stdio.h>
+  #include <stdlib.h>
+  #include <time.h>
+--- 22,37 ----
+      by Patrick Mullen <p_mullen@linuxrc.net>
+      Version 0.2.14
+  */
+! /* This is a modified version of spp_portsan. It is meant to be used in
+!  * conjunction with sguil. Changes include using CallLogFuncs and the
+!  * output format.
+! */
+!  
+  #include <sys/types.h>
+  #include <string.h>
++ //  Bammkkkk
++ #include <sys/stat.h>
++ #include <unistd.h>
+  #include <stdio.h>
+  #include <stdlib.h>
+  #include <time.h>
+***************
+*** 234,240 ****
+  {
+      tLOCAL, tGMT
+  }           timeFormat;
+! FILE *logFile;
+  int packetLogSize;      /* Number of data bytes to log per scan
+                   * packet */
+  
+--- 241,256 ----
+  {
+      tLOCAL, tGMT
+  }           timeFormat;
+! // Bammkkkk
+! long GetMilliseconds()
+! {
+!   struct timeval tv;
+!   gettimeofday(&tv, NULL);
+! 
+!   return (long)(tv.tv_sec * 1000 + tv.tv_usec / 1000);
+! }
+! char *logDirName;
+! char *sensorName;
+  int packetLogSize;      /* Number of data bytes to log per scan
+                   * packet */
+  
+***************
+*** 981,988 ****
+                  }
+  
+                  SetEvent(&event, GENERATOR_SPP_PORTSCAN, PORTSCAN_SCAN_DETECT, 
+!                         1, 0, 0, 0);
+!                 CallAlertFuncs(NULL , logMessage, NULL, &event);
+                  scanList->lastSource->scanDetected = 1;
+                  scanList->lastSource->reportTime = currTime;
+                  scanList->lastSource->event_id = event_id;
+--- 997,1005 ----
+                  }
+  
+                  SetEvent(&event, GENERATOR_SPP_PORTSCAN, PORTSCAN_SCAN_DETECT, 
+!                         1, 0, 5, 0);
+!                 // CallAlertFuncs(NULL , logMessage, NULL, &event);
+! 		CallLogFuncs(p , logMessage, NULL, &event);
+                  scanList->lastSource->scanDetected = 1;
+                  scanList->lastSource->reportTime = currTime;
+                  scanList->lastSource->event_id = event_id;
+***************
+*** 1233,1239 ****
+      char **toks;
+      int numToks;
+  
+!     char *logFileName;
+  
+      DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,MODNAME ": ParsePortscanArgs(): %s\n", args););
+  
+--- 1250,1256 ----
+      char **toks;
+      int numToks;
+  
+!     struct stat st;    
+  
+      DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,MODNAME ": ParsePortscanArgs(): %s\n", args););
+  
+***************
+*** 1241,1260 ****
+  
+      if(!args)
+      {
+!         FatalError(MODNAME ": %s (%d) => portscan configuration format:  address/mask ports seconds [logfile]\n", file_name, file_line);
+      }
+  
+      /* the '\\' sets the string escape delimiter - MFR */
+  #ifdef WIN32
+!     toks = mSplit(args, " ", 6, &numToks, 0);
+  #else
+!     toks = mSplit(args, " ", 6, &numToks, '\\');    /* ZDNOTE What does the
+                                                       * '\\' do? */
+  #endif
+  
+!     if((numToks < 3) || (numToks > 6))
+      {
+!         FatalError(MODNAME "%s(%d) => portscan configuration format:  address/mask ports seconds [logfile]\n", file_name, file_line);
+      }
+  
+      maxPorts = atoi(toks[1]);
+--- 1258,1280 ----
+  
+      if(!args)
+      {
+!         FatalError(MODNAME ": %s (%d) => portscan configuration format:  address/mask ports seconds logDir sensor_name\n", file_name, file_line);
+      }
+  
+      /* the '\\' sets the string escape delimiter - MFR */
++     /* the sguil mod adds a seventh arg -> sensorName - Bammkkkk */
+  #ifdef WIN32
+!     toks = mSplit(args, " ", 7, &numToks, 0);
+  #else
+!     toks = mSplit(args, " ", 7, &numToks, '\\');    /* ZDNOTE What does the
+                                                       * '\\' do? */
+  #endif
+  
+!     /* Went ahead and made all the args mandatory. - Bammkkkk */
+!     printf("Number of toks: %i\n", numToks);
+!     if((numToks != 5))
+      {
+!         FatalError(MODNAME "%s(%d) => portscan configuration format:  address/mask ports seconds logDir snesor_name\n", file_name, file_line);
+      }
+  
+      maxPorts = atoi(toks[1]);
+***************
+*** 1263,1325 ****
+  
+      PortscanParseIP(toks[0]);
+      /* ParseIP(toks[0], homeAddr); */
+  
+!     /*
+!      * Now we use the default log directory if provided from the command line
+!      * (-l).
+!      */
+!     if(numToks == 4)
+!     {
+! #ifdef WIN32
+!         logFileName = (char *) calloc(strlen(toks[3]) + 1 + 1, 1);
+!         strncpy(logFileName, toks[3], strlen(toks[3]));
+! #else
+!         if(pv.log_dir && (*toks[3] != '/'))
+!         {
+!             if(*(pv.log_dir + strlen(pv.log_dir) - 1) != '/')
+!             {
+!                 logFileName = (char *)calloc(strlen(pv.log_dir) 
+!                         + strlen(toks[3]) + 1 + 1, 1);
+  
+!                 strncat(logFileName, pv.log_dir, strlen(pv.log_dir) + 1);
+!                 strncat(logFileName, "/", 1);
+!                 strncat(logFileName, toks[3], strlen(toks[3]));
+!             }
+!             else
+!             {
+!                 logFileName = (char *)calloc(strlen(pv.log_dir) 
+!                         + strlen(toks[3]) + 1, 1);
+!                    
+!                 strncat(logFileName, pv.log_dir, strlen(pv.log_dir) + 1);
+!                 strncat(logFileName, toks[3], strlen(toks[3]));
+!             }
+!         }
+!         else
+!         {
+!             logFileName = (char *)calloc(strlen(toks[3]) + 1, 1);
+!                
+!             strncat(logFileName, toks[3], strlen(toks[3]) + 1);
+!         }
+! #endif  /* WIN32 */
+  
+!         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,MODNAME ": logFileName = %s\n", logFileName););
+! 
+!         logFile = fopen(logFileName, "a+");
+!         if(!logFile)
+!         {
+!             perror("fopen");
+!             FatalError(MODNAME ": logfile open error (%s)\n", logFileName);
+!         }
+! 
+!         logLevel |= lFILE;
+!     }
+  
+      mSplitFree(&toks, numToks);
+  
+      /* How about some error detecting? :) */
+      if(maxPorts == 0 || maxTime.tv_sec == 0)
+      {
+!         FatalError(MODNAME ": %s (%d) => portscan configuration format:  address/mask ports seconds [logfile]\n", file_name, file_line);
+      }
+      /*
+       * ZDNOTE Compile time settings.  Obviously needs to become runtime
+--- 1283,1316 ----
+  
+      PortscanParseIP(toks[0]);
+      /* ParseIP(toks[0], homeAddr); */
++     /* Lots of stuff deleted - Bammkkkk */
+  
+!     logDirName = (char *) calloc(strlen(toks[3]) + 1, 1);
+!     strncpy(logDirName, toks[3], strlen(toks[3]));
+  
+!     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,MODNAME ": logDirName = %s\n", logDirName););
+  
+!     if(stat(logDirName, &st) < 0)
+!       {
+!         FatalError(MODNAME ": Unable to stat directory (%s)\n", logDirName);
+!       }
+!     if((!S_ISDIR(st.st_mode) || access(logDirName, W_OK) < 0))
+!       {
+!         FatalError(MODNAME ": %s is not a directory or is not writable", logDirName);
+!       }
+!                                                                                                                                     
+!     logLevel |= lFILE;
+! 
+!     /* Set the sensor name for the log file - Bammkkkk */
+!     sensorName = (char *) calloc(strlen(toks[4]) + 1, 1);
+!     strncpy(sensorName, toks[4], strlen(toks[4]));
+  
+      mSplitFree(&toks, numToks);
+  
+      /* How about some error detecting? :) */
+      if(maxPorts == 0 || maxTime.tv_sec == 0)
+      {
+!        FatalError(MODNAME ": ERROR: %s (%d) => portscan configuration format:  address/mask ports seconds logDir sensor_name\n", file_name, file_line);
+      }
+      /*
+       * ZDNOTE Compile time settings.  Obviously needs to become runtime
+***************
+*** 1385,1390 ****
+--- 1376,1395 ----
+      char *month;
+      struct tm *time;
+      char sourceAddress[16], destinationAddress[16];
++     char currentTime[80];
++     char logFileName[STD_BUF];
++     FILE *logFile;
++ 
++     /* Open file to log to - Bammkkkk */
++     snprintf(logFileName, STD_BUF, "%s/portscan_log.%lu", logDirName, GetMilliseconds());
++     logFile = fopen(logFileName, "a");
++     if(!logFile)
++       {
++ 	perror("fopen");
++ 	FatalError(MODNAME ": Unable to open logfile (%s)\n", logFileName);
++       }
++   
++ 
+      memset(sourceAddress, '\0', 16);
+      memset(destinationAddress, '\0', 16);
+  
+***************
+*** 1409,1415 ****
+               * stuff.
+               */
+              time = (timeFormat == tLOCAL) ? localtime((time_t *) & currentConnection->timestamp.tv_sec) : gmtime(&currentConnection->timestamp.tv_sec);
+! 
+              switch(time->tm_mon)
+              {
+                  case 0:
+--- 1414,1420 ----
+               * stuff.
+               */
+              time = (timeFormat == tLOCAL) ? localtime((time_t *) & currentConnection->timestamp.tv_sec) : gmtime(&currentConnection->timestamp.tv_sec);
+! 	    strftime(currentTime, 80, "%F %T", time);
+              switch(time->tm_mon)
+              {
+                  case 0:
+***************
+*** 1510,1524 ****
+--- 1515,1535 ----
+              }
+  
+              /* I have control of all data here, so this should be safe */
++ 	    /*
+              fprintf(logFile, "%s %2d %.2d:%.2d:%.2d %s:%d -> %s:%d %s %s %s\n", month, time->tm_mday,
+                      time->tm_hour, time->tm_min, time->tm_sec,
+                      sourceAddress, currentConnection->sport, destinationAddress,
+                      currentConnection->dport, scanType, currentConnection->tcpFlags, reservedBits);
++ 	    */
++ 	    fprintf(logFile, "%s|%s|%s|%d|%s|%d|%s %s %s\n", sensorName, currentTime, sourceAddress, 
++ 		    currentConnection->sport, destinationAddress, currentConnection->dport, 
++ 		    scanType, currentConnection->tcpFlags, reservedBits);
+          }
+      }
+  
+      /* Now that we're done, flush the buffer to disk. */
+      fflush(logFile);
++     fclose(logFile);
+  }
+  
+  

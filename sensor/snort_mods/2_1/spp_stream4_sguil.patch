@@ -1,0 +1,341 @@
+*** spp_stream4.c	Wed Sep 10 16:00:50 2003
+--- spp_stream4.sguil	Thu Oct 23 08:10:53 2003
+***************
+*** 33,38 ****
+--- 33,57 ----
+   *
+   */
+  
++ /* Added a new stats type "db". The main purpose is to get session stats loaded
++  * into the database for datamining using sguil (http://www.satexas.com/~bamf/sguil/).
++  * 
++  * Config from snort.conf:
++  * keepstats db /log/dir
++  *
++  *
++  * Output is pipe deliminated and a new file (/log/dir/ssn_log.<microseconds>)
++  * is created each time the deleted sessions are flushed (see FLUSH_DELAY):
++  *
++  * xid|start_time|end_time|src_ip|dst_ip|src_port|dst_port|src_pckts|dst_pckts|src_bytes|dst_bytes
++  *
++  * xid is the time in milliseconds at SessionDelete.
++  *
++  *
++  * Bammkkkk
++ */
++ 
++ 
+  /*  I N C L U D E S  ************************************************/
+  #ifdef HAVE_CONFIG_H
+  #include "config.h"
+***************
+*** 61,66 ****
+--- 80,86 ----
+  #endif /* WIN32 */
+  #include <time.h>
+  #include <rpc/types.h>
++ #include <unistd.h>
+  
+  #ifdef HAVE_STRINGS_H
+  #include <strings.h>
+***************
+*** 130,135 ****
+--- 150,156 ----
+  #define STATS_HUMAN_READABLE   1
+  #define STATS_MACHINE_READABLE 2
+  #define STATS_BINARY           3
++ #define STATS_DB               4
+  
+  #define STATS_MAGIC  0xDEAD029A   /* magic for the binary stats file */
+  
+***************
+*** 183,188 ****
+--- 204,212 ----
+  #define MAXSIZE_IP              65535
+  #define MAX_TRACKER_AMOUNT      (MAX_STREAM_SIZE + 4000)
+  
++ /* How often to flush if using STATS_DB */
++ #define FLUSH_DELAY 30000000
++ 
+  /* random array of flush points */
+  
+  #define FCOUNT 64
+***************
+*** 198,203 ****
+--- 222,228 ----
+  
+  
+  
++ 
+  /*  D A T A   S T R U C T U R E S  **********************************/
+  typedef struct _Stream4Data
+  {
+***************
+*** 287,292 ****
+--- 312,334 ----
+      u_int32_t cbytes;
+  } BinStats;
+  
++ typedef struct _DbStats
++ {
++     u_int64_t xid;
++     char start_time[20];
++     char end_time[20];
++     u_int32_t sip;
++     u_int32_t cip;
++     u_int16_t sport;
++     u_int16_t cport;
++     u_int32_t spackets;
++     u_int32_t cpackets;
++     u_int32_t sbytes;
++     u_int32_t cbytes;
++     struct _DbStats *next;
++ } DbStats;
++ 
++ 
+  typedef struct _StatsLog
+  {
+      FILE *fp;
+***************
+*** 333,338 ****
+--- 375,384 ----
+  Stream4Data s4data;
+  u_int32_t stream4_memory_usage;
+  u_int32_t ps_memory_usage;
++ DbStats *dbsPtr = NULL;
++ u_int64_t LastFlushTime;
++ char DBLOGDIR[STD_BUF];
++ 
+  
+  /* stream4 emergency mode counters... */
+  S4Emergency s4_emergency;
+***************
+*** 381,392 ****
+--- 427,558 ----
+  static INLINE void StreamSegmentSub(Stream *stream, u_int16_t sub);
+  static INLINE void StreamSegmentAdd(Stream *stream, u_int16_t add);
+  
++ DbStats *AddDbStats(DbStats * dbsPtr, Session * ssn);
++ DbStats *FlushDbStats(DbStats * dbsPtr);
++ 
+  /*
+    Here is where we separate which functions will be called in the
+    normal case versus in the asynchronus state
+  
+  */
+     
++ u_int64_t TimeMilliseconds()
++ {
++     struct timeval  tm;
++     u_int64_t secs;
++     long ms;
++ 
++     gettimeofday(&tm, NULL);
++ 
++     ms = tm.tv_usec;
++     secs = time(NULL);
++ 
++     return (u_int64_t ) (secs * 1000000 + ms);
++ }
++ 
++ 
++ DbStats *AddDbStats(DbStats *dbsPtr, Session *ssn)
++ {
++ 
++   DbStats *dbs = dbsPtr;
++   register int s;
++   struct tm *lt;
++   struct tm *et;
++ 
++   if (dbsPtr != NULL)
++   {
++ 
++     while (dbsPtr->next != NULL)
++       dbsPtr = dbsPtr->next;
++ 
++     dbsPtr->next = (DbStats *) malloc (sizeof (DbStats));
++     dbsPtr=dbsPtr->next;
++     dbsPtr->next = NULL;
++ 
++     dbsPtr->xid = TimeMilliseconds();
++ 
++     lt = gmtime((time_t *) &ssn->start_time);
++     s = (ssn->start_time + thiszone) % 86400;
++     sprintf(dbsPtr->start_time, "%02d-%02d-%02d %02d:%02d:%02d", 1900 + lt->tm_year,
++            lt->tm_mon+1, lt->tm_mday, s/3600, (s%3600)/60, s%60);
++ 
++     et = gmtime((time_t *) &ssn->last_session_time);
++     s = (ssn->last_session_time + thiszone) % 86400;
++     sprintf(dbsPtr->end_time, "%02d-%02d-%02d %02d:%02d:%02d", 1900 + et->tm_year,
++                et->tm_mon+1, et->tm_mday, s/3600, (s%3600)/60, s%60);
++ 
++     dbsPtr->sip = ntohl(ssn->server.ip);
++     dbsPtr->cip = ntohl(ssn->client.ip);
++     dbsPtr->sport = ssn->server.port;
++     dbsPtr->cport = ssn->client.port;
++     dbsPtr->spackets = ssn->server.pkts_sent;
++     dbsPtr->cpackets = ssn->client.pkts_sent;
++     dbsPtr->sbytes = ssn->server.bytes_sent;
++     dbsPtr->cpackets = ssn->client.pkts_sent;
++     dbsPtr->sbytes = ssn->server.bytes_sent;
++     dbsPtr->cbytes = ssn->client.bytes_sent;
++     return dbs;
++ 
++   } else {
++ 
++     dbsPtr = (DbStats *) malloc (sizeof (DbStats));
++     dbsPtr->next = NULL;
++ 
++     dbsPtr->xid = TimeMilliseconds();
++ 
++     lt = gmtime((time_t *) &ssn->start_time);
++     s = (ssn->start_time + thiszone) % 86400;
++     sprintf(dbsPtr->start_time, "%02d-%02d-%02d %02d:%02d:%02d", 1900 + lt->tm_year,
++            lt->tm_mon+1, lt->tm_mday, s/3600, (s%3600)/60, s%60);
++ 
++     et = gmtime((time_t *) &ssn->last_session_time);
++     s = (ssn->last_session_time + thiszone) % 86400;
++     sprintf(dbsPtr->end_time, "%02d-%02d-%02d %02d:%02d:%02d", 1900 + et->tm_year,
++                et->tm_mon+1, et->tm_mday, s/3600, (s%3600)/60, s%60);
++ 
++     dbsPtr->sip = ntohl(ssn->server.ip);
++     dbsPtr->cip = ntohl(ssn->client.ip);
++     dbsPtr->sport = ssn->server.port;
++     dbsPtr->cport = ssn->client.port;
++     dbsPtr->spackets = ssn->server.pkts_sent;
++     dbsPtr->cpackets = ssn->client.pkts_sent;
++     dbsPtr->sbytes = ssn->server.bytes_sent;
++     dbsPtr->cbytes = ssn->client.bytes_sent;
++     return dbsPtr;
++   }
++ }
++ 
++ DbStats *FlushDbStats(DbStats *dbsPtr)
++ {
++ 
++       char dblogfile[STD_BUF];
++       FILE *dbstats_log;
++ 
++       LogMessage("Flushing stats...\n");
++       snprintf(dblogfile, STD_BUF, "%s/ssn_log.%llu",
++         DBLOGDIR, TimeMilliseconds());
++ 
++       if((dbstats_log = fopen(dblogfile, "a")) == NULL )
++          FatalError("Unable to write to '%s': %s\n", dblogfile, strerror(errno));
++ 
++       while (dbsPtr != NULL)
++       {
++         DbStats *tmp;
++         fprintf(dbstats_log, "%llu|%s|%s|%u|%u|%d|%d|%u|%u|%u|%u\n",
++           dbsPtr->xid, dbsPtr->start_time, dbsPtr->end_time, dbsPtr->cip,
++           dbsPtr->sip, dbsPtr->cport, dbsPtr->sport,
++           dbsPtr->cpackets, dbsPtr->spackets, dbsPtr->cbytes, dbsPtr->sbytes);
++ 
++        tmp = dbsPtr->next;
++        free(dbsPtr);
++        dbsPtr = tmp;
++       }
++ 
++     fclose(dbstats_log);
++     LastFlushTime = TimeMilliseconds();
++     return dbsPtr;
++ }
++ 
+  int UpdateState(Session *, Packet *, u_int32_t); 
+  int UpdateStateAsync(Session *, Packet *, u_int32_t);
+  
+***************
+*** 827,832 ****
+--- 993,1000 ----
+      AddFuncToPreprocList(ReassembleStream4);
+      AddFuncToCleanExitList(Stream4CleanExitFunction, NULL);
+      AddFuncToRestartList(Stream4RestartFunction, NULL);    
++ 
++     LastFlushTime = TimeMilliseconds();
+  }
+  
+  void DisplayStream4Config(void) 
+***************
+*** 941,946 ****
+--- 1109,1127 ----
+                      stats_log->filename = strdup("snort-unified.stats");
+                      OpenStatsFile();
+                  } 
++                 else if(!strcasecmp(stoks[1], "db"))
++                 {
++                     if(s_toks > 2)
++                     {
++                       s4data.track_stats_flag = STATS_DB;
++                       snprintf(DBLOGDIR,STD_BUF, "%s", stoks[2]);
++                       if( access(DBLOGDIR, 2) != 0)
++                         FatalError("ERROR: ssn log dir '%s' does not exist\n", DBLOGDIR);
++                     } else {
++                       ErrorMessage("Stats mode \"db\" requires a log dir.\n");
++                       s4data.track_stats_flag=0;
++                     }
++                 }
+                  else
+                  {
+                      ErrorMessage("Bad stats mode for stream4, ignoring\n");
+***************
+*** 3148,3159 ****
+      struct tm *lt;
+      struct tm *et;
+      Session *killme;
+  
+      RemoveStreamSession(&sfPerf.sfBase);
+      
+      if(ssn == NULL)
+          return;
+!     
+      if(s4data.track_stats_flag == STATS_HUMAN_READABLE)
+      {
+          lt = localtime((time_t *) &ssn->start_time);
+--- 3329,3341 ----
+      struct tm *lt;
+      struct tm *et;
+      Session *killme;
++     u_int64_t currentTime;
+  
+      RemoveStreamSession(&sfPerf.sfBase);
+      
+      if(ssn == NULL)
+          return;
+! 
+      if(s4data.track_stats_flag == STATS_HUMAN_READABLE)
+      {
+          lt = localtime((time_t *) &ssn->start_time);
+***************
+*** 3181,3186 ****
+--- 3363,3376 ----
+                  ssn->client.bytes_sent);
+  
+      }
++     else if(s4data.track_stats_flag == STATS_DB)
++     {
++        dbsPtr = AddDbStats(dbsPtr, ssn);
++        currentTime = TimeMilliseconds();
++        if (currentTime > (LastFlushTime + FLUSH_DELAY)) 
++          dbsPtr = FlushDbStats(dbsPtr);
++     }
++ 
+      else if(s4data.track_stats_flag == STATS_MACHINE_READABLE)
+      {
+          lt = localtime((time_t *) &ssn->start_time);
+***************
+*** 3489,3495 ****
+--- 3679,3692 ----
+      if(s4data.track_stats_flag)
+      {
+          if(s4data.track_stats_flag != STATS_BINARY)
++         {
++           if(s4data.track_stats_flag == STATS_DB)
++           {
++             dbsPtr = FlushDbStats(dbsPtr);
++           } else {
+              fclose(session_log);
++           }
++         }
+          else
+              if(stats_log != NULL)
+                  fclose(stats_log->fp);
