@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.96 2003/11/19 17:48:12 bamm Exp $ #
+# $Id: sguil.tk,v 1.97 2003/11/26 17:53:03 shalligan Exp $ #
 
 ####################################################################
 # Snort GUI for Lamerz [sguil] - A tcl/tk interface to snort       #
@@ -34,6 +34,27 @@ if [catch {package require sha1} sha1Version] {
   exit
 }
 
+# Load iwidgets and namespaces
+if [catch {package require Iwidgets} iwidgetsVersion] {
+  puts "ERROR: Cannot fine the Iwidgets extension."
+  puts "The iwidgets package is part of the incr tcl extension and is"
+  puts "available as a port/package most systems."
+  puts "See http://www.tcltk.com/iwidgets/ for more info."
+  exit
+}
+namespace import -force iwidgets::panedwindow
+namespace import -force iwidgets::tabnotebook
+namespace import -force iwidgets::scrolledtext
+namespace import -force iwidgets::optionmenu
+namespace import -force iwidgets::buttonbox
+namespace import -force iwidgets::entryfield
+namespace import -force iwidgets::checkbox
+namespace import -force iwidgets::messagedialog
+namespace import -force iwidgets::scrolledlistbox
+namespace import -force iwidgets::combobox
+namespace import -force iwidgets::radiobox
+namespace import -force iwidgets::dialogshell
+
 set ACTIVE_EVENT 0
 set MULTI_SELECT 0
 set QUERY_NUMBER 0
@@ -55,7 +76,8 @@ set currentSelectedPane 0
 set COUNTER 0
 ######################## END GLOBALS ################################
 
-########################## PROCS ####################################
+
+######################## COMMUNICATION PROCS ########################
 
 proc ServerCommandRcvd { socketID } {
   global DEBUG EMAIL_RESULTS CONNECTED GLOBAL_QRY_LIST
@@ -201,125 +223,18 @@ proc SendToSguild { data } {
     }
   }
 }
-proc UpdateClock {} {
-  global gmtClock
-  $gmtClock configure -text "[GetCurrentTimeStamp] GMT"
-  after 1000 UpdateClock
-}
-proc AboutBox {} {
-    global VERSION
-    set aboutWin .aboutWin
-    if [winfo exists $aboutWin] {
-	wm withdraw $aboutWin
-	wm deiconify $aboutWin
-	return
-    }
-    toplevel $aboutWin
-    wm title $aboutWin "Snort GUI for Lamerz \[sguil\]"
-    set welcomeFrame [frame $aboutWin.welcomeFrame -borderwidth 1 -background black]
-    set welcomeLabel [label $welcomeFrame.welcomeLabel -background lightblue\
-	    -foreground navy -text "\
-	    Snort GUI for Lamerz \[sguil\] Version: $VERSION\n\
-	    \n\
-	    Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
-	    \n\
-	    This program is distributed under the terms of version 1.0 of the\n\
-	    Q Public License.  See LICENSE.QPL for further details.\n\
-	    \n\
-	    This program is distributed in the hope that it will be useful,\n\
-	    but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
-	    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\
-	    "]
-    pack $welcomeLabel -ipadx 5 -ipady 5
-    pack $welcomeFrame -side top -padx 5 -pady 10
-    set actionButtonFrame [frame $aboutWin.actionButtonFrame -background white]
-    set okButton [button $actionButtonFrame.okButton -text "Ok"\
-	    -command "destroy $aboutWin"]
-    pack $okButton -side top
-    pack $actionButtonFrame -side bottom
-}
-proc TableNameList { tmpList } {
-  global tableList
-  set tableList $tmpList
-}
-proc TableColumns { tableName tmpColumnList } {
-  global tableColumnArray
-  set tableColumnArray($tableName) $tmpColumnList
-}
-proc ShowDBTables {} {
-  global tableList tableColumnArray currentTableList tableListFrame
-  set tableWin .tableWin
-  if [winfo exists $tableWin] {
-    wm withdraw $tableWin
-    wm deiconify $tableWin
-    return
-  }
-  toplevel $tableWin
-  wm title $tableWin "Table Descriptions"
-  set tableSelMenu [optionmenu $tableWin.tableSelMenu\
-    -labeltext "Table Name:" -command "DisplayTableColumns $tableWin.tableSelMenu"] 
-  foreach tableName $tableList {
-    $tableSelMenu insert end $tableName
-    set tableListFrame($tableName) [frame $tableWin.${tableName}Frame\
-     -background black -borderwidth 1]
-    CreateTableListBox $tableListFrame($tableName) $tableColumnArray($tableName)
-  }
-  set currentTableList $tableName
-  button $tableWin.close -text "Close" -command "destroy $tableWin"
-  pack $tableSelMenu $tableListFrame($tableName) $tableWin.close -side top
-  $tableSelMenu sort ascending
-  $tableSelMenu select event
-  $tableSelMenu configure -cyclicon true
-  DisplayTableColumns $tableWin.tableSelMenu
-}
-proc DisplayTableColumns { winName } {
-  global currentTableList tableListFrame
-  set tableName [$winName get]
-  pack forget $tableListFrame($currentTableList)
-  pack $tableListFrame($tableName) -after $winName -fill both -expand true
-  set currentTableList $tableName
-}
-proc CreateTableListBox { winName columnList } {
-  set nameFrame [frame  $winName.nameFrame]
-    set nameLabel [label $nameFrame.nameLabel -text "Column Name" -background black -foreground white]
-    set nameList [listbox $nameFrame.nameList -width 15 -height 10\
-     -yscrollcommand "$winName.scroll set" -exportselection false -borderwidth 0]
-    pack $nameLabel -fill x -side top
-    pack $nameList -side top -fill both -expand true
-  set typeFrame [frame  $winName.typeFrame]
-    set typeLabel [label $typeFrame.typeLabel -text "Type" -background black -foreground white]
-    set typeList [listbox $typeFrame.typeList -width 10 -height 10\
-     -yscrollcommand "$winName.scroll set" -exportselection false -borderwidth 0]
-    pack $typeLabel -fill x -side top
-    pack $typeList -side top -fill both -expand true
-  set lengthFrame [frame $winName.lenghtFrame]
-    set lengthLabel [label $lengthFrame.lengthLabel -text "Length" -background black -foreground white]
-    set lengthList [listbox $lengthFrame.lengthList -width 10 -height 10\
-     -yscrollcommand "$winName.scroll set" -exportselection false -borderwidth 0]
-    pack $lengthLabel -fill x -side top
-    pack $lengthList -side top -fill both -expand true
-  scrollbar $winName.scroll -command "MultiScrollBar \"$nameList $typeList $lengthList\""\
-   -width 10
-  pack $nameFrame $typeFrame $lengthFrame -side left -expand true -fill both
-  pack $winName.scroll -side right -fill y
-   
-  set BCOLOR white
-  foreach column $columnList {
-    $nameList insert end [lindex $column 0]
-    $typeList insert end [lindex $column 1]
-    $lengthList insert end [lindex $column 2]
-    if { $BCOLOR == "white" } { set BCOLOR lightblue } else { set BCOLOR white }
-    $nameList itemconfigure end -background $BCOLOR
-    $typeList itemconfigure end -background $BCOLOR
-    $lengthList itemconfigure end -background $BCOLOR
-  }
-}
+
+
 proc SendUserMsg {} {
   global USERMSG userMsgEntry
 
   SendToSguild "[list UserMessage $USERMSG]"
   [$userMsgEntry component entry] delete 0 end
 }
+
+########################## PROCS ####################################
+
+
 
 proc UserMessage { user userMsg } {
   global userMsgText messageTabs MESSAGE_TAB USER_MSG_SCROLL
@@ -336,23 +251,7 @@ proc UserMessage { user userMsg } {
   [$userMsgText component text] insert end "\n\[[lindex [GetCurrentTimeStamp] 1]\] <$user> $userMsg"
   if { $USER_MSG_SCROLL } { [$userMsgText component text] see end }
 }
-proc DisplayIncidentCats {} {
-  set categoryTl [toplevel .categoryTl]
-  wm title .categoryTl "Incident Categories"
-  wm geometry .categoryTl +[winfo pointerx .]+[winfo pointery .]
-  set categoryText [scrolledtext $categoryTl.categoryText -vscrollmode dynamic -hscrollmode dynamic\
-   -wrap word -visibleitems 60x8 -labelpos n -labeltext "Incident Category Definitions"]
-  set categoryButton [button $categoryTl.close -text "Ok" -command "destroy $categoryTl"]
-  pack $categoryText -side top -fill both -expand true
-  pack $categoryButton -side bottom
-  $categoryText component text insert end "Category I\tUnauthorized Root/Admin Access\n"
-  $categoryText component text insert end "Category II\tUnauthorized User Access\n"
-  $categoryText component text insert end "Category III\tAttempted Unauthorized Access\n"
-  $categoryText component text insert end "Category IV\tSuccessful Denial of Service Attack\n"
-  $categoryText component text insert end "Category V\tPoor Security Practice or Policy Violation\n"
-  $categoryText component text insert end "Category VI\tReconnaissance/Probes/Scans\n"
-  $categoryText component text insert end "Category VII\tVirus Infection\n"
-}
+
 proc GetComment {} {
   global COMMENT_FLAG
   set COMMENT_FLAG 0
@@ -419,59 +318,7 @@ proc ValidateEvent { status {c_flag {0}} } {
      SelectNextEvent $currentSelectedPane $selectedIndex
   }
 }
-#
-# SimpleQueryCmd: Makes a seperate cnx to sguild for the purpose of running
-#                 a single query to the db. These queries are preformated
-#                 see below. I am sure this is going to come back and bite
-#                 me in the ass.    Bammkkkk
-#
-# <cmd> must be in the format of "<request> sid cid" where <request> is one 
-# of the below.
-#
-# <request>
-#  Data returned from DB.
-# 
-# GetIPData
-#  INET_NTOA(src_ip), INET_NTOA(dst_ip), ip_ver, ip_hlen, ip_tos, ip_len, ip_id, 
-#  ip_flags, ip_off, ip_ttl, ip_csum
-#
-# GetTcpData
-#  tcp_seq, tcp_ack, tcp_off, tcp_res, tcp_flags, tcp_win, tcp_csum, tcp_urp, src_port, dst_port
-#  
-# GetIcmpData
-#  icmp_type, icmp_code, icmp_csum, icmp_id, icmp_seq, data_payload
-#
-# GetPayloadData
-#  data_payload 
-# 
-# GetUdpData
-#  udp_len, udp_csum, src_port, dst_port
-#
-proc SimpleQueryCmd { host port cmd} {
-    global EMAIL_RESULTS
-    global DEBUG
-    if [catch { ConnectToSguild } tmpSocketID] {
-       ErrorMessage $tmpSocketID
-    } else {
-       set CONNECTED 1
-       puts $tmpSocketID $cmd
-       if {[lindex $cmd 0] != "GetPSData"} {
-          # Index 0 is the returned cmd, index 1 is the data.
-          set data [lrange [gets $tmpSocketID] 1 end]
-	    
-       } else {
-         set psrow ""
-         set i 0
-         set data ""
-         while { [lindex $psrow 0] != "DONE" } {
-	    set psrow [lrange [gets $tmpSocketID] 1 end]
-	    lappend data $psrow
-	 }
-       }
-       close $tmpSocketID
-       return $data
-    }
-}
+
 proc OptimizeTables {} {
     global socketID DEBUG RETURN_FLAG
     global CONNECTED
@@ -573,313 +420,6 @@ proc DeleteRequest { deletetype } {
 }
 
 
-proc LaunchXscriptMenu { winName yRoot} {
-  global ACTIVE_EVENT eventIDMenut MULTI_SELECT
-  if {!$ACTIVE_EVENT || $MULTI_SELECT == 1} { return }
-  set selectedIndex { $winName curselection }
-  if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
-  tk_popup $eventIDMenut [winfo rootx $winName] [expr $yRoot + 6]
-}
-proc LaunchIPQueryMenu { winName yRoot } {
-  global ACTIVE_EVENT ipQueryMenu MULTI_SELECT
-  if {!$ACTIVE_EVENT || $MULTI_SELECT == 1} { return }
-  set selectedIndex { $winName curselection }
-  if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
-  tk_popup $ipQueryMenu [winfo rootx $winName] [expr $yRoot + 6]
-}
-proc LaunchPortQueryMenu { winName yRoot } {
-  global ACTIVE_EVENT portQueryMenu MULTI_SELECT
-  if {!$ACTIVE_EVENT || $MULTI_SELECT == 1} { return }
-  set selectedIndex { $winName curselection }
-  if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
-  tk_popup $portQueryMenu [winfo rootx $winName] [expr $yRoot + 6]
-}
-proc LaunchSigQueryMenu { winName yRoot } {
-  global ACTIVE_EVENT sigQueryMenu MULTI_SELECT
-    if {!$ACTIVE_EVENT || $MULTI_SELECT == 1} { return }
-  set selectedIndex { $winName curselection }
-  if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
-  tk_popup $sigQueryMenu [winfo rootx $winName] [expr $yRoot + 6]
-}
-proc LaunchCorrelateMenu { winName yRoot } {
-  global ACTIVE_EVENT correlateMenu MULTI_SELECT
-  if {!$ACTIVE_EVENT || $MULTI_SELECT == 1} { return }
-  set selectedIndex { $winName curselection }
-  if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
-  tk_popup $correlateMenu [winfo rootx $winName] [expr $yRoot +6]
-}
-proc LaunchStatusMenu { winName yRoot } {
-  global ACTIVE_EVENT statusMenu
-  if {!$ACTIVE_EVENT} { return }
-  set selectedIndex { $winName curselection }
-  if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
-  tk_popup $statusMenu [winfo rootx $winName] [expr $yRoot +6]
-}
-proc ClearPacketData {} {
-  global srcIPHdrFrame dstIPHdrFrame verIPHdrFrame hdrLenIPHdrFrame
-  global tosIPHdrFrame lenIPHdrFrame idIPHdrFrame flagsIPHdrFrame
-  global offsetIPHdrFrame ttlIPHdrFrame chksumIPHdrFrame
-  global r1TcpHdrFrame r0TcpHdrFrame urgTcpHdrFrame ackTcpHdrFrame
-  global pshTcpHdrFrame rstTcpHdrFrame synTcpHdrFrame finTcpHdrFrame
-  global windowTcpHdrFrame urpTcpHdrFrame tcpchksumTcpHdrFrame
-  global sPortTcpHdrFrame dPortTcpHdrFrame seqTcpHdrFrame
-  global acknoTcpHdrFrame tcpoffsetTcpHdrFrame resTcpHdrFrame
-  global sPortUdpHdrFrame dPortUdpHdrFrame udplenUdpHdrFrame udpchksumUdpHdrFrame
-  global typeIcmpHdrFrame codeIcmpHdrFrame chksumIcmpHdrFrame
-  global idIcmpHdrFrame seqIcmpHdrFrame sipIcmpDecodeFrame
-  global dipIcmpDecodeFrame sportIcmpDecodeFrame dportIcmpDecodeFrame protoIcmpDecodeFrame gipIcmpDecodeFrame
-  global dataText
-
-  $srcIPHdrFrame.text delete 0.0 end
-  $dstIPHdrFrame.text delete 0.0 end
-  $verIPHdrFrame.text delete 0.0 end
-  $hdrLenIPHdrFrame.text delete 0.0 end
-  $tosIPHdrFrame.text delete 0.0 end
-  $lenIPHdrFrame.text delete 0.0 end
-  $idIPHdrFrame.text delete 0.0 end
-  $flagsIPHdrFrame.text delete 0.0 end
-  $offsetIPHdrFrame.text delete 0.0 end
-  $ttlIPHdrFrame.text delete 0.0 end
-  $chksumIPHdrFrame.text delete 0.0 end
-
-  $r1TcpHdrFrame.text delete 0.0 end
-  $r0TcpHdrFrame.text delete 0.0 end
-  $urgTcpHdrFrame.text delete 0.0 end
-  $ackTcpHdrFrame.text delete 0.0 end
-  $pshTcpHdrFrame.text delete 0.0 end
-  $rstTcpHdrFrame.text delete 0.0 end
-  $synTcpHdrFrame.text delete 0.0 end
-  $finTcpHdrFrame.text delete 0.0 end
-  $windowTcpHdrFrame.text delete 0.0 end
-  $urpTcpHdrFrame.text delete 0.0 end
-  $tcpchksumTcpHdrFrame.text delete 0.0 end
-  $sPortTcpHdrFrame.text delete 0.0 end
-  $dPortTcpHdrFrame.text delete 0.0 end
-  $seqTcpHdrFrame.text delete 0.0 end
-  $acknoTcpHdrFrame.text delete 0.0 end
-  $tcpoffsetTcpHdrFrame.text delete 0.0 end
-  $resTcpHdrFrame.text delete 0.0 end
-
-  $sPortUdpHdrFrame.text delete 0.0 end
-  $dPortUdpHdrFrame.text delete 0.0 end
-  $udplenUdpHdrFrame.text delete 0.0 end
-  $udpchksumUdpHdrFrame.text delete 0.0 end
-
-  $typeIcmpHdrFrame.text delete 0.0 end
-  $codeIcmpHdrFrame.text delete 0.0 end
-  $chksumIcmpHdrFrame.text delete 0.0 end
-  $idIcmpHdrFrame.text delete 0.0 end
-  $seqIcmpHdrFrame.text delete 0.0 end
-  $sipIcmpDecodeFrame.text delete 0.0 end
-  $dipIcmpDecodeFrame.text delete 0.0 end
-  $gipIcmpDecodeFrame.text delete 0.0 end
-  $sportIcmpDecodeFrame.text delete 0.0 end
-  $dportIcmpDecodeFrame.text delete 0.0 end
-  $protoIcmpDecodeFrame.text delete 0.0 end
-  $dataText delete 0.0 end
-}
-proc InsertIPHdr { data } {
-  global srcIPHdrFrame dstIPHdrFrame verIPHdrFrame hdrLenIPHdrFrame
-  global tosIPHdrFrame lenIPHdrFrame idIPHdrFrame flagsIPHdrFrame
-  global offsetIPHdrFrame ttlIPHdrFrame chksumIPHdrFrame
-  
-  $srcIPHdrFrame.text insert 0.0 [lindex $data 0]
-  $dstIPHdrFrame.text insert 0.0 [lindex $data 1]
-  $verIPHdrFrame.text insert 0.0 [lindex $data 2]
-  $hdrLenIPHdrFrame.text insert 0.0 [lindex $data 3]
-  $tosIPHdrFrame.text insert 0.0 [lindex $data 4]
-  $lenIPHdrFrame.text insert 0.0 [lindex $data 5]
-  $idIPHdrFrame.text insert 0.0 [lindex $data 6]
-  $flagsIPHdrFrame.text insert 0.0 [lindex $data 7]
-  $offsetIPHdrFrame.text insert 0.0 [lindex $data 8]
-  $ttlIPHdrFrame.text insert 0.0 [lindex $data 9]
-  $chksumIPHdrFrame.text insert 0.0 [lindex $data 10]
-}
-proc InsertTcpHdr { data } {
-  global r1TcpHdrFrame r0TcpHdrFrame urgTcpHdrFrame ackTcpHdrFrame
-  global pshTcpHdrFrame rstTcpHdrFrame synTcpHdrFrame finTcpHdrFrame
-  global windowTcpHdrFrame urpTcpHdrFrame tcpchksumTcpHdrFrame
-  global sPortTcpHdrFrame dPortTcpHdrFrame seqTcpHdrFrame
-  global acknoTcpHdrFrame tcpoffsetTcpHdrFrame resTcpHdrFrame
-
-  $sPortTcpHdrFrame.text insert 0.0 [lindex $data 8]
-  $dPortTcpHdrFrame.text insert 0.0 [lindex $data 9]
-  $seqTcpHdrFrame.text insert 0.0 [lindex $data 0]
-  $acknoTcpHdrFrame.text insert 0.0 [lindex $data 1]
-  $tcpoffsetTcpHdrFrame.text insert 0.0 [lindex $data 2]
-  $resTcpHdrFrame.text insert 0.0 [lindex $data 3]
-  # TCP Flags
-  set ipFlags [lindex $data 4]
-  set r1Flag "."
-  set r0Flag "."
-  set urgFlag "."
-  set ackFlag "."
-  set pshFlag "."
-  set rstFlag "."
-  set synFlag "."
-  set finFlag "."
-  if { $ipFlags != "" } {
-    if { 128 & $ipFlags } {
-      set r1Flag "X"
-      set ipFlags [expr $ipFlags - 128]
-    }
-    if { 64 & $ipFlags } {
-      set r0Flag "X"
-      set ipFlags [expr $ipFlags - 64]
-    }
-    if { 32 & $ipFlags } {
-      set urgFlag "X"
-      set ipFlags [expr $ipFlags - 32]
-    }
-    if { 16 & $ipFlags } {
-      set ackFlag "X"
-      set ipFlags [expr $ipFlags - 16]
-    }
-    if { 8 & $ipFlags } {
-      set pshFlag "X"
-      set ipFlags [expr $ipFlags - 8]
-    }
-    if { 4 & $ipFlags } {
-      set rstFlag "X"
-      set ipFlags [expr $ipFlags - 4]
-    }
-    if { 2 & $ipFlags } {
-      set synFlag "X"
-      set ipFlags [expr $ipFlags - 2]
-    }
-    if { 1 & $ipFlags } {
-      set finFlag "X"
-    }
-  }
-  $r1TcpHdrFrame.text insert 0.0 $r1Flag
-  $r0TcpHdrFrame.text insert 0.0 $r0Flag
-  $urgTcpHdrFrame.text insert 0.0 $urgFlag
-  $ackTcpHdrFrame.text insert 0.0 $ackFlag
-  $pshTcpHdrFrame.text insert 0.0 $pshFlag
-  $rstTcpHdrFrame.text insert 0.0 $rstFlag
-  $synTcpHdrFrame.text insert 0.0 $synFlag
-  $finTcpHdrFrame.text insert 0.0 $finFlag
-
-  $windowTcpHdrFrame.text insert 0.0 [lindex $data 5]
-  $urpTcpHdrFrame.text insert 0.0 [lindex $data 6]
-  $tcpchksumTcpHdrFrame.text insert 0.0 [lindex $data 7]
-  
-}
-proc InsertUdpHdr { data } {
-  global sPortUdpHdrFrame dPortUdpHdrFrame udplenUdpHdrFrame udpchksumUdpHdrFrame
-  $sPortUdpHdrFrame.text insert 0.0 [lindex $data 2]
-  $dPortUdpHdrFrame.text insert 0.0 [lindex $data 3]
-  $udplenUdpHdrFrame.text insert 0.0 [lindex $data 0]
-  $udpchksumUdpHdrFrame.text insert 0.0 [lindex $data 1]
-}
-proc InsertIcmpHdr { data pldata } {
-  global typeIcmpHdrFrame codeIcmpHdrFrame chksumIcmpHdrFrame
-  global idIcmpHdrFrame seqIcmpHdrFrame
-  global icmpDecodeFrame icmpHdrFrame
-  $typeIcmpHdrFrame.text insert 0.0 [lindex $data 0]
-  $codeIcmpHdrFrame.text insert 0.0 [lindex $data 1]
-  $chksumIcmpHdrFrame.text insert 0.0 [lindex $data 2]
-  $idIcmpHdrFrame.text insert 0.0 [lindex $data 3]
-  $seqIcmpHdrFrame.text insert 0.0 [lindex $data 4]
-  
-  # If the ICMP packet is a dest unreachable, redirect or a time exceeded,
-  # check to see if it is network, host, port unreachable or admin prohibited or filtered
-  # then show some other stuff
-
-  if {[lindex $data 0] == "3" || [lindex $data 0] == "11" || [lindex $data 0] == "5"} {
-	if {[lindex $data 1] == "0" || [lindex $data 1] == "4" || [lindex $data 1] == "9" || [lindex $data 1] == "13" || [lindex $data 1] == "1" || [lindex $data 1] == "3" || [lindex $data 1] == "2" } {
-	    global protoIcmpDecodeFrame sipIcmpDecodeFrame sportIcmpDecodeFrame dipIcmpDecodeFrame dportIcmpDecodeFrame gipIcmpDecodeFrame
-	    
-	    #  There may be 32-bits of NULL padding at the start of the payload
-	    # or a 32-bit gateway address on a redirect
-	    set offset 0
-	    # puts [string range $pldata 0 7]
-	    if {[string range $pldata 0 7] == "00000000" || [lindex $data 0] == "5"} {
-		set offset 8
-		if {[lindex $data 0] == "5"} {
-		    set giphex1 [string range $pldata 0 1]
-		    set giphex2 [string range $pldata 2 3]
-		    set giphex3 [string range $pldata 4 5]
-		    set giphex4 [string range $pldata 6 7]
-		    $gipIcmpDecodeFrame.text insert 0.0 [format "%i" 0x$giphex1].[format "%i" 0x$giphex2].[format "%i" 0x$giphex3].[format "%i" 0x$giphex4]
-		}
-	    }
-	    # puts [string range $pldata [expr $offset+24] [expr $offset+25]]
-	    
-	    # Build the protocol
-	    set protohex [string range $pldata [expr $offset+18] [expr $offset+19]]
-	    $protoIcmpDecodeFrame.text insert 0.0 [format "%i" 0x$protohex]
-
-	    # Build the src address
-	    set srchex1 [string range $pldata [expr $offset+24] [expr $offset+25]]
-	    set srchex2 [string range $pldata [expr $offset+26] [expr $offset+27]]
-	    set srchex3 [string range $pldata [expr $offset+28] [expr $offset+29]]
-	    set srchex4 [string range $pldata [expr $offset+30] [expr $offset+31]]
-	    $sipIcmpDecodeFrame.text insert 0.0 [format "%i" 0x$srchex1].[format "%i" 0x$srchex2].[format "%i" 0x$srchex3].[format "%i" 0x$srchex4]
-	    
-	    # Build the dst address
-	    set dsthex1 [string range $pldata [expr $offset+32] [expr $offset+33]]
-	    set dsthex2 [string range $pldata [expr $offset+34] [expr $offset+35]]
-	    set dsthex3 [string range $pldata [expr $offset+36] [expr $offset+37]]
-	    set dsthex4 [string range $pldata [expr $offset+38] [expr $offset+39]]
-	    $dipIcmpDecodeFrame.text insert 0.0 [format "%i" 0x$dsthex1].[format "%i" 0x$dsthex2].[format "%i" 0x$dsthex3].[format "%i" 0x$dsthex4]
-	    
-	    # Find and build the src port
-	    set hdroffset [expr [string index $pldata [expr ($offset+1)]] * 8 + $offset]
-	    puts "header offset = $hdroffset"
-	    puts "header lenght = [string index $pldata [expr ($offset+1)]]"
-	    puts "offset = $offset"
-	    puts "looking for length at [expr ($offset+1)]"
-	    puts "pldata is $pldata"
-	    set sporthex [string range $pldata $hdroffset [expr $hdroffset+3]]
-	    $sportIcmpDecodeFrame.text insert 0.0 [format "%i" 0x$sporthex]
-	    
-	    # Dest Port
-	    set dporthex [string range $pldata [expr $hdroffset+4] [expr $hdroffset+7]]
-	    $dportIcmpDecodeFrame.text insert 0.0 [format "%i" 0x$dporthex]
-	    
-	    pack $icmpDecodeFrame -after $icmpHdrFrame -fill x
-	} else {
-            pack forget $icmpDecodeFrame
-        }
-    } else {
-        pack forget $icmpDecodeFrame
-    }
-	    
-}
-proc InsertPayloadData { data } {
-  global dataText
-  if {[lindex $data 0] == ""} { 
-    $dataText insert 0.0 "None."
-  } else {
-    set payload [lindex $data 0]
-    set dataLength [string length $payload]
-    set asciiStr ""
-    set counter 2
-    for {set i 1} {$i < $dataLength} {incr i 2} {
-      set currentByte [string range $payload [expr $i - 1] $i]
-      lappend hexStr $currentByte
-      set intValue [format "%i" 0x$currentByte]
-      if { $intValue < 32 || $intValue > 126 } {
-        # Non printable char
-        set currentChar "."
-      } else {
-        set currentChar [format "%c" $intValue]
-      }
-      set asciiStr "$asciiStr$currentChar"
-      if { $counter == 32 } {
-        $dataText insert end "$hexStr $asciiStr\n"
-        set hexStr ""
-        set asciiStr ""
-        set counter 2
-      } else {
-        incr counter 2
-      }
-    }
-    $dataText insert end "[format "%-47s %s\n" $hexStr $asciiStr]"
-  }
-  Idle
-}
 
 #
 # GetCurrentTimeStamp: Returns date/time in YYYYY-MM-DD HH:MM:SS.
@@ -1192,389 +732,7 @@ proc UnSelectHostLookups {} {
   $dnsButton deselect
   ClearDNSText
 }
-#
-# UnSelectAllOptions:  Used when ESC is hit or on a multiple selection to turn off packet details, etc
-#
-proc UnSelectPacketOptions { } {
-  global displayPacketButton displayRuleButton referenceButton displayPSButton
-  $displayPacketButton deselect
-  ClearPacketData
-  $displayRuleButton deselect
-  ClearRuleText
-  $referenceButton configure -state disabled
-  ClearPSLists
-  $displayPSButton deselect
-}
-#
-# ScrollHome: If ScrollHome var is set, move the scrollbar to the bottom of the list
-#
-proc ScrollHome { paneName } {
-  global SCROLL_HOME
-  if {$SCROLL_HOME($paneName)} {
-    foreach childWin [winfo children $paneName] {
-      if { [winfo name $childWin] != "scroll" } {
-        $childWin.list see end
-      }
-    }
-  }
-}
 
-#
-# BindSelectionToAllLists: Grabs button-1 events and make sure that a list is
-#                          selected across all lists.
-#
-proc BindSelectionToAllLists { listName } {
-    foreach buttonEvent { "Shift-Button-1" } {
-	bind $listName <$buttonEvent> { ShiftSelect %W [%W nearest %y]; break }
-    }
-    foreach buttonEvent { "Control-Button-1" } {
-	bind $listName <$buttonEvent> { CtrlSelect %W [%W nearest %y]; break }
-    }
-    foreach buttonEvent { "Button-1" } {
-        bind $listName <$buttonEvent> { SingleSelect %W [%W nearest %y]; break }
-    }
-    foreach buttonEvent { "B1-Motion" "Control-B1-Motion" } {
-	bind $listName <$buttonEvent> { MotionSelect %W [%W nearest %y]; break }
-    }
-    foreach buttonEvent { "ButtonRelease-1" } {
-	bind $listName <$buttonEvent> { ReSetMotion }
-    }
-    foreach buttonEvent { "MouseWheel" "Button-5" "Button-4" } {
-	bind $listName <$buttonEvent> { WheelScroll %D %W "Button"; break }
-    }
-}    
-proc BindSelectionToAllPSLists { listName } {
-
-    foreach buttonEvent { "MouseWheel" "Button-5" "Button-4" } {
-	    bind $listName <$buttonEvent> { WheelScroll %D %W "Button"; break }
-	}
-}
-#
-# WheelScroll: Scroll all of the lists together on a mousey-wheely-scrolly
-#
-proc WheelScroll { delta winName source } {
-    global SCROLL_HOME
-    if { $source == "Button" } {
-	set parentWin [winfo parent [winfo parent $winName]]
-    } else {
-	set parentWin $winName
-    }
-    set SCROLL_HOME($parentWin) 0
-    # first we have to support Windows and X
-    # Windows will trigger on MouseWheel events and delta will be high (at least more than 10)
-    # if it is a negative number, then we are looking a a MouseWheel event
-    # XWindows (in most cases generate Button-4 or -5 events and delta will be 4 or 5
-    
-    # X-Windows wheel motion
-    if { $delta == 4 || $delta == 5 } {
-	if { $delta == 4 } { set move -3 }
-	if { $delta == 5 } { set move 3 }
-    } else {
-	# MouseWheel Motion (usually Windows generated)
-	if { $delta > 0 } { set move -3 }
-	if { $delta < 0 } { set move 3}
-	if { $delta == 0 } { break } 
-    }
-    foreach childWin [winfo children $parentWin] {
-	if { [winfo name $childWin] != "scroll" } {
-	    $childWin.list yview scroll $move units
-	}
-    }
-    # check scrollbar position, if at the bottom, toggle SCROLL_HOME
-    set scrollbarPosition [lindex [$parentWin.scroll get] 1]
-    if {$scrollbarPosition == 1.0} {set SCROLL_HOME($parentWin) 1}
-}
-
-#
-# ReSetMotion: Reset Motion Vars on a button release
-#
-proc ReSetMotion {} {
-    global MotionStart MotionLoxIndex MotionHighIndex MOVEMENT_DIR
-    set MotionStart -1
-    set MotionHighIndex -1
-    set MotionLowIndex -1
-    set MOVEMENT_DIR ""
-}
-#
-# ShiftSelect: Enable MultiSelection using shift-click
-#
-proc ShiftSelect { winName index } {
-    global MULTI_SELECT currentSelectedPane LASTINDEXSELECTED MOVEMENT_DIR BUSY
-    # If we are busy then abort.
-    if {$BUSY} { bell; return }
-    # check to see if we are in a new pane and if so, error.
-    if { [info exists currentSelectedPane] && [winfo parent [winfo parent $winName]] != $currentSelectedPane } {
-	ErrorMessage "You may only shift-select from within the same event pane."
-	return
-    }
-    # check to see if anything is currently selected, if no this is basically a single select
-    if { [llength [$winName curselection]] < 1 } {
-	SingleSelect $winName $index
-	return
-    }
-    set MULTI_SELECT 1
-    UnSelectPacketOptions
-    UnSelectHostLookups
-    # Check to see if the current index is higher or lower that the LASTSELECTEDINDEX
-    if { $index > $LASTINDEXSELECTED } {
-	set MOVEMENT_DIR "shift"
-	foreach childWin [winfo children $currentSelectedPane] {
-	      if { [winfo name $childWin] != "scroll" } {
-		  $childWin.list select clear 0 end
-	      }
-	  }
-	  HighLightListLine $currentSelectedPane $index $LASTINDEXSELECTED 
-	  return
-      } else {
-	  set MOVEMENT_DIR "shift"
-	  foreach childWin [winfo children $currentSelectedPane] {
-	      if { [winfo name $childWin] != "scroll" } {
-		  $childWin.list select clear 0 end
-	      }
-	  }
-	  HighLightListLine $currentSelectedPane $index $LASTINDEXSELECTED 
-	  return
-      }
-}
-    
-    
-#
-# MotionSelect: Enable selection of multiple rows using button-1 motion
-#
-proc MotionSelect { winName index } {
-  global currentSelectedPane MULTI_SELECT MotionHighIndex MotionLowIndex MotionStart MOVEMENT_DIR
-  global BUSY
-
-  # If we are busy then abort.
-  if {$BUSY} { bell; return }
-
-  # check to see if we are in a new pane and if so, error.
-  if { [info exists currentSelectedPane] && [winfo parent [winfo parent $winName]] != $currentSelectedPane } {
-    ErrorMessage "You may only control-select from within the same event pane."
-    return
-  }
-  # Check to see if something is currently selected
-  # If so, this is going to add to the selection and set MULTI_SELECT to 1
-  # If this is the first selection, it is essentially the same as clicking w/o the ctrl
-  # and Multi-select should stay at 0
-  if { [llength [$winName curselection]] > 0 } {
-    set MULTI_SELECT 1 
-  } else {
-    # If this is the first item selected then treat as a SingleSelect
-    SingleSelect $winName $index
-    return
-  }
-  #  Motion events will always select consecutive indicies.  The click or ctrl-click
-  # at the start of the motion will be either the high or the low.  When motion begins
-  # we will set $MotionIndexHigh and $MotionIndexLow to the index that motion started on
-  # but won't select or deselect it.  That should already have been done by the click.
-  if { $MotionHighIndex == -1 } {
-      set MotionHighIndex $index
-      set MotionLowIndex $index
-      set MotionStart $index
-      return
-  }
-  # If the current index is the same as MotionStart we either haven't moved and only the
-  # index at MotionStart should be selected.  So lets do a singleselect.  I know that this breaks
-  # a user adding to a selection made with a ctrl-click, but deal with it.
-  if { $index == $MotionStart } {
-      SingleSelect $winName $index
-      set MotionHighIndex $index
-      set MotionLowIndex $index
-      return
-  }
-  # Check to see if the current index falls between our existing low and High indices
-  # if it does, we turned around
-  if { $index > $MotionLowIndex && $index < $MotionHighIndex && $index != $MotionStart} {
-      # Were we going up and turned down?
-      if { $MotionHighIndex == $MotionStart } {
-	  #unselect everything between the current index and the old MotionLowIndex
-	  foreach childWin [winfo children $currentSelectedPane] {
-	      if { [winfo name $childWin] != "scroll" } {
-		  $childWin.list select clear $MotionLowIndex [expr $index-1]
-	      }
-	  }
-	  # Set the new low to the current index
-	  set MotionLowIndex $index
-	 
-      }
-      # Were we going down and turned up?
-      if { $MotionLowIndex == $MotionStart } {
-	  #unselect everything between the current index and the old MotionHighIndex
-	  foreach childWin [winfo children $currentSelectedPane] {
-	      if { [winfo name $childWin] != "scroll" } {
-		  $childWin.list select clear [expr $index+1] $MotionHighIndex
-	      }
-	  }
-	  # Set the new High to the current index
-	  set MotionHighIndex $index
-      }
-  }
-  # If MotionIndexHigh/Low are set then this is not the first event.  Check the index to see
-  # which direction the motion is going
-  set MULTI_SELECT 1
-  UnSelectPacketOptions
-  UnSelectHostLookups
-  if { $index > $MotionHighIndex } {
-      set MotionHighIndex $index
-      set MOVEMENT_DIR down
-  }
-  if { $index < $MotionLowIndex } {
-      set MotionLowIndex $index
-      set MOVEMENT_DIR up
-  }
-  # Select everything between high and low
-  if { $MOVEMENT_DIR == "down" } {
-        HighLightListLine $currentSelectedPane $MotionHighIndex $MotionLowIndex
-  } else {
-        HighLightListLine $currentSelectedPane $MotionLowIndex $MotionHighIndex
-  }
-    
-  return
-}
-
-
-
-#
-# CtrlSelect:  Enables selection of multiple rows using ctrl-click
-#
-proc CtrlSelect { winName index } {
-  global currentSelectedPane MULTI_SELECT LASTINDEXSELECTED BUSY
-
-  # If we are busy then abort.
-  if {$BUSY} { bell; return }
-
-  # Check to see if we are in a new pane and if so, error.
-  if { [info exists currentSelectedPane] && [winfo parent [winfo parent $winName]] != $currentSelectedPane } {
-    ErrorMessage "You may only control-select from within the same event pane."
-    return
-  }
-  # Check to see if something is currently selected
-  # If so, this is going to add to the selection and set MULTI_SELECT to 1
-  # If this is the first selection, it is essentially the same as clicking w/o the ctrl
-  # and Multi-select should stay at 0
-  if { [llength [$winName curselection]] > 0 } {
-    set MULTI_SELECT 1 
-  } else {
-    # If this is the first item selected then treat as a SingleSelect
-    SingleSelect $winName $index
-    return
-  }
-  # If ctrl-clicking an already selected event we should unselect it
-  if { [$winName selection includes $index] == 1 } {
-        foreach childWin [winfo children $currentSelectedPane] {
-	  if { [winfo name $childWin] != "scroll" } {
-	      $childWin.list select clear $index
-	  }
-      }
-      return
-
-  }
-  # save the index in $LASTINDEXSELECTED
-  set LASTINDEXSELECTED $index
-  SelectAllLists $winName $index
-}
-
-#
-# SingleSelect:  Selects a single row
-#
-proc SingleSelect { winName index } {
-  global currentSelectedPane ACTIVE_EVENT MULTI_SELECT LASTINDEXSELECTED BUSY
-
-  # If we are busy then abort.
-  if {$BUSY} { bell; return }
-
-  # On a right click, we could be called in on event that has
-  # already been highlighted. We check so that we don't have to
-  # go and get the whois etc info
-  if { !$MULTI_SELECT && $ACTIVE_EVENT} {
-    if { [$winName selection includes $index] } { 
-      return
-    }
-  }
-
-  set MULTI_SELECT 0 
-  # Unhighlight anything that is highlighted
-  if {[info exists currentSelectedPane]} {
-    UnHighLightListLine $currentSelectedPane
-  }
-  # Save index in $LASTINDEXSELECTED
-  set LASTINDEXSELECTED $index
-  # Run SelectAllLists
-  SelectAllLists $winName $index
-}
-
-proc SelectNextEvent { paneName index } {
-    global ACTIVE_EVENT
-  set listSize [$paneName.eventIDFrame.list size]
-  if { $listSize == 0 } { set ACTIVE_EVENT 0; return }
-  if { $index < $listSize  } {
-    SelectAllLists $paneName.eventIDFrame.list $index
-  } elseif { $index > 0 } {
-    SelectAllLists $paneName.eventIDFrame.list [expr $index - 1]
-  }
-}
-
-#
-# SelectAllLists: Highlight all lists and update event data info.
-#
-proc SelectAllLists { winName index } {
-  global MULTI_SELECT currentSelectedPane ACTIVE_EVENT DISPLAYEDDETAIL portscanDataFrame packetDataFrame
-  global SSN_QUERY
-
-  set ACTIVE_EVENT 1
-  set currentSelectedPane [winfo parent [winfo parent $winName]]
-  if { $index < 0 } {
-    set ACTIVE_EVENT 0
-    return
-  }
- 
-  HighLightListLine $currentSelectedPane $index $index
-
-
-  # Check to see if we are working with a session query tab
-  if {[lindex [ split [winfo name $currentSelectedPane] _] 0] == "ssnquery" } { 
-    set SSN_QUERY 1 
-  } else {
-    set SSN_QUERY 0
-  }
-
-#
-# We don't want any detail displayed if this is a multi-select
-# So lets stick this below bit in a conditional
-#
-  if { !$MULTI_SELECT } {
-    if {$SSN_QUERY} {
-      UnSelectPacketOptions
-    } else {
-      #puts [regexp "^spp_portscan:" [$currentSelectedPane.msgFrame.list get $index]]
-      if { [regexp "^spp_portscan:" [$currentSelectedPane.msgFrame.list get $index]] } {
-        if { $DISPLAYEDDETAIL != $portscanDataFrame } {
-          pack forget $packetDataFrame
-          pack $portscanDataFrame -fill both -expand true
-        }
-        set DISPLAYEDDETAIL $portscanDataFrame
-        DisplayPortscanData
-      } else {
-        if { $DISPLAYEDDETAIL != $packetDataFrame } {
-          pack forget $portscanDataFrame
-          pack $packetDataFrame -fill both -expand true
-          set DISPLAYEDDETAIL $packetDataFrame
-        }
-        DisplayPacketHdr $currentSelectedPane $index
-        GetRuleInfo
-        GetPacketInfo
-      }
-    }
-    ResolveHosts
-    GetWhoisData
-  } else {
-      UnSelectPacketOptions
-      UnSelectHostLookups
-  }
-      
-  
-}
 #
 # DisplayPacketHdr: Determines the correct hdr to display (tcp/udp/icmp).
 #
@@ -1599,65 +757,12 @@ proc DisplayPacketHdr { paneName index } {
   }
 }
 
-#
-# UnHighLightListLine: Unhighlight currently highlighted line.
-#
-proc UnHighLightListLine { paneName } {
-  if { [winfo exists $paneName] } {
-    foreach childWin [winfo children $paneName] {
-      if { [winfo name $childWin] != "scroll" } {
-        $childWin.list select clear 0 end
-      }
-    }
-  }
-}
 
-#
-# HighLightListLine: Highlight all the lists.
-# paneName = current pane name
-# index = current index
-# lastindex = other index for multi-selects.  If this is a single select
-# put the same value as index
-proc HighLightListLine { paneName index lastindex } {
-  global MOVEMENT_DIR
-  set activeIndex [$paneName.sensorFrame.list index active]
-  foreach childWin [winfo children $paneName] {
-    if { [winfo name $childWin] != "scroll" } {
-      #$childWin.list select clear 0 end
-      #$childWin.list select anchor $index
-      #$childWin.list select set anchor $index
-      $childWin.list activate $index
-	if { $index > $lastindex } {
-	    $childWin.list select set $lastindex $index 
-	} else {
-	    $childWin.list select set $index $lastindex
-	}
-	
-	if { $MOVEMENT_DIR == "down" } {
-	    $childWin.list see [expr $index+1]
-	} elseif { $MOVEMENT_DIR == "up" } {
-	    $childWin.list see [expr $index-1]
-	} elseif { $MOVEMENT_DIR == "shift" } {
-	    # do nothing
-	} else {
-	    $childWin.list see $index
-	}
-      $childWin.list itemconfigure $activeIndex -foreground black
-    }
-  }
-}
 proc CleanExit {} {
   puts "Goodbye."
   exit
 }
-proc InfoMessage { message } {
-    puts $message
-    tk_messageBox -type ok -icon info -message "$message"
-}
-proc ErrorMessage { message } {
-    puts $message
-    tk_messageBox -type ok -icon warning -message "$message"
-}
+
 proc ClearPSLists {} {
   global portscanLabelListFrame
   foreach listName [winfo children $portscanLabelListFrame] {
@@ -1727,172 +832,7 @@ proc GetPacketInfo {} {
     SendToSguild "GetPayloadData $sid $cid"
   }
 }
-proc GetRuleInfo {} {
-  global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton MULTI_SELECT SSN_QUERY
-  global CONNECTED eventArray
-  ClearRuleText
-  if {$ACTIVE_EVENT && $SHOWRULE && !$MULTI_SELECT && !$SSN_QUERY} {
-    if {!$CONNECTED} {
-      ErrorMessage "Not connected to sguild. Cannot make rule request."
-      return
-    }
-    set selectedIndex [$currentSelectedPane.msgFrame.list curselection]
-    set message [$currentSelectedPane.msgFrame.list get $selectedIndex]
-    set sensorName [$currentSelectedPane.sensorFrame.list get $selectedIndex]
-    if {$DEBUG} {puts  "RuleRequest $sensorName $message"}
-    SendToSguild "RuleRequest $sensorName $message"
-  } else {
-    $referenceButton configure -state disabled
-  }
-}
-proc ClearRuleText {} {
-  global ruleText
-  $ruleText clear
-}
-proc InsertRuleData { ruleData } {
-  global ruleText referenceButton
-  $ruleText component text insert end $ruleData
-  $referenceButton configure -state normal
-}
-proc GetDshieldIP { arg } {
-  global DEBUG BROWSER_PATH currentSelectedPane ACTIVE_EVENT MULTI_SELECT
-  if { $ACTIVE_EVENT && !$MULTI_SELECT} {
-    set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
-    if { $arg == "srcip" } {
-      set ipAddr [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
-    } else {
-      set ipAddr [$currentSelectedPane.dstIPFrame.list get $selectedIndex]
-    }
-    if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
-	exec $BROWSER_PATH http://www.dshield.org/ipinfo.php?ip=$ipAddr &
-    } else {
-      tk_messageBox -type ok -icon warning -message\
-       "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
-        to point your favorite browser."
-      puts "Error: $BROWSER_PATH does not exist or is not executable."
-    }
-  }
-}
-proc GetDshieldPort { arg } {
-  global DEBUG BROWSER_PATH currentSelectedPane ACTIVE_EVENT MULTI_SELECT
-  if { $ACTIVE_EVENT && !$MULTI_SELECT} {
-    set selectedIndex [$currentSelectedPane.srcPortFrame.list curselection]
-    if { $arg == "srcport" } {
-      set ipPort [$currentSelectedPane.srcPortFrame.list get $selectedIndex]
-    } else {
-      set ipPort [$currentSelectedPane.dstPortFrame.list get $selectedIndex]
-    }
-    if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
-	exec $BROWSER_PATH http://www.dshield.org/port_report.php?port=$ipPort &
-    } else {
-      tk_messageBox -type ok -icon warning -message\
-       "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
-        to point your favorite browser."
-      puts "Error: $BROWSER_PATH does not exist or is not executable."
-    }
-  }
-}
-proc GetReference {} {
-  global DEBUG ruleText BROWSER_PATH
-  
-  set signature [$ruleText get 0.0 end]
-  # parse the sig for the sid
-  regexp {sid:\s*([0-9]+)\s*;} $signature match sid
-  if {$sid > 1000000} {
-    # Local Rule
-    tk_messageBox -type ok -icon warning -message\
-     "Sid $sid is a locally managed signature/rule."
-    puts "Error: Sid $sid is a locally managed signature/rule."
-  } elseif { $sid <= 100 } {
-    tk_messageBox -type ok -icon warning -message\
-     "Sid $sid is reserved for future use. Is there an error in the sig file?"
-    puts "Error: Sid $sid is reserved for future use. Error?."
-  } else {
-    if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
-      exec $BROWSER_PATH http://www.snort.org/snort-db/sid.html?sid=$sid &
-      if {$DEBUG} {puts "$BROWSER_PATH http://www.snort.org/snort-db/sid.html?sid=$sid launched."}
-    } else {
-      tk_messageBox -type ok -icon warning -message\
-       "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
-        to point your favorite browser."
-      puts "Error: $BROWSER_PATH does not exist or is not executable."
-    }
-  }
-}
-#
-# DnsButtonActy: Called when the reverse DNS button is released
-#
-proc ResolveHosts {} {
-  global REVERSE_DNS currentSelectedPane ACTIVE_EVENT MULTI_SELECT
-  ClearDNSText
-  if {$REVERSE_DNS && $ACTIVE_EVENT && !$MULTI_SELECT} {
-    Working
-    update
-    set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
-    set srcIP [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
-    set dstIP [$currentSelectedPane.dstIPFrame.list get $selectedIndex]
-    set srcName [GetHostbyAddr $srcIP]
-    set dstName [GetHostbyAddr $dstIP]
-    InsertDNSData $srcIP $srcName $dstIP $dstName
-    Idle
-  }
-}
-proc GetWhoisData {} {
-  global ACTIVE_EVENT currentSelectedPane WHOISLIST whoisText WHOIS_PATH MULTI_SELECT
-  ClearWhoisData
-  if {$ACTIVE_EVENT && $WHOISLIST != "none" && !$MULTI_SELECT} {
-    Working
-    update
-    set selectedIndex [$currentSelectedPane.$WHOISLIST.list curselection]
-    set ip [$currentSelectedPane.$WHOISLIST.list get $selectedIndex]
-    if { $WHOIS_PATH == "SimpleWhois" } {
-      foreach line [SimpleWhois $ip] {
-        $whoisText insert end "$line\n"
-      }
-    } else {
-      $whoisText insert end "Attempting whois query on $ip\n"
-      update
-      set whoisCommandID [open "| $WHOIS_PATH $ip" r]
-      while { [gets $whoisCommandID data] >= 0 } {
-        $whoisText insert end "$data\n"
-      }
-      catch {close $whoisCommandID} closeError
-      $whoisText insert end $closeError
-    }
-    Idle
-  }
-}
-#
-# GetHostbyAddr: uses extended tcl (wishx) to get an ips hostname
-#                May move to a server func in the future
-#
-proc GetHostbyAddr { ip } {
-  if [catch {host_info official_name $ip} hostname] {
-    set hostname "Unknown"
-  }
-  return $hostname
-}
-#
-# ClearDNSText: Clears the src/dst dns results
-#
-proc ClearDNSText {} {
-  global srcDnsDataEntryTextFrame dstDnsDataEntryTextFrame
-  foreach i "nameText ipText" {
-    $srcDnsDataEntryTextFrame.$i delete 0.0 end
-    $dstDnsDataEntryTextFrame.$i delete 0.0 end
-  }
-} 
-proc InsertDNSData { srcIP srcName dstIP dstName} {
-  global srcDnsDataEntryTextFrame dstDnsDataEntryTextFrame
-  $srcDnsDataEntryTextFrame.ipText insert 0.0 $srcIP
-  $srcDnsDataEntryTextFrame.nameText insert 0.0 $srcName
-  $dstDnsDataEntryTextFrame.ipText insert 0.0 $dstIP
-  $dstDnsDataEntryTextFrame.nameText insert 0.0 $dstName
-}
-proc ClearWhoisData {} {
-  global whoisText
-  $whoisText delete 0.0 end
-}
+
 proc MultiScrollBar { scroll_list args } {
   set len [llength $scroll_list]
   for { set i 0 } { $i < $len } {incr i} {
@@ -1900,181 +840,7 @@ proc MultiScrollBar { scroll_list args } {
     eval $temp_list yview $args
   }
 }
-proc CreateXscriptWin { winName } {
-  toplevel $winName
-  menubutton $winName.menubutton -underline 0 -text File -menu $winName.menubutton.menu
-  menu $winName.menubutton.menu -tearoff 0
-  $winName.menubutton.menu add command -label "Save As" -command "SaveXscript $winName"
-  $winName.menubutton.menu add command -label "Close Window" -command "destroy $winName"
-  scrolledtext $winName.sText -vscrollmode dynamic -hscrollmode dynamic -wrap word\
-   -visibleitems 85x30 -sbwidth 10
-  $winName.sText tag configure srcTag -foreground blue
-  $winName.sText tag configure dstTag -foreground red
-  scrolledtext $winName.debug -vscrollmode dynamic -hscrollmode none -wrap word\
-   -visibleitems 85x5 -sbwidth 10 -labeltext "Debug Messages" -textbackground lightblue
-  pack $winName.menubutton -side top -anchor w
-  pack $winName.sText $winName.debug -side top -fill both -expand true
-}
-proc InsertXscriptData { winName state data } {
-  global XSCRIPTDATARCVD
-  if { ! [winfo exist $winName] } {
-    CreateXscriptWin $winName
-  }
-  #puts $XSCRIPTDATARCVD($winName)
-  if {! $XSCRIPTDATARCVD($winName)} {
-    $winName.sText clear
-    $winName configure -cursor left_ptr
-    set XSCRIPTDATARCVD($winName) 1
-  }
-  if { $state == "HDR" } {
-    $winName.sText component text insert end "$data\n"
-  } elseif { $state == "SRC" } {
-    $winName.sText component text insert end "$state: $data\n" srcTag
-  } elseif { $state == "DST" } { 
-    $winName.sText component text insert end "$state: $data\n" dstTag
-  } elseif { $state == "ERROR" } {
-    puts "data: $data"
-    if { $data != "" } {
-      ErrorMessage "$data"
-    }
-  } else {
-    $winName.debug component text insert end "$data\n"
-    $winName.debug see end
-  } 
-}
-proc XscriptServerCmdRcvd { socketID } {
-    global DEBUG XSCRIPT_STATE SESSION_STATE socketWinName
-  if { [eof $socketID] || [catch {gets $socketID data}] } {
-    close $socketID
-    if {$DEBUG} {puts "Socket $socketID closed."}
-  } else {
-    if {$DEBUG} {puts "Client Command: $data"}
-    switch -exact -- $data {
-      HDR { set SESSION_STATE($socketID) HDR }
-      SRC { set SESSION_STATE($socketID) SRC }
-      DST { set SESSION_STATE($socketID) DST }
-      DEBUG { set SESSION_STATE($socketID) DEBUG }
-      DONE { close $socketID; unset SESSION_STATE($socketID); unset socketWinName($socketID) }
-      ERROR { set SESSION_STATE($socketID) ERROR }
-      default { InsertXscriptData $socketWinName($socketID) $SESSION_STATE($socketID) $data }
-    }
-  }
-}
-proc GetXscript { type force } {
-  global ACTIVE_EVENT SERVERHOST XSCRIPT_SERVER_PORT DEBUG currentSelectedPane XSCRIPTDATARCVD
-  global socketWinName SESSION_STATE SSN_QUERY ETHEREAL_STORE_DIR
-  global OPENSSL VERSION
-  if {!$ACTIVE_EVENT} {return}
-  set winName $currentSelectedPane.sensorFrame.list
-  set eventIndex [$winName curselection]
-  set winParents [winfo parent [winfo parent $winName]]
-  if {$SSN_QUERY} {
-    set cnxID [$winParents.xidFrame.list get $eventIndex]
-    set timestamp [$winParents.startTimeFrame.list get $eventIndex]
-    set proto 6
-  } else {
-    set proto [$winParents.protoFrame.list get $eventIndex]
-    if { $type == "xscript" && $proto != "6" } {
-      tk_messageBox -type ok -icon warning -message\
-       "Transcripts can only be generated for TCP traffic at this time."
-      return
-    }
-    set cnxID [lindex [split [$winParents.eventIDFrame.list get $eventIndex] .] 1]
-    set timestamp [$winParents.dateTimeFrame.list get $eventIndex]
-  }
-  set sensor [$winParents.sensorFrame.list get $eventIndex]
-  set srcIP [$winParents.srcIPFrame.list get $eventIndex]
-  set srcPort [$winParents.srcPortFrame.list get $eventIndex]
-  set dstIP [$winParents.dstIPFrame.list get $eventIndex]
-  set dstPort [$winParents.dstPortFrame.list get $eventIndex]
-  set xscriptWinName ".${sensor}_${cnxID}"
-  if [catch {set socketID [socket $SERVERHOST $XSCRIPT_SERVER_PORT]}] {
-    if {$DEBUG} {puts "Unable to connect to xscript server $SERVERHOST on port $XSCRIPT_SERVER_PORT."}
-  } else {
-    # Version check
-    if {$OPENSSL} {
-      set tmpVERSION "$VERSION OPENSSL ENABLED"
-    } else {
-      set tmpVERSION "$VERSION OPENSSL DISABLED"
-    }     
-    if [catch {gets $socketID} serverVersion] {
-      puts "ERROR: $serverVersion"
-      return -code error "$serverVersion"
-    }
-    if { $serverVersion != $tmpVERSION } {
-      ErrorMessage "Mismatched versions with xscriptd.\nSERVER: ($serverVersion)\nCLIENT: ($tmpVERSION)"
-      return
-    }
-    puts $socketID $tmpVERSION
-    if {$OPENSSL} {
-      tls::import $socketID
-    }
-    if { $type == "xscript"} {
-      fconfigure $socketID -buffering line
-      fileevent $socketID readable [list XscriptServerCmdRcvd $socketID]
-      if {$DEBUG} {
-        puts "Xscript Request sent: $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
-      }
-      #set xscriptWinName ".[join [split $eventID .] _]"
-      set socketWinName($socketID) $xscriptWinName
-      set SESSION_STATE($socketID) HDR
-      CreateXscriptWin $xscriptWinName
-      $xscriptWinName.debug component text insert 0.0\
-       "Your request has been sent to the server.\nPlease be patient as this can take some time.\n"
-      $xscriptWinName configure -cursor watch
-      set XSCRIPTDATARCVD($xscriptWinName) 0
-      puts $socketID "XscriptRequest $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
-      
-    } elseif { $type == "ethereal" } {
-      if { $proto != "1" } {
-        if { $srcPort > $dstPort } {
-          set tmpFile "$ETHEREAL_STORE_DIR/${dstIP}_${dstPort}-${srcIP}_${srcPort}-${proto}.raw"
-        } else {
-          set tmpFile "$ETHEREAL_STORE_DIR/${srcIP}_${srcPort}-${dstIP}_${dstPort}-${proto}.raw"
-        }
-      } else {
-        set tmpFile "$ETHEREAL_STORE_DIR/${srcIP}_${dstIP}-${proto}.raw"
-      }
-      set tmpFileID [open $tmpFile w]
-      fconfigure $tmpFileID -translation binary
-      fconfigure $socketID -translation binary
-      fileevent $socketID readable [list CopyRawData $socketID $tmpFileID $tmpFile]
-      if {$DEBUG} {
-        puts "Ethereal Request sent: $sensor $xscriptWinName \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
-      }
-      puts $socketID "EtherealRequest $sensor $xscriptWinName \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
-      flush $socketID
-    }
-  }
-}
-proc CopyDone { socketID tmpFileID tmpFile bytes {error {}} } {
-  global DEBUG ETHEREAL_PATH
-  close $tmpFileID
-  close $socketID
-  if {$DEBUG} {puts "Bytes Transfered: $bytes"}
-  if { $bytes == 0 } { 
-    ErrorMessage "No data available." 
-    file delete $tmpFileID
-  } else {
-    eval exec $ETHEREAL_PATH -n -r $tmpFile &
-    InfoMessage "Raw file is stored in $tmpFile. Please delete when finished"
-  }
-}
-proc CopyRawData { socketID tmpFileID tmpFile } {
-  catch {fcopy $socketID $tmpFileID -command [list CopyDone $socketID $tmpFileID $tmpFile]} dataError
-}
-proc SaveXscript { win } {
-  set initialFile [string trimleft $win .]
-  set saveFile [tk_getSaveFile -parent $win -initialfile $initialFile.txt]
-  if { $saveFile == "" } {
-    tk_messageBox -type ok -icon warning -parent $win -message\
-     "No filename selected. Transcipt was NOT saved."
-    return
-  }
-  if { [catch {$win.sText export $saveFile} saveError] } {
-    tk_messageBox -type ok -icon warning -parent $win -message $saveError
-  }
-}
+
 proc DisplayCorrelatedEvents { winName } {
   global ACTIVE_EVENT correlateArray eventTabs eventArray
   if {!$ACTIVE_EVENT} { return }
@@ -2836,7 +1602,6 @@ foreach arg $argv {
   }
 }
 
-set USER_QRY_FILE "$env(HOME)/.sgqry"
 if { ![info exists CONF_FILE] } {
   # No conf file specified check the defaults
   if { [file exists $env(HOME)/sguil.conf] } {
@@ -2891,6 +1656,9 @@ source $SGUILLIB/report.tcl
 source $SGUILLIB/qrylib.tcl
 source $SGUILLIB/stdquery.tcl
 source $SGUILLIB/qrybuild.tcl
+source $SGUILLIB/sellib.tcl
+source $SGUILLIB/guilib.tcl
+source $SGUILLIB/extdata.tcl
 if { $WHOIS_PATH == "SimpleWhois" } {
   source $SGUILLIB/whois.tcl
 }
@@ -2902,40 +1670,6 @@ wm withdraw .
 option add *textBackground white
 option add *selectBackground $SELECTBACKGROUND
 option add *selectForeground $SELECTFOREGROUND
-
-
-
-
-# Font
-#font create ourFont -family {new century schoolbook} -size 10 -weight normal\
- #-underline 0 -slant roman -overstrike 0
-
-
-# Load iwidgets and namespaces
-if [catch {package require Iwidgets} iwidgetsVersion] {
-  puts "ERROR: Cannot fine the Iwidgets extension."
-  puts "The iwidgets package is part of the incr tcl extension and is"
-  puts "available as a port/package most systems."
-  puts "See http://www.tcltk.com/iwidgets/ for more info."
-  exit
-}
-namespace import -force iwidgets::panedwindow
-namespace import -force iwidgets::tabnotebook
-namespace import -force iwidgets::scrolledtext
-namespace import -force iwidgets::optionmenu
-namespace import -force iwidgets::buttonbox
-namespace import -force iwidgets::entryfield
-namespace import -force iwidgets::checkbox
-namespace import -force iwidgets::messagedialog
-namespace import -force iwidgets::scrolledlistbox
-namespace import -force iwidgets::combobox
-namespace import -force iwidgets::radiobox
-namespace import -force iwidgets::dialogshell
-proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
-  label $winFrame.label -text "$labelText" -foreground black -background $bgColor -anchor s -height $height
-  text $winFrame.text  -width $width -background white -height 1
-  pack $winFrame.label $winFrame.text -side top -anchor w -fill both -expand true
-}
 
 set topFrame [frame .topFrame]
   set fileMenu [menubutton $topFrame.fileMenu -text File -underline 0 -menu $topFrame.fileMenu.menu]
