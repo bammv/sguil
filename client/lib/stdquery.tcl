@@ -6,6 +6,7 @@ proc StdQuery {} {
   global commentBox whereBox STD_QRY_TYPE RETURN_FLAG1
 
   # Zero out the query
+  set STD_QRY_TYPE "event"
   set RETURN_FLAG1 0
   # Grab the current pointer locations
   set xy [winfo pointerxy .]
@@ -238,7 +239,7 @@ proc SaveUserQry {type win stdQryWin} {
     # refresh the list from the file.
     InsertUserQueries $stdQryWin.mFrame.lFrame.uList	
     # refresh the selected User Query
-    $stdQryWin.mFrame.lFrame.uList component listbox selection set $uIndex
+    catch {$stdQryWin.mFrame.lFrame.uList component listbox selection set $uIndex}
    
 }    
 
