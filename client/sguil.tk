@@ -2,19 +2,6 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# Load extended tcl
-if [catch {package require Tclx} tclxVersion] {
-  puts "ERROR: The tclx extension does NOT appear to be installed on this sysem."
-  puts "Extended tcl (tclx) is available as a port/package for most linux and BSD systems."
-  exit
-}
-# Load sha1 from tcllib
-if [catch {package require sha1} sha1Version] {
-  puts "ERROR: The sha1 package does NOT appear to be installed on this sysem."
-  puts "The sha1 package is part of the tcllib extension. A port/package is available for most linux and BSD systems."
-  exit
-}
-
 ####################################################################
 # Snort GUI for Lamerz [sguil] - A tcl/tk interface to snort       #
 ####################################################################
@@ -30,7 +17,20 @@ if [catch {package require sha1} sha1Version] {
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.2.6"
+set VERSION "SGUIL-0.3.0"
+
+# Load extended tcl
+if [catch {package require Tclx} tclxVersion] {
+  puts "ERROR: The tclx extension does NOT appear to be installed on this sysem."
+  puts "Extended tcl (tclx) is available as a port/package for most linux and BSD systems."
+  exit
+}
+# Load sha1 from tcllib
+if [catch {package require sha1} sha1Version] {
+  puts "ERROR: The sha1 package does NOT appear to be installed on this sysem."
+  puts "The sha1 package is part of the tcllib extension. A port/package is available for most linux and BSD systems."
+  exit
+}
 
 set ACTIVE_EVENT 0
 set MULTI_SELECT 0

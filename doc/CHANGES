@@ -1,7 +1,7 @@
-CVS-HEAD aka sguil-0.3.0beta
+sguil-0.3.0 (30 Oct 2003)
 
   **** WARNING WARNING WARNING ****
-  * If you run CVS-HEAD, make sure*
+  * If you are updating, make sure*
   * you recompile barnyard with   *
   * the latest op_sguil.c. Other- *
   * wise barnyard and sguild will *
@@ -15,6 +15,8 @@ CVS-HEAD aka sguil-0.3.0beta
   op_sguil
     * Now makes a sustained connection to sguild rather vs.
       a new connect for each event.
+
+    * Events table gets updated first.
 
   sguil.tk
     * Added Text Export Button to send query reults to a 

@@ -9,7 +9,7 @@ set SERVERPORT 7735
 # Set LOCALSENSOR to 0 if the sensor is on a remote machine. xscriptd
 # will then use ssh to get the data back here. Read the INSTALL for more
 # info about setting ssh up correctly.
-set LOCALSENSOR 0
+set LOCALSENSOR 1
 # 1=on 0=off DEBUG is very chatty.
 set DEBUG 1
 # Where you want to archive raw file locally when xscripts are requested.
@@ -41,7 +41,7 @@ set P0F_PATH "/usr/sbin/p0f"
 ################################################
 
 
-set VERSION "SGUIL-0.2.6"
+set VERSION "SGUIL-0.3.0"
 
 #################### PROCS ######################
 

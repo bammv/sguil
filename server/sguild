@@ -13,7 +13,7 @@ exec tclsh "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.2.6"
+set VERSION "SGUIL-0.3.0"
 set DB_VERSION "0.7"
 
 # Config options moved to sguild.conf

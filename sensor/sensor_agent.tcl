@@ -6,7 +6,7 @@ exec tclsh "$0" "$@"
 set SERVER_HOST syn
 # Port sguild listens on for sensor connects
 set SERVER_PORT 7736
-# Local hostname
+# Local hostname (sensorname)
 set HOSTNAME gateway
 # Where to look for files created by modded spp_portscan
 set PORTSCAN_DIR /snort_data/portscans
