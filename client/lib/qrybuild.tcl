@@ -8,11 +8,7 @@ proc QryBuild {tableSelected whereTmp } {
 	set SELECTEDTABLE "event"
     }
     if {$whereTmp == "empty"} {
-	if {$SELECTEDTABLE == "event"} {
-	    set whereTmp "WHERE event.sid = sensor.sid AND "
-	} else {
-	    set whereTmp "WHERE sessions.sid = sensor.sid AND "
-	}
+      set whereTmp "WHERE"
     }
 
     # Grab the current pointer locations
@@ -194,11 +190,11 @@ proc typeChange {} {
     $mainFrame.sFrame.cList delete 0 end
     
     if {[$mainFrame.qTypeBox get] == "event" } {
-	$mainFrame.eFrame.eBox insert end "WHERE event.sid = sensor.sid AND  LIMIT 500"
+	$mainFrame.eFrame.eBox insert end "WHERE  LIMIT 500"
 	set SELECTEDTABLE "event"
     } else {
 	set SELECTEDTABLE "sessions"
-	$mainFrame.eFrame.eBox insert end "WHERE sessions.sid = sensor.sid  LIMIT 500"
+	$mainFrame.eFrame.eBox insert end "WHERE  LIMIT 500"
     }
     $mainFrame.eFrame.eBox mark set insert "end -11 c"
     # return $tableSelected

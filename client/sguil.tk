@@ -2,6 +2,8 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
+# $ID$ #
+
 ####################################################################
 # Snort GUI for Lamerz [sguil] - A tcl/tk interface to snort       #
 ####################################################################
@@ -3398,9 +3400,9 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
       set finTcpHdrFrame [frame $tcpHdrFrame.finTcpHdrFrame]
         LabelText $finTcpHdrFrame 1 "F\nI\nN" 3
       set seqTcpHdrFrame [frame $tcpHdrFrame.seqTcpHdrFrame]
-        LabelText $seqTcpHdrFrame 9 "Seq #" 3
+        LabelText $seqTcpHdrFrame 10 "Seq #" 3
       set acknoTcpHdrFrame [frame $tcpHdrFrame.acknoTcpHdrFrame]
-        LabelText $acknoTcpHdrFrame 9 "Ack #" 3
+        LabelText $acknoTcpHdrFrame 10 "Ack #" 3
       set tcpoffsetTcpHdrFrame [frame $tcpHdrFrame.tcpoffsetTcpHdrFrame]
         LabelText $tcpoffsetTcpHdrFrame 5 "Offset" 3
       set resTcpHdrFrame [frame $tcpHdrFrame.resTcpHdrFrame]
@@ -3442,7 +3444,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
       set idIcmpHdrFrame [frame $icmpHdrFrame.idIcmpHdrFrame]
         LabelText $idIcmpHdrFrame 6 "ID"
       set seqIcmpHdrFrame [frame $icmpHdrFrame.seqIcmpHdrFrame]
-        LabelText $seqIcmpHdrFrame 6 "Seq #"
+        LabelText $seqIcmpHdrFrame 10 "Seq #"
       pack $icmpHdrLabel -side left -anchor w -fill y
       pack $typeIcmpHdrFrame $codeIcmpHdrFrame $chksumIcmpHdrFrame $idIcmpHdrFrame $seqIcmpHdrFrame\
        -side left -anchor w -fill x -expand true
