@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.17 2004/04/04 18:00:01 dlowless Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.18 2004/04/04 18:07:04 dlowless Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -151,7 +151,7 @@ function show_alerts( $where_query, $aggregate_result ) {
 			//	sprintf($signature, "%20s", $row['signature']);
 			//	print("	<td>&nbsp;" . $signature . "&nbsp;</td>\n");
 			//} else {
-				print(" <td>&nbsp;<a href=http://www.snort.org/snort-db/sid.html?sid=" . $row['signature_id'] . " target=_new>" . $row['signature'] . "</a>&nbsp;</td>\n");
+				print(" <td>&nbsp;<a href=http://www.snort.org/snort-db/sid.html?sid=" . $row['signature_id'] . " target=snortdotorg>" . $row['signature'] . "</a>&nbsp;</td>\n");
 			//}
 			
 			print("</tr>\n");
