@@ -1,5 +1,24 @@
-# $Id: CHANGES,v 1.38 2004/06/29 03:15:57 bamm Exp $ #
+# $Id: CHANGES,v 1.39 2004/08/09 17:33:16 shalligan Exp $ #
 
+sguil-0.5.1 (CVS HEAD)
+
+ General
+  * Text based reporting is in.  You can generate reports from 
+    any SELECT query to a text output format and save it.  This
+    allow aggregate queries (TOP TEN Events, etc).  Queries are
+    stored in the new sguild.reports file on the sguld server. -srh
+
+ sguild
+  * Autocat rules now support regular expressions (in TCL expanded syntax)
+    for matching signature messages.  -srh
+
+ sguil.tk
+  * Added a search widget to do searches of the text and hex payload
+    to make it easier to find that string that made the rule fire.
+    Toggle the widget on/off with ctl-f or right-click in the payload
+    window.  You can set the default state in sguil.conf.  Default 
+    is on. -srh
+ 
 sguil-0.5.0 (29 Jun 2004)
 
  General
