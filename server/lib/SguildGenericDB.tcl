@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.3 2004/10/18 15:28:20 shalligan Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.4 2004/10/18 16:15:40 shalligan Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -91,9 +91,7 @@ proc DBCommand { query } {
   }
                                                                                                      
   if [catch {mysqlexec $dbSocketID $query} tmpError] {
-    puts "ERROR Execing DB cmd: $query"
-    puts "$tmpError"
-    CleanExit
+      ErrorMessage "ERROR Execing DB cmd: $query Error: $tmpError"
   }
   catch {mysqlclose $dbSocketID}
   return
