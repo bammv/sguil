@@ -7,6 +7,8 @@ CVS-HEAD
     * Alpha support for emailing events. Need to add better
       error checking.
 
+    * Proc SendSensorList now makes sure sensor.active=y.
+
   sguild.conf
     * Vars for emailing selected events.
 

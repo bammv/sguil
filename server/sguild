@@ -922,7 +922,7 @@ proc GetUdpData { socketID sid cid } {
 #
 proc SendSensorList { socketID } {
   global sensorList
-  set query "SELECT hostname FROM sensor"
+  set query "SELECT hostname FROM sensor WHERE active='Y'"
   set sensorList [FlatDBQuery $query]
   if { $sensorList != "" } {
     puts $socketID "SensorList $sensorList"
