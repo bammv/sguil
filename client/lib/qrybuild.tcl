@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.19 2003/11/19 18:18:13 bamm Exp $ #
+# $Id: qrybuild.tcl,v 1.20 2003/12/02 14:54:02 shalligan Exp $ #
 proc QryBuild {tableSelected whereTmp } {
     global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList
@@ -14,9 +14,15 @@ proc QryBuild {tableSelected whereTmp } {
 
     # Grab the current pointer locations
     set xy [winfo pointerxy .]
-    
     # Create the window
-    set qryBldWin [toplevel .qryBldWin]
+    set qryBldWin .qryBldWin
+    if { [winfo exists $qryBldWin] } {
+	    wm withdraw $qryBldWin
+	    wm deiconify $qryBldWIn
+	    return
+	}
+  
+    toplevel $qryBldWin
     wm title $qryBldWin "Query Builder"
     wm geometry $qryBldWin +[lindex $xy 0]+[lindex $xy 1]
     
