@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.7 2005/01/05 23:45:53 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.8 2005/01/06 16:14:04 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -82,7 +82,7 @@ proc SendEtherealData { fileName TRANS_ID } {
   fcopy $rFileID $clientSocketID
   fconfigure $clientSocketID -encoding utf-8 -translation {auto crlf}
   if { [catch {close $rFileId} tmpError] } {
-    LogMessage "Error closing $filename: $tmpError"
+    LogMessage "Error closing $fileName: $tmpError"
   }
   # Old stuff if we need to revert back to Base64 file xfers (yuck)
   #sock12 null /snort_data/archive/2004-06-10/gateway ethereal gateway {2004-06-10 17:21:56}
