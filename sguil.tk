@@ -15,7 +15,7 @@
 
 ########################## GLOBALS ##################################
 
-set VERSION "sguil 0.1"
+set VERSION "sguil 0.2"
 
 set ACTIVE_EVENT 0
 set MULTI_SELECT 0
@@ -34,18 +34,6 @@ set MONITORFLAG 0
 
 ########################## PROCS ####################################
 
-#proc DisplayLicense {} {
-#  global LICENSE_FILE
-#  toplevel .licenseInfo
-#  scrolledtext .licenseInfo.text -wrap word -vscrollmode dynamic -hscrollmode none -labeltext "License Info"\
-#   -relief flat -visibleitems 80x10
-#  button .licenseInfo.close -text Accept -command "destroy .licenseInfo"
-#  pack .licenseInfo.text .licenseInfo.close -side top
-#  .licenseInfo.text insert 0.0 $LICENSE
-#}
-#
-# ServerCommandRcvd: Called as server sends commands
-#
 proc ServerCommandRcvd { socketID } {
   global DEBUG
 
@@ -72,9 +60,87 @@ proc ServerCommandRcvd { socketID } {
       PSDataResults { InsertPSData [lrange $data 1 end] }
       InsertEscalatedEvent { $serverCmd [lrange $data 1 end] }
       SensorList { $serverCmd [lrange $data 1 end] }
+      TableNameList { $serverCmd [lrange $data 1 end] }
+      TableColumns { $serverCmd [lindex $data 1] [lrange $data 2 end] }
       default { puts "Unrecognized command from $socketID: $data" }
     }
   } 
+}
+proc TableNameList { tmpList } {
+  global tableList
+  set tableList $tmpList
+}
+proc TableColumns { tableName tmpColumnList } {
+  global tableColumnArray
+  set tableColumnArray($tableName) $tmpColumnList
+}
+proc ShowDBTables {} {
+  global tableList tableColumnArray currentTableList tableListFrame
+  set tableWin .tableWin
+  if [winfo exists $tableWin] {
+    wm withdraw $tableWin
+    wm deiconify $tableWin
+    return
+  }
+  toplevel $tableWin
+  wm title $tableWin "Table Descriptions"
+  set tableSelMenu [optionmenu $tableWin.tableSelMenu\
+    -labeltext "Table Name:" -command "DisplayTableColumns $tableWin.tableSelMenu"] 
+  foreach tableName $tableList {
+    $tableSelMenu insert end $tableName
+    set tableListFrame($tableName) [frame $tableWin.${tableName}Frame\
+     -background black -borderwidth 1]
+    CreateTableListBox $tableListFrame($tableName) $tableColumnArray($tableName)
+  }
+  set currentTableList $tableName
+  button $tableWin.close -text "Close" -command "destroy $tableWin"
+  pack $tableSelMenu $tableListFrame($tableName) $tableWin.close -side top
+  $tableSelMenu sort ascending
+  $tableSelMenu select event
+  $tableSelMenu configure -cyclicon true
+  DisplayTableColumns $tableWin.tableSelMenu
+}
+proc DisplayTableColumns { winName } {
+  global currentTableList tableListFrame
+  set tableName [$winName get]
+  pack forget $tableListFrame($currentTableList)
+  pack $tableListFrame($tableName) -after $winName -fill both -expand true
+  set currentTableList $tableName
+}
+proc CreateTableListBox { winName columnList } {
+  set nameFrame [frame  $winName.nameFrame]
+    set nameLabel [label $nameFrame.nameLabel -text "Column Name" -background black -foreground white]
+    set nameList [listbox $nameFrame.nameList -width 15 -height 10\
+     -yscrollcommand "$winName.scroll set" -exportselection false -borderwidth 0]
+    pack $nameLabel -fill x -side top
+    pack $nameList -side top -fill both -expand true
+  set typeFrame [frame  $winName.typeFrame]
+    set typeLabel [label $typeFrame.typeLabel -text "Type" -background black -foreground white]
+    set typeList [listbox $typeFrame.typeList -width 10 -height 10\
+     -yscrollcommand "$winName.scroll set" -exportselection false -borderwidth 0]
+    pack $typeLabel -fill x -side top
+    pack $typeList -side top -fill both -expand true
+  set lengthFrame [frame $winName.lenghtFrame]
+    set lengthLabel [label $lengthFrame.lengthLabel -text "Length" -background black -foreground white]
+    set lengthList [listbox $lengthFrame.lengthList -width 10 -height 10\
+     -yscrollcommand "$winName.scroll set" -exportselection false -borderwidth 0]
+    pack $lengthLabel -fill x -side top
+    pack $lengthList -side top -fill both -expand true
+  scrollbar $winName.scroll -command "MultiScrollBar \"$nameList $typeList $lengthList\""\
+   -width 10
+  pack $nameFrame $typeFrame $lengthFrame -side left -expand true -fill both
+  pack $winName.scroll -side right -fill y
+   
+  set BCOLOR white
+  foreach column $columnList {
+    $nameList insert end [lindex $column 0]
+    $typeList insert end [lindex $column 1]
+    $lengthList insert end [lindex $column 2]
+    if { $BCOLOR == "white" } { set BCOLOR lightblue } else { set BCOLOR white }
+    $nameList itemconfigure end -background $BCOLOR
+    $typeList itemconfigure end -background $BCOLOR
+    $lengthList itemconfigure end -background $BCOLOR
+  }
 }
 proc QueryRequest { queryType { incidentCat {NULL} } } {
   global currentSelectedPane
@@ -154,6 +220,7 @@ proc EditWhere { whereTmp } {
    -hscrollmode none -wrap word -visibleitems 80x5 -labeltext "Edit WHERE Statement"]
   set buttonBox [buttonbox $editWhere.buttonBox]
     $buttonBox add ok -text "Ok" -command "set RETURN_FLAG 1"
+    $buttonBox add showTables -text "Show DB Tables" -command ShowDBTables
     $buttonBox add cancel -text "Cancel" -command "set RETURN_FLAG 0"
   pack $textBox $buttonBox -side top -fill both -expand true
   set whereTmp "$whereTmp LIMIT 500"
@@ -528,7 +595,6 @@ proc DeleteEventID { eventID } {
     if { $eventIDIndex >= 0 } { DeleteLine $rtPaneArray($arrayName) $eventIDIndex }
   }
   set escalatedIDList [$escalateFrame.eventIDFrame.list get 0 end]
-  puts $escalatedIDList
   set escalatedIDIndex [lsearch -exact $escalatedIDList $eventID]
   if { $escalatedIDIndex >= 0 } { DeleteLine $escalateFrame $escalatedIDIndex }
 }
@@ -1927,7 +1993,7 @@ package require Iwidgets 3.0
 namespace import iwidgets::panedwindow
 namespace import iwidgets::tabnotebook
 namespace import iwidgets::scrolledtext
-namespace import iwidgets::scrolledframe
+namespace import iwidgets::optionmenu
 namespace import iwidgets::buttonbox
 
 proc LabelText { winFrame width labelText { height {1} } } {
@@ -1945,6 +2011,7 @@ set topFrame [frame .topFrame]
   pack $fileMenu $soundFrame -side left
   set menuList [menu $fileMenu.menu -tearoff 0]
   $menuList add command -label "Query..." -command "QueryRequest empty"
+  $menuList add command -label "Show DataBase Tables" -command "ShowDBTables"
   $menuList add command -label "Display Incident Categories" -command DisplayIncidentCats
   #$menuList add command -label "License" -command "DisplayLicense"
   $menuList add command -label "Sleep (Ctrl-s)" -command "GoToSleep"

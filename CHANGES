@@ -6,12 +6,18 @@ Version 0.2
     * Fixed escalate bug where events weren't removed from all
       connected clients.
 
+    * Added a Show DB Tables function to assist analyst in 
+      creating queries.
+
   sguild
     * Added procs and changes required for monitoring specific
       sensors.
 
     * Fixed escalate bug where events weren't removed from all
       connected clients.
+
+    * Gets DB table info on init in support of the "Show DB
+      Tables" function added to sguil.tk.
 
 Version 0.1
   sguil.tk

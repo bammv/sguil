@@ -11,7 +11,7 @@
 
 ########################## GLOBALS ##################################
 
-set VERSION "sguil 0.1"
+set VERSION "sguil 0.2"
 
 # DEBUG 1=on 0=off This is VERY chatty.
 set DEBUG 1
@@ -234,6 +234,13 @@ proc DeleteEventID { socketID eventID status } {
   UpdateDBStatus $eventID [GetCurrentTimeStamp] $status
 }
 
+proc SendDBInfo { socketID } {
+  global tableNameList tableArray 
+  SendSocket $socketID "TableNameList $tableNameList"
+  foreach tableName $tableNameList {
+    SendSocket $socketID "TableColumns $tableName $tableArray($tableName)"
+  }
+}
 #
 # ClientConnect: Sets up comms for client/server
 #
@@ -244,6 +251,8 @@ proc ClientConnect { socketID IPAddr port } {
   }
   fconfigure $socketID -buffering line
   fileevent $socketID readable [list ClientCmdRcvd $socketID]
+  # Send the client a list of tables and column names/info
+  SendDBInfo $socketID
 } 
 
 proc SensorConnect { socketID IPAddr port } {
@@ -532,17 +541,26 @@ foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, event.cl
   lappend escalateIDList $escalatedEventID
   set escalateArray($escalatedEventID) $row
 }
+# Get DB info (table names and column info)
+if {$DEBUG} { puts "Retrieving DB info..." }
+set tableNameList [mysqlinfo $dbSocketID tables]
+if {$DEBUG} {puts "Table names: $tableNameList"}
+foreach tableName $tableNameList {
+  set tableArray($tableName) [mysqlcol $dbSocketID $tableName {name type length}]
+}
 mysqlclose $dbSocketID
-puts "Waiting for events from sensors..."
-
 set sensorQuery "SELECT hostname FROM sensor"
 set sensorList [FlatDBQuery $sensorQuery]
 puts "Unique sensors in the DB: $sensorList"
 
+
 # Open a socket for clients to connect to
 set serverSocket [socket -server ClientConnect $SERVERPORT]
+puts "Clients can now connect."
 # Open a socket for sensors to connect to
 set sensorSocket [socket -server SensorConnect $SENSORPORT]
+puts "Waiting for events from sensors."
+
 # Infinate wait
 vwait FOREVER
 
