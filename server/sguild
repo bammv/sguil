@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.98 2004/06/14 21:21:28 bamm Exp $ #
+# $Id: sguild,v 1.99 2004/06/24 21:20:06 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -1427,13 +1427,23 @@ proc DBCommand { query } {
   global DBNAME DBUSER DBPORT DBHOST DBPASS
 
   if { $DBPASS == "" } {
-    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+    set dbCmd [list mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
   } else {
-    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+    set dbCmd [list mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
   }
 
-  mysqlexec $dbSocketID $query
-  mysqlclose $dbSocketID
+  # Connect to the DB
+  if { [ catch {eval $dbCmd} dbSocketID ] } {
+    puts "ERROR Connecting to the DB: $dbSocketID"
+    CleanExit
+  }
+
+  if [catch {mysqlexec $dbSocketID $query} tmpError] {
+    puts "ERROR Execing DB cmd: $query"
+    puts "$tmpError"
+    CleanExit
+  }
+  catch {mysqlclose $dbSocketID}
   return 
 }
 proc UpdateDBStatusList { whereTmp timestamp uid status } {
