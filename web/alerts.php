@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/alerts.php,v 1.2 2004/03/31 18:19:18 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/alerts.php,v 1.3 2004/04/01 15:35:01 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -19,6 +19,16 @@
 	<title>Alert Listing</title>
 	<meta name="author" content="Michael Boman">
 	<meta name="copyright" content="Copyright 2004 Michael Boman <mboman@users.sourceforge.net>. All Rights Reserved.">
+<?php
+	if( $_REQUEST['auto_refresh'] == 1 ) {
+		$url=$_SERVER['PHP_SELF'] .
+			"?query=" . $_REQUEST['query'] .
+			"&auto_refresh=" . $_REQUEST['auto_refresh'] .
+			"&autorefresh_interval=" . $_REQUEST['autorefresh_interval'];
+			
+			printf("	<meta http-equiv=\"refresh\" content=\"" . $_REQUEST['autorefresh_interval'] . "; URL=" . $url ."\">\n");
+	}
+?>
 </head>
 <body>
 

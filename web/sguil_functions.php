@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.5 2004/03/31 20:44:45 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.6 2004/04/01 15:35:01 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -67,7 +67,14 @@ function show_alerts( $where_query ) {
 	print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\">\n");
 	print("<tr><td colspan=\"11\">Query: " .
 		"<input type=\"text\" name=\"query\" size=\"100\" value=\"" . $where_query . "\"> " .
-		"<input name=\"submit\" value=\"Submit\" type=\"submit\"></td></tr>\n");
+		"<input name=\"submit\" value=\"Submit\" type=\"submit\">" .
+		"<input type=\"checkbox\" name=\"auto_refresh\" value=\"1\"");
+	if( $_REQUEST['auto_refresh'] == 1 ) {
+		print(" checked");
+	}
+	print("> Auto-Refresh every " .
+		"<input type=\"text\" name=\"autorefresh_interval\" size=\"3\" value=\"" . $_REQUEST['autorefresh_interval'] . "\"> seconds." .
+		"</td></tr>\n");
 	print("</table>\n");
 	print("</form>\n");
 	print("<hr>\n");	
@@ -177,7 +184,7 @@ function show_sessions( $where_query ) {
 	
 	if ( $where_query == "" ) {
 		printf("</table>\n");
-		printf("No where statement provided.");
+		printf("<p>No where statement provided.</p>");
 		return(0);
 	}
 
@@ -599,7 +606,8 @@ function alert_details_payload($sid, $cid) {
 		      $asciiStr = $asciiStr . $currentChar;
 
 				if ( $counter == 32 ) {
-					$dataText = $dataText . $hexStr . "  " . $asciiStr . "\n";
+		    		$asciiStrEsc = htmlspecialchars($asciiStr);
+					$dataText = $dataText . $hexStr . "  " . $asciiStrEsc . "\n";
 					$hexStr = "";
 					$asciiStr = "";
 					$counter = 2;
@@ -609,15 +617,16 @@ function alert_details_payload($sid, $cid) {
     		}
     		
     		// Last line.. Need to put in spaces for the char's the doesn't exist.
-    		
-    		for(; $counter < 32; $counter = $counter + 2 ) {
+    		while( $counter > 2 && $counter < 32 ) {
 	    		$hexStr = $hexStr . "   ";
 		      $asciiStr = $asciiStr . " ";
+		      $counter = $counter + 2;
     		}
     		
-    		$dataText = $dataText . $hexStr . "     " . $asciiStr . "\n";
+    		$asciiStrEsc = htmlspecialchars($asciiStr);
     		
-    		sprintf($dataText, "%-47s %s\n", $hexStr, $asciiStr);
+    		$dataText = $dataText . $hexStr . "     " . $asciiStrEsc . "\n";
+    		
 		}
 
 		print("$dataText");

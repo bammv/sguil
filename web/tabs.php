@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/Attic/tabs.php,v 1.2 2004/03/31 18:19:18 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/Attic/tabs.php,v 1.3 2004/04/01 15:35:01 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -24,7 +24,7 @@
 			<td width="25%" colspan="0" rowspan="0" align="center" valign="middle">
 				<form action="alerts.php" method="POST" target="alerts">
 					<input type="hidden" name="query" value="WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp ASC LIMIT 50">
-					<input value="RealTime Events" type="submit">
+					<input value="RealTime Events" type="submit">		
 				</form>
 			</td>
 			<td width="25%" colspan="0" rowspan="0" align="center" valign="middle">
