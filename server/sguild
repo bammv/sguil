@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.139 2005/02/08 23:28:39 bamm Exp $ #
+# $Id: sguild,v 1.140 2005/02/09 15:47:08 shalligan Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -498,6 +498,7 @@ foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, \
 LogMessage "Retrieving DB info..." 
 set tableNameList [mysqlinfo $dbSocketID tables]
 regsub -all {sancp_\S+\s} $tableNameList {} newList
+set tableNameList $newList
 foreach tableName $newList {
   set tableArray($tableName) [mysqlcol $dbSocketID $tableName {name type length}]
 }
