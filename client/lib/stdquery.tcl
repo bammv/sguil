@@ -20,7 +20,7 @@ proc StdQuery {} {
   # File menu contains Add, Delete, and Edit
   set fMenuButton [menubutton $stdQryWin.fMenuButton -text File -underline 0 -menu $stdQryWin.fMenuButton.fMenu]
   set fMenu [menu $fMenuButton.fMenu -tearoff 0]
-  $fMenu add command -label "Add Query" -command "AddQuery"
+  $fMenu add command -label "Add Query" -command "AddStdUserQuery"
   $fMenu add command -label "Delete Query" -command "DelQuery"
   $fMenu add command -label "Edit Query" -command "EditQuery"
   pack $fMenuButton -side top -anchor w
@@ -40,14 +40,15 @@ proc StdQuery {} {
 
   # Import the global list into the window.
   InsertGlobalQueries $globalLists
+  InsertUserQueries $userLists
 
 
   # Detail frame contains the query comment, WHERE statement, and buttons
-  set detailFrame [frame $mainFrame.dFrame]
-    set commentBox [scrolledtext $detailFrame.cBox -visibleitems 70x5 -sbwidth 10\
+  set detailFrame [frame $mainFrame.dFrame -background lightblue]
+    set commentBox [scrolledtext $detailFrame.cBox -visibleitems 70x4 -sbwidth 10\
      -vscrollmode static -hscrollmode dynamic -wrap word -labelpos n\
      -labeltext "Comment"]
-    set whereBox [scrolledtext $detailFrame.wBox -visibleitems 70x15 -sbwidth 10\
+    set whereBox [scrolledtext $detailFrame.wBox -visibleitems 70x12 -sbwidth 10\
      -vscrollmode static -hscrollmode dynamic -wrap word -labelpos n\
      -labeltext "Query"]
 
@@ -67,12 +68,28 @@ proc InsertGlobalQueries { win } {
   global GLOBAL_QRY_LIST gComment gWhere gType
   set cIndex 0
   foreach globalQry $GLOBAL_QRY_LIST {
-    set newList [split $globalQry |]
-    $win insert end [lindex $newList 0]
-    set gComment($cIndex) [lindex $newList 1]
-    set gWhere($cIndex) [lindex $newList 2]
-    set gType($cIndex) [lindex $newList 3]
-    incr cIndex
+    if { [regexp {^(.*)\|\|(.*)\|\|(.*)\|\|(.*)$} $globalQry match name comment where type] } {
+      $win insert end "$name ($type)"
+      set gComment($cIndex) $comment
+      set gWhere($cIndex) $where
+      set gType($cIndex) $type
+      incr cIndex
+    }
+  }
+}
+proc InsertUserQueries { win } {
+  global USER_QryList uCommnet uWhere uType
+  $win delete 0 end
+  if { ![info exists USER_QRY_LIST] } { return }
+  set cIndex 0
+  foreach userQry $USER_QRY_LIST {
+    if { [regexp {^(.*)\|\|(.*)\|\|(.*)\|\|(.*)$} $userQry match name comment where type] } {
+      $win insert end "$name ($type)"
+      set uComment($cindex) $comment
+      set uWhere($cIndex) $where
+      set uType($cIndex) $type
+      incr cIndex
+    }
   }
 }
 proc GlobalQuerySelect { listName } {
@@ -85,3 +102,50 @@ proc GlobalQuerySelect { listName } {
   set STD_QUERY $gWhere($cIndex)
   set STD_QUERY_TYPE $gType($cIndex)
 }
+proc ReadQryFile {} {
+  global USER_QRY_FILE USER_QRY_LIST
+  set USER_QRY_LIST ""
+  if { [file exists $USER_QRY_FILE] } {
+    set cIndex 0
+    for_file userQry $USER_QRY_FILE {
+      lappend USER_QRY_LIST $userQry
+    }
+  } 
+}
+proc AddStdUserQuery {} {
+  global USER_QRY_FILE
+  
+  set newQuery [UserQryWiz]
+}
+proc UserQryWiz {} {
+
+  set NEW_QUERY ""
+  
+  set xy [winfo pointerxy .]
+
+  set win [toplevel .userQryWiz]
+  wm title $win "Add New User Query"
+  wm geometry $win +[lindex $xy 0]+[lindex $xy 1]
+  
+  set frame1 [frame $win.frame1]
+  set typeWin [optionmenu $frame1.om -labeltext "Type:" -command "UpdateQryType $win.om"]
+  $typeWin insert end event
+  $typeWin insert end sessions
+  set nameWin [entryfield $frame1.ef -labeltext "Name:" -labelpos w -width 20]
+  pack $typeWin -side left
+  pack $nameWin -side left -fill x -expand true
+
+  set commentWin [scrolledtext $win.cBox -visibleitems 70x4 -sbwidth 10\
+   -vscrollmode static -hscrollmode dynamic -wrap word -labelpos n\
+   -labeltext "Comment"]
+  set whereBox [scrolledtext $win.wBox -visibleitems 70x12 -sbwidth 10\
+   -vscrollmode static -hscrollmode dynamic -wrap word -labelpos n\
+   -labeltext "Query"]
+  set winBB [buttonbox $win.bb]
+      $winBB add okay -text "Add" -command ""
+      $winBB add cancel -text "Cancel" -command "destroy $win"
+
+  pack $frame1 $commentWin $whereBox $winBB -side top -fill both -expand true
+
+}
+

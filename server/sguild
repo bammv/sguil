@@ -1104,7 +1104,7 @@ foreach arg $argv {
     flag {
       switch -glob -- $arg {
         -- { set state flag }
-        -h { DisplayUsage }
+        -h { DisplayUsage $argv0}
         -c { set state conf }
         -u { set state users_file }
         -D { set DAEMON_CONF_OVERRIDE 1 }
