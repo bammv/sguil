@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.123 2004/07/22 14:01:40 bamm Exp $ #
+# $Id: sguil.tk,v 1.124 2004/07/22 15:03:53 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -347,7 +347,9 @@ proc ValidateEvent { status {c_flag {0}} } {
       UnHighLightListLine $currentSelectedPane
     } 
     set MULTI_SELECT 0
-    SelectNextEvent $currentSelectedPane $selectedIndex
+    if { [info exists selectedIndex] && $selectedIndex != "" } { 
+      SelectNextEvent $currentSelectedPane $selectedIndex
+    }
     if { [info exists tmpDeletedEIDList] && $tmpDeletedEIDList != "" } {
       SendToSguild "DeleteEventIDList ${status}::${eventComment}::${tmpDeletedEIDList}"
       if {$DEBUG} {
