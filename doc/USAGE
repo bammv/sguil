@@ -28,11 +28,22 @@ clients. Hot keys can also be used:
 
 Querying the DB:
 Searches can be initiated using different "templates". For a blank
-template, use File->Query. Once selected, a window allowing you to
+template, use Query->Event Query. Once selected, a query builder allowing you to
 edit the query will pop up. Only the WHERE statement can be edited.
 IMPORTANT: DO NOT DELETE THE JOIN (event.sid=sensor.sid), it is 
 required on ALL queries. Other templates are available by selecting
 an event and right clicking on the src/dst ip columns.
+
+A blank template for session queries can be found under Query->Session Query
+and a completely blank query builder can be found under Query->Query Builder.
+
+If you wish to save a query for future use use Query->Standard Queries.
+In the Standard Query dialog, select File->Add Query to add a new user query.
+User queries are saved locally and therefore are only available on the
+machine used to create them.  To create a standard query for global use,
+edit the sguild.queries file on your sguild server. In order to have sguild
+reload the sguild.queries file and update the clients, send a -HUP signal
+to the sguild process.
 
 Correlated Events:
 Events that have the same src IP and signature/message are correlated
@@ -48,6 +59,26 @@ right click on the sid.cid column. Select Transcript or Ethereal.
 Middle clicking on the sid.cid column of a highlighted event will
 also request a transcript.
 
+Creating Reports:
+Plain Text or Email reports can be created by selecting the events
+to report and choosing Report-><Report Type>.  Summary reports contain
+the full packet headers, detail reports add the payloads.  You can also
+elect to sanitize your reports and have all IP addresses obfuscated.  Keep
+in mind that IP addresses encoded into payloads (ie. ICMP Dest Unreachable events)
+will still exist in the output.
+
+Query output can also be saved to a text file (human-readable, or delimited (CSV, <TAB>, |, etc)
+by clicking the "Export" button in a query pane.  This will export only the infomation
+that is contained in the query pane (ie. no header details, no payloads, etc).
+
+Auto-Categorization:
+You can have sguild automatically categorize events by editing the autocat.conf
+file on the sguild server.  These event will have a status automatically assigned
+to them and will not appear in any analyst's console.  Analysts can query 
+for "auto-catted" events by selecting the "Auto Cats" global standard query.
+In order to have sguild reload the autocat.conf file, 
+send a -HUP signal to the sguild process.  A HUP will only effect future events, 
+if you want to auto-cat previously received events, sguild must be restarted.
 
 Other:
 The up/down arrows can be used to select previous/next event in the
@@ -56,7 +87,9 @@ at once.
 
 
 Help or Suggestions:
-Email me at bamm@satx.rr.com or visit #snort-gui on openprojects.net.
+Subscribe and post to the sguil-users list at 
+http://lists.sourceforge.net/lists/listinfo/sguil-users 
+or visit #snort-gui on openprojects.net.
 
 
 Bammkkkk
