@@ -1,4 +1,4 @@
-# $Id: INSTALL.openbsd,v 1.4 2004/06/29 18:36:09 shalligan Exp $ #
+# $Id: INSTALL.openbsd,v 1.5 2004/07/12 15:28:47 shalligan Exp $ #
 <---------------------------------------------------------------------->
 
 **** Set up the Sguil Server ****
@@ -52,6 +52,7 @@
 	a) cd /usr/ports/lang/tcl/8.3
 	b) make
 	c) make install
+	d) DO NOT make clean.  tclX and iTCL need the build dir.
 
 4)  Install Tclx:
 	****NOTE****
@@ -106,6 +107,8 @@ INSTALLING THE CLIENT
 	shell>cd /usr/ports/x11/tk
 	shell>make
 	shell>make install
+	
+	DO NOT make clean.  tclX and iTCL need the build dir.
 
 3)  Install tclx
 	a) same as above EXCEPT:
