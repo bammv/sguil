@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.2 2004/10/14 17:34:46 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.3 2004/10/14 18:33:06 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR DEBUG
@@ -258,5 +258,12 @@ proc GenerateXscript { fileName clientSocketID winName } {
   }
   SendSocket $clientSocketID "XscriptMainMsg $winName DONE"
   unset transInfoArray($TRANS_ID)
+}
+
+proc TcpFlowFormat { srcIP srcPort dstIP dstPort } {
+  set tmpSrcIP [split $srcIP .]
+  set tmpDstIP [split $dstIP .]
+  set tmpData [eval format "%03i.%03i.%03i.%03i.%05i-%03i.%03i.%03i.%03i.%05i" $tmpSrcIP $srcPort $tmpDstIP $dstPort]
+  return $tmpData
 }
 
