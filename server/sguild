@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.129 2004/11/03 20:03:22 shalligan Exp $ #
+# $Id: sguild,v 1.130 2004/11/04 17:02:58 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -408,11 +408,15 @@ if { [lsearch $DB_VERSION $currentDBVer] < 0 } {
 
 # If emailing of events is enabled, we need to make sure the libs are installed.
 if { [info exists EMAIL_EVENTS] && $EMAIL_EVENTS } {
-  package require mime
-  package require smtp
+    package require mime
+    package require smtp
+    # Make sure our vars are initialized
+    if { ![info exists EMAIL_CLASSES] } { set EMAIL_CLASSES "" }
+    if { ![info exists EMAIL_DISABLE_SIDS] } { set EMAIL_DISABLE_SIDS "" }
+    if { ![info exists EMAIL_ENABLE_SIDS] } { set EMAIL_ENABLE_SIDS "" }
 } else {
-  # Just in case the var doesn't get set in sguild.conf
-  set EMAIL_EVENTS 0
+    # Just in case the var doesn't get set in sguild.conf
+    set EMAIL_EVENTS 0
 }
 
 # Set the AUTOID before we get events.
