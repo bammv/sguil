@@ -298,6 +298,7 @@ if { $EVENT } {
     if { !$QUIET } { puts -nonewline "Getting a list of sensors..." }
     set sensorIDList [GetSensorIDList $DBSOCKETID ${PREFIX}event]
     if { !$QUIET } { puts "Success." }
+    if { !$QUIET } { puts "Sensor list: $sensorIDList" }
     
     #
     # The rest of the tables are archived based on each sensors

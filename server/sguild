@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.132 2004/11/12 21:45:44 bamm Exp $ #
+# $Id: sguild,v 1.133 2004/11/22 22:42:40 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -237,6 +237,9 @@ if { [info exists CONF_FILE] } {
   DisplayUsage $argv0
 }
 
+# Set sensor aggregation to 1 if not specified
+if { ![info exists SENSOR_AGGREGATION_ON] } { set SENSOR_AGGREGATION_ON 1 }
+
 # If DEBUG was specified on the cmd line, we override the conf file here
 if { [info exists DEBUG_OVERRIDE] && [info exists DEBUG_LEVEL] } {
     set DEBUG $DEBUG_LEVEL
@@ -447,7 +450,7 @@ foreach row [mysqlsel $dbSocketID "SELECT event.status, \
   
     InfoMessage "Archived Alert: $row"
     if { ![array exists acRules] || ![AutoCat $row] } {
-	set matchAID [CorrelateEvent [lindex $row 8] [lindex $row 7]]
+	set matchAID [CorrelateEvent [lindex $row 5] [lindex $row 8] [lindex $row 7]]
 	if { $matchAID == 0 } {
 	    AddEventToEventArray $row
 	} else {

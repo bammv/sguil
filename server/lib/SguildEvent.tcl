@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $ #
+# $Id: SguildEvent.tcl,v 1.3 2004/11/22 22:42:41 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -29,14 +29,14 @@ proc EventRcvd { socketID data } {
     # the autocat, then we send off the rule
     if { ![array exists acRules] || ![AutoCat $eventDataList] } {
       # Correlation/aggregation checks here: CorrelateEvent SrcIP Message
-      set matchAID [ CorrelateEvent [lindex $eventDataList 8] [lindex $eventDataList 7] ]
+      set sid [lindex $eventDataList 13]
+      set matchAID [ CorrelateEvent $sid [lindex $eventDataList 8] [lindex $eventDataList 7] ]
       if { $matchAID == 0 } {
         AddEventToEventArray $eventDataList
         # Clients don't need the sid and rev
         SendEvent "[lrange $eventDataList 0 12] 1"
         if { $EMAIL_EVENTS } {
           #Ug-ly. Things will get better when the rules are in the DB.
-          set sid [lindex $eventDataList 13]
           set class [lindex $eventDataList 2]
           if { ([lsearch -exact $EMAIL_CLASSES $class] >= 0\
                && [lsearch -exact $EMAIL_DISABLE_SIDS $sid] < 0)
@@ -204,15 +204,25 @@ proc DeleteEventID { socketID eventID status } {
   UpdateDBStatus $eventID [GetCurrentTimeStamp] $userIDArray($socketID) $status
 }
 
-proc CorrelateEvent { srcip msg } {
-  global eventIDArray eventIDList eventIDCountArray
+proc CorrelateEvent { sid srcip msg } {
+  global eventIDArray eventIDList eventIDCountArray SENSOR_AGGREGATION_ON
   set MATCH 0
   # Loop thru the RTEVENTS for a match on srcip msg
   foreach rteid $eventIDList {
+
     if { [lindex $eventIDArray($rteid) 8] == $srcip && [lindex $eventIDArray($rteid) 7] == $msg } {
       # Have a match
       set MATCH $rteid
+
+      # Do sid check if needed here
+      if {$SENSOR_AGGREGATION_ON} {
+        if { [lindex [split $rteid .] 0] != $sid } {
+          set MATCH 0
+        }
+      }
+
     }
+
   }
   return $MATCH
 }
