@@ -24,7 +24,7 @@ proc QryBuild {tableSelected whereTmp } {
     set funcList(main) [list Common Strings Comparison Logical DateTime]
     set funcList(Common) [list INET_ATON() LIMIT LIKE AND OR NOT]
     set funcList(Strings) [list LIKE REGEXP RLIKE]
-    set funcList(Logical) [list AND OR NOT BETWEEN()]
+    set funcList(Logical) [list AND OR NOT BETWEEN() LIKE]
     set funcList(Comparison) [list = != < > <=>]
     set funcList(DateTime) [list TO_DAYS() UNIX_TIMESTAMP() UTC_TIMESTAMP()]
     foreach tableName $tableList {
@@ -35,7 +35,7 @@ proc QryBuild {tableSelected whereTmp } {
     set mainFrame [frame $qryBldWin.mFrame -background #dcdcdc -borderwidth 1]
 
     
-    set qryTypeBox [radiobox $mainFrame.qTypeBox -orient horizontal]
+    set qryTypeBox [radiobox $mainFrame.qTypeBox -orient horizontal -labeltext "Select Query Type" -labelpos n]
       $qryTypeBox add event -text "Events"
       $qryTypeBox add session -text "Sessions"
    
@@ -91,12 +91,12 @@ proc QryBuild {tableSelected whereTmp } {
   
       pack $metaList $catList $itemList -side left -fill both -expand true
       iwidgets::Labeledwidget::alignlabels $metaList $catList $itemList
-    
-    pack $qryTypeBox $editFrame -side top -fill both -expand yes
+    pack $qryTypeBox -side top -fill none -expand false
+    pack $editFrame -side top -fill both -expand yes
     #pack  $mainBB1 $mainBB2 -side top -fill none -expand false
     pack  $selectFrame $bb -side top -fill both -expand true -pady 1
     eval $metaList insert 0 $mlst
-    pack $mainFrame -side top -pady 1
+    pack $mainFrame -side top -pady 1 -expand true -fill both
 
     
 
