@@ -528,9 +528,10 @@ proc OptimizeTables {} {
 	    }
 	   
 	}
-	destroy $optimizeTables
-	return
-    }
+	
+    } 
+    destroy $optimizeTables
+    return
 }
 	    
     
