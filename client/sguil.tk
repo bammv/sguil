@@ -318,7 +318,7 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } } {
     set eventMsg [$currentSelectedPane.msgFrame.list get $selectedIndex]
     set whereTmp "$whereTmp event.signature = '$eventMsg'"
   }
-  set whereStatement [EditWhere $whereTmp]
+  set whereStatement [QryBuild $tableName $whereTmp]
   if { $whereStatement == "cancel" } { return }
   if { $queryType == "category" } {
     switch -exact $incidentCat {
@@ -2950,6 +2950,7 @@ namespace import -force iwidgets::checkbox
 namespace import -force iwidgets::messagedialog
 namespace import -force iwidgets::scrolledlistbox
 namespace import -force iwidgets::combobox
+namespace import -force iwidgets::radiobox
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
   label $winFrame.label -text "$labelText" -foreground black -background $bgColor -anchor s -height $height
@@ -2985,7 +2986,7 @@ set topFrame [frame .topFrame]
     $queryList add command -label "Query Event Table" -command "QueryRequest event empty"
     $queryList add command -label "Query Sessions Table" -command "QueryRequest sessions empty"
     $queryList add command -label "Standard Queries" -command "GetStdQuery"
-    $queryList add command -label "Query Builder" -command "QryBuild"
+    $queryList add command -label "Query Builder" -command "QryBuild empty empty"
     $queryList add cascade -label "Query by Category" -menu $queryList.category
     set categoryMenu [menu $queryList.category -tearoff 0]
       $categoryMenu add command -label "Cat I: Unauthorized Root Access"\

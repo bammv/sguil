@@ -1,7 +1,15 @@
-proc QryBuild {} {
-    global RETURN_FLAG 
+proc QryBuild {tableSelected whereTmp } {
+    global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList
     set RETURN_FLAG 0
+    set SELECTEDTABLE $tableSelected
+    
+    if {$SELECTEDTABLE == "empty"} {
+	set SELECTEDTABLE "event"
+    }
+    if {$whereTmp == "empty"} {
+	set whereTmp "WHERE event.sid = sensor.sid AND "
+    }
 
     # Grab the current pointer locations
     set xy [winfo pointerxy .]
@@ -14,7 +22,7 @@ proc QryBuild {} {
     # Create some arrays for the lists
     set mlst [list Tables Functions]
     set funcList(main) [list Common Strings Comparison Logical DateTime]
-    set funcList(Common) [list INET_ATON() LIMIT LIKE() AND OR NOT]
+    set funcList(Common) [list INET_ATON() LIMIT LIKE AND OR NOT]
     set funcList(Strings) [list LIKE REGEXP RLIKE]
     set funcList(Logical) [list AND OR NOT BETWEEN()]
     set funcList(Comparison) [list = != < > <=>]
@@ -27,12 +35,24 @@ proc QryBuild {} {
     set mainFrame [frame $qryBldWin.mFrame -background #dcdcdc -borderwidth 1]
 
     
-    
+    set qryTypeBox [radiobox $mainFrame.qTypeBox -orient horizontal]
+      $qryTypeBox add event -text "Events"
+      $qryTypeBox add session -text "Sessions"
+   
+    if {$SELECTEDTABLE == "event"} {
+	$qryTypeBox select event
+    } else {
+	$qryTypeBox select session
+    }
+    $qryTypeBox configure -command {typeChange}
+
     set editFrame [frame $mainFrame.eFrame -background black -borderwidth 1]
       set editBox [scrolledtext $editFrame.eBox -textbackground white -vscrollmode dynamic \
 		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 60x10 -textfont ourFixedFont \
 		-labeltext "Edit Where Clause"]
-      $editBox insert end "WHERE event.sid = sensor.sid AND  LIMIT 500"
+      #$editBox insert end "WHERE event.sid = sensor.sid AND  LIMIT 500"
+      set whereTmp "$whereTmp  LIMIT 500"
+      $editBox insert end $whereTmp
       $editBox mark set insert "end -11 c"
       set bb [buttonbox $mainFrame.bb]
       $bb add Submit -text "Submit" -command "set RETURN_FLAG 1"
@@ -72,7 +92,7 @@ proc QryBuild {} {
       pack $metaList $catList $itemList -side left -fill both -expand true
       iwidgets::Labeledwidget::alignlabels $metaList $catList $itemList
     
-    pack $editFrame -side top -fill both -expand yes
+    pack $qryTypeBox $editFrame -side top -fill both -expand yes
     #pack  $mainBB1 $mainBB2 -side top -fill none -expand false
     pack  $selectFrame $bb -side top -fill both -expand true -pady 1
     eval $metaList insert 0 $mlst
@@ -84,10 +104,12 @@ proc QryBuild {} {
 
 
     tkwait variable RETURN_FLAG
-    set returnWhere 0
+    set returnWhere "cancel"
     if {$RETURN_FLAG} {
 	set returnWhere "[$editBox get 0.0 end]"
 	puts $returnWhere
+    } else {
+	set returnWhere "cancel"
     }
     destroy $qryBldWin
     return $returnWhere  
@@ -95,7 +117,7 @@ proc QryBuild {} {
 
 
 proc updateCatList { selectFrame } {
-    global tableList funcList metaSelection
+    global funcList metaSelection SELECTEDTABLE
      
     $selectFrame.cList delete 0 end
     #$selectFrame.cList delete entry 0 end
@@ -103,8 +125,14 @@ proc updateCatList { selectFrame } {
     
     set sel [$selectFrame.mList getcurselection]
     set metaSelection $sel
+#    puts $tableSelected
     if {$sel == "Tables"} { 
-	eval $selectFrame.cList insert 0 $tableList
+	if { $SELECTEDTABLE == "event" } {
+	    set localTableList [list event data icmphdr tcphdr udphdr sensor]
+	} else {
+	    set localTableList [list sessions sensor]
+	}
+	eval $selectFrame.cList insert 0 $localTableList
     } else {
 	eval $selectFrame.cList insert 0 $funcList(main)
     }
@@ -131,6 +159,24 @@ proc addToEditBox { editBox selectFrame } {
     }
     
     $editBox insert insert "$addText "
+}
+
+proc typeChange {} {
+    global SELECTEDTABLE
+    set mainFrame .qryBldWin.mFrame
+    $mainFrame.eFrame.eBox delete 0.0 end
+    $mainFrame.sFrame.iList delete 0 end
+    $mainFrame.sFrame.cList delete 0 end
+    
+    if {[$mainFrame.qTypeBox get] == "event" } {
+	$mainFrame.eFrame.eBox insert end "WHERE event.sid = sensor.sid AND  LIMIT 500"
+	set SELECTEDTABLE "event"
+    } else {
+	set SELECTEDTABLE "session"
+	$mainFrame.eFrame.eBox insert end "WHERE session.sid = sensor.sid  LIMIT 500"
+    }
+    $mainFrame.eFrame.eBox mark set insert "end -11 c"
+    # return $tableSelected
 }
 
 
