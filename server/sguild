@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.88 2004/05/13 21:13:55 bamm Exp $ #
+# $Id: sguild,v 1.89 2004/05/26 18:25:11 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -15,7 +15,7 @@ exec tclsh "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.4.0"
+set VERSION "SGUIL-0.4.1"
 # Silly but we can use either version for now
 set DB_VERSION "0.7 0.8"
 
@@ -444,6 +444,7 @@ proc ClientCmdRcvd { socketID } {
       DeleteEventIDList { $clientCmd $socketID $data1 }
       EventHistoryRequest { $clientCmd $socketID $index1 $index2 $data3 }
       ExecDB { $clientCmd $socketID $data1 }
+      GetCorrelatedEvents { $clientCmd $socketID $index1 $index2 }
       GetIcmpData { $clientCmd $socketID $index1 $index2 }
       GetIPData { $clientCmd $socketID $index1 $index2 }
       GetPayloadData { $clientCmd $socketID $index1 $index2 }
@@ -500,14 +501,39 @@ proc ClientExitClose { socketID } {
     unset socketInfo($socketID)
   }
 }
-
+proc FormatStdToQuery { status priority class sensor time sid cid msg sip dip proto sp dp } {
+  return "[list $status $priority $sensor $time $sid $cid $msg $sip $dip $proto $sp $dp]"
+}
+proc GetCorrelatedEvents { socketID eid winName } {
+  global correlatedEventArray eventIDArray
+  if { [info exists eventIDArray] } {
+    SendSocket $socketID "InsertQueryResults $winName [eval FormatStdToQuery $eventIDArray($eid)]"
+  }
+  if { [info exists correlatedEventArray($eid)] } {
+    foreach row $correlatedEventArray($eid) {
+      SendSocket $socketID "InsertQueryResults $winName [eval FormatStdToQuery $row]"
+    } 
+  }
+}
+proc CorrelateEvent { srcip msg } {
+  global eventIDArray eventIDList eventIDCountArray
+  set MATCH 0
+  # Loop thru the RTEVENTS for a match on srcip msg
+  foreach rteid $eventIDList {
+    if { [lindex $eventIDArray($rteid) 8] == $srcip && [lindex $eventIDArray($rteid) 7] == $msg } {
+      # Have a match
+      set MATCH $rteid
+    }
+  }
+  return $MATCH
+}
 #
 # EventRcvd: Called by main when events are received.
 #
 proc EventRcvd { socketID data } {
-  global DEBUG EMAIL_EVENTS EMAIL_CLASSES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS
-  global acRules acCat
-  set eventDataList [lrange [split $data |] 1 end]
+  global DEBUG EMAIL_EVENTS EMAIL_CLASSES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS eventIDCountArray
+  global acRules acCat correlatedEventArray
+  set eventDataList [lrange [split $data |] 1 13]
   if { [lindex $eventDataList 2] == "system-info" } {
     if {$DEBUG} {
       puts "SYSTEM INFO: $eventDataList"
@@ -522,20 +548,32 @@ proc EventRcvd { socketID data } {
     }
     puts $socketID "CONFIRM [lindex $eventDataList 6]"
     flush $socketID
-    # I we don't have any auto-cat rules, or we don't match on
+    # If we don't have any auto-cat rules, or we don't match on
     # the autocat, then we send off the rule
     if { ![array exists acRules] || ![AutoCat $eventDataList] } {
-      AddEventToEventArray $eventDataList
-      SendEvent $eventDataList
-      if { $EMAIL_EVENTS } {
-        #Ug-ly. Things will get better when the rules are in the DB.
-        set sid [lindex $eventDataList 13]
-        set class [lindex $eventDataList 2]
-        if { ([lsearch -exact $EMAIL_CLASSES $class] >= 0\
-             && [lsearch -exact $EMAIL_DISABLE_SIDS $sid] < 0)
-             || [lsearch -exact $EMAIL_ENABLE_SIDS $sid] >= 0 } {
-          EmailEvent $eventDataList
+      # Correlation/aggregation checks here: CorrelateEvent sid aid SrcIP Message
+      set matchAID [ CorrelateEvent [lindex $eventDataList 8] [lindex $eventDataList 7] ]
+      if { $matchAID == 0 } {
+        AddEventToEventArray $eventDataList
+        SendEvent "$eventDataList 1"
+        if { $EMAIL_EVENTS } {
+          #Ug-ly. Things will get better when the rules are in the DB.
+          set sid [lindex $eventDataList 13]
+          set class [lindex $eventDataList 2]
+          if { ([lsearch -exact $EMAIL_CLASSES $class] >= 0\
+               && [lsearch -exact $EMAIL_DISABLE_SIDS $sid] < 0)
+               || [lsearch -exact $EMAIL_ENABLE_SIDS $sid] >= 0 } {
+            EmailEvent $eventDataList
+          }
         }
+      } else {
+        # Add event to parents list
+        lappend correlatedEventArray($matchAID) $eventDataList
+        # Bump the parents count
+        incr eventIDCountArray($matchAID)
+        # Send an update notice to clients
+        set sensorName [lindex $eventDataList 3]
+        SendIncrEvent $matchAID $sensorName $eventIDCountArray($matchAID) [lindex $eventDataList 1]
       }
     }
   }
@@ -609,6 +647,16 @@ proc SendEvent { eventDataList } {
     if {$DEBUG} { puts "No clients to send alert to." }
   }
 }
+proc SendIncrEvent { eid sensorName count priority} {
+  global DEBUG clientMonitorSockets
+  if { [info exists clientMonitorSockets($sensorName)] } {
+    foreach clientSocket $clientMonitorSockets($sensorName) {
+      catch {SendSocket $clientSocket "IncrEvent $eid $count $priority"} tmpError
+    }
+  } else {
+    if {$DEBUG} { puts "No clients to send msg to." }
+  }
+}
 proc SendSystemInfoMsg { sensor msg } {
   global clientList DEBUG
   if { [info exists clientList] && [llength $clientList] > 0 } {
@@ -623,8 +671,9 @@ proc SendSystemInfoMsg { sensor msg } {
 # AddEventToEventArray: Global eventIDArray contains current events.
 #
 proc AddEventToEventArray { eventDataList } {
-  global eventIDArray eventIDList sensorIDList
+  global eventIDArray eventIDList sensorIDList eventIDCountArray
   set eventID [join [lrange $eventDataList 5 6] .]
+  set eventIDCountArray($eventID) 1
   set sensorName [lindex $eventDataList 3]
   set eventIDArray($eventID) $eventDataList
   # Arrays are not kept in any particular order so we have to keep
@@ -634,9 +683,9 @@ proc AddEventToEventArray { eventDataList } {
 
 proc DeleteEventIDList { socketID data } {
   global eventIDArray eventIDList clientList escalateArray escalateIDList
-  global userIDArray
+  global userIDArray correlatedEventArray eventIDCountArray 
   
-  regexp {^(.*)::(.*)::(.*)$} $data allMatch status comment deleteEventIDList
+  regexp {^(.*)::(.*)::(.*)$} $data allMatch status comment eventID
   set count 0
   set updateTmp ""
   foreach socket $clientList {
@@ -647,42 +696,57 @@ proc DeleteEventIDList { socketID data } {
     # dealt with. 
     catch {SendSocket $socket "DeleteEventIDList $deleteEventIDList"} tmpError
   }
-  foreach eventID $deleteEventIDList {
-    if { [info exists escalateIDList] } {set escalateIDList [ldelete $escalateIDList $eventID]}
-    # If status == 2 then escalate
-    if {$status == 2} {
-      lappend escalateIDList $eventID
-      if [info exists eventIDArray($eventID)] {
-        set escalateArray($eventID) $eventIDArray($eventID)
+  set tmpSid [lindex [split $eventID .] 0]
+  set tmpCid [lindex [split $eventID .] 1]
+  # updateTmp contains the constraints of our UPDATE query
+  set updateTmp "(sid=$tmpSid AND cid=$tmpCid)"
+  if { [info exists escalateIDList] } {set escalateIDList [ldelete $escalateIDList $eventID]}
+  lappend tmpEidList $eventID
+  # loop through the parents array and add all the sids/cids to the UPDATE
+  if [info exists correlatedEventArray($eventID)] {
+    foreach row $correlatedEventArray($eventID) {
+      set tmpSid [lindex $row 5]
+      set tmpCid [lindex $row 6]
+      set updateTmp " $updateTmp (sid=$tmpSid AND cid=$tmpCid)"
+      if { [info exists escalateIDList] } {
+        set escalateIDList [ldelete $escalateIDList "$tmpSid.$tmpCid"]
+      }
+      # Tmp list of eids
+      lappend tmpEidList "$tmpSid.$tmpCid"
+    }
+  }
+  # If status == 2 then escalate
+  if {$status == 2} {
+    foreach tmpEid $tmpEidList {
+      lappend escalateIDList $tmpEid
+      if [info exists eventIDArray($tmpEid)] {
+        set escalateArray($tmpEid) $eventIDArray($tmpEid)
       } else {
-        set escalateArray($eventID) [FlatDBQuery\
+        set escalateArray($tmpEid) [FlatDBQuery\
          "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.sid=[lindex [split $eventID .] 0] AND event.cid=[lindex [split $eventID .] 1]"]
       }
       foreach socket $clientList {
-        catch {SendSocket $socket "InsertEscalatedEvent $escalateArray($eventID)"} tmpError
+        catch {SendSocket $socket "InsertEscalatedEvent $escalateArray($tmpEid)"} tmpError
       }
     }
-    if { [info exists eventIDArray($eventID)] } { unset eventIDArray($eventID) }
-    if [info exists eventIDList] {
-      set eventIDList [ldelete $eventIDList $eventID]
-    }
-    set splitID [split $eventID .]
-    set sid [lindex $splitID 0]
-    set cid [lindex $splitID 1]
-    if { $count < 1000 } {
-      set updateTmp "$updateTmp (sid=$sid AND cid=$cid)"
-    } else {
-      regsub -all {\) \(} $updateTmp {) OR (} whereTmp
-      UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $userIDArray($socketID) $status
-      set count 0
-      set updateTmp "(sid=$sid AND cid=$cid)"
-    }
-    # Update the history here
-    InsertHistory $sid $cid $userIDArray($socketID) [GetCurrentTimeStamp] $status $comment
-    incr count
   }
+  # Cleanup
+  if { [info exists eventIDArray($eventID)] } { unset eventIDArray($eventID) }
+  if { [info exists correlatedEventArray($eventID)] } { unset correlatedEventArray($eventID) }
+  if { [info exists eventIDCountArray($eventID)] } { unset eventIDCountArray($eventID) }
+  if [info exists eventIDList] {
+    set eventIDList [ldelete $eventIDList $eventID]
+  }
+  
+  # Finally we update the DB
   regsub -all {\) \(} $updateTmp {) OR (} whereTmp
   UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $userIDArray($socketID) $status
+  # Update the history here
+  foreach tmpEid $tmpEidList {
+    set tmpSid [lindex [split $tmpEid .] 0]
+    set tmpCid [lindex [split $tmpEid .] 1]
+    InsertHistory $tmpSid $tmpCid $userIDArray($socketID) [GetCurrentTimeStamp] $status $comment
+  } 
 }
 
 proc InsertHistory { sid cid uid timestamp status comment} {
@@ -1052,7 +1116,6 @@ proc ForkQueryd {} {
 	}
         set query [lindex $data 2]
         if {$DEBUG} {puts "Sending DB Query: $query"}
-	if {$DEBUG} {puts "Client Win Name is: $clientWinName"}
         set dbSocketID [eval $dbCmd]
         if [catch {mysqlsel $dbSocketID "$query" -list} selResults] {
           puts $outPipeID "$clientSocketID InfoMessage $selResults"
@@ -1330,7 +1393,7 @@ proc SendEscalatedEvents { socketID } {
 # SendCurrentEvents: Sends newly connected clients the current event list
 #
 proc SendCurrentEvents { socketID } {
-  global eventIDArray eventIDList DEBUG clientMonitorSockets
+  global eventIDArray eventIDList DEBUG clientMonitorSockets eventIDCountArray
   
   if { [info exists eventIDList] && [llength $eventIDList] > 0 } {
     foreach eventID $eventIDList {
@@ -1338,7 +1401,7 @@ proc SendCurrentEvents { socketID } {
       if { [info exists clientMonitorSockets($sensorName)] } {
         if { [lsearch -exact $clientMonitorSockets($sensorName) $socketID] >= 0} {
           if {$DEBUG} { puts "Sending client $socketID: InsertEvent $eventIDArray($eventID)" }
-          catch {SendSocket $socketID "InsertEvent $eventIDArray($eventID)"} tmpError
+          catch {SendSocket $socketID "InsertEvent $eventIDArray($eventID) $eventIDCountArray($eventID)"} tmpError
         }
       }
     }
@@ -1676,6 +1739,8 @@ if { [info exists EMAIL_EVENTS] && $EMAIL_EVENTS } {
 
 # Set the AUTOID before we get events.
 set AUTOID [GetUserID auto]
+# Initialize some vars
+set eventIDList ""
 
 if {$DEBUG} {
   puts "Querying DB for archived events..."
@@ -1684,8 +1749,15 @@ if {$DEBUG} {
 foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp ASC" -list] {
   if {$DEBUG} {puts "Archived Alert: $row"}
   if { ![array exists acRules] || ![AutoCat $row] } {
-    AddEventToEventArray $row
-    SendEvent $row
+    set matchAID [CorrelateEvent [lindex $row 8] [lindex $row 7]]
+    if { $matchAID == 0 } {
+      AddEventToEventArray $row
+    } else {
+      # Add event to parents list
+      lappend correlatedEventArray($matchAID) $row
+      # Bump the parents count
+      incr eventIDCountArray($matchAID)
+    }
   }
 }
 if {$DEBUG} {

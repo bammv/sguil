@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.106 2004/05/03 17:54:47 bamm Exp $ #
+# $Id: sguil.tk,v 1.107 2004/05/26 18:25:12 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -19,7 +19,7 @@ exec wish "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.4.0"
+set VERSION "SGUIL-0.4.1"
 
 # Load extended tcl
 if [catch {package require Tclx} tclxVersion] {
@@ -107,6 +107,7 @@ proc ServerCommandRcvd { socketID } {
    
     switch -exact -- $serverCmd {
       InsertEvent { $serverCmd $data1 }
+      IncrEvent { $serverCmd $data1 }
       InsertSystemInfoMsg { $serverCmd $index1 $data2 }
       InsertRuleData { $serverCmd $data1 }
       DeleteEventID { $serverCmd $data1 }
@@ -141,7 +142,8 @@ proc ServerCommandRcvd { socketID } {
 # Send PING/PONG every 60 secs to keep comms open thru pesky FWs.
 #
 proc HeartBeat {} {
-  SendToSguild "PING"
+  global CONNECTED
+  if {$CONNECTED} { SendToSguild "PING" }
   after 60000 HeartBeat
 }
 proc ConnectToSguild {} {
@@ -299,6 +301,7 @@ proc ValidateEvent { status {c_flag {0}} } {
     ErrorMessage "Not Connected to sguild. Cannot validate events at this time."
     return
   }
+  Working
   set eventComment none
   if {$ACTIVE_EVENT} {
      if { $status == 2 || $c_flag } {
@@ -309,22 +312,19 @@ proc ValidateEvent { status {c_flag {0}} } {
       [lsort -integer -decreasing [$currentSelectedPane.eventIDFrame.list curselection]] {
        # Get the eventID to be deleted
        set eventID [$currentSelectedPane.eventIDFrame.list get $selectedIndex]
-	lappend deleteEventIDList $eventID
        # Remove the selected line from the console
        DeleteLine $currentSelectedPane $selectedIndex
-       if { [info exists correlateArray($eventID)] } {
-         foreach event $correlateArray($eventID) {
-           if { [info exists eventArray($event)] } { unset eventArray($event) }
-           lappend deleteEventIDList $event
-         }
-         unset correlateArray($eventID)
-       } 
+       update 
+       lappend tmpDeletedEIDList $eventID
      }
-     update idletasks
-     if {$DEBUG} {
-       puts "Sending Server: DeleteEventIDList ${eventComment}::${status}::${deleteEventIDList}"
+     Idle
+     update
+     foreach tmpEID $tmpDeletedEIDList {
+       SendToSguild "DeleteEventIDList ${status}::${eventComment}::${tmpEID}"
+       if {$DEBUG} {
+         puts "Sending Server: DeleteEventIDList ${eventComment}::${status}::${tmpEID}"
+       }
      }
-     SendToSguild "DeleteEventIDList ${status}::${eventComment}::${deleteEventIDList}"
      if { [llength [$currentSelectedPane.eventIDFrame.list curselection]] > 1} {
 	 # puts "unslecting multiple events"
 	 UnHighLightListLine $currentSelectedPane
@@ -540,7 +540,7 @@ proc InsertEvent { eventData } {
   set insertPane [GetPaneNameByPriority $priority]
   set eventID [join [lrange $eventData 5 6] .]
   set status RT
-  set count 1
+  set count [lindex $eventData 13]
   set sensor [lindex $eventData 3]
   set dateTime [lindex $eventData 4]
   set message [lindex $eventData 7]
@@ -552,50 +552,30 @@ proc InsertEvent { eventData } {
   set statusColor [GetColorByPriority $priority]
   # Add event to eventArray
   set eventArray($eventID) $eventData
-  # Check to see if we can correlate this event with another based on srcIP and
-  # the signature matched.
-  if {![CorrelateEvent $insertPane $eventID $srcIP $message]} {
     DisplayEvent $insertPane $status $priority $count $sensor $dateTime $eventID $message\
      $srcIP $dstIP $proto $srcPort $dstPort $statusColor
     if {$SOUND} { Speak "Alert received from $sensor. $message" }
-  }
 }
-proc CorrelateEvent { paneName eventID srcIP message } {
-  global correlateArray ALTCOLORS
-  
-  set RETURN 0
-  set srcIPList [$paneName.srcIPFrame.list get 0 end]
-  set messageList [$paneName.msgFrame.list get 0 end]
-  # Loop thru the srcIPs for a match
-  set srcIPMatchIndex [lsearch -exact $srcIPList $srcIP]
-  while {$srcIPMatchIndex >= 0} {
-    if {[lindex $messageList $srcIPMatchIndex] == $message} {
-      set RETURN 1
-      set correlateID [$paneName.eventIDFrame.list get $srcIPMatchIndex]
-      lappend correlateArray($correlateID) $eventID
-      set eventCount [$paneName.countFrame.list get $srcIPMatchIndex]
-      incr eventCount
-
-      # Update the list
-      $paneName.countFrame.list delete $srcIPMatchIndex
-      $paneName.countFrame.list insert $srcIPMatchIndex $eventCount
-      if {$ALTCOLORS} {
-        set rowColor [lindex [$paneName.dstIPFrame.list itemconfigure $srcIPMatchIndex -background] 4]
-        $paneName.countFrame.list itemconfigure $srcIPMatchIndex -background $rowColor
-      }
-      # if the list index was selected, re-select it
-      if { [$paneName.eventIDFrame.list selection includes $srcIPMatchIndex] } { 
-	    $paneName.countFrame.list selection set $srcIPMatchIndex
-      }
-      break
+proc IncrEvent { data } {
+  global ALTCOLORS
+  set eid [lindex $data 0]
+  set count [lindex $data 1]
+  set paneName [GetPaneNameByPriority [lindex $data 2]]
+  set eidMatch [lsearch -exact [$paneName.eventIDFrame.list get 0 end] $eid]
+  if { $eidMatch >= 0 } {
+    # Change the count value the hard way
+    $paneName.countFrame.list delete $eidMatch
+    $paneName.countFrame.list insert $eidMatch $count
+    if {$ALTCOLORS} {
+      set rowColor [lindex [$paneName.dstIPFrame.list itemconfigure $eidMatch -background] 4]
+      $paneName.countFrame.list itemconfigure $eidMatch -background $rowColor
     }
-    set srcIPList [lreplace $srcIPList $srcIPMatchIndex $srcIPMatchIndex FILLER]
-    set srcIPMatchIndex [lsearch -exact $srcIPList $srcIP]
+    # if the list index was selected, re-select it
+    if { [$paneName.eventIDFrame.list selection includes $eidMatch] } { 
+      $paneName.countFrame.list selection set $eidMatch
+    }
   }
-  ScrollHome $paneName
-  return $RETURN
 }
-
 proc GetStatusNameByNumber { status } {
   switch -exact $status {
     1  { set statusName NA }
@@ -612,10 +592,10 @@ proc GetStatusNameByNumber { status } {
 }
 proc InsertQueryResults { paneName results } {
   set queryType [lindex [split [winfo name $paneName] _] 0]
-  if { $queryType == "query" } {
-    InsertEventQueryResults $paneName $results
-  } else {
+  if { $queryType == "ssnquery" || $queryType == "sancpquery" } {
     InsertSessionQueryResults $paneName $results
+  } else {
+    InsertEventQueryResults $paneName $results
   }
 }
 proc InsertEventQueryResults { paneName results } {
@@ -860,8 +840,9 @@ proc DisplayCorrelatedEvents { winName } {
   global ACTIVE_EVENT correlateArray eventTabs eventArray
   if {!$ACTIVE_EVENT} { return }
   set eventIndex [$winName curselection]
-  set eventID [[winfo parent [winfo parent $winName]].eventIDFrame.list get $eventIndex]
-  if { ![info exists correlateArray($eventID)] } {
+  set winParent [winfo parent [winfo parent $winName]]
+  set eventID [$winParent.eventIDFrame.list get $eventIndex]
+  if { [$winParent.countFrame.list get $eventIndex] == 1 } {
     tk_messageBox -type ok -icon warning -message\
      "$eventID has no correlated events."
     return
@@ -881,11 +862,9 @@ proc DisplayCorrelatedEvents { winName } {
   pack $closeButton $exportButton -side left -anchor w
   pack $buttonFrame -side top -anchor w
   pack $correlateFrame -side bottom
-  
-  eval DisplayEvent $correlateFrame RT [lindex $eventArray($eventID) 1] 1 [lrange $eventArray($eventID) 3 4] [join [lrange $eventArray($eventID) 5 6] . ] [lrange $eventArray($eventID) 7 12] [GetColorByPriority [lindex $eventArray($eventID) 1]]
-  foreach event $correlateArray($eventID) {
-    eval DisplayEvent $correlateFrame RT [lindex $eventArray($eventID) 1] 1 [lrange $eventArray($event) 3 4] [join [lrange $eventArray($event) 5 6] . ] [lrange $eventArray($event) 7 12] [GetColorByPriority [lindex $eventArray($event) 1]]
-  }
+
+  # Correlation/aggregation is done on the server now
+  SendToSguild "GetCorrelatedEvents $eventID $correlateFrame"
 }
 proc DeleteTab { eventTabs tabName } {
   global ACTIVE_EVENT currentSelectedPane
