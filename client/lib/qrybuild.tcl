@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.28 2005/01/25 18:12:11 shalligan Exp $ #
+# $Id: qrybuild.tcl,v 1.29 2005/01/26 15:53:08 shalligan Exp $ #
 proc QryBuild {tableSelected whereTmp } {
     global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList
@@ -401,12 +401,12 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
     
     # build the ip part of the query.  It will look the same no matter what table we are working with. 
     if { [$srcdstBox get] == "src" } {
-	set inserttext "(${SELECTEDTABLE}.src_ip > ${decNetwork} AND ${SELECTEDTABLE}.src_ip < ${decBcast}) "
+	set inserttext "${SELECTEDTABLE}.src_ip BETWEEN ${decNetwork} AND ${decBcast} "
     } elseif { [$srcdstBox get] == "dst" } {
-	set inserttext "(${SELECTEDTABLE}.dst_ip > ${decNetwork} AND ${SELECTEDTABLE}.dst_ip < ${decBcast}) "
+	set inserttext "${SELECTEDTABLE}.dst_ip BETWEEN ${decNetwork} AND ${decBcast} "
     } else {
-	set inserttext "((${SELECTEDTABLE}.dst_ip > ${decNetwork} AND ${SELECTEDTABLE}.dst_ip < ${decBcast}) \
-		OR (${SELECTEDTABLE}.src_ip > ${decNetwork} AND ${SELECTEDTABLE}.src_ip < ${decBcast})) "
+	set inserttext "(${SELECTEDTABLE}.dst_ip BETWEEN ${decNetwork} AND ${decBcast} \
+		OR ${SELECTEDTABLE}.src_ip BETWEEN ${decNetwork} AND ${decBcast}) "
     }
 
     # do something depending on who called us
