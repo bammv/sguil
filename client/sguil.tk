@@ -2,7 +2,6 @@
 # Run wish from users PATH \
 exec wish -f "$0" ${1+"$@"}
 package require Tclx
-#package require tcllib
 package require sha1
 
 

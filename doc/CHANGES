@@ -1,5 +1,17 @@
 CVS-HEAD
 
+  **** WARNING WARNING WARNING ****
+  * If you run CVS-HEAD, make sure*
+  * you recompile barnyard with   *
+  * the latest op_sguil.c. Other- *
+  * wise barnyard and sguild will *
+  * go Kaplooey.  Bammkkkk        *
+  **** WARNING WARNING WARNING ****
+
+  op_sguil
+    * Now makes a sustained connection to sguild rather vs.
+      a new connect for each event.
+
   sguil.tk
     * Fixed Mouse-Wheel scrolling in X and Windows (geek2)
 
@@ -24,7 +36,9 @@ CVS-HEAD
     * Added initial support for standard queries.
 
   sguild
-    * Alpha support for emailing events. 
+    * Sustained cnx with op_sguil (barnyard). 
+
+    * Support for emailing events. 
 
     * Proc SendSensorList now makes sure sensor.active=y.
 

@@ -72,6 +72,7 @@ typedef struct _SguilOpData
     int sensor_id;
     int options;
     char *sguild_host;
+    int sguild_sock;
     int sguild_port;
     int nospin;
     u_int32_t event_id;
@@ -99,7 +100,9 @@ char *sgdb_flavours[] = {NULL, "mysql", "postgres"};
 
 
 /*  P R O T O T Y P E S  ************************************************/
+int SguildConnect(SguilOpData *);
 int SguilSendEvent(SguilOpData *data, char *eventMsg);
+int read_line();
 int SguilOpSetup(OutputPlugin *, char *args);
 int SguilOpExit(OutputPlugin *);
 int SguilOpStart(OutputPlugin *, void *);
@@ -224,8 +227,13 @@ int SguilOpStart(OutputPlugin *outputPlugin, void *spool_header)
     if(data == NULL)
         FatalError("ERROR: Unable to find context for Sguil startup!\n");
 
+    /* Connect to sguild */
+    if(SguildConnect(data))
+      FatalError("SguilOp: Failed to connect to sguild: %s:%i\n",
+        data->sguild_host, data->sguild_port);
+
     /* Write a system-info message*/
-    sprintf(tmpMsg, "RTEvent |||system-info|%s||Barnyard started.||||||||", pv.hostname);
+    sprintf(tmpMsg, "RTEvent |||system-info|%s||Barnyard started.||||||||\n", pv.hostname);
     SguilSendEvent(data, tmpMsg);
     
     /* Connect to the database */
@@ -263,11 +271,11 @@ int SguilOpStart(OutputPlugin *outputPlugin, void *spool_header)
     }
     LogMessage("SguilOpStart Complete\n"); fflush(stdout);
 
-    sprintf(tmpMsg, "RTEvent |||system-info|%s||Database Server: %s.||||||||",
+    sprintf(tmpMsg, "RTEvent |||system-info|%s||Database Server: %s.||||||||\n",
 		   pv.hostname, data->server);
     SguilSendEvent(data, tmpMsg);
 
-    sprintf(tmpMsg, "RTEvent |||system-info|%s||Database Next CID: %i.||||||||",
+    sprintf(tmpMsg, "RTEvent |||system-info|%s||Database Next CID: %i.||||||||\n",
 		    pv.hostname, data->event_id);
     SguilSendEvent(data, tmpMsg);
     return 0;
@@ -479,7 +487,7 @@ int SguilOpLog(void *context, void *data)
 	    //sgEndTransaction(op_data);  /* XXX: Error Checking */
 	    ++op_data->event_id;
             /* Append the sig id and rev to the RT event */
-            snprintf(eventInfo, SYSLOG_BUF, "%u|%u|", sid->sid, sid->rev);
+            snprintf(eventInfo, SYSLOG_BUF, "%u|%u|\n", sid->sid, sid->rev);
             strcat(syslogMessage, eventInfo);
 	    /* Write to the network socket */
 	    SguilSendEvent(op_data, syslogMessage);
@@ -1041,68 +1049,162 @@ int PostgresInsert(, char *sql, unsigned int *row_id)
 #endif /* ENABLE_POSTGRES */
 
 
-/* SguilSendEvent() opens a network socket for sending RT
- * event messages to a sguild server. It's primitive code
- * but seems to work well. I heavily borrowed from some
- * online tutorials.  Bammkkkk
- *
+/* SguildConnect() opens a network socket to sguild for sending
+ * RT event messages.  Bammkkkk
 */
-int SguilSendEvent(SguilOpData *op_data, char *eventMsg)
+int SguildConnect(SguilOpData *op_data)
 {
 	int sockfd;
-        int spin = 1;
 	struct hostent *he;
 	struct sockaddr_in server_addr;
 
 	if ((he=gethostbyname(op_data->sguild_host)) == NULL)
-	{
-		FatalError("Cannot resolve hostname: %s\n", op_data->sguild_host);
-		return 1;
-	}
-
-	/* Spin until we can send the alert to sguild */
-        while(spin)
         {
-	        if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	        {
-
-		    LogMessage("Cannot open socket.\n");
-
-	        } else {
-
-	            server_addr.sin_family = AF_INET;
-	            server_addr.sin_port = htons(op_data->sguild_port);
-	            server_addr.sin_addr = *((struct in_addr *)he->h_addr);
-	            memset(&(server_addr.sin_zero), '\0', 8);
-
-    	            if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) < 0)
-	            {
-
-  	               perror("connect");
-		       LogMessage("Cannot connect to %s on TCP port %u.\n",
-	                op_data->sguild_host, op_data->sguild_port);
-                       close(sockfd);
-
-                    } else {
-
-
-	                if(send(sockfd, eventMsg, strlen(eventMsg) + 1, 0))
-	                {
-	                        LogMessage("Msg sent: %s\n", eventMsg);
-                                spin = 0;
-                        }
-	                close(sockfd);
-                    }
-               }
-               if(spin) 
-               {
-                   LogMessage("Failed to send event to sguild: %s\n", eventMsg);
-                   /* If the nospin option was set the we exit the loop here */
-                   if(op_data->nospin) break;
-                   LogMessage("Retrying in 15 secs.\n");
-                   if(BarnyardSleep(15)) break;
-               }
+                FatalError("Cannot resolve hostname: %s\n", op_data->sguild_host);
+                return 1;
         }
-	return 0;
+        
+        if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+        {
+ 
+            FatalError("Cannot open a local socket.\n");
+            return 1;
+ 
+        }
+
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_port = htons(op_data->sguild_port);
+        server_addr.sin_addr = *((struct in_addr *)he->h_addr);
+        memset(&(server_addr.sin_zero), '\0', 8);
+
+        if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) < 0)
+        {
+                                                                                                              
+           LogMessage("Cannot connect to %s on TCP port %u.\n",
+                op_data->sguild_host, op_data->sguild_port);
+           close(sockfd);
+           return 1;
+
+        } 
+
+        op_data->sguild_sock = sockfd;
+        return 0;
+
+}
+/* I love google. http://pont.net/socket/prog/tcpServer.c */
+int read_line(int newSd, char *line_to_return) {
+  
+  static int rcv_ptr=0;
+  static char rcv_msg[MAX_MSG_LEN];
+  static int n;
+  int offset;
+
+  offset=0;
+
+  while(1) {
+    if(rcv_ptr==0) {
+
+      memset(rcv_msg,0x0,MAX_MSG_LEN);
+      n = recv(newSd, rcv_msg, MAX_MSG_LEN, 0);
+      if (n<0) {
+	LogMessage("ERROR: Unable to read data.\n");
+	return 1;
+      } else if (n==0) {
+	LogMessage("ERROR: Connecton closed by client\n");
+	close(newSd);
+	return 1;
+      }
+    }
+  
+    /* if new data read on socket */
+    /* OR */
+    /* if another line is still in buffer */
+
+    /* copy line into 'line_to_return' */
+    while(*(rcv_msg+rcv_ptr)!=0x0A && rcv_ptr<n) {
+      memcpy(line_to_return+offset,rcv_msg+rcv_ptr,1);
+      offset++;
+      rcv_ptr++;
+    }
+    
+    /* end of line + end of buffer => return line */
+    if(rcv_ptr==n-1) { 
+      /* set last byte to END_LINE */
+      *(line_to_return+offset)=0x0A;
+      rcv_ptr=0;
+      return ++offset;
+    } 
+    
+    /* end of line but still some data in buffer => return line */
+    if(rcv_ptr <n-1) {
+      /* set last byte to END_LINE */
+      *(line_to_return+offset)=0x0A;
+      rcv_ptr++;
+      return ++offset;
+    }
+
+    /* end of buffer but line is not ended => */
+    /*  wait for more data to arrive on socket */
+    if(rcv_ptr == n) {
+      rcv_ptr = 0;
+    } 
+    
+  }
 }
 
+/* SguilSendEvent() sends the event via the open network socket.
+ * Bammkkkk
+*/
+int SguilSendEvent(SguilOpData *op_data, char *eventMsg)
+{
+
+     int schars;
+     char line[100];
+     
+
+     if((schars = send(op_data->sguild_sock, eventMsg, strlen(eventMsg) + 1, 0)) < 0)
+     {
+             LogMessage("ERROR! Couldn't send msg.\n");
+
+             /* ReConnect to sguild */
+             while(SguildConnect(op_data) == 1)
+             {
+                 if(op_data->nospin) return 0;
+                 LogMessage("ERROR: Couldn't reconnect. Will try again in 15 secs.\n");
+                 if (BarnyardSleep(15)) break;
+             }
+             LogMessage("Connected to %s.\n", op_data->sguild_host);
+             SguilSendEvent(op_data, eventMsg);
+
+     } else {
+
+             //LogMessage("Msg sent: %s", eventMsg);
+             //LogMessage("Chars sent: %i\n", schars);
+
+             memset(line, 0x0, 100);
+             if(read_line(op_data->sguild_sock, line) == 1)
+             {
+
+                 if (op_data->nospin == 0)
+                 {
+
+
+                    LogMessage("ERROR! Didn't receive confirmation. Trying to reconnect.\n");
+
+                    /* ReConnect to sguild */
+                    while(SguildConnect(op_data) == 1)
+                    {
+                        LogMessage("ERROR: Couldn't reconnect. Will try again in 15 secs.\n");
+                        if (BarnyardSleep(15)) break;
+                    }
+ 
+                    LogMessage("Connected to %s.\n", op_data->sguild_host);
+                    SguilSendEvent(op_data, eventMsg);
+
+                 }
+
+             }
+     }
+     return 0;
+     
+}

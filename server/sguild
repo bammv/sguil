@@ -332,13 +332,15 @@ proc ClientExitClose { socketID } {
 #
 # EventRcvd: Called by main when events are received.
 #
-proc EventRcvd { data } {
+proc EventRcvd { socketID data } {
   global DEBUG EMAIL_EVENTS EMAIL_CLASSES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS
   set eventDataList [lrange [split $data |] 1 end]
   if { [lindex $eventDataList 2] == "system-info" } {
     if {$DEBUG} {
       puts "SYSTEM INFO: $eventDataList"
     }
+    puts "$socketID : CONFIRM system msg"
+    puts $socketID "CONFIRM system msg"
     set sensorName [lindex $eventDataList 3]
     set message [lindex $eventDataList 5]
     SendSystemInfoMsg $sensorName $message
@@ -346,6 +348,9 @@ proc EventRcvd { data } {
     if {$DEBUG} {
       puts "Alert Received: $eventDataList"
     }
+    puts "$socketID : CONFIRM [lindex $eventDataList 6]"
+    puts $socketID "CONFIRM [lindex $eventDataList 6]"
+    flush $socketID
     AddEventToEventArray $eventDataList
     SendEvent $eventDataList
     if { $EMAIL_EVENTS } {
@@ -601,7 +606,7 @@ proc HandShake { socketID cmd } {
 proc SensorConnect { socketID IPAddr port } {
   global DEBUG
   if {$DEBUG} {puts "Connect from $IPAddr:$port $socketID"}
-  fconfigure $socketID -buffering line
+  fconfigure $socketID -buffering line -blocking 0
   fileevent $socketID readable [list SensorCmdRcvd $socketID]
 }
 proc GetSensorID { sensorName } {
@@ -727,13 +732,13 @@ proc SensorCmdRcvd { socketID } {
     set sensorCmd [ctoken tmpData " "]
     # set sensorCmd [lindex $data 0]
     switch -exact -- $sensorCmd {
-      RTEvent	{ EventRcvd $data }
+      RTEvent	{ EventRcvd $socketID $data }
       PSFile	{ RcvPortscanFile $socketID [lindex $data 1] }
       CONNECT   { SensorAgentConnect $socketID [lindex $data 1] }
       DiskReport { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
       SsnFile	{ RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] }
       PING	{ puts $socketID "PONG" }
-      default	{ puts "Sensor Cmd Unkown: $sensorCmd" }
+      default	{ puts "Sensor Cmd Unkown ($socketID): $sensorCmd" }
     }
   }
 }

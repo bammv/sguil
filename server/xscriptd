@@ -296,7 +296,7 @@ proc XscriptRequest { socketID sensor eventID timestamp srcIP srcPort dstIP dstP
     while { [gets $p0fID data] >= 0 } {
       puts $socketID "OS Fingerprint:\t$data"
     }
-    close $p0fID
+    catch {close $p0fID} closeError
   }
   puts $socketID "================================================================================="
   set tcpflowID [open "| $TCPFLOW -r $rawDataFile"]
