@@ -1,4 +1,4 @@
-# $Id: INSTALL.openbsd,v 1.5 2004/07/12 15:28:47 shalligan Exp $ #
+# $Id: INSTALL.openbsd,v 1.6 2004/09/17 20:41:01 shalligan Exp $ #
 <---------------------------------------------------------------------->
 
 **** Set up the Sguil Server ****
@@ -83,7 +83,7 @@
 		%
 
 6)  Install tcllib port
-	a) cd /usr/ports/deve/tcllib
+	a) cd /usr/ports/devel/tcllib
 	b) make
 	c) make install
 
