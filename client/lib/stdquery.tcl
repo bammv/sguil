@@ -117,6 +117,10 @@ proc AddStdUserQuery {} {
   
   set newQuery [UserQryWiz]
 }
+proc UpdateQryType { win } {
+  global TMP_QRY_TYPE
+  set TMP_QRY_TYPE [$win get]
+}
 proc UserQryWiz {} {
 
   set NEW_QUERY ""
@@ -128,7 +132,7 @@ proc UserQryWiz {} {
   wm geometry $win +[lindex $xy 0]+[lindex $xy 1]
   
   set frame1 [frame $win.frame1]
-  set typeWin [optionmenu $frame1.om -labeltext "Type:" -command "UpdateQryType $win.om"]
+  set typeWin [optionmenu $frame1.om -labeltext "Type:" -command "UpdateQryType $frame1.om"]
   $typeWin insert end event
   $typeWin insert end sessions
   set nameWin [entryfield $frame1.ef -labeltext "Name:" -labelpos w -width 20]
