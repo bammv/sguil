@@ -95,7 +95,6 @@ typedef struct _SguilOpData
 char *sgdb_flavours[] = {NULL, "mysql", "postgres"};
 
 /* Network socket defines */
-#define SGUILD_SERVER_PORT 7736
 #define MAX_MSG_LEN 100
 
 
@@ -1072,7 +1071,7 @@ int SguilSendEvent(SguilOpData *op_data, char *eventMsg)
 	        } else {
 
 	            server_addr.sin_family = AF_INET;
-	            server_addr.sin_port = htons(SGUILD_SERVER_PORT);
+	            server_addr.sin_port = htons(op_data->sguild_port);
 	            server_addr.sin_addr = *((struct in_addr *)he->h_addr);
 	            memset(&(server_addr.sin_zero), '\0', 8);
 
@@ -1081,7 +1080,7 @@ int SguilSendEvent(SguilOpData *op_data, char *eventMsg)
 
   	               perror("connect");
 		       LogMessage("Cannot connect to %s on TCP port %u.\n",
-	                op_data->sguild_host, SGUILD_SERVER_PORT);
+	                op_data->sguild_host, op_data->sguild_port);
                        close(sockfd);
 
                     } else {
