@@ -64,7 +64,11 @@ Sguild is a tcl script and I would recommend using tcl-8.3
 or better. I haven't had time to test lesser versions but
 they may work. 
 
-1) Sguild requires mysqltcl support and it can
+1) Make sure tcl is installed along wigh the extended (tclx)
+libs (http://tclx.sourceforge.net). Tclx is a common tcl
+extensions and packages can be found most OSs/distros.
+
+2) Sguild requires mysqltcl support and it can
 be downloaded from http://www.xdobry.de/mysqltcl/. Once
 installed, test that it can be loaded by invoking the tcl
 interpreter (ie /usr/bin/tcl or /usr/local/bin/tclsh8.3)
@@ -79,18 +83,18 @@ prior to the line:
   package require mysqltcl
 in order for the tcl/tk interpreter to find the package.)
 
-2) Edit sguild so the first line contains the correct path to
+3) Edit sguild so the first line contains the correct path to
 the tcl interpreter (ie #!/usr/bin/tcl or #!/usr/local/bin/tclsh8.3).
 
-3) Configure options within sguild.conf. Pay particular attention
+4) Configure options within sguild.conf. Pay particular attention
 to the PATH you define for sguild to look for snort rules.  In the
 future, rules will be localized in the DB, for now each rule file
 must be kept on the sguild server based on the hostname. Don't
 forget to copy these rule files over after installing the sensor.
 
-4) Add users to sguild.users file.
+5) Add users to sguild.users file.
 
-5) Start the daemon, it will send a query to the DB to get
+6) Start the daemon, it will send a query to the DB to get
 any archived alerts and then echo "Waiting for events from sensors."
 
 

@@ -22,7 +22,7 @@ set VERSION "sguil 0.2"
 proc DisplayUsage { cmdName } {
   puts "Usage: $cmdName -- -c <filename> -u <filename>"
   puts "  -c <filename>: PATH to the sguild config (sguild.conf) file."
-  puts "  -p <filename>: PATH to the sguild users (sguild.users) file."
+  puts "  -u <filename>: PATH to the sguild users (sguild.users) file."
   exit 1
 }
 proc CleanExit {} {
@@ -810,6 +810,8 @@ set validSockets ""
 
 # Load mysql support.
 package require mysqltcl
+# Load extended tcl
+package require Tclx
 
 # GetOpts
 set state flag
@@ -820,12 +822,12 @@ foreach arg $argv {
       switch -glob -- $arg {
         -- { set state flag }
         -c { set state conf }
-        -u { puts "got here"; set state users_file }
+        -u { set state users_file }
         default { DisplayUsage $argv0 }
       }
     }
     conf { set CONF_FILE $arg; set state flag }
-    users_file { puts "getting here";set USERS_FILE $arg; set state flag }
+    users_file { set USERS_FILE $arg; set state flag }
     default { DisplayUsage $argv0 }
   }
 }
