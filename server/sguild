@@ -412,10 +412,10 @@ proc EventRcvd { socketID data } {
     }
     puts $socketID "CONFIRM [lindex $eventDataList 6]"
     flush $socketID
-    AddEventToEventArray $eventDataList
     # I we don't have any auto-cat rules, or we don't match on
     # the autocat, then we send off the rule
     if { ![array exists acRules] || ![AutoCat $eventDataList] } {
+      AddEventToEventArray $eventDataList
       SendEvent $eventDataList
       if { $EMAIL_EVENTS } {
         #Ug-ly. Things will get better when the rules are in the DB.
