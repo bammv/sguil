@@ -1,4 +1,4 @@
-# $Id: SguildAutoCat.tcl,v 1.1 2004/10/05 15:23:20 bamm Exp $ #
+# $Id: SguildAutoCat.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $ #
 
 # Format for the autocat file is:
 # <erase time>||<sensorName>||<src_ip>||<src_port>||<dst_ip>||<dst_port>||<proto>||<sig msg>||<cat value>
@@ -25,15 +25,15 @@ proc LoadAutoCatFile { filename } {
 }
 
 proc RemoveAutoCatRule { rid } {
-  global acRules acCat DEBUG
-  if {$DEBUG} { puts "Removing Rule: $acRules($rid)" }
+  global acRules acCat
+  LogMessage "Removing Rule: $acRules($rid)"
   unset acRules($rid)
   unset acCat($rid)
 }
 
 proc AddAutoCatRule { line rid } {
-  global acRules acCat DEBUG
-  if {$DEBUG} {puts "Adding AutoCat Rule: $line"}
+  global acRules acCat
+  InfoMessage "Adding AutoCat Rule: $line"
   # dIndex are the indexes within each data line
   # that we want to look at.
   foreach dIndex [list 3 8 11 9 12 10 7] {
@@ -43,7 +43,7 @@ proc AddAutoCatRule { line rid } {
     if { $dIndex == 7 } {
         if [regsub "^%%REGEXP%%" $tmpVar "" regVar] {
             if [catch {regexp $regVar "XXTESTINGXX"} tmpError] {
-                puts "Bad regexp in autocat rule $rid Error: $tmpError dropping rule"
+                LogMessage "Bad regexp in autocat rule $rid Error: $tmpError dropping rule"
                 # Rm any parts from the rule
                 if { [info exists acRules($rid)] } { unset acRules($rid) }
                 return
@@ -60,7 +60,7 @@ proc AddAutoCatRule { line rid } {
 }
 
 proc AutoCat { data } {
-  global acRules acCat DEBUG AUTOID
+  global acRules acCat AUTOID
   foreach rid [array names acRules] {
     set MATCH 1
     foreach rule [lrange $acRules($rid) 0 end] {
@@ -91,7 +91,7 @@ proc AutoCat { data } {
         }
     }
     if { $MATCH } {
-      if {$DEBUG} {puts "AUTO MARKING EVENT AS : $acCat($rid)"}
+      InfoMessage "AUTO MARKING EVENT AS : $acCat($rid)"
       UpdateDBStatus "[lindex $data 5].[lindex $data 6]" [GetCurrentTimeStamp] $AUTOID $acCat($rid)
       InsertHistory [lindex $data 5] [lindex $data 6] $AUTOID [GetCurrentTimeStamp] $acCat($rid) "Auto Update"
       return 1

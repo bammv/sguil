@@ -1,7 +1,7 @@
-# $Id: SguildQueryd.tcl,v 1.1 2004/10/05 15:23:20 bamm Exp $ #
+# $Id: SguildQueryd.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $ #
 
 proc ForkQueryd {} {
-  global DEBUG mainWritePipe mainReadPipe
+  global mainWritePipe mainReadPipe
   # This pipe sends to queryd
   pipe queryReadPipe mainWritePipe
   # THis pipe lets queryd send back.
@@ -10,7 +10,6 @@ proc ForkQueryd {} {
   if {[set childPid [fork]] == 0 } {
     # We are the child now.
     proc mainCmdRcvd { inPipeID outPipeID } {
-      global DEBUG
       fconfigure $inPipeID -buffering line
       if { [eof $inPipeID] || [catch {gets $inPipeID data}] } {
         exit
@@ -25,7 +24,7 @@ proc ForkQueryd {} {
             set ClientCommand "InsertQueryResults"
         }
         set query [lindex $data 2]
-        if {$DEBUG} {puts "Sending DB Query: $query"}
+        InfoMessage "Sending DB Query: $query"
         set dbSocketID [eval $dbCmd]
         if [catch {mysqlsel $dbSocketID "$query" -list} selResults] {
           puts $outPipeID "$clientSocketID InfoMessage $selResults"
@@ -43,7 +42,7 @@ proc ForkQueryd {} {
       }
     }
     fileevent $queryReadPipe readable [list mainCmdRcvd $queryReadPipe $queryWritePipe]
-    if {$DEBUG} { puts "Queryd Forked" }
+    LogMessage "Queryd Forked"
   }
   return $childPid
 }

@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.2 2004/10/14 17:34:46 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.3 2004/10/18 15:28:20 shalligan Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -25,11 +25,11 @@ proc GetSensorID { sensorName } {
 }
 
 proc ExecDB { socketID query } {
-  global DBNAME DBUSER DBPASS DBPORT DBHOST DEBUG
+  global DBNAME DBUSER DBPASS DBPORT DBHOST
     if { [lindex $query 0] == "OPTIMIZE" } {
         SendSystemInfoMsg sguild "Table Optimization beginning, please stand by"
     }
-  if {$DEBUG} {puts "Sending DB Query: $query"}
+  InfoMessage "Sending DB Query: $query"
   if { $DBPASS == "" } {
       set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
   } else {
@@ -52,7 +52,7 @@ proc ExecDB { socketID query } {
 
 proc QueryDB { socketID clientWinName query } {
   global mainWritePipe
-  global DBNAME DBUSER DBPASS DBPORT DBHOST DEBUG
+  global DBNAME DBUSER DBPASS DBPORT DBHOST
                                                                                                      
   # Just pass the query to queryd.
   if { $DBPASS == "" } {
@@ -87,8 +87,7 @@ proc DBCommand { query } {
                                                                                                      
   # Connect to the DB
   if { [ catch {eval $dbCmd} dbSocketID ] } {
-    puts "ERROR Connecting to the DB: $dbSocketID"
-    CleanExit
+    ErrorMessage "ERROR Connecting to the DB: $dbSocketID"
   }
                                                                                                      
   if [catch {mysqlexec $dbSocketID $query} tmpError] {
@@ -125,3 +124,10 @@ proc UpdateDBStatus { eventID timestamp uid status } {
   set execResults [mysqlexec $dbSocketID $updateString]
   mysqlclose $dbSocketID
 }
+
+
+
+
+
+
+

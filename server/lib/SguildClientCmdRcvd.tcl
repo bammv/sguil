@@ -1,18 +1,18 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.2 2004/10/11 21:45:25 shalligan Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.3 2004/10/18 15:28:20 shalligan Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
 #
 proc ClientCmdRcvd { socketID } {
-  global DEBUG clientList validSockets GLOBAL_QRY_LIST REPORT_QRY_LIST
+  global clientList validSockets GLOBAL_QRY_LIST REPORT_QRY_LIST
                                                                                                             
   if { [eof $socketID] || [catch {gets $socketID data}] } {
     # Socket closed
     close $socketID
     ClientExitClose $socketID
-    if {$DEBUG} { puts "Socket $socketID closed" }
+    LogMessage "Socket $socketID closed" 
   } else {
-    if {$DEBUG} {puts "Clent Command Recieved: $data"}
+    InfoMessage "Client Command Recieved: $data"
     set origData $data
     set clientCmd [ctoken data " "]
     # Check to make the client validated itself
@@ -61,7 +61,7 @@ proc ClientCmdRcvd { socketID } {
       XscriptRequest { eval $clientCmd $socketID $data1 }
       EtherealRequest { eval $clientCmd $socketID $data1 }
       LoadNessusReports { $clientCmd $socketID $index1 $index2 $data3 }
-      default { if {$DEBUG} {puts "Unrecognized command from $socketID: $origData"} }
+      default { InfoMessage "Unrecognized command from $socketID: $origData" }
     }
   }
 }
@@ -144,18 +144,18 @@ proc SendDBInfo { socketID } {
 # use sig ids in the future.
 #
 proc RuleRequest { socketID sensor message } {
-  global RULESDIR DEBUG
+  global RULESDIR
                                                                                                             
   set RULEFOUND 0
   set ruleDir $RULESDIR/$sensor
   if { [file exists $ruleDir] } {
     foreach ruleFile [glob -nocomplain $ruleDir/*.rules] {
-      if {$DEBUG} {puts "Checking $ruleFile..."}
+      InfoMessage "Checking $ruleFile..."
       set ruleFileID [open $ruleFile r]
       while { [gets $ruleFileID data] >= 0 } {
         if { [string match "*$message*" $data] } {
           set RULEFOUND 1
-          if {$DEBUG} {puts "Matching rule found in $ruleFile."}
+          InfoMessage "Matching rule found in $ruleFile."
           break
         }
       }
@@ -173,7 +173,7 @@ proc RuleRequest { socketID sensor message } {
 }
 
 proc GetPSData { socketID timestamp srcIP MAX_PS_ROWS } {
-  global DBNAME DBUSER DBPASS DBPORT DBHOST DEBUG
+  global DBNAME DBUSER DBPASS DBPORT DBHOST
   if { $MAX_PS_ROWS == 0 } {
     set query\
     "SELECT * FROM portscan WHERE timestamp > '$timestamp' AND src_ip='$srcIP'"
@@ -181,7 +181,7 @@ proc GetPSData { socketID timestamp srcIP MAX_PS_ROWS } {
     set query\
     "SELECT * FROM portscan WHERE timestamp > '$timestamp' AND src_ip='$srcIP' LIMIT $MAX_PS_ROWS"
   }
-  if {$DEBUG} {puts "Getting PS data: $query"}
+  InfoMessage "Getting PS data: $query"
   if {$DBPASS == ""} {
     set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
   } else {
@@ -276,8 +276,8 @@ proc GetUdpData { socketID sid cid } {
 #                 now the client gets everything.
 #
 proc MonitorSensors { socketID sensorList } {
-  global DEBUG clientList clientMonitorSockets connectedAgents socketInfo sensorUsers
-  if {$DEBUG} {puts "$socketID added to clientList"}
+  global clientList clientMonitorSockets connectedAgents socketInfo sensorUsers
+  LogMessage "$socketID added to clientList"
   lappend clientList $socketID
   foreach sensorName $sensorList {
     lappend clientMonitorSockets($sensorName) $socketID
@@ -303,14 +303,14 @@ proc SendEscalatedEvents { socketID } {
 # SendCurrentEvents: Sends newly connected clients the current event list
 #
 proc SendCurrentEvents { socketID } {
-  global eventIDArray eventIDList DEBUG clientMonitorSockets eventIDCountArray
+  global eventIDArray eventIDList clientMonitorSockets eventIDCountArray
                                                                                                                        
   if { [info exists eventIDList] && [llength $eventIDList] > 0 } {
     foreach eventID $eventIDList {
       set sensorName [lindex $eventIDArray($eventID) 3]
       if { [info exists clientMonitorSockets($sensorName)] } {
         if { [lsearch -exact $clientMonitorSockets($sensorName) $socketID] >= 0} {
-          if {$DEBUG} { puts "Sending client $socketID: InsertEvent [lrange $eventIDArray($eventID) 0 12]" }
+          InfoMessage "Sending client $socketID: InsertEvent [lrange $eventIDArray($eventID) 0 12]" 
           catch {\
            SendSocket $socketID "InsertEvent [lrange $eventIDArray($eventID) 0 12] $eventIDCountArray($eventID)"\
           } tmpError
@@ -321,8 +321,8 @@ proc SendCurrentEvents { socketID } {
 }
 
 proc LoadNessusReports { socketID filename table bytes} {
-    global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe userIDArray
-    if {$DEBUG} {puts "Recieving nessus file $filename."}
+    global TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe userIDArray
+    InfoMessage "Recieving nessus file $filename."
     set NESSUS_OUTFILE $TMPDATADIR/$filename
     set outFileID [open $NESSUS_OUTFILE w]
     fconfigure $outFileID -translation binary
@@ -330,12 +330,11 @@ proc LoadNessusReports { socketID filename table bytes} {
     fcopy $socketID $outFileID -size $bytes
     close $outFileID
     fconfigure $socketID -encoding utf-8 -translation {auto crlf}
-    if {$DEBUG} {puts "Loading $filename into DB."}
+    InfoMessage "Loading $filename into DB."
     if { $table == "main" } {
 	set NESSUS_OUTFILE2 "$TMPDATADIR/tmp${filename}"
 	set outFileID [open $NESSUS_OUTFILE2 w]
 	set uid $userIDArray($socketID)
-	puts $uid
 	for_file line $NESSUS_OUTFILE {
 	    if {$line != ""} {
 		regsub {^\|\|} $line "||${uid}|" line
@@ -371,3 +370,5 @@ proc LoadNessusReports { socketID filename table bytes} {
     puts $loaderWritePipe [list $NESSUS_OUTFILE $cmd]
     flush $loaderWritePipe
 }
+
+

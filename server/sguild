@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.125 2004/10/05 15:23:20 bamm Exp $ #
+# $Id: sguild,v 1.126 2004/10/18 15:28:19 shalligan Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -53,16 +53,16 @@ proc CleanExit {} {
   global PID_FILE FORKD_PIDS
   if { [info exists PID_FILE] && [file exists $PID_FILE] } {
     if [catch {file delete -force $PID_FILE} delError] {
-      puts "ERROR: $delError"
+      puts " SGUILD: ERROR: $delError"
     }
   }
   if { [info exists FORKD_PIDS] } {
-    puts "killing child procs..."
+    puts "SGUILD: killing child procs..."
     foreach PID $FORKD_PIDS {
       kill $PID
     }
   }
-  puts "Exiting..."
+  puts "SGUILD: Exiting..."
   exit
 }
 
@@ -277,8 +277,9 @@ if { ![info exists USERS_FILE] } {
     if { [info exists ADDUSER] && $ADDUSER } {
       CreateUsersFile "/etc/sguild/sguil.users"
     } else {
-      puts "ERROR: Could not find a sguild.users file."
-      puts "       Checked in ./ and /etc/sguild/"
+      set DEBUG 2
+      LogMessage "ERROR: Could not find a sguild.users file."
+      LogMessage "       Checked in ./ and /etc/sguild/"
       DisplayUsage $argv0
     }
   }
@@ -287,7 +288,8 @@ if { ![info exists USERS_FILE] } {
     if { [info exists ADDUSER] && $ADDUSER } {
       CreateUsersFile $USERS_FILE
     } else {
-      puts "ERROR: $USERS_FILE does not exist"
+      set DEBUG 2
+      LogMessage "ERROR: $USERS_FILE does not exist"
       DisplayUsage $argv0
     }
   }
@@ -310,7 +312,8 @@ if { ![info exists ACCESS_FILE] } {
   } elseif { [file exists ./sguild.access] } {
     set ACCESS_FILE "./sguild.access"
   } else {
-    puts "ERROR: No sguild.access file found."
+    set DEBUG 2
+    LogMessage "ERROR: No sguild.access file found."
     DisplayUsage $argv0   
   }
 }
@@ -380,22 +383,21 @@ if { $DBPASS == "" } {
   set connectCmd "-host $DBHOST -user $DBUSER -port $DBPORT -password $DBPASS"
 }
 if [catch {eval mysqlconnect $connectCmd} dbSocketID] {
-  puts "ERROR: Unable to connect to $DBHOST on $DBPORT: Make sure mysql is running."
-  puts "$dbSocketID"
-  CleanExit
+  LogMessage "ERROR: Unable to connect to $DBHOST on $DBPORT: Make sure mysql is running."
+  ErrorMessage "$dbSocketID"
 }
 # See if the DB we want to use exists
 if { [catch {mysqluse $dbSocketID $DBNAME} noDBError] } {
-  puts "Error: $noDBError"
+  LogMessage "Error: $noDBError"
   # Create the DB or die.
   if {![CreateDB $DBNAME]} { CleanExit }
 }
 # Make sure we have a compatible DB version
 set currentDBVer [FlatDBQuery "SELECT version FROM version"]
 if { [lsearch $DB_VERSION $currentDBVer] < 0 } {
-  puts "ERROR: Incompatable DB schema.\nRequired Version: $DB_VERSION\nInstalled Version: $currentDBVer"
-  puts "Check the server/sql_scripts directory of the src that came with sguild for scripts to help you upgrade"
-  CleanExit
+  ErrorMessage "ERROR: Incompatable DB schema. Required Version: $DB_VERSION \
+    Installed Version: $currentDBVer Check the server/sql_scripts directory of \
+    the src that came with sguild for scripts to help you upgrade"
 }
 
 # If emailing of events is enabled, we need to make sure the libs are installed.
@@ -412,36 +414,53 @@ set AUTOID [GetUserID auto]
 # Initialize some vars
 set eventIDList ""
 
-if {$DEBUG} {
-  puts "Querying DB for archived events..."
-  puts "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp ASC"
-}
-foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp ASC" -list] {
-  if {$DEBUG} {puts "Archived Alert: $row"}
-  if { ![array exists acRules] || ![AutoCat $row] } {
-    set matchAID [CorrelateEvent [lindex $row 8] [lindex $row 7]]
-    if { $matchAID == 0 } {
-      AddEventToEventArray $row
-    } else {
-      # Add event to parents list
-      lappend correlatedEventArray($matchAID) $row
-      # Bump the parents count
-      incr eventIDCountArray($matchAID)
+LogMessage "Querying DB for archived events..."
+InfoMessage  "SELECT event.status, event.priority, event.class, sensor.hostname, \
+    event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), \
+    INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, \
+    sensor WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp ASC"
+
+foreach row [mysqlsel $dbSocketID "SELECT event.status, \
+    event.priority, event.class, sensor.hostname, event.timestamp, \
+    event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), \
+    INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, \
+    event.dst_port FROM event, sensor WHERE event.sid=sensor.sid \
+    AND event.status=0 ORDER BY event.timestamp ASC" -list] {
+  
+    InfoMessage "Archived Alert: $row"
+    if { ![array exists acRules] || ![AutoCat $row] } {
+	set matchAID [CorrelateEvent [lindex $row 8] [lindex $row 7]]
+	if { $matchAID == 0 } {
+	    AddEventToEventArray $row
+	} else {
+	    # Add event to parents list
+	    lappend correlatedEventArray($matchAID) $row
+	    # Bump the parents count
+	    incr eventIDCountArray($matchAID)
+	}
     }
-  }
 }
-if {$DEBUG} {
-  puts "Querying DB for escalated events..."
-  puts "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=2 ORDER BY event.timestamp ASC"
-}
-foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=2 ORDER BY event.timestamp ASC" -list] {
-  if {$DEBUG} {puts "Escalated Event: $row"}
-  set escalatedEventID "[lindex $row 5].[lindex $row 6]"
-  lappend escalateIDList $escalatedEventID
-  set escalateArray($escalatedEventID) $row
+
+LogMessage "Querying DB for escalated events..."
+InfoMessage "SELECT event.status, event.priority, event.class, \
+    sensor.hostname, event.timestamp, event.sid, event.cid, \
+    event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), \
+    event.ip_proto, event.src_port, event.dst_port FROM event, sensor \
+    WHERE event.sid=sensor.sid AND event.status=2 ORDER BY event.timestamp ASC"
+
+foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, \
+    event.class, sensor.hostname, event.timestamp, event.sid, event.cid, \
+    event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), \
+    event.ip_proto, event.src_port, event.dst_port FROM event, sensor \
+    WHERE event.sid=sensor.sid AND event.status=2 ORDER BY event.timestamp ASC" -list] {
+    
+    InfoMessage "Escalated Event: $row"
+    set escalatedEventID "[lindex $row 5].[lindex $row 6]"
+    lappend escalateIDList $escalatedEventID
+    set escalateArray($escalatedEventID) $row
 }
 # Get DB info (table names and column info)
-if {$DEBUG} { puts "Retrieving DB info..." }
+LogMessage "Retrieving DB info..." 
 set tableNameList [mysqlinfo $dbSocketID tables]
 foreach tableName $tableNameList {
   set tableArray($tableName) [mysqlcol $dbSocketID $tableName {name type length}]
@@ -458,8 +477,7 @@ if { [info exists BIND_CLIENT_IP_ADDR] && $BIND_CLIENT_IP_ADDR != "" } {
   set clientSocketCmd "socket -server ClientConnect $SERVERPORT"
 }
 if [catch {eval $clientSocketCmd} serverSocket] {
-  puts "ERROR: Couldn't open client socket: $serverSocket"
-  CleanExit
+  ErrorMessage "ERROR: Couldn't open client socket: $serverSocket"
 }
 # Open a socket for sensors to connect to
 if { [info exists BIND_SENSOR_IP_ADDR] && $BIND_SENSOR_IP_ADDR != "" } {
@@ -468,14 +486,15 @@ if { [info exists BIND_SENSOR_IP_ADDR] && $BIND_SENSOR_IP_ADDR != "" } {
   set sensorSocketCmd "socket -server SensorConnect $SENSORPORT"
 }
 if [catch {eval $sensorSocketCmd} sensorSocket] {
-  puts "ERROR: Couldn't open sensor socket: $sensorSocket"
-  CleanExit
+  ErrorMessage "ERROR: Couldn't open sensor socket: $sensorSocket"
 }
-puts "Sguild Initialized."
+LogMessage "Sguild Initialized."
 
 signal trap {HUP} HupTrapped
 signal trap {QUIT TERM} CleanExit
 
 # Infinite wait
 vwait FOREVER
+
+
 

@@ -1,22 +1,22 @@
-# $Id: SguildConnect.tcl,v 1.1 2004/10/05 15:23:20 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
 #
 proc ClientConnect { socketID IPAddr port } {
-  global DEBUG socketInfo VERSION
+  global socketInfo VERSION
   global OPENSSL KEY PEM
-  if {$DEBUG} {
-    puts "Client Connect: $IPAddr $port $socketID"
-  }
+
+  LogMessage "Client Connect: $IPAddr $port $socketID"
+  
   # Check the client access list
   if { ![ValidateClientAccess $IPAddr] } {
     SendSocket $socketID "Connection Refused."
     catch {close $socketID} tmpError
-    if {$DEBUG} { puts "Invalid access attempt from $IPAddr" }
+    LogMessage "Invalid access attempt from $IPAddr"
     return
   }
-  if {$DEBUG} { puts "Valid client access: $IPAddr" }
+  LogMessage "Valid client access: $IPAddr"
   set socketInfo($socketID) "$IPAddr $port"
   fconfigure $socketID -buffering line
   # Do version checks
@@ -24,14 +24,14 @@ proc ClientConnect { socketID IPAddr port } {
     return
   }
   if [catch {gets $socketID} clientVersion] {
-    if {$DEBUG} {puts "$ERROR: $clientVersion"}
+    LogMessage "$ERROR: $clientVersion"
     return
   }
   if { $clientVersion != $VERSION } {
     catch {close $socketID} tmpError
-    if {$DEBUG} {puts "ERROR: Client connect denied - mismatched versions" }
-    if {$DEBUG} {puts "CLIENT VERSION: $clientVersion" }
-    if {$DEBUG} {puts "SERVER VERSION: $VERSION" }
+    LogMessage "ERROR: Client connect denied - mismatched versions"
+    LogMessage "CLIENT VERSION: $clientVersion"
+    LogMessage "SERVER VERSION: $VERSION"
     ClientExitClose $socketID
     return
   }
@@ -44,16 +44,16 @@ proc ClientConnect { socketID IPAddr port } {
 }
 
 proc SensorConnect { socketID IPAddr port } {
-  global DEBUG
-  if {$DEBUG} {puts "Connect from $IPAddr:$port $socketID"}
+
+  LogMessage "Connect from $IPAddr:$port $socketID"
   # Check the client access list
   if { ![ValidateSensorAccess $IPAddr] } {
     SendSocket $socketID "Connection Refused."
     catch {close $socketID} tmpError
-    if {$DEBUG} { puts "Invalid access attempt from $IPAddr" }
+    LogMessage "Invalid access attempt from $IPAddr"
     return
   }
-  if {$DEBUG} { puts "ALLOWED" }
+  LogMessage "ALLOWED"
   fconfigure $socketID -buffering line -blocking 0
   fileevent $socketID readable [list SensorCmdRcvd $socketID]
 }
@@ -81,12 +81,14 @@ proc HandShake { socketID cmd } {
     close $socketID
     ClientExitClose socketID
   } elseif { [catch {tls::handshake $socketID} results] } {
-    puts "ERROR: $results"
+    LogMessage "ERROR: $results"
     close $socketID
     ClientExitClose socketID
   } elseif {$results == 1} {
-    puts "Handshake complete for $socketID"
+    InfoMessage "Handshake complete for $socketID"
     fileevent $socketID readable [list $cmd $socketID]
   }
 }
+
+
 

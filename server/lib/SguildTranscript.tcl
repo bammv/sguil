@@ -1,38 +1,32 @@
-# $Id: SguildTranscript.tcl,v 1.3 2004/10/14 18:33:06 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.4 2004/10/18 15:28:20 shalligan Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
-  global LOCAL_LOG_DIR DEBUG
+  global LOCAL_LOG_DIR
   # Check to make sure our dirs exists. We use <rootdir>/date/sensorName/*.raw
   if { ! [file exists $LOCAL_LOG_DIR] } {
     if { [catch { file mkdir $LOCAL_LOG_DIR } mkdirError] } {
-      # Problem creating LOCAL_LOG_DIR
-      if { $DEBUG } {
-        puts "Error: Unable to create $LOCAL_LOG_DIR for storing pcap data."
-        puts " $mkdirError"
-      }
-      return -code error $mkdirError
+	# Problem creating LOCAL_LOG_DIR
+        LogMessage "Error: Unable to create $LOCAL_LOG_DIR for storing pcap data. $mkdirError"
+	
+	return -code error $mkdirError
     }
   }
   set dateDir "$LOCAL_LOG_DIR/$date"
   if { ! [file exists $dateDir] } {
     if { [catch { file mkdir $dateDir } mkdirError] } {
-      # Problem creating dateDir
-      if { $DEBUG } {
-        puts "Error: Unable to create $dateDir for storing pcap data."
-        puts " $mkdirError"
-      }
-      return -code error $mkdirError
+	# Problem creating dateDir
+        LogMessage "Error: Unable to create $dateDir for storing pcap data.  $mkdirError"
+	
+	return -code error $mkdirError
     }
   }
   set sensorDir "$dateDir/$sensor"
   if { ![file exists $sensorDir] } {
     if { [catch { file mkdir $sensorDir }  mkdirError] } {
-      # Problem creating sensorDir
-      if { $DEBUG } {
-        puts "Error: Unable to create $sensorDir for storing pcap data."
-        puts " $mkdirError"
-      }
-      return -code error $mkdirError
+	# Problem creating sensorDir
+        LogMessage "Error: Unable to create $sensorDir for storing pcap data.  $mkdirError"
+	
+	return -code error $mkdirError
     }
   }
   # We always make the highest port the apparent source. This way we don't store
@@ -46,7 +40,7 @@ proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
 }
 
 proc EtherealRequest { socketID sensor timestamp srcIP srcPort dstIP dstPort ipProto force } {
-  global TRANS_ID transInfoArray DEBUG LOCAL_LOG_DIR
+  global TRANS_ID transInfoArray LOCAL_LOG_DIR
     # Increment the xscript counter. Gives us a unique way to track the xscript
   incr TRANS_ID
   set date [lindex $timestamp 0]
@@ -74,7 +68,7 @@ proc EtherealRequest { socketID sensor timestamp srcIP srcPort dstIP dstPort ipP
 }
 
 proc SendEtherealData { fileName TRANS_ID } {
-  global DEBUG transInfoArray
+  global transInfoArray
                                                                                                             
   set clientSocketID [lindex $transInfoArray($TRANS_ID) 0]
   #puts $clientSocketID "EtherealDataBase64 [file tail $fileName] [file size $fileName]"
@@ -87,7 +81,7 @@ proc SendEtherealData { fileName TRANS_ID } {
   fcopy $rFileID $clientSocketID
   fconfigure $clientSocketID -encoding utf-8 -translation {auto crlf}
   if { [catch {close $rFileId} tmpError] } {
-    if { $DEBUG } { puts "Error closing $filename: $tmpError" }
+    LogMessage "Error closing $filename: $tmpError"
   }
   # Old stuff if we need to revert back to Base64 file xfers (yuck)
   #sock12 null /snort_data/archive/2004-06-10/gateway ethereal gateway {2004-06-10 17:21:56}
@@ -102,7 +96,7 @@ proc SendEtherealData { fileName TRANS_ID } {
 }
 
 proc XscriptRequest { socketID sensor winID timestamp srcIP srcPort dstIP dstPort force } {
-  global TRANS_ID transInfoArray DEBUG LOCAL_LOG_DIR TCPFLOW
+  global TRANS_ID transInfoArray LOCAL_LOG_DIR TCPFLOW
   # If we don't have TCPFLOW then error to the user and return
   if { ![info exists TCPFLOW] || ![file exists $TCPFLOW] || ![file executable $TCPFLOW] } {
       SendSocket $socketID "ErrorMessage ERROR: tcpflow is not installed on the server."
@@ -145,35 +139,34 @@ proc XscriptRequest { socketID sensor winID timestamp srcIP srcPort dstIP dstPor
 }
 
 proc GetRawDataFromSensor { TRANS_ID sensor timestamp srcIP srcPort dstIP dstPort proto filename type } {
-  global agentSocket connectedAgents DEBUG transInfoArray
+  global agentSocket connectedAgents transInfoArray
   set RFLAG 1
   if { [array exists agentSocket] && [info exists agentSocket($sensor)]} {
-    set sensorSocketID $agentSocket($sensor)
-    if {$DEBUG} {
-      puts "Sending $sensor: RawDataRequest $TRANS_ID $sensor $timestamp $srcIP $dstIP $dstPort $proto $filename $type"
-    }
-    if { [catch { puts $sensorSocketID\
-         "[list RawDataRequest $TRANS_ID $sensor $timestamp $srcIP $dstIP $srcPort $dstPort $proto $filename $type]" }\
-          sendError] } {
-      catch { close $sensorSocketID } tmpError
-      CleanUpDisconnectedAgent $sensorSocketID
-      set RFLAG 0
-    }
-    flush $sensorSocketID
-    if { $type == "xscript" } {
-      SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
-       "XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] Raw data request sent to $sensor."
-    }
+      set sensorSocketID $agentSocket($sensor)
+      InfoMessage "Sending $sensor: RawDataRequest $TRANS_ID $sensor $timestamp $srcIP $dstIP $dstPort $proto $filename $type"
+
+      if { [catch { puts $sensorSocketID\
+	      "[list RawDataRequest $TRANS_ID $sensor $timestamp $srcIP $dstIP $srcPort $dstPort $proto $filename $type]" }\
+	      sendError] } {
+	  catch { close $sensorSocketID } tmpError
+	  CleanUpDisconnectedAgent $sensorSocketID
+	  set RFLAG 0
+      }
+      flush $sensorSocketID
+      if { $type == "xscript" } {
+	  SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
+		  "XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] Raw data request sent to $sensor."
+      }
   } else {
-    set RFLAG 0
+      set RFLAG 0
   }
   return $RFLAG
 }
 
 proc RawDataFile { socketID fileName TRANS_ID } {
-  global DEBUG agentSensorName transInfoArray
+  global agentSensorName transInfoArray
   set type [lindex $transInfoArray($TRANS_ID) 3]
-  if {$DEBUG} {puts "Recieving rawdata file $fileName."}
+  InfoMessage "Recieving rawdata file $fileName."
   if { $type == "xscript" } {
     SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
      "XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] Recieving raw file from sensor."
@@ -194,13 +187,13 @@ proc RawDataFile { socketID fileName TRANS_ID } {
 }
 
 proc XscriptDebugMsg { TRANS_ID msg } {
-  global DEBUG transInfoArray
+  global transInfoArray
   SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
      "XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] $msg"
 }
 
 proc GenerateXscript { fileName clientSocketID winName } {
-  global TRANS_ID transInfoArray TCPFLOW DEBUG LOCAL_LOG_DIR P0F P0F_PATH
+  global TRANS_ID transInfoArray TCPFLOW LOCAL_LOG_DIR P0F P0F_PATH
   set NODATAFLAG 1
   # We don't have a really good way for make xscripts yet and are unable
   # to figure out the true src. So we assume the low port was the server
@@ -234,7 +227,7 @@ proc GenerateXscript { fileName clientSocketID winName } {
   #SendSocket $clientSocketID "XscriptMainMsg $winName ================================================================================="
   SendSocket $clientSocketID "XscriptMainMsg $winName \n"
   if  [catch {open "| $TCPFLOW -c -r $fileName"} tcpflowID] {
-    if {$DEBUG} {puts "ERROR: tcpflow: $tcpflowID"}
+    LogMessage "ERROR: tcpflow: $tcpflowID"
     SendSocket $clientSocketID "XscriptDebugMsg $winName ERROR: tcpflow: $tcpflowID"
     catch {close $tcpflowID}
     return
@@ -266,4 +259,9 @@ proc TcpFlowFormat { srcIP srcPort dstIP dstPort } {
   set tmpData [eval format "%03i.%03i.%03i.%03i.%05i-%03i.%03i.%03i.%03i.%05i" $tmpSrcIP $srcPort $tmpDstIP $dstPort]
   return $tmpData
 }
+
+
+
+
+
 

@@ -1,13 +1,13 @@
-# $Id: SguildSendComms.tcl,v 1.1 2004/10/05 15:23:20 bamm Exp $ #
+# $Id: SguildSendComms.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $ #
 
 #
 # SendSocket: Send command to client
 #
 proc SendSocket { socketID command } {
-  global clientList DEBUG
-  if {$DEBUG} {puts "Sending $socketID: $command"}
+  global clientList
+  InfoMessage "Sending $socketID: $command"
   if { [catch {puts $socketID $command} sendError] } {
-    if {$DEBUG} { puts "Error sending \"$command\" to $socketID" }
+    LogMessage "Error sending \"$command\" to $socketID"
     catch { close $socketID } closeError
     # Remove socket from the client list
     ClientExitClose $socketID
@@ -20,35 +20,35 @@ proc SendSocket { socketID command } {
 # SendEvent: Send events to connected clients
 #
 proc SendEvent { eventDataList } {
-  global DEBUG clientMonitorSockets
+  global clientMonitorSockets
   set sensorName [lindex $eventDataList 3]
   if { [info exists clientMonitorSockets($sensorName)] } {
     foreach clientSocket $clientMonitorSockets($sensorName) {
       catch {SendSocket $clientSocket "InsertEvent $eventDataList"} tmpError
     }
   } else {
-    if {$DEBUG} { puts "No clients to send alert to." }
+    InfoMessage "No clients to send alert to."
   }
 }
 
 proc SendIncrEvent { eid sensorName count priority} {
-  global DEBUG clientMonitorSockets
+  global clientMonitorSockets
   if { [info exists clientMonitorSockets($sensorName)] } {
     foreach clientSocket $clientMonitorSockets($sensorName) {
       catch {SendSocket $clientSocket "IncrEvent $eid $count $priority"} tmpError
     }
   } else {
-    if {$DEBUG} { puts "No clients to send msg to." }
+    InfoMessage "No clients to send msg to."
   }
 }
 proc SendSystemInfoMsg { sensor msg } {
-  global clientList DEBUG
+  global clientList
   if { [info exists clientList] && [llength $clientList] > 0 } {
     foreach clientSocket $clientList {
       catch {SendSocket $clientSocket "InsertSystemInfoMsg $sensor $msg"} tmpError
     }
   } else {
-    if {$DEBUG} { puts "No clients to send info msg to." }
+    InfoMessage "No clients to send info msg to."
   }
 }
 

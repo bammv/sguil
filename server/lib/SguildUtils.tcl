@@ -1,8 +1,7 @@
-# $Id: SguildUtils.tcl,v 1.1 2004/10/05 15:23:20 bamm Exp $ #
+# $Id: SguildUtils.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $ #
 
 proc Daemonize {} {
-  global PID_FILE DEBUG
-  set DEBUG 0
+  global PID_FILE
   set childPID [fork]
   # Parent exits.
   if { $childPID == 0 } { exit }
@@ -12,8 +11,7 @@ proc Daemonize {} {
   if { ![info exists PID_FILE] } { set PID_FILE "/var/run/sguild.pid" }
   set PID_DIR [file dirname $PID_FILE]
   if { ![file exists $PID_DIR] || ![file isdirectory $PID_DIR] || ![file writable $PID_DIR] } {
-    puts "ERROR: Directory $PID_DIR does not exists or is not writable."
-    puts "Process ID will not be written to file."
+    LogMessage "ERROR: Directory $PID_DIR does not exists or is not writable. Process ID will not be written to file."
   } else {
     set pidFileID [open $PID_FILE w]
     puts $pidFileID $PID
@@ -22,11 +20,11 @@ proc Daemonize {} {
 }
 
 proc HupTrapped {} {
-  global DEBUG AUTOCAT_FILE GLOBAL_QRY_FILE GLOBAL_QRY_LIST clientList REPORT_QRY_FILE REPORT_QRY_LIST
+  global AUTOCAT_FILE GLOBAL_QRY_FILE GLOBAL_QRY_LIST clientList REPORT_QRY_FILE REPORT_QRY_LIST
   global acRules acCat ACCESS_FILE
-  if { $DEBUG } { puts "HUP signal caught." }
+  LogMessage "HUP signal caught."
   # Reload auto cat rules
-  if { $DEBUG } { puts "Reloading AutoCat rules: $AUTOCAT_FILE" }
+  InfoMessage "Reloading AutoCat rules: $AUTOCAT_FILE"
   # Clear the current rules
   if [info exists acRules] { unset acRules }
   if [info exists acCat] { unset acCat }
@@ -34,7 +32,7 @@ proc HupTrapped {} {
     LoadAutoCatFile $AUTOCAT_FILE
   }
   # reload global queries.
-  if { $DEBUG } { puts "Reloaded Global Queries: $GLOBAL_QRY_FILE" }
+  InfoMessage "Reloaded Global Queries: $GLOBAL_QRY_FILE"
   # Clear the current list
   set GLOBAL_QRY_LIST ""
   if { [file exists $GLOBAL_QRY_FILE] } {
@@ -113,3 +111,49 @@ proc LoadReportQueries { fileName } {
     #regsub -all {\n} $REPORT_QRY_LIST {} $REPORT_QRY_LIST
 }
 
+#  Puts an error to std_out or to syslog if in daemon
+#  mode and then calls CleanExit {}
+proc ErrorMessage { msg } {
+    global DAEMON
+    if {$DAEMON} {
+	Syslog $msg err
+    } else {
+	puts $msg
+    }
+    CleanExit
+}
+
+#  Puts a message to std_out or to syslog if in daemon
+#  mode only if debug == 2.  Use this for noisy less important
+#  messages
+proc InfoMessage { msg } {
+    global DEBUG DAEMON
+    if { $DEBUG > 1 } {
+	if { $DAEMON } {
+	    Syslog $msg info
+	} else {
+	    puts $msg
+	}
+    }
+}
+
+#  Puts a message to std_out or to syslog if in daemon
+#  mode only if debug >  0.  Use this for important messages
+#  that we don't need to die on.
+proc LogMessage { msg } {
+    global DEBUG DAEMON
+    if { $DEBUG > 0 } {
+	if { $DAEMON } {
+	    Syslog $msg notice
+	} else {
+	    puts $msg
+	}
+    }
+}
+
+#  Logs a message to syslog to the facility defined by the
+#  SyslogFacility conf option
+proc Syslog { msg level } {
+    global SYSLOGFACILITY
+    catch { exec logger -t "SGUILD" -p "$SYSLOGFACILITY.$level" $msg } logError
+}

@@ -1,24 +1,20 @@
-# $Id: SguildEvent.tcl,v 1.1 2004/10/05 15:23:20 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
 #
 proc EventRcvd { socketID data } {
-  global DEBUG EMAIL_EVENTS EMAIL_CLASSES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS eventIDCountArray
+  global EMAIL_EVENTS EMAIL_CLASSES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS eventIDCountArray
   global acRules acCat correlatedEventArray eventIDList
   set eventDataList [lrange [split $data |] 1 15]
   if { [lindex $eventDataList 2] == "system-info" } {
-    if {$DEBUG} {
-      puts "SYSTEM INFO: $eventDataList"
-    }
+    InfoMessage "SYSTEM INFO: $eventDataList"
     puts $socketID "CONFIRM system msg"
     set sensorName [lindex $eventDataList 3]
     set message [lindex $eventDataList 5]
     SendSystemInfoMsg $sensorName $message
   } else {
-    if {$DEBUG} {
-      puts "Alert Received: $eventDataList"
-    }
+    InfoMessage "Alert Received: $eventDataList"
     puts $socketID "CONFIRM [lindex $eventDataList 6]"
     flush $socketID
     # Make sure we don't have a dupe. If so, report an error and return.
@@ -26,9 +22,7 @@ proc EventRcvd { socketID data } {
     if { [lsearch $eventIDList $currentEventAID] >= 0 } {
       # Have a dupe. Could be b/c we just initialized and a sensor
       # was waiting to send us an alert that we pulled from the DB.
-      if {$DEBUG} {
-        puts "Non-fatal Error: recieved a duplicate alert. : $currentEventAID"
-      }
+      InfoMessage "Non-fatal Error: recieved a duplicate alert. : $currentEventAID"
       return
     }
     # If we don't have any auto-cat rules, or we don't match on
@@ -78,7 +72,6 @@ proc AddEventToEventArray { eventDataList } {
 }
 
 proc DeleteEventIDList { socketID data } {
-  global DEBUG
   global eventIDArray eventIDList clientList escalateArray escalateIDList
   global userIDArray correlatedEventArray eventIDCountArray
                                                                                                             
@@ -171,12 +164,11 @@ proc DeleteEventIDList { socketID data } {
   # meant to update
   if { $totalUpdates != $eidListSize } {
     catch {SendSocket $socketID "ErrorMessage ERROR: Some events may not have been updated. Event(s) may be missing from DB. See sguild output for more information."} tmpError
-    puts "ERROR: Number of updates mismatched number of events."
-    puts "       Number of EVENTS:  $eidListSize"
-    puts "       Number of UPDATES: $totalUpdates"
-    puts "       Update List: $tmpEidList"
+    LogMessage "ERROR: Number of updates mismatched number of events. \
+	    Number of EVENTS:  $eidListSize \
+	    Number of UPDATES: $totalUpdates Update List: $tmpEidList"
   } else {
-    if {$DEBUG} { puts "Updated $totalUpdates event(s)." }
+    InfoMessage "Updated $totalUpdates event(s)."
   }
   # Update the history here
   foreach tmpEid $tmpEidList {
@@ -224,5 +216,11 @@ proc CorrelateEvent { srcip msg } {
   }
   return $MATCH
 }
+
+
+
+
+
+
 
 

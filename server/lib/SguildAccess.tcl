@@ -1,9 +1,9 @@
-# $Id: SguildAccess.tcl,v 1.1 2004/10/05 15:23:20 bamm Exp $ #
+# $Id: SguildAccess.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $ #
 
 # Load up the access lists.
 proc LoadAccessFile { filename } {
-  global CLIENT_ACCESS_LIST SENSOR_ACCESS_LIST DEBUG
-  if {$DEBUG} { puts "Loading access list: $filename " }
+  global CLIENT_ACCESS_LIST SENSOR_ACCESS_LIST
+  LogMessage "Loading access list: $filename " 
   set CANYFLAG 0
   set SANYFLAG 0
   for_file line $filename {
@@ -14,9 +14,9 @@ proc LoadAccessFile { filename } {
         if { $ipaddr == "ANY" || $ipaddr == "any" } {
           set CANYFLAG 1
           set CLIENT_ACCESS_LIST ANY
-          if {$DEBUG} { puts "Client access list set to ALLOW ANY." }
+          InfoMessage "Client access list set to ALLOW ANY." 
         } else {
-          if {$DEBUG} { puts "Adding client to access list: $ipaddr" }
+          InfoMessage "Adding client to access list: $ipaddr"
           lappend CLIENT_ACCESS_LIST $ipaddr
         }
       } elseif { [regexp {^\s*sensor} $line] && $SANYFLAG != "1" } {
@@ -24,31 +24,29 @@ proc LoadAccessFile { filename } {
         if { $ipaddr == "ANY" || $ipaddr == "any" } {
           set SANYFLAG 1
           set SENSOR_ACCESS_LIST ANY
-          if {$DEBUG} { puts "Sensor access list set to ALLOW ANY." }
+          InfoMessage "Sensor access list set to ALLOW ANY." 
         } else {
-          if {$DEBUG} { puts "Adding sensor to access list: $ipaddr" }
+          InfoMessage "Adding sensor to access list: $ipaddr"
           lappend SENSOR_ACCESS_LIST $ipaddr
         }
       } else {
-        if {$DEBUG} { puts "ERROR: Parsing $filename: Format error: $line" }
+        LogMessage "ERROR: Parsing $filename: Format error: $line"
       }
     }
   }
   if {![info exists CLIENT_ACCESS_LIST] || $CLIENT_ACCESS_LIST == "" } {
-    puts "ERROR: No client access lists found in $filename."
-    CleanExit
+    ErrorMessage "ERROR: No client access lists found in $filename."
   }
   if {![info exists SENSOR_ACCESS_LIST] || $SENSOR_ACCESS_LIST == "" } {
-    puts "ERROR: No sensor access lists found in $filename."
-    CleanExit
+    ErrorMessage "ERROR: No sensor access lists found in $filename."
   }
                                                                                                                                                        
-  if {$DEBUG} { puts ": Done " }
+  LogMessage ": Done "
 }
 
 proc ValidateSensorAccess { ipaddr } {
-  global SENSOR_ACCESS_LIST DEBUG
-  if {$DEBUG} {puts -nonewline "Validating sensor access: $ipaddr : "}
+  global SENSOR_ACCESS_LIST
+  LogMessage "Validating sensor access: $ipaddr : "
   set RFLAG 0
   if { $SENSOR_ACCESS_LIST == "ANY" } {
     set RFLAG 1
@@ -58,8 +56,8 @@ proc ValidateSensorAccess { ipaddr } {
   return $RFLAG
 }
 proc ValidateClientAccess { ipaddr } {
-  global CLIENT_ACCESS_LIST DEBUG
-  if {$DEBUG} {puts "Validating client access: $ipaddr"}
+  global CLIENT_ACCESS_LIST
+  LogMessage "Validating client access: $ipaddr"
   set RFLAG 0
   if { $CLIENT_ACCESS_LIST == "ANY" } {
     set RFLAG 1
@@ -74,13 +72,11 @@ proc CreateUsersFile { fileName } {
   set dirName [file dirname $fileName]
   if { ![file exists $dirName] || ![file isdirectory $dirName] } {
     if [catch {file mkdir $dirName} dirError] {
-      puts "Error: Could not create $dirName: $dirError"
-      CleanExit
+      ErrorMessage "Error: Could not create $dirName: $dirError"
     }
   }
   if [catch {open $fileName w} fileID] {
-    puts "Error: Could not create $fileName: $fileID"
-    CleanExit
+    ErrorMessage "Error: Could not create $fileName: $fileID"
   } else {
     puts $fileID "#"
     puts $fileID "# WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
@@ -129,7 +125,7 @@ proc DelUser { userName USERS_FILE } {
 proc AddUser { userName USERS_FILE } {
   # Usernames must be alpha-numeric
   if { ![string is alnum $userName] } {
-    puts "ERROR: Unsername must be alpha-numeric"
+    puts "ERROR: Username must be alpha-numeric"
     return
   }
   # Make sure we aren't adding a dupe.
@@ -138,7 +134,7 @@ proc AddUser { userName USERS_FILE } {
     if { ![regexp ^# $line] && ![regexp ^$ $line] } {
       # User file is boobie deliminated
       if { $userName == [ctoken line "(.)(.)"] } {
-        puts "ERROR: User \'$userName\' already exists in $USERS_FILE."
+	puts "ERROR: User \'$userName\' already exists in $USERS_FILE."
         return
       }
     }
@@ -174,8 +170,7 @@ proc ValidateUser { socketID username } {
   fileevent $socketID readable {}
   fconfigure $socketID -buffering line
   if { ![file exists $USERS_FILE] } {
-    puts "Fatal Error! Cannot access $USERS_FILE."
-    CleanExit
+    ErrorMessage "Fatal Error! Cannot access $USERS_FILE."
   }
   set VALID 0
   set nonce [format "%c%c%c" [GetRandAlphaNumInt] [GetRandAlphaNumInt] [GetRandAlphaNumInt] ]
@@ -220,4 +215,9 @@ proc ValidateUser { socketID username } {
   }
   fileevent $socketID readable [list ClientCmdRcvd $socketID]
 }
+
+
+
+
+
 

@@ -1,16 +1,16 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.2 2004/10/07 19:36:15 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.3 2004/10/18 15:28:20 shalligan Exp $ #
 
 proc SensorCmdRcvd { socketID } {
-  global DEBUG connectedAgents agentSensorName
+  global connectedAgents agentSensorName
   if { [eof $socketID] || [catch {gets $socketID data}] } {
     # Socket closed
     catch { close $socketID } closeError
-    if {$DEBUG} { puts "Socket $socketID closed" }
+    InfoMessage "Socket $socketID closed"
     if { [info exists connectedAgents] && [info exists agentSensorName($socketID)] } {
       CleanUpDisconnectedAgent $socketID
     }
   } else {
-    if {$DEBUG} { puts "Sensor Data Rcvd: $data" }
+    InfoMessage "Sensor Data Rcvd: $data"
     # note that ctoken changes the string that it is operating on
     # so instead of re-writing all of the proc to move up one in
     # the index when looking at $data, I wrote $data to $tmpData
@@ -28,15 +28,15 @@ proc SensorCmdRcvd { socketID } {
       PING      { puts $socketID "PONG"; flush $socketID }
       XscriptDebugMsg { $sensorCmd [lindex $data 1] [lindex $data 2] }
       RawDataFile { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
-      default   { if {$DEBUG} {puts "Sensor Cmd Unkown ($socketID): $sensorCmd"} }
+      default   { LogMessage "Sensor Cmd Unkown ($socketID): $sensorCmd" }
     }
   }
 }
 
 proc RcvSsnFile { socketID tableName fileName sensorName } {
-  global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe
+  global TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe
   set sensorID [GetSensorID $sensorName]
-  if {$DEBUG} {puts "Receiving session file $fileName."}
+  InfoMessage "Receiving session file $fileName."
   fconfigure $socketID -translation binary
   set DB_OUTFILE $TMPDATADIR/$fileName
   set fileID [open $DB_OUTFILE w]
@@ -44,11 +44,9 @@ proc RcvSsnFile { socketID tableName fileName sensorName } {
   close $fileID
   close $socketID
   if {$sensorID == 0} {
-    if {$DEBUG} {
-      puts "ERROR: $sensorName is not in DB!!"
-    }
-    SendSystemInfoMsg sguild "ERROR: Received session file from unkown sensor - $sensorName"
-    return
+      LogMessage "ERROR: $sensorName is not in DB!!"
+      SendSystemInfoMsg sguild "ERROR: Received session file from unkown sensor - $sensorName"
+      return
   }
   set inFileID [open $DB_OUTFILE r]
   set outFileID [open $DB_OUTFILE.tmp w]
@@ -64,7 +62,7 @@ proc RcvSsnFile { socketID tableName fileName sensorName } {
   close $outFileID
   file delete $DB_OUTFILE
                                                                                                                                    
-  if {$DEBUG} {puts "Loading $i cnxs from $fileName into $tableName."}
+  InfoMessage "Loading $i cnxs from $fileName into $tableName."
   if {$DBPASS != "" } {
     set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
      -e \"LOAD DATA LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE $tableName FIELDS TERMINATED\
@@ -80,15 +78,15 @@ proc RcvSsnFile { socketID tableName fileName sensorName } {
 }
 
 proc RcvPortscanFile { socketID fileName } {
-  global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe
-  if {$DEBUG} {puts "Recieving portscan file $fileName."}
+  global TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe
+  InfoMessage "Recieving portscan file $fileName."
   fconfigure $socketID -translation binary
   set PS_OUTFILE $TMPDATADIR/$fileName
   set fileID [open $PS_OUTFILE w]
   fcopy $socketID $fileID
   close $fileID
   close $socketID
-  if {$DEBUG} {puts "Loading $fileName into DB."}
+  InfoMessage "Loading $fileName into DB."
   if {$DBPASS != "" } {
     set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
      -e \"LOAD DATA LOCAL INFILE '$PS_OUTFILE' INTO TABLE portscan FIELDS TERMINATED\
@@ -107,4 +105,10 @@ proc DiskReport { socketID fileSystem percentage } {
   global agentSensorName
   SendSystemInfoMsg $agentSensorName($socketID) "$fileSystem $percentage"
 }
+
+
+
+
+
+
 
