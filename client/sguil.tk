@@ -2157,10 +2157,6 @@ proc GetXscript { type force } {
   set srcPort [$winParents.srcPortFrame.list get $eventIndex]
   set dstIP [$winParents.dstIPFrame.list get $eventIndex]
   set dstPort [$winParents.dstPortFrame.list get $eventIndex]
-  if { $proto == "1" } {
-      set srcPort 88888
-      set dstPort 88888
-  }
   set xscriptWinName ".${sensor}_${cnxID}"
   if [catch {set socketID [socket $SERVERHOST $XSCRIPT_SERVER_PORT]}] {
     if {$DEBUG} {puts "Unable to connect to xscript server $SERVERHOST on port $XSCRIPT_SERVER_PORT."}
@@ -2182,19 +2178,23 @@ proc GetXscript { type force } {
       puts $socketID "XscriptRequest $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
       
     } elseif { $type == "ethereal" } {
-      if { $srcPort > $dstPort } {
-        set tmpFile "/tmp/${dstIP}_${dstPort}-${srcIP}_${srcPort}.raw"
+      if { $proto != "1" } {
+        if { $srcPort > $dstPort } {
+          set tmpFile "/tmp/${dstIP}_${dstPort}-${srcIP}_${srcPort}-${proto}.raw"
+        } else {
+          set tmpFile "/tmp/${srcIP}_${srcPort}-${dstIP}_${dstPort}-${proto}.raw"
+        }
       } else {
-        set tmpFile "/tmp/${srcIP}_${srcPort}-${dstIP}_${dstPort}.raw"
+        set tmpFile "/tmp/${srcIP}_${dstIP}-${proto}.raw"
       }
       set tmpFileID [open $tmpFile w]
       fconfigure $tmpFileID -translation binary
       fconfigure $socketID -translation binary
       fileevent $socketID readable [list CopyRawData $socketID $tmpFileID $tmpFile]
       if {$DEBUG} {
-        puts "Ethereal Request sent: $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
+        puts "Ethereal Request sent: $sensor $xscriptWinName \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
       }
-      puts $socketID "EtherealRequest $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
+      puts $socketID "EtherealRequest $sensor $xscriptWinName \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
       flush $socketID
     }
   }
