@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.4 2005/03/03 21:07:45 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.5 2005/03/04 22:19:02 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -67,8 +67,26 @@ proc SensorAgentInit { socketID sensorName } {
     set agentSensorName($socketID) $sensorName
     set sensorID [GetSensorID $sensorName]
 
-    SendSystemInfoMsg $sensorName "Agent connected."
+    if { $sensorID == "" } {
 
+        LogMessage "New sensor. Adding sensor $sensorName to the DB."
+        # We have a new sensor
+        set sensorName $agentSensorName($socketID)
+
+        set tmpQuery "INSERT INTO sensor (hostname) VALUES ('$sensorName')"
+
+        if [catch {SafeMysqlExec $tmpQuery} tmpError] {
+            # Insert failed
+            ErrorMessage "ERROR from mysqld: $tmpError :\nQuery => $tmpQuery"
+            ErrorMessage "ERROR: Unable to add new sensors."
+            return
+        }
+
+        set sensorID [GetSensorID $sensorName]
+
+    }
+
+    SendSystemInfoMsg $sensorName "Agent connected."
     SendSensorAgent $socketID [list SensorID $sensorID]
 
 }

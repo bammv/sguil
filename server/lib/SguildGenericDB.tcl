@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.6 2005/03/03 21:07:45 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.7 2005/03/04 22:19:02 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -19,9 +19,12 @@ proc InsertHistory { sid cid uid timestamp status comment} {
 }
                                                                                                      
 proc GetSensorID { sensorName } {
-  # For now we query the DB everytime we need the sid.
-  set sid [FlatDBQuery "SELECT sid FROM sensor WHERE hostname='$sensorName'"]
-  return $sid
+
+    # For now we query the DB everytime we need the sid.
+    set sid [FlatDBQuery "SELECT sid FROM sensor WHERE hostname='$sensorName'"]
+
+    return $sid
+
 }
 
 proc GetMaxCid { sid } {

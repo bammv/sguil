@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.141 2005/03/03 21:07:44 bamm Exp $ #
+# $Id: sguild,v 1.142 2005/03/04 22:18:51 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -417,19 +417,7 @@ if { [file exists $REPORT_QRY_FILE] } {
 if {[info exists DAEMON_CONF_OVERRIDE] && $DAEMON_CONF_OVERRIDE} { set DAEMON 1}
 if {$DAEMON} { Daemonize }
 
-# Fork a child to load PS/SSN info
-set childPid [ForkLoader]
-if { $childPid == 0 } { vwait LOADER }
-lappend FORKD_PIDS $childPid
-
-# Fork a child to handle queries
-set childPid [ForkQueryd]
-if { $childPid == 0 } { vwait QUERYD }
-lappend FORKD_PIDS $childPid
-fileevent $mainReadPipe readable [list QuerydCmdRcvd $mainReadPipe]
-fconfigure $mainReadPipe -buffering line
-
-# Get archived alerts from the DB
+# Check and initialize the DB
 if { $DBPASS == "" } {
   set connectCmd "-host $DBHOST -user $DBUSER -port $DBPORT"
 } else {
@@ -453,6 +441,21 @@ if { [lsearch $DB_VERSION $currentDBVer] < 0 } {
     the src that came with sguild for scripts to help you upgrade"
 }
 
+mysqlclose $MAIN_DB_SOCKETID
+# End DB checks
+
+# Fork a child to load PS/SSN info
+set childPid [ForkLoader]
+if { $childPid == 0 } { vwait LOADER }
+lappend FORKD_PIDS $childPid
+
+# Fork a child to handle queries
+set childPid [ForkQueryd]
+if { $childPid == 0 } { vwait QUERYD }
+lappend FORKD_PIDS $childPid
+fileevent $mainReadPipe readable [list QuerydCmdRcvd $mainReadPipe]
+fconfigure $mainReadPipe -buffering line
+
 # If emailing of events is enabled, we need to make sure the libs are installed.
 if { [info exists EMAIL_EVENTS] && $EMAIL_EVENTS } {
     package require mime
@@ -471,6 +474,16 @@ set AUTOID [GetUserID auto]
 # Initialize some vars
 set eventIDList ""
 
+# Open the main connection the the DB back up.
+if [catch {eval mysqlconnect $connectCmd} MAIN_DB_SOCKETID] {
+  LogMessage "ERROR: Unable to connect to $DBHOST on $DBPORT: Make sure mysql is running."
+  ErrorMessage "$MAIN_DB_SOCKETID"
+}
+if { [catch {mysqluse $MAIN_DB_SOCKETID $DBNAME} noDBError] } {
+  ErrorMessage "Error: $noDBError"
+}
+
+# Get the archived alerts
 LogMessage "Querying DB for archived events..."
 InfoMessage  "SELECT event.status, event.priority, event.class, sensor.hostname, \
     event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), \

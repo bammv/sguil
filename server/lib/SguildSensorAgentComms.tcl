@@ -12,6 +12,12 @@ proc SendSensorAgent { socketID msg } {
 proc AgentLastCidReq { socketID req_socketID sid } {
 
     set maxCid [GetMaxCid $sid]
+
+    if { $maxCid == "{}" } {
+        # New sensor
+        set maxCid 0
+    }
+
     SendSensorAgent $socketID [list LastCidResults $req_socketID $maxCid]
 
 }

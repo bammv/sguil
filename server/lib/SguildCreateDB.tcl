@@ -1,7 +1,7 @@
-# $Id: SguildCreateDB.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $
+# $Id: SguildCreateDB.tcl,v 1.3 2005/03/04 22:19:02 bamm Exp $
 
 proc CreateDB { DBNAME } {
-  global dbSocketID
+  global MAIN_DB_SOCKETID
   puts -nonewline "The database $DBNAME does not exist. Create it (\[y\]/n)?: "
   flush stdout
   set answer [gets stdin]
@@ -17,11 +17,11 @@ proc CreateDB { DBNAME } {
     return 0
   }
   puts -nonewline "Creating the DB $DBNAME..."
-  if [ catch {mysqlexec $dbSocketID "CREATE DATABASE $DBNAME"} createDBError] {
+  if [ catch {mysqlexec $MAIN_DB_SOCKETID "CREATE DATABASE $DBNAME"} createDBError] {
     puts $createDBError
     return 0
   }
-  mysqluse $dbSocketID $DBNAME
+  mysqluse $MAIN_DB_SOCKETID $DBNAME
   puts "Okay."
   if [catch {set fileID [open $fileName r]} openFileError] {
     puts $openFileError
@@ -35,7 +35,7 @@ proc CreateDB { DBNAME } {
       if { [regexp {(^.*);\s*$} $line match data] } {
         lappend mysqlCmd $data
         #puts "CMD: [join $mysqlCmd]"
-        mysqlexec $dbSocketID [join $mysqlCmd]
+        mysqlexec $MAIN_DB_SOCKETID [join $mysqlCmd]
         set mysqlCmd ""
       } else {
         lappend mysqlCmd $line
