@@ -1,10 +1,19 @@
 #!/bin/sh
 # Run wish from users PATH \
 exec wish "$0" "$@"
-package require Tclx
-package require sha1
 
-
+# Load extended tcl
+if [catch {package require Tclx} tclxVersion] {
+  puts "ERROR: The tclx extension does NOT appear to be installed on this sysem."
+  puts "Extended tcl (tclx) is available as a port/package for most linux and BSD systems."
+  exit
+}
+# Load sha1 from tcllib
+if [catch {package require sha1} sha1Version] {
+  puts "ERROR: The sha1 package does NOT appear to be installed on this sysem."
+  puts "The sha1 package is part of the tcllib extension. A port/package is available for most linux and BSD systems."
+  exit
+}
 
 ####################################################################
 # Snort GUI for Lamerz [sguil] - A tcl/tk interface to snort       #
@@ -2901,7 +2910,13 @@ option add *selectForeground $SELECTFOREGROUND
 
 
 # Load iwidgets and namespaces
-package require Iwidgets
+if [catch {package require Iwidgets} iwidgetsVersion] {
+  puts "ERROR: Cannot fine the Iwidgets extension."
+  puts "The iwidgets package is part of the incr tcl extension and is"
+  puts "available as a port/package most systems."
+  puts "See http://www.tcltk.com/iwidgets/ for more info."
+  exit
+}
 namespace import -force iwidgets::panedwindow
 namespace import -force iwidgets::tabnotebook
 namespace import -force iwidgets::scrolledtext
