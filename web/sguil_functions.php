@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.27 2004/04/05 14:29:30 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.28 2004/04/05 17:05:30 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -20,12 +20,12 @@ function DBOpen() {
 	$conn = mysql_connect($dbhost, $dbuser, $dbpass);
 
 	if (!$conn) {
-	   echo "Unable to connect to DB: " . mysql_error();
+	   print("Unable to connect to DB: " . mysql_error());
 	   exit;
 	}
   
 	if (!mysql_select_db($dbname)) {
-	   echo "Unable to select " . $dbname . ": " . mysql_error();
+	   print("Unable to select " . $dbname . ": " . mysql_error());
 	   exit;
 	}
 }
@@ -82,7 +82,7 @@ function show_alerts( $where_query, $aggregate_result ) {
 	$result = mysql_query(str_replace("\\","",$sql));
 
 	if (!$result) {
-   	echo "Could not successfully run query (" .$sql . ") from DB: " . mysql_error();
+   	print("Could not successfully run query (" .$sql . ") from DB: " . mysql_error());
    	exit;
 	}
 
@@ -253,7 +253,7 @@ function show_sessions( $where_query ) {
 	$result = mysql_query($sql);
 
 	if (!$result) {
-   	echo "Could not successfully run query ($sql) from DB: " . mysql_error();
+   	printf("Could not successfully run query ($sql) from DB: " . mysql_error());
    	exit;
 	}
 
@@ -318,7 +318,7 @@ function alert_details_ip($sid,$cid) {
 	$result = mysql_query($sql);
 
 	if (!$result) {
-   	echo "Could not successfully run query ($sql) from DB: " . mysql_error();
+   	print("Could not successfully run query ($sql) from DB: " . mysql_error());
    	exit;
 	}
 
@@ -373,7 +373,7 @@ function alert_details_tcp($sid,$cid) {
 	$result = mysql_query($sql);
 
 	if (!$result) {
-   	echo "Could not successfully run query ($sql) from DB: " . mysql_error();
+   	print("Could not successfully run query ($sql) from DB: " . mysql_error());
    	exit;
 	}
 
@@ -486,7 +486,7 @@ function alert_details_icmp($sid,$cid) {
 	$result = mysql_query($sql);
 
 	if (!$result) {
-   	echo "Could not successfully run query ($sql) from DB: " . mysql_error();
+   	print("Could not successfully run query ($sql) from DB: " . mysql_error());
    	exit;
 	}
 
@@ -528,7 +528,7 @@ function alert_details_icmp($sid,$cid) {
 				$result2 = mysql_query($sql2);
 
 				if (!$result2) {
-					echo "Could not successfully run query ($sql) from DB: " . mysql_error();
+					print("Could not successfully run query ($sql) from DB: " . mysql_error());
 					exit;
 				}
 
@@ -603,7 +603,7 @@ function alert_details_udp($sid,$cid) {
 	$result = mysql_query($sql);
 
 	if (!$result) {
-   	echo "Could not successfully run query ($sql) from DB: " . mysql_error();
+   	print("Could not successfully run query ($sql) from DB: " . mysql_error());
    	exit;
 	}
 
@@ -643,7 +643,7 @@ function alert_details_payload($sid, $cid) {
 	$result = mysql_query($sql);
 
 	if (!$result) {
-   	echo "Could not successfully run query ($sql) from DB: " . mysql_error();
+   	print("Could not successfully run query ($sql) from DB: " . mysql_error());
    	exit;
 	}
 
