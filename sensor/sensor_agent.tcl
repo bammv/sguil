@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.26 2005/01/27 19:25:24 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.27 2005/01/28 00:07:39 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -198,13 +198,14 @@ proc ParseSsnSancpFiles { fileName } {
              # Corrupt File
              puts "ERROR"   
         }
+        set fDate [clock format [clock scan $date] -gmt true -f "%Y%m%d"]
         # Files can contain data from different start days
-        if { ![info exists outFileID($date)] } {
-            set outFile($date) "[file dirname $fileName]/parsed.[file tail $fileName].$date"
-            set outFileID($date) [open $outFile($date) w]
+        if { ![info exists outFileID($fDate)] } {
+            set outFile($fDate) "[file dirname $fileName]/parsed.[file tail $fileName].$fDate"
+            set outFileID($fDate) [open $outFile($fDate) w]
         } 
         # Prepend sensorID
-        puts $outFileID($date) "${SENSOR_ID}|$line"  
+        puts $outFileID($fDate) "${SENSOR_ID}|$line"  
         
     }
  
