@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.149 2004/10/20 20:45:38 shalligan Exp $ #
+# $Id: sguil.tk,v 1.150 2004/10/28 16:56:00 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -347,7 +347,7 @@ proc ValidateEvent { status {c_flag {0}} } {
   if {$ACTIVE_EVENT} {
     if { $status == 2 || $c_flag } {
       set eventComment [GetComment]
-      if { $eventComment == "" } { InfoMessage "No comment, aborting."; return }
+      if { $eventComment == "" } { InfoMessage "No comment, aborting."; Idle; return }
     }
     foreach selectedIndex\
      [lsort -integer -decreasing [$currentSelectedPane.eventIDFrame.list curselection]] {
