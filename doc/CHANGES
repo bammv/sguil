@@ -1,14 +1,31 @@
 Version CVS-Head
   sguil.tk
-    * Added decodes for ICMP Type 3 (dest Unreachable) and 11 (time exceeded)
-  sguild
-    * changed GetIcmpData to return the payload so we can parse it out 
     
-    * Proc CreateDB added. Sguild will create the required database
-      if it doesn't exists (on request).
+  sguild
+   
 
 Version 0.2
   sguil.tk
+    * Re-arranged menu
+
+    * Database Purge/Optimize
+
+    * GMT clock
+
+    * Many bugfixes
+
+    * User log in for accountability (no authentication (yet))
+    
+    * Add comments to events (shift-F<n>)
+
+    * E-Mail events in summary or detail with option to 'sanatize IP addresses
+
+    * Session Queries
+
+    * Event History
+    
+    * Added decodes for ICMP Type 3 (dest Unreachable) and 11 (time exceeded)
+    
     * Dialog for selecting sensor(s) on to monitor added
       to initialization.
 
@@ -28,10 +45,25 @@ Version 0.2
     * Gets DB table info on init in support of the "Show DB
       Tables" function added to sguil.tk.
 
+    * changed GetIcmpData to return the payload so we can parse it out 
+    
+    * Proc CreateDB added. Sguild will create the required database
+      if it doesn't exists (on request).
+    * many many bugfixes.
+    * Added SimpleQueryCommand for OOB queries
+    * History and comment support for events.
+    * New system messages (user login/out, monitored sensors).
+    * Changed ExecDB to allow for DELETE and other non-SELECT/UPDATE queries (if DB permissions permit it)
+    * DB schema slightly changed
+    * Moved the config to sguild.conf and added a sguild.users
+
   op_sguil.c
     * Added "nospin" option for those users who want barnyard
       to continue processesing events if unable to connect to
       sguild.
+
+  xscriptd
+    * Added passive OS detection (p0f)
 
 Version 0.1
   sguil.tk
