@@ -1,4 +1,4 @@
-CREATE TABLE nessus_data
+CREATE TABLE nessus_data IF NOT EXISTS
 (
   rid           VARCHAR(40)	NOT NULL,
   port          VARCHAR(40),
@@ -7,7 +7,7 @@ CREATE TABLE nessus_data
   description		TEXT,
   INDEX rid (rid));
 
-CREATE TABLE nessus
+CREATE TABLE nessus IF NOT EXISTS
 (
   uid           INT            NOT NULL,
   rid           VARCHAR(40)    NOT NULL,
