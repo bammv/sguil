@@ -2030,10 +2030,15 @@ proc DisplayCorrelatedEvents { winName } {
   set correlateFrame [frame $currentTab.$eventIDNice]
   $eventTabs select end
   CreateEventLists $correlateFrame
-  set closeButton [button $currentTab.close -text "Close Tab" -relief flat -borderwidth 0 -width 1\
-   -foreground white -background black -activebackground black -activeforeground red\
-   -command "DeleteTab $eventTabs $currentTab"]
-  pack $closeButton -side bottom -fill x
+  set buttonFrame [frame $currentTab.buttonFrame]
+  set closeButton [button $buttonFrame.close -text "Close Tab" -borderwidth 1 -width 1\
+	  -pady 0 -padx 1 -relief groove\
+	  -command "DeleteTab $eventTabs $currentTab"]
+  set exportButton [button $buttonFrame.export -text "Export Query Results" -borderwidth 1 -width 1\
+	  -pady 0 -padx 1 -relief groove\
+	  -command "ExportResults $correlateFrame event"]
+  pack $closeButton $exportButton -side left -fill x -expand true
+  pack $buttonFrame -side bottom -fill x
   pack $correlateFrame -side top
   
   eval DisplayEvent $correlateFrame RT [lindex $eventArray($eventID) 1] 1 [lrange $eventArray($eventID) 3 4] [join [lrange $eventArray($eventID) 5 6] . ] [lrange $eventArray($eventID) 7 12] [GetColorByPriority [lindex $eventArray($eventID) 1]]

@@ -86,11 +86,11 @@ proc SsnQueryRequest { whereStatement } {
     break
   }
   set buttonFrame [frame $currentTab.buttonFrame]
-  set closeButton [button $buttonFrame.close -text "Close Tab" -relief flat -borderwidth 0 -width 1\
-   -foreground white -background black -activebackground black -activeforeground red -pady 0\
-   -command "DeleteTab $eventTabs $currentTab"]
-  set exportButton [button $buttonFrame.export -text "Export Query Results" -relief flat -borderwidth 0 -width 1\
-	  -foreground white -background black -activebackground black -activeforeground red -pady 0\
+  set closeButton [button $buttonFrame.close -text "Close Tab" -borderwidth 1 -width 1\
+	  -pady 0 -padx 1 -relief groove\
+	  -command "DeleteTab $eventTabs $currentTab"]
+  set exportButton [button $buttonFrame.export -text "Export Query Results" -borderwidth 1 -width 1\
+	  -pady 0 -padx 1 -relief groove\
 	  -command "ExportResults $queryFrame ssn"]
   pack $closeButton $exportButton -side left -fill x -expand true
   pack $buttonFrame $whereText -side bottom -fill x
@@ -130,11 +130,11 @@ proc DBQueryRequest { whereStatement {winTitle {none} } } {
     break
   }
   set buttonFrame [frame $currentTab.buttonFrame]
-  set closeButton [button $buttonFrame.close -text "Close Tab" -relief flat -borderwidth 0 -width 1\
-   -foreground white -background black -activebackground black -activeforeground red -pady 0\
-   -command "DeleteTab $eventTabs $currentTab"]
-  set exportButton [button $buttonFrame.export -text "Export Query Results" -relief flat -borderwidth 0 -width 1\
-	  -foreground white -background black -activebackground black -activeforeground red -pady 0\
+  set closeButton [button $buttonFrame.close -text "Close Tab" -borderwidth 1 -width 1\
+	  -pady 0 -padx 1 -relief groove\
+	  -command "DeleteTab $eventTabs $currentTab"]
+  set exportButton [button $buttonFrame.export -text "Export Query Results" -borderwidth 1 -width 1\
+	  -pady 0 -padx 1 -relief groove\
 	  -command "ExportResults $queryFrame event"]
   pack $closeButton $exportButton -side left -fill x -expand true
   pack $buttonFrame $whereText -side bottom -fill x

@@ -79,19 +79,25 @@ proc EmailEvents { detail sanitize } {
 	return
     }
 }	
-proc ExportResults { currenttab type } {
-    global currentSelectedPane RETURN_FLAG env
+proc ExportResults { currentTab type } {
+    global currentSelectedPane RETURN_FLAG env quote header
 
     set RETURN_FLAG 0
     set exportPromptWin [dialogshell .exportPromptWin -title "Select a Text Report Type"\
 	    -buttonboxpos s -width 150 ]
       $exportPromptWin add ok -text "Ok" -command "set RETURN_FLAG 1"
-      $exportPromptWin add cancel -text "Cancel" -command "set RETURN_FLAG 1"
+      $exportPromptWin add cancel -text "Cancel" -command "set RETURN_FLAG 0"
     set exportPromptFrame [$exportPromptWin childsite]
     set exportCBox [combobox $exportPromptFrame.cBox -dropdown false -labeltext "Separator:"]
+    set checkBox [checkbox $exportPromptFrame.oBox -labeltext "Options" -labelpos n -orient vertical]
+      $checkBox add quotebox -text "Quote Text Fields" -variable quote 
+      $checkBox add headerbox -text "Include Field Names in First Row" -variable header
+    #$checkBox select quotebox
+    #$checkBox select headerbox
     set SepList [list , | || <TAB> HUMAN-READABLE]
     eval $exportCBox insert list end $SepList
-    pack $exportCBox
+    $exportCBox insert entry end ","
+    pack $exportCBox $checkBox
     $exportPromptWin activate
     
     tkwait variable RETURN_FLAG
@@ -100,20 +106,24 @@ proc ExportResults { currenttab type } {
     
     set SepChar [$exportCBox get]
     destroy $exportPromptWin
-    set filename [tk_getSaveFile -initialdir $env(HOME)]
-    
-    set winname $currenttab
+  
+    set tabLabel [winfo name $currentTab]
+    regsub -all { } $tabLabel {_} defaultname
+    set defaultname "${defaultname}.csv"
+    set filename [tk_getSaveFile -initialdir $env(HOME) -initialfile $defaultname]
+    set winname $currentTab
+    if { $filename == "" } {return}
     
     if {$SepChar == "HUMAN-READABLE" } {
 	if { $type == "event"} { set OutputText [ExportHumanText $winname] }
 	if { $type == "ssn"} { set OutputText [ExportHumanSSNText $winname] }
     } else {
-	if { $type == "event"} {set OutputText [ExportDelimitedText $winname $SepChar]}
-	if { $type == "ssn" } {set OutputText [ExportDelimitedSSNText $winname $SepChar]}
+	if { $type == "event"} {set OutputText [ExportDelimitedText $winname $SepChar $quote $header]}
+	if { $type == "ssn" } {set OutputText [ExportDelimitedSSNText $winname $SepChar $quote $header]}
     }
     if [catch {open $filename w} fileID] {
 	puts "Error: Could not create/open $filename: $fileID"
-	exit
+	return
     } else {
 	puts $fileID $OutputText
 	close $fileID
@@ -129,11 +139,12 @@ proc TextReport  { detail sanitize } {
 	set sepPromptWin [dialogshell .sepPromptWin_$REPORTNUM -title "Select a Text Report Type"\
 		-buttonboxpos s -width 150]
 	  $sepPromptWin add ok -text "Ok" -command "set RETURN_FLAG 1"
-	  $sepPromptWin add cancel -text "Cancel" -command "set RETURN_FLAG 1"
+	  $sepPromptWin add cancel -text "Cancel" -command "set RETURN_FLAG 0"
 	  set sepPromptFrame [$sepPromptWin childsite]
-	    set sepCBox [combobox $sepPromptFrame.cBox -dropdown false -labeltext "Type:"]
+	    set sepCBox [combobox $sepPromptFrame.cBox -dropdown false -labeltext "Type:" -editable false]
 	set SepList [list HUMAN-READABLE]
 	    eval $sepCBox insert list end $SepList
+	    $sepCBox insert entry end HUMAN-READABLE
 	pack $sepCBox
 	$sepPromptWin activate
 	tkwait variable RETURN_FLAG
@@ -143,7 +154,7 @@ proc TextReport  { detail sanitize } {
 	destroy $sepPromptWin
 
 	set filename [tk_getSaveFile -initialdir $env(HOME)]
-	
+	if {$filename == "" } {return}
 	set winname $currentSelectedPane
 	set curselection [$currentSelectedPane.eventIDFrame.list curselection]
 	# Build the text we are going to output before we open the file
@@ -154,7 +165,7 @@ proc TextReport  { detail sanitize } {
 	}
 	if [catch {open $filename w} fileID] {
 	    puts "Error: Could not create/open $filename: $fileID"
-	    exit
+	    return
 	} else {
 	    puts $fileID $OutputText
 	    close $fileID
@@ -870,13 +881,17 @@ proc ExportHumanText { winname } {
     return $ReturnString
 }
 
-proc ExportDelimitedText { winname SepChar } {
+proc ExportDelimitedText { winname SepChar quote header} {
 
     # leaving the sanitize toggle in here in case I want it later
     set sanitize 0
     if {$SepChar == "<TAB>"} {set SepChar "\t"}
-    set ReturnString "STATUS${SepChar}COUNT${SepChar}Sensor${SepChar}sid.cid${SepChar}Date/Time${SepChar}Source IP\
-	    ${SepChar}Source Port${SepChar}Dest IP${SepChar}Dest Port${SepChar}Protocol${SepChar}Event Message\n"
+    if { $header == 1 } {
+	set ReturnString "STATUS${SepChar}COUNT${SepChar}Sensor${SepChar}sid.cid${SepChar}Date/Time${SepChar}Source IP\
+		${SepChar}Source Port${SepChar}Dest IP${SepChar}Dest Port${SepChar}Protocol${SepChar}Event Message\n"
+    } else {
+	set ReturnString ""
+    }
     set ListSize [$winname.eventIDFrame.list size]
     for {set i 0} {$i<$ListSize} {incr i} {
 	set ReturnString "${ReturnString}[$winname.statusFrame.list get $i]${SepChar}"
@@ -898,8 +913,11 @@ proc ExportDelimitedText { winname SepChar } {
 	    set ReturnString "${ReturnString}[$winname.dstPortFrame.list get $i]${SepChar}"
 	}
 	set ReturnString "${ReturnString}[$winname.protoFrame.list get $i]${SepChar}"
-	set ReturnString "${ReturnString}\"[$winname.msgFrame.list get $i]\"\n"
-	
+	if { $quote == 1 } {
+	    set ReturnString "${ReturnString}\"[$winname.msgFrame.list get $i]\"\n"
+	} else {
+	    set ReturnString "${ReturnString}[$winname.msgFrame.list get $i]\n"
+	}
     }
     return $ReturnString
 }
@@ -934,12 +952,16 @@ proc ExportHumanSSNText { winname } {
     }
     return $ReturnString
 }
-proc ExportDelimitedSSNText { winname SepChar } {
+proc ExportDelimitedSSNText { winname SepChar quote header } {
     
     if {$SepChar == "<TAB>"} {set SepChar "\t"}
-    set ReturnString "Sensor${SepChar}SSN ID${SepChar}Start Time${SepChar}End Time${SepChar}Source IP${SepChar}Source Port\
-	    ${SepChar}Dest IP${SepChar}Dest Port${SepChar}Source Packets${SepChar}Source Bytes${SepChar}Dest Packets\
-	    ${SepChar}Dest Bytes\n"
+    if { $header == 1 } {
+	set ReturnString "Sensor${SepChar}SSN ID${SepChar}Start Time${SepChar}End Time${SepChar}Source IP${SepChar}Source Port\
+		${SepChar}Dest IP${SepChar}Dest Port${SepChar}Source Packets${SepChar}Source Bytes${SepChar}Dest Packets\
+		${SepChar}Dest Bytes\n"
+    } else {
+	set ReturnString ""
+    }
     # leaving the sanitize toggle in here in case I want it later
     set sanitize 0
     set ReturnString ""
