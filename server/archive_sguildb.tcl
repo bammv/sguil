@@ -143,7 +143,7 @@ proc DisplayUsage { cmd } {
   puts "  --delete-sancp:      Delete matching rows from the sancp table and do NOT archive."
   puts "  --ignore-sancp:      (default)  Ignore the sancp table."
   puts ""
-  puts " Example: $cmd --event --sancp --delete-portscans -p june_ -d 2004-08-01 -d sguildb"
+  puts " Example: $cmd --event --sancp --delete-portscans -p june_ -d 2004-08-01 --dbname sguildb"
   puts "   This would create the tables june_event, june_tcphdr, june_sancp, etc"
   puts "   in the database sguildb using WHERE timestamp < '2004-08-01'. Portscan data would"
   puts "   NOT be archived."
