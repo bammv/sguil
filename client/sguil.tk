@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.169 2005/03/04 20:26:36 shalligan Exp $ #
+# $Id: sguil.tk,v 1.170 2005/03/04 20:42:45 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1488,12 +1488,11 @@ proc InsertHistoryResults { winName results } {
 #                   correctly (set varName value). Returns 1 if good.
 #
 proc CheckLineFormat { line } {
-  
-  set RETURN 1
+    
+    set RETURN 1
   # Right now we just check the length and for "set".
-  if { [llength $line] !=3 ||[lindex $line 0] != "set" } { set RETURN 0 }
-      puts "check line is $RETURN"
-  return $RETURN
+    if { [llength $line] !=3 ||[lindex $line 0] != "set" } { set RETURN 0 }
+	return $RETURN
 }
 
 
