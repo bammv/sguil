@@ -441,9 +441,12 @@ proc ExecDB { socketID query } {
   } else {
       set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
   }
-  set execResults [mysqlexec $dbSocketID $query]
-  mysqlclose $dbSocketID
+  if [catch {mysqlexec $dbSocketID $query} execResults] {
+	SendSocket $socketID "InfoMessage \{ERROR running DELETE query, perhaps you don't have DELETE permission.\nError:$execResults\}"
+  } else {
   SendSocket $socketID "InfoMessage \{Query deleted $execResults rows.\}"
+  }
+  mysqlclose $dbSocketID
 }
  
 proc QueryDB { socketID clientWinName query } {
