@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.6 2004/10/28 19:49:33 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.7 2004/11/04 16:41:07 shalligan Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -378,7 +378,6 @@ proc LoadNessusReports { socketID filename table bytes} {
 		    BY '|' LINES TERMINATED BY '||' STARTING BY '||'\""
 	}
     } else {
-	file copy -force $NESSUS_OUTFILE "/home/steve/debug"
 	if {$DBPASS != "" } {
 	    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
 		    -e \"LOAD DATA LOCAL INFILE '$NESSUS_OUTFILE' INTO TABLE nessus_data FIELDS TERMINATED\
