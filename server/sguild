@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.144 2005/03/09 22:16:35 shalligan Exp $ #
+# $Id: sguild,v 1.145 2005/03/11 21:16:44 shalligan Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -505,6 +505,7 @@ foreach row [mysqlsel $MAIN_DB_SOCKETID "SELECT event.status, \
 	} else {
 	    # Add event to parents list
 	    lappend correlatedEventArray($matchAID) $row
+	    lappend correlatedEventIDArray($matchAID) [lindex $row 13]
 	    # Bump the parents count
 	    incr eventIDCountArray($matchAID)
 	}

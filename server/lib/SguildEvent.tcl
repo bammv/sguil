@@ -1,11 +1,11 @@
-# $Id: SguildEvent.tcl,v 1.7 2005/03/09 22:16:36 shalligan Exp $ #
+# $Id: SguildEvent.tcl,v 1.8 2005/03/11 21:16:46 shalligan Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
 #
 proc EventRcvd { eventDataList } {
   global EMAIL_EVENTS EMAIL_CLASSES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS eventIDCountArray
-  global acRules acCat correlatedEventArray eventIDList
+  global acRules acCat correlatedEventArray eventIDList correlatedEventIDArray
 
   if { [lindex $eventDataList 2] == "system-info" } {
     InfoMessage "SYSTEM INFO: $eventDataList"
@@ -45,6 +45,7 @@ proc EventRcvd { eventDataList } {
       } else {
         # Add event to parents list
         lappend correlatedEventArray($matchAID) $eventDataList
+	lappend correlatedEventIDArray($matchAID) [lindex $eventDataList 15]
         # Bump the parents count
         incr eventIDCountArray($matchAID)
         # Send an update notice to clients
@@ -203,9 +204,9 @@ proc DeleteEventID { socketID eventID status } {
 }
 
 proc CorrelateEvent { sid srcip msg {event_id {NULL}} {event_ref {NULL}} } {
-    global eventIDArray eventIDList eventIDCountArray SENSOR_AGGREGATION_ON
+    global eventIDArray eventIDList eventIDCountArray SENSOR_AGGREGATION_ON correlatedEventIDArray
     set MATCH 0
-
+    
     # Loop thru the RTEVENTS for a match on srcip msg
     if {$SENSOR_AGGREGATION_ON} {
         # Match alerts from just this sensor (sid)
@@ -214,15 +215,30 @@ proc CorrelateEvent { sid srcip msg {event_id {NULL}} {event_ref {NULL}} } {
         # Match alerts from any sensor
         set tmpList $eventIDList
     }
-
+    
     foreach rteid $tmpList {
-      # This checks to see if we have a matching srcip and alert message
-      if { ([lindex $eventIDArray($rteid) 8] == $srcip && [lindex $eventIDArray($rteid) 7] == $msg) || \
-	       ($msg == "portscan: Open Port" && [lindex $eventIDArray($rteid) 14] == $event_ref )} {
-          # Have a match
-          set MATCH $rteid
-      }
-
+	# This checks to see if we have a matching srcip and alert message.  Skip Open Port Messages, we deal with them below.
+	if { [lindex $eventIDArray($rteid) 8] == $srcip && [lindex $eventIDArray($rteid) 7] == $msg && $msg != "portscan: Open Port" }  {
+	    # Have a match
+	    set MATCH $rteid
+	    break
+	}
+	
+	if { $msg == "portscan: Open Port" && [regexp "^portscan:" [lindex $eventIDArray($rteid) 7]] } {
+	    if { [lindex $eventIDArray($rteid) 14] == $event_ref } {
+		set MATCH $rteid
+		break
+	    } else {
+		# Need to check the children of this rteid to see if the Open Port event matches
+		# First.  Are there children at all.
+		if [info exists correlatedEventIDArray($rteid)] {
+		    if { [lsearch $correlatedEventIDArray($rteid) $event_ref] > -1 } {
+			set MATCH $rteid
+			break
+		    }
+		}
+	    }
+	}
     }
 
     return $MATCH
