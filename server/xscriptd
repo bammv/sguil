@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: xscriptd,v 1.19 2004/04/21 18:44:27 bamm Exp $ #
+# $Id: xscriptd,v 1.20 2004/05/11 14:29:34 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -33,6 +33,8 @@ set REMOTE_LOG_DIR /snort_data/dailylogs
 # NOTE: You only need these if you are using remote sensors (ie LOCALSENSOR=0)
 set SSH "/usr/bin/ssh"
 set SCP "/usr/bin/scp"
+# Username to login as on the remote sensors
+set RUSER "root"
 # If LOCALSENSOR is 0 then TCPDUMP needs to be the path to TCPDUMP on the sensor.
 set TCPDUMP "/usr/sbin/tcpdump"
 # http://www.circlemud.org/~jelson/software/tcpflow/
@@ -111,7 +113,7 @@ proc GetRawDataFromLocal { timestamp srcIP srcPort dstIP dstPort proto sensorDir
   return $sensorDir/$rawDataFileName
 }
 proc GetRawDataFromSensor { sensor timestamp srcIP srcPort dstIP dstPort proto sensorDir rawDataFileName {socketID {NONE} } } {
-  global LOCAL_LOG_DIR REMOTE_LOG_DIR SSH SCP TCPDUMP DEBUG
+  global LOCAL_LOG_DIR REMOTE_LOG_DIR SSH SCP RUSER TCPDUMP DEBUG
   set date [lindex $timestamp 0]
   if {$DEBUG} {puts "Getting a list of raw data files from $sensor."}
   if {$socketID != "NONE"} { 
@@ -156,14 +158,14 @@ proc GetRawDataFromSensor { sensor timestamp srcIP srcPort dstIP dstPort proto s
   } else {
       set tcpdumpFilter "host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto"
   }  
-  eval exec $SSH $sensor $TCPDUMP -r $REMOTE_LOG_DIR/$date/$logFileName -w /tmp/$rawDataFileName $tcpdumpFilter
+  eval exec $SSH -l $RUSER $sensor $TCPDUMP -r $REMOTE_LOG_DIR/$date/$logFileName -w /tmp/$rawDataFileName $tcpdumpFilter
 
   if {$DEBUG} { puts "Copying the file from $sensor." }
   if {$socketID != "NONE"} { puts $socketID "Copying the file from $sensor." }
-  eval exec $SCP root@$sensor:/tmp/$rawDataFileName $sensorDir
+  eval exec $SCP $RUSER@$sensor:/tmp/$rawDataFileName $sensorDir
   if {$DEBUG} { puts "Removing file from $sensor." }
   if {$socketID != "NONE"} { puts $socketID "Removing file from $sensor." }
-  eval exec $SSH $sensor rm -f /tmp/$rawDataFileName
+  eval exec $SSH -l $RUSER $sensor rm -f /tmp/$rawDataFileName
   return $sensorDir/$rawDataFileName
 }
 
