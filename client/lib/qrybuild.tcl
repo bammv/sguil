@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.20 2003/12/02 14:54:02 shalligan Exp $ #
+# $Id: qrybuild.tcl,v 1.21 2004/03/24 17:40:49 shalligan Exp $ #
 proc QryBuild {tableSelected whereTmp } {
     global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList
@@ -53,13 +53,10 @@ proc QryBuild {tableSelected whereTmp } {
     set qryTypeBox [radiobox $mainFrame.qTypeBox -orient horizontal -labeltext "Select Query Type" -labelpos n -foreground darkblue]
       $qryTypeBox add event -text "Events" -selectcolor red -foreground black
       $qryTypeBox add sessions -text "Sessions" -selectcolor red -foreground black
-   
-    if {$SELECTEDTABLE == "event"} {
-	$qryTypeBox select event
-    } else {
-	$qryTypeBox select sessions
-    }
-    $qryTypeBox configure -command {typeChange}
+      $qryTypeBox add sancp -text "Sancp" -selectcolor red -foreground black  
+ 
+      $qryTypeBox select $SELECTEDTABLE
+      $qryTypeBox configure -command {typeChange}
 
     set editFrame [frame $mainFrame.eFrame -background black -borderwidth 1]
       set editBox [scrolledtext $editFrame.eBox -textbackground white -vscrollmode dynamic \
@@ -145,8 +142,10 @@ proc updateCatList { selectFrame } {
     if {$sel == "Tables"} { 
 	if { $SELECTEDTABLE == "event" } {
 	    set localTableList [list event data icmphdr tcphdr udphdr sensor]
-	} else {
+	} elseif { $SELECTEDTABLE == "sessions" } {
 	    set localTableList [list sessions sensor]
+	} else {
+	    set localTableList [list sancp sensor]
 	}
 	eval $selectFrame.cList insert 0 $localTableList
     } else {
@@ -199,10 +198,14 @@ proc typeChange {} {
     if {[$mainFrame.qTypeBox get] == "event" } {
 	$mainFrame.eFrame.eBox insert end "WHERE  LIMIT 500"
 	set SELECTEDTABLE "event"
-    } else {
+    } elseif {[$mainFrame.qTypeBox get] == "sessions" } {
 	set SELECTEDTABLE "sessions"
 	$mainFrame.eFrame.eBox insert end "WHERE  LIMIT 500"
+    } else {
+	set SELECTEDTABLE "sancp"
+	$mainFrame.eFrame.eBox insert end "WHERE LIMIT 500"
     }
+    
     $mainFrame.eFrame.eBox mark set insert "end -11 c"
     # return $tableSelected
 }
@@ -218,7 +221,9 @@ proc InvokeQryBuild { tableSelected whereTmp } {
     if { $whereStatement == "cancel" } { return }
     if { $tableName == "event" } {
 	DBQueryRequest $whereStatement
-    } else {
+    } elseif { $tableName == "sessions" } {
 	SsnQueryRequest $whereStatement
+    } else {
+	SancpQueryRequest $whereStatement
     }
 }
