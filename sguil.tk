@@ -29,6 +29,8 @@ set MotionLowIndex -1
 set MOVEMENT_DIR ""
 set LASTINDEXSELECTED 1
 set MONITORFLAG 0
+set HOSTNAME "homefries.geeksquad.com"
+set MAILSERVER "mail.333tech.com"
 
 ######################## END GLOBALS ################################
 
@@ -258,15 +260,80 @@ proc ValidateEvent { status } {
      # set selectedIndex [$currentSelectedPane.eventIDFrame.list curselection]
      foreach selectedIndex\
       [lsort -integer -decreasing [$currentSelectedPane.eventIDFrame.list curselection]] {
-       puts "Validating Index: $selectedIndex"
+       # puts "Validating Index: $selectedIndex"
        RemoveEvent $currentSelectedPane $selectedIndex $status
      }
      if { [llength [$currentSelectedPane.eventIDFrame.list curselection]] > 1} {
-	 puts "unslecting multiple events"
+	 # puts "unslecting multiple events"
 	 UnHighLightListLine $currentSelectedPane
      } 
   }
 }
+proc EmailEvents {} {
+    global ACTIVE_EVENT currentSelectedPane RETURN_FLAG
+    set RETURN_FLAG 0
+    if {$ACTIVE_EVENT} {
+	set editEmail .editEmail
+	if { [winfo exists $editEmail] } {
+	    wm withdraw $editEmail
+	    wm deiconify $editEmail
+	    return
+	}
+	toplevel $editEmail
+	wm geometry $editEmail +200+200
+	wm title $editEmail "E-Mail Event"
+	
+	set textBox [scrolledtext $editEmail.textBox -textbackground white -vscrollmode dynamic\
+		-hscrollmode none -wrap word -visibleitems 80x5 -labeltext "Edit Email"]
+	set fromBox [entryfield $editEmail.fromBox -labeltext "From:" ]
+	set toBox [entryfield $editEmail.toBox  -labeltext "To:"]
+	set subjectBox [entryfield $editEmail.subjectBox -labeltext "Subject:"]
+	
+	set buttonBox [buttonbox $editEmail.buttonBox]
+	$buttonBox add ok -text "Send" -command "set RETURN_FLAG 1"
+	$buttonBox add cancel -text "Cancel" -command "set RETURN_FLAG 0"
+	pack $fromBox $toBox $subjectBox -side top -fill x -padx 10 -expand 0
+	pack $textBox -side top -fill both -expand true
+	pack $buttonBox -side top -fill none -expand 0
+	
+	foreach selectedIndex [$currentSelectedPane.eventIDFrame.list curselection] {
+	    puts "Emailing index: $selectedIndex"
+	    $textBox insert end "------------------------------------------------------------------------\n"
+	    $textBox insert end "Count:[$currentSelectedPane.countFrame.list get $selectedIndex] "
+	    $textBox insert end "Event#[$currentSelectedPane.eventIDFrame.list get $selectedIndex] "
+	    $textBox insert end "[$currentSelectedPane.dateTimeFrame.list get $selectedIndex]\n"
+	    $textBox insert end "[$currentSelectedPane.msgFrame.list get $selectedIndex]\n"
+	    $textBox insert end "[$currentSelectedPane.srcIPFrame.list get $selectedIndex] -> "
+	    $textBox insert end "[$currentSelectedPane.dstIPFrame.list get $selectedIndex]\n"
+	    $textBox insert end "Protocol: [$currentSelectedPane.protoFrame.list get $selectedIndex] "
+	    if {[$currentSelectedPane.protoFrame.list get $selectedIndex] == "6" || \
+		    [$currentSelectedPane.protoFrame.list get $selectedIndex] == "7"} {
+		$textBox insert end "sport=[$currentSelectedPane.srcPortFrame.list get $selectedIndex] -> "
+		$textBox insert end "dport=[$currentSelectedPane.dstPortFrame.list get $selectedIndex]\n\n"
+	    }
+	}
+
+	tkwait variable RETURN_FLAG
+	if {$RETURN_FLAG} {
+	    global HOSTNAME MAILSERVER
+	    #load /usr/local/lib/email17.tcl
+	    package require EMail 1.7
+	    set EmailTo [$toBox get]
+	    set EmailCC ""
+	    set EmailBCC ""
+	    set EmailArgs ""
+	    set EmailFrom [$fromBox get]
+	    set EmailSubj [$subjectBox get]
+	    set EmailBody [$textBox get 0.0 end]
+	    EMail::Init $EmailFrom $HOSTNAME $MAILSERVER
+	    EMail::Send $EmailTo $EmailCC $EmailBCC $EmailSubj $EmailBody -command
+	}  
+	destroy $editEmail
+	return
+    }
+}	
+	
+	    
 proc LaunchXscriptMenu { winName yRoot} {
   global ACTIVE_EVENT xscriptMenu MULTI_SELECT
   if {!$ACTIVE_EVENT || $MULTI_SELECT == 1} { return }
@@ -2050,6 +2117,7 @@ option add *Font ourStandardFont
 
 # Source required sguillibs
 source $SGUILLIB/dkffont.tcl
+source $SGUILLIB/email17.tcl
 
 # Connect to the server
 if [catch {set socketID [socket $SERVERHOST $SERVERPORT]}] {
@@ -2086,6 +2154,7 @@ namespace import iwidgets::tabnotebook
 namespace import iwidgets::scrolledtext
 namespace import iwidgets::optionmenu
 namespace import iwidgets::buttonbox
+namespace import iwidgets::entryfield
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
   label $winFrame.label -text "$labelText" -foreground black -background $bgColor -anchor s -height $height
@@ -2104,6 +2173,7 @@ set topFrame [frame .topFrame]
   $menuList add command -label "Query..." -command "QueryRequest empty"
   $menuList add command -label "Show DataBase Tables" -command "ShowDBTables"
   $menuList add command -label "Display Incident Categories" -command DisplayIncidentCats
+  $menuList add command -label "Send Event Detail via email" -command EmailEvents
   #$menuList add command -label "License" -command "DisplayLicense"
   $menuList add command -label "Sleep (Ctrl-s)" -command "GoToSleep"
   $menuList add cascade -label "Change Font" -menu $menuList.font
