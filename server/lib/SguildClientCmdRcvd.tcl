@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.10 2005/03/09 22:16:36 shalligan Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.11 2005/03/10 15:47:10 shalligan Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -286,8 +286,11 @@ proc GetOpenPorts { socketID sid cid } {
 
     set query\
 	"SELECT unified_event_id FROM event WHERE sid=$sid and cid=$cid"
-    set event_id [FlatDBQuery $query]
-    puts "event_id is $event_id"
+    set event_id [lindex [FlatDBQuery $query] 0]
+    if { $event_id == "" } { 
+	catch {SendSocket $socketID "InsertOpenPortsData DONE"} tmpError
+	return
+    }
     set query\
 	"SELECT INET_NTOA(event.dst_ip), data.data_payload from event, data WHERE event.sid=data.sid AND event.cid=data.cid AND event.unified_event_ref=$event_id"
     foreach row [mysqlsel $dbSocketID "$query" -list] {
