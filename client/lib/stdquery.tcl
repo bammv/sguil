@@ -248,7 +248,8 @@ proc DelQry {stdQryWin} {
     
     if { [string trim [$stdQryWin.mFrame.lFrame.uList getcurselection]] == ""} {
 	  
-	    InfoMessage "Please Select a User Query to Delete"
+            tk_messageBox -type ok -icon info -parent $stdQryWin\
+             -message "Please Select a User Query to Delete"
 	    return
 	}
     set answer [tk_messageBox -message "ARE YOU SURE you want to delete this query?" -type yesno -icon question]
