@@ -1,5 +1,5 @@
 *** spp_stream4.c	Wed Sep 10 16:00:50 2003
---- spp_stream4.c.sguil	Wed Oct  8 18:25:21 2003
+--- spp_stream4.sguil	Thu Oct 23 08:10:53 2003
 ***************
 *** 33,38 ****
 --- 33,57 ----
@@ -159,12 +159,12 @@
 + 
 +     dbsPtr->xid = TimeMilliseconds();
 + 
-+     lt = localtime((time_t *) &ssn->start_time);
++     lt = gmtime((time_t *) &ssn->start_time);
 +     s = (ssn->start_time + thiszone) % 86400;
 +     sprintf(dbsPtr->start_time, "%02d-%02d-%02d %02d:%02d:%02d", 1900 + lt->tm_year,
 +            lt->tm_mon+1, lt->tm_mday, s/3600, (s%3600)/60, s%60);
 + 
-+     et = localtime((time_t *) &ssn->last_session_time);
++     et = gmtime((time_t *) &ssn->last_session_time);
 +     s = (ssn->last_session_time + thiszone) % 86400;
 +     sprintf(dbsPtr->end_time, "%02d-%02d-%02d %02d:%02d:%02d", 1900 + et->tm_year,
 +                et->tm_mon+1, et->tm_mday, s/3600, (s%3600)/60, s%60);
@@ -188,12 +188,12 @@
 + 
 +     dbsPtr->xid = TimeMilliseconds();
 + 
-+     lt = localtime((time_t *) &ssn->start_time);
++     lt = gmtime((time_t *) &ssn->start_time);
 +     s = (ssn->start_time + thiszone) % 86400;
 +     sprintf(dbsPtr->start_time, "%02d-%02d-%02d %02d:%02d:%02d", 1900 + lt->tm_year,
 +            lt->tm_mon+1, lt->tm_mday, s/3600, (s%3600)/60, s%60);
 + 
-+     et = localtime((time_t *) &ssn->last_session_time);
++     et = gmtime((time_t *) &ssn->last_session_time);
 +     s = (ssn->last_session_time + thiszone) % 86400;
 +     sprintf(dbsPtr->end_time, "%02d-%02d-%02d %02d:%02d:%02d", 1900 + et->tm_year,
 +                et->tm_mon+1, et->tm_mday, s/3600, (s%3600)/60, s%60);
