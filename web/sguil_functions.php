@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.18 2004/04/04 18:07:04 dlowless Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.19 2004/04/04 19:17:23 dlowless Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -68,9 +68,10 @@ function show_alerts( $where_query, $aggregate_result ) {
 			FROM event, sensor";
 
 		if ( $where_query == "" ) {
-			$where_query = "WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp DESC LIMIT 50";
+			// $where_query = "WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp DESC LIMIT 50";
+			$where_query = "WHERE event.sid=sensor.sid AND event.status=0 AND inet_ntoa(src_ip) = '" . $_REQUEST['src_ip'] . "' and signature_id = ".$_REQUEST['signature_id'] . " ORDER BY event.timestamp DESC LIMIT 50";
 		}
-		
+	
 	}
 	
 	$sql = $alert_query . " " . $where_query;
@@ -85,6 +86,7 @@ function show_alerts( $where_query, $aggregate_result ) {
 	// print the header
 	print("<form action=\"" . $_SERVER['PHP_SELF'] . "\" method=\"POST\">\n");
 	print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\">\n");
+
 	print("<tr><td colspan=\"11\">Query: " .
 		"<input type=\"text\" name=\"query\" size=\"100\" value=\"" . $where_query . "\"> " .
 		"<input type=\"hidden\" name=\"aggregate\" value=\"" . $_REQUEST['aggregate'] . "\"> " .
@@ -125,7 +127,8 @@ function show_alerts( $where_query, $aggregate_result ) {
 			
 			print("<tr bgcolor=\"" . $colours[$i] . "\">\n");
 			print("	<td bgcolor=\"" . $status_colour[$row['status']] . "\">&nbsp;" . $status_desc[$row['status']] . "&nbsp;</td>\n");
-			print("	<td>&nbsp;" . $row['CNT'] . "&nbsp;</td>\n");
+			print("	<td>&nbsp;<a href=alerts.php?aggregate=0&src_ip=" . $row['src_ip']."&signature_id=" . $row['signature_id'] . ">" . $row['CNT'] . "</a>&nbsp;</td>\n");
+//			print("	<td>&nbsp;" . $row['CNT'] . "&nbsp;</td>\n");
 			print("	<td>&nbsp;" . $row['hostname'] . "&nbsp;</td>\n");
 			print("	<td>&nbsp;<a href=\"$detail_url\" target=\"lookup_right\">" . $row['sid'] . "." . $row['cid'] . "</a>&nbsp;</td>\n");
 			print("	<td>&nbsp;" . str_replace(" ", "&nbsp;", $row['timestamp']) . "&nbsp;</td>\n");
@@ -139,9 +142,9 @@ function show_alerts( $where_query, $aggregate_result ) {
 			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a>&nbsp;(" . getcountrycodebyaddr($row['dst_ip']) . ")&nbsp;</td>\n");
 
 			if ( (getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto']))=="") || ( getprotobynumber($row['ip_proto']) != 'udp' && getprotobynumber($row['ip_proto']) != 'tcp' ))
-				print("	<td>&nbsp;" . $row['dst_port'] . "&nbsp;</td>\n");
+				print("	<td>&nbsp;<a href=http://www.dshield.org/port_report.php?port=" .$row['dst_port']. " target=dshield>" . $row['dst_port'] . "</a>&nbsp;</td>\n");
 			else
-				print("	<td>&nbsp;" . $row['dst_port'] ."&nbsp;(" .getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto'])) . ")&nbsp;</td>\n");
+				print("	<td>&nbsp;<a href=http://www.dshield.org/port_report.php?port=" .$row['dst_port']. " target=dshield>" . $row['dst_port'] ."&nbsp;(" .getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto'])) . ")</a>&nbsp;</td>\n");
 
 			print("	<td>&nbsp;" . $row['ip_proto'] ."&nbsp;(" . getprotobynumber($row['ip_proto']). ")" . "&nbsp;</td>\n");
 			
@@ -151,7 +154,9 @@ function show_alerts( $where_query, $aggregate_result ) {
 			//	sprintf($signature, "%20s", $row['signature']);
 			//	print("	<td>&nbsp;" . $signature . "&nbsp;</td>\n");
 			//} else {
-				print(" <td>&nbsp;<a href=http://www.snort.org/snort-db/sid.html?sid=" . $row['signature_id'] . " target=snortdotorg>" . $row['signature'] . "</a>&nbsp;</td>\n");
+
+				print("	<td>&nbsp;<a href=http://www.snort.org/snort-db/sid.html?sid=" . $row['signature_id']." target=_new>" . $row['signature'] . "</a>&nbsp;</td>\n");
+
 			//}
 			
 			print("</tr>\n");
