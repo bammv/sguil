@@ -34,12 +34,14 @@ set DEBUG 1
 
 # Don't touch these
 set CONNECTED 0
+set BUSY 0
 
 proc FinishedCopy { fileID socketID bytes {error {}} } {
-  global DEBUG
+  global DEBUG BUSY
   close $fileID
   close $socketID
   if {$DEBUG} {puts "Bytes copied: $bytes"}
+  set BUSY 0
 }
 proc SendPSDataToSvr { fileName } {
   global SERVER_HOST SERVER_PORT DEBUG
@@ -53,7 +55,7 @@ proc SendPSDataToSvr { fileName } {
 }
 
 proc CopyDataToServer { fileName socketID } {
-  global DEBUG SERVER_HOST
+  global DEBUG SERVER_HOST BUSY
   if {$DEBUG} {puts "Copying $fileName to $SERVER_HOST."}
   set fileID [open $fileName r]
   fconfigure $fileID -translation binary
@@ -61,6 +63,7 @@ proc CopyDataToServer { fileName socketID } {
     puts "Error: $fcopyError"
     return
   }
+  vwait BUSY
   file delete $fileName
 }
 
