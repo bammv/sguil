@@ -75,13 +75,16 @@ SectionEnd
 Section -AdditionalIcons
   SetOutPath $INSTDIR
   WriteIniStr "$INSTDIR\${PRODUCT_NAME}.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
-  ;WriteIniStr "$INSTDIR\ActiveState TCL.url" "InternetShortcut" "URL" "http://www.activestate.com/Products/ActiveTcl/"
-  ;WriteIniStr "$INSTDIR\BOSECO.url" "InternetShortcut" "URL" "http://www.boseco.com/"
+  WriteIniStr "$INSTDIR\ActiveState TCL.url" "InternetShortcut" "URL" "http://www.activestate.com/Products/ActiveTcl/"
+  WriteIniStr "$INSTDIR\BOSECO.url" "InternetShortcut" "URL" "http://www.boseco.com/"
   CreateDirectory "$SMPROGRAMS\SGUIL Client"
   CreateShortCut "$SMPROGRAMS\SGUIL Client\SGUIL Client.lnk" "$INSTDIR\sguil_tk.tcl"
-  CreateShortCut "$DESKTOP\SGUIL Client.lnk" "$INSTDIR\sguil_tk.tcl"
+  CreateShortCut "$SMPROGRAMS\SGUIL Client\Sguil Configuration.lnk" "write.exe" '"$INSTDIR\sguil.conf"'
   CreateShortCut "$SMPROGRAMS\SGUIL Client\Website.lnk" "$INSTDIR\${PRODUCT_NAME}.url"
+  CreateShortCut "$SMPROGRAMS\SGUIL Client\ActiveState TCL.lnk" "$INSTDIR\ActiveState TCL.url"
+  CreateShortCut "$SMPROGRAMS\SGUIL Client\BOSECO.lnk" "$INSTDIR\BOSECO.url"
   CreateShortCut "$SMPROGRAMS\SGUIL Client\Uninstall.lnk" "$INSTDIR\uninst.exe"
+  CreateShortCut "$DESKTOP\SGUIL Client.lnk" "$INSTDIR\sguil_tk.tcl"
 SectionEnd
 
 Section -Post
@@ -92,6 +95,15 @@ Section -Post
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
 SectionEnd
+
+Function .onInit
+  System::Call 'kernel32::CreateMutexA(i 0, i 0, t "SguilClientMutex") i .r1 ?e'
+  Pop $R0
+
+  StrCmp $R0 0 +3
+  MessageBox MB_OK|MB_ICONEXCLAMATION "The installer is already running."
+  Abort
+FunctionEnd
 
 
 Function un.onUninstSuccess
@@ -133,6 +145,9 @@ Section Uninstall
   Delete "$SMPROGRAMS\SGUIL Client\Uninstall.lnk"
   Delete "$SMPROGRAMS\SGUIL Client\Website.lnk"
   Delete "$SMPROGRAMS\SGUIL Client\SGUIL Client.lnk"
+  Delete "$SMPROGRAMS\SGUIL Client\Sguil Configuration.lnk"
+  Delete "$SMPROGRAMS\SGUIL Client\ActiveState TCL.lnk"
+  Delete "$SMPROGRAMS\SGUIL Client\BOSECO.lnk"
   Delete "$DESKTOP\SGUIL Client.lnk"
 
   RMDir "$SMPROGRAMS\SGUIL Client"
