@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.3 2003/12/04 16:34:33 creining Exp $
+# $Id: extdata.tcl,v 1.4 2004/01/13 21:13:35 bamm Exp $
 
 proc GetRuleInfo {} {
   global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT SSN_QUERY
@@ -257,7 +257,7 @@ proc XscriptServerCmdRcvd { socketID } {
 proc GetXscript { type force } {
   global ACTIVE_EVENT SERVERHOST XSCRIPT_SERVER_PORT DEBUG currentSelectedPane XSCRIPTDATARCVD
   global socketWinName SESSION_STATE SSN_QUERY ETHEREAL_STORE_DIR
-  global OPENSSL VERSION
+  global OPENSSL VERSION USERNAME PASSWD
   if {!$ACTIVE_EVENT} {return}
   set winName $currentSelectedPane.sensorFrame.list
   set eventIndex [$winName curselection]
@@ -283,7 +283,7 @@ proc GetXscript { type force } {
   set dstPort [$winParents.dstPortFrame.list get $eventIndex]
   set xscriptWinName ".${sensor}_${cnxID}"
   if [catch {set socketID [socket $SERVERHOST $XSCRIPT_SERVER_PORT]}] {
-    if {$DEBUG} {puts "Unable to connect to xscript server $SERVERHOST on port $XSCRIPT_SERVER_PORT."}
+    ErrorMessage "Unable to connect to xscript server $SERVERHOST on port $XSCRIPT_SERVER_PORT."
   } else {
     # Version check
     if {$OPENSSL} {
@@ -302,6 +302,22 @@ proc GetXscript { type force } {
     puts $socketID $tmpVERSION
     if {$OPENSSL} {
       tls::import $socketID
+    }
+    puts $socketID "ValidateUser $USERNAME"
+    flush $socketID
+    set saltNonce [gets $socketID]
+    set tmpSalt [lindex $saltNonce 0]
+    set tmpNonce [lindex $saltNonce 1]
+    set passwdHash [::sha1::sha1 "${PASSWD}${tmpSalt}"]
+    set finalCheck [::sha1::sha1 "${tmpNonce}${tmpSalt}${passwdHash}"]
+    puts $socketID $finalCheck
+    flush $socketID
+    set USERID [lindex [gets $socketID] 1]
+    if { $USERID == "INVALID" } {
+      catch {close $socketID} closeError
+      ErrorMessage "Invalid Username/Password sent to xscriptd.\
+       Please exit and reauthenticate your client."
+       return
     }
     if { $type == "xscript"} {
       fconfigure $socketID -buffering line

@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: xscriptd,v 1.17 2004/01/09 20:57:50 bamm Exp $ #
+# $Id: xscriptd,v 1.18 2004/01/13 21:13:35 bamm Exp $ #
 
 set SERVERPORT 7735
 # sguild and xscriptd should be ran on the same system.
@@ -226,7 +226,7 @@ proc CopyDone { rawFileID socketID bytes {error {}} } {
 }
 proc XscriptRequest { socketID sensor eventID timestamp srcIP srcPort dstIP dstPort force } {
   global TCPFLOW DEBUG LOCAL_LOG_DIR REMOTE_LOG_DIR LOCALSENSOR
-  global P0F P0F_PATH
+  global P0F P0F_PATH validSockets
   set date [lindex $timestamp 0]
   # Check to make sure our dirs exists. We use <rootdir>/date/sensorName/*.raw
   set dateDir "$LOCAL_LOG_DIR/$date"
@@ -259,6 +259,7 @@ proc XscriptRequest { socketID sensor eventID timestamp srcIP srcPort dstIP dstP
     puts $socketID "ERROR"
     puts $socketID "Error getting raw data from sensor."
     close $socketID
+    set validSockets [ldelete $validSockets $socketID]
     return
   }
   # Check for P0F if enabled
@@ -321,29 +322,34 @@ proc XscriptRequest { socketID sensor eventID timestamp srcIP srcPort dstIP dstP
   }
   puts $socketID "DONE"
   close $socketID
+  set validSockets [ldelete $validSockets $socketID]
 }
 proc ClientConnect { socketID IPAddr port } {
-  global DEBUG VERSION
+  global DEBUG VERSION validSockets
   global OPENSSL KEY PEM
   if {$DEBUG} { puts "Client Connect: $IPAddr $port $socketID" }
   fconfigure $socketID -buffering line
   # Do version checks
   if [catch {puts $socketID "$VERSION"} sendError ] {
     catch {close $socketID} closeError
+    set validSockets [ldelete $validSockets $socketID]
     if {$DEBUG} { puts "ERROR: Socket $socketID ($IPAddr:$port) closed. $sendError" }
     return
   }
   if [catch {gets $socketID} clientVersion] {
     if {$DEBUG} {puts "$ERROR: $clientVersion : Socket $socketID ($IPAddr:$port) closed."}
     catch {close $socketID} closeError
+    set validSockets [ldelete $validSockets $socketID]
     return
   }
   if { $clientVersion != $VERSION } {
     catch {close $socketID} tmpError
+    set validSockets [ldelete $validSockets $socketID]
     if {$DEBUG} {puts "ERROR: Client connect denied - mismatched versions" }
     if {$DEBUG} {puts "CLIENT VERSION: $clientVersion" }
     if {$DEBUG} {puts "SERVER VERSION: $VERSION" }
     catch {close $socketID} closeError
+    set validSockets [ldelete $validSockets $socketID]
     return
   }
   if {$OPENSSL} {
@@ -353,33 +359,104 @@ proc ClientConnect { socketID IPAddr port } {
     fileevent $socketID readable [list ClientCmdRcvd $socketID]
   }
 }
+proc GetRandAlphaNumInt {} {
+  set x [expr [random 74] + 48]
+  while {!($x >= 48 && $x <= 57) && !($x >= 65 && $x <= 90)\
+      && !($x >= 97 && $x <= 122)} {
+     set x [expr [random 74] + 48]
+  }
+  return $x
+}
 proc HandShake { socketID cmd } {
+  global validSockets
   puts "HANDSHAKE"
   if {[eof $socketID]} {
     close $socketID
+    set validSockets [ldelete $validSockets $socketID]
   } elseif { [catch {tls::handshake $socketID} results] } {
     puts "ERROR: $results"
     close $socketID
+    set validSockets [ldelete $validSockets $socketID]
   } elseif {$results == 1} {
     puts "Handshake complete for $socketID"
     fileevent $socketID readable [list $cmd $socketID]
   }
 }
 proc ClientCmdRcvd { socketID } {
-  global DEBUG
+  global DEBUG validSockets
   if { [eof $socketID] || [catch {gets $socketID data}] } {
     close $socketID
+    set validSockets [ldelete $validSockets $socketID]
     if {$DEBUG} {puts "Socket $socketID closed."}
   } else {
     if {$DEBUG} {puts "Client Command: $data"}
     set clientCmd [lindex $data 0]
+    if { $clientCmd != "ValidateUser" } {
+      if { [lsearch -exact $validSockets $socketID] < 0 } {
+        catch {puts $socketID\
+         "InfoMessage {Client does not appear to be logged in. Please exit and log back in.}"} tmpError
+        return
+      }
+    }
     switch -exact $clientCmd {
       XscriptRequest { eval $clientCmd $socketID [lrange $data 1 end] }
       EtherealRequest { eval $clientCmd $socketID [lrange $data 1 end] }
+      ValidateUser { ValidateUser $socketID [lindex $data 1] }
       default { puts "Unrecognized command from $socketID: $data" }
     }
   }
 }
+proc ValidateUser { socketID username } {
+  global USERS_FILE validSockets DEBUG
+  fileevent $socketID readable {}
+  fconfigure $socketID -buffering line
+  if { ![file exists $USERS_FILE] } {
+    puts "Fatal Error! Cannot access $USERS_FILE."
+    exit 1
+  }
+  set VALID 0
+  set nonce [format "%c%c%c" [GetRandAlphaNumInt] [GetRandAlphaNumInt] [GetRandAlphaNumInt] ]
+  for_file line $USERS_FILE {
+    if { ![regexp ^# $line] && ![regexp ^$ $line] } {
+      # Probably should check for corrupted info here
+      set tmpUserName [ctoken line "(.)(.)"]
+      set tmpSaltHash [ctoken line "(.)(.)"]
+      if { $tmpUserName == $username } {
+        set VALID 1
+        set tmpSalt [string range $tmpSaltHash 0 1]
+        set finalCheck [::sha1::sha1 "${nonce}${tmpSaltHash}"]
+        break
+      }
+    }
+  }
+  if {$VALID} {
+    puts $socketID "$tmpSalt $nonce"
+    set finalClient [gets $socketID]
+    if { $finalClient == $finalCheck } {
+      lappend validSockets $socketID
+    } else {
+      set validSockets [ldelete $validSockets $socketID]
+      catch {puts $socketID "UserID INVALID"} tmpError
+      catch {close $socketID} closeError
+      if {$DEBUG} {puts "Unable to validate user $username."}
+      return
+    }
+  } else {
+    #Not a valid user. Make up info.
+    set tmpSalt [format "%c%c" [GetRandAlphaNumInt] [GetRandAlphaNumInt] ]
+    set finalCheck [::sha1::sha1 "${nonce}${tmpSalt}"]
+    puts $socketID "$tmpSalt $nonce"
+    set finalClient [gets $socketID]
+    set validSockets [ldelete $validSockets $socketID]
+    catch {puts $socketID "UserID INVALID"} tmpError
+    catch {close $socketID} closeError
+    if {$DEBUG} {puts "Unable to validate user $username."}
+    return
+  }
+  puts $socketID "UserID VALID"
+  fileevent $socketID readable [list ClientCmdRcvd $socketID]
+}
+
 proc Daemonize {} {
   global PID_FILE DEBUG
   set DEBUG 0
@@ -411,6 +488,18 @@ proc DisplayUsage { cmdName } {
   puts "  -D Runs xscriptd in daemon mode."
   exit 1 
 }
+#
+# ldelete: Delete item from a list
+#
+proc ldelete { list value } {
+  set ix [lsearch -exact $list $value]
+  if {$ix >= 0} {
+    return [lreplace $list $ix $ix]
+  } else {
+    return $list
+  }
+}
+
 proc CleanExit {} {
   global PID_FILE 
   if { [info exists PID_FILE] && [file exists $PID_FILE] } {
@@ -426,7 +515,17 @@ proc CleanExit {} {
 #################### MAIN #######################
 
 # Load extended tcl
-package require Tclx
+if [catch {package require Tclx} tclxVersion] {
+  puts "ERROR: The tclx extension does NOT appear to be installed on this sysem."
+  puts "Extended tcl (tclx) is available as a port/package for most linux and BSD systems."
+  exit
+}
+# Load sha1 from tcllib
+if [catch {package require sha1} sha1Version] {
+  puts "ERROR: The sha1 package does NOT appear to be installed on this sysem."
+  puts "The sha1 package is part of the tcllib extension. A port/package is available for most linux and BSD systems."
+  exit
+}
 
 # GetOpts
 set state flag
@@ -440,12 +539,14 @@ foreach arg $argv {
         -O { set state openssl }
         -o { set OPENSSL 1 }
         -C { set state certs }
+        -u { set state users_file }
         default { DisplayUsage $argv0 }
       }
     }
     pid_file { set PID_FILE $arg; set state flag }
     openssl { set OPENSSL 1; set TLS_PATH $arg; set state flag }
     certs { set CERTS_PATH $arg; set state flag }
+    users_file { set USERS_FILE $arg; set state flag }
     default { DisplayUsage $argv0 }
   }
 }
@@ -484,9 +585,31 @@ if { [info exists OPENSSL] && $OPENSSL } {
   set VERSION "$VERSION OPENSSL DISABLED"
   set OPENSSL 0
 }
+# Check for a valid USERS file
+if { ![info exists USERS_FILE] } {
+  # No users file was specified. Go with the defaults
+  if { [file exists /etc/sguild/sguild.users] } {
+    set USERS_FILE "/etc/sguild/sguild.users"
+  } elseif { [file exists ./sguild.users] } {
+    set USERS_FILE "./sguild.users"
+  } else {
+      puts "ERROR: Could not find a sguild.users file."
+      puts "       Checked in ./ and /etc/sguild/"
+      DisplayUsage $argv0
+  }
+} else {
+  if { ![file exists $USERS_FILE] } {
+      puts "ERROR: $USERS_FILE does not exist"
+      DisplayUsage $argv0
+  }
+}
+# zero out validSockets
+set validSockets ""
 if {[info exists DAEMON] && $DAEMON} { Daemonize }
 
-set serverSocket [socket -server ClientConnect $SERVERPORT]
+if [catch {socket -server ClientConnect $SERVERPORT} serverSocket] {
+  puts "ERROR: $sensorSocket"
+}
 puts "Xscriptd Version $VERSION Initialized."
 vwait FOREVERBABY
 
