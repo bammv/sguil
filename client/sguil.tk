@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.101 2004/01/09 20:57:50 bamm Exp $ #
+# $Id: sguil.tk,v 1.102 2004/02/26 16:08:32 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -80,7 +80,8 @@ set COUNTER 0
 ######################## COMMUNICATION PROCS ########################
 
 proc ServerCommandRcvd { socketID } {
-  global DEBUG EMAIL_RESULTS CONNECTED GLOBAL_QRY_LIST
+  global DEBUG EMAIL_RESULTS CONNECTED GLOBAL_QRY_LIST 
+    # REPORT_QRY_LIST
 
   if { [eof $socketID] || [catch {gets $socketID data} errorCheck] } {
     #Close the socket and exit
@@ -128,6 +129,7 @@ proc ServerCommandRcvd { socketID } {
       UserMessage { $serverCmd $index1 $data2 }
       PONG { if {$DEBUG} {puts "Comm test successful"  } }
       GlobalQryList { set GLOBAL_QRY_LIST $data1 }
+      # ReportQryList { set REPORT_QRY_LIST $data1 }
       ReportResponse { $serverCmd $index1 $data2 }
       default { puts "Unrecognized command from $socketID: $origData" }
     }
@@ -204,6 +206,7 @@ proc ReconnectToSguild {} {
     SendToSguild "MonitorSensors $monitorList"
     SendToSguild "SendEscalatedEvents"
     SendToSguild "SendGlobalQryList"
+    # SendToSguild "SendReportQryList"
   }
 }
 proc SendToSguild { data } {
@@ -2432,11 +2435,11 @@ bind . <Control-Key-Down> {
 # Up arrow moves selected event up one.
 bind . <Key-Up> {
   if {$ACTIVE_EVENT} {
-      set selectedIndex [$currentSelectedPane.eventIDFrame.list index active]
+      set selectedIndex [$currentSelectedPane.sensorFrame.list index active]
     
-    set listSize [$currentSelectedPane.eventIDFrame.list size]
+    set listSize [$currentSelectedPane.sensorFrame.list size]
     if { $selectedIndex != 0 && $selectedIndex < $listSize  } {
-      SingleSelect $currentSelectedPane.eventIDFrame.list [expr $selectedIndex - 1]
+      SingleSelect $currentSelectedPane.sensorFrame.list [expr $selectedIndex - 1]
       foreach childWin [winfo children $currentSelectedPane] {
         if { [winfo name $childWin] != "scroll" } {
 	    $childWin.list itemconfigure $selectedIndex -foreground black
@@ -2451,10 +2454,10 @@ bind . <Key-Up> {
 # Down arrow moves selected event down one.
 bind . <Key-Down> {
   if {$ACTIVE_EVENT} {
-    set selectedIndex [$currentSelectedPane.eventIDFrame.list index active]
-    set listSize [$currentSelectedPane.eventIDFrame.list size]
-    if { $selectedIndex < $listSize  } {
-      SingleSelect $currentSelectedPane.eventIDFrame.list [expr $selectedIndex + 1]
+    set selectedIndex [$currentSelectedPane.sensorFrame.list index active]
+    set listSize [$currentSelectedPane.sensorFrame.list size]
+    if { $selectedIndex < [expr $listSize -1]  } {
+      SingleSelect $currentSelectedPane.sensorFrame.list [expr $selectedIndex + 1]
       foreach childWin [winfo children $currentSelectedPane] {
         if { [winfo name $childWin] != "scroll" } {
           $childWin.list see [expr $selectedIndex + 1]
@@ -2535,4 +2538,5 @@ if [catch { ConnectToSguild } socketID] {
   update
   SendToSguild "SendEscalatedEvents"
   SendToSguild "SendGlobalQryList"
+  # SendToSguild "SendReportQryList"
 }
