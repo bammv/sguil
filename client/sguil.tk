@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.132 2004/07/27 15:09:19 shalligan Exp $ #
+# $Id: sguil.tk,v 1.133 2004/07/28 20:47:10 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2368,7 +2368,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
      pack $dataFrameLabel -side left -anchor w -fill y
      pack $dataTextFrame -side left -anchor w -fill both -expand true
     set dataSearchFrame [frame $packetFrame.dataSearchFrame -bd 0]
-	  set dataSearchText [entry $dataSearchFrame.dataSearchText -width 20 -background white -font ourFixedFont]
+	  set dataSearchText [entryfield $dataSearchFrame.dataSearchText -width 20 -background white]
 	  set dataSearchButton [button $dataSearchFrame.dataSearchButton -state disabled -text "Search Packet Payload"\
 	    -command "SearchData"]
 	  set dataSearchType [radiobox $dataSearchFrame.dataSearchType -orient horizontal -labelpos e -borderwidth 0]
@@ -2379,8 +2379,11 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
   	  
 	  pack $dataSearchText $dataSearchButton $dataSearchType $dataSearchCaseCheck -side left -fill x
      set dataFrameMenu [menu $dataFrame.dataFrameMenu -tearoff 0]
-      $dataFrameMenu add command -label "Show/Hide Search Frame"\
+       $dataFrameMenu add command -label "Show/Hide Search Frame"\
 	      -command "ShowHideSearch"
+     bind [$dataSearchText component entry] <Return> {
+       SearchData
+     }
      foreach childWin [winfo children $dataTextFrame] {
 	bind $childWin <ButtonPress-3> {
 	    tk_popup $dataFrameMenu %X [expr %Y +6]
