@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.23 2004/10/18 21:46:05 shalligan Exp $ #
+# $Id: qrybuild.tcl,v 1.24 2004/11/09 20:26:45 shalligan Exp $ #
 proc QryBuild {tableSelected whereTmp } {
     global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList
@@ -56,7 +56,7 @@ proc QryBuild {tableSelected whereTmp } {
     # Main Frame
     set mainFrame [frame $qryBldWin.mFrame -background #dcdcdc -borderwidth 1]
 
-    
+    # Query Type Box 
     set qryTypeBox [radiobox $mainFrame.qTypeBox -orient horizontal -labeltext "Select Query Type" -labelpos n -foreground darkblue]
       $qryTypeBox add event -text "Events" -selectcolor red -foreground black
       $qryTypeBox add sessions -text "Sessions" -selectcolor red -foreground black
@@ -65,7 +65,10 @@ proc QryBuild {tableSelected whereTmp } {
       $qryTypeBox select $SELECTEDTABLE
       $qryTypeBox configure -command {typeChange}
 
+    # Edit Frame
     set editFrame [frame $mainFrame.eFrame -background black -borderwidth 1]
+      
+      # main edit box
       set editBox [scrolledtext $editFrame.eBox -textbackground white -vscrollmode dynamic \
 		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 60x10 -textfont ourFixedFont \
 		-labeltext "Edit Where Clause"]
@@ -73,25 +76,28 @@ proc QryBuild {tableSelected whereTmp } {
       if { ![string match -nocase *limit* $whereTmp] } { set whereTmp "$whereTmp  LIMIT 500" }
       $editBox insert end $whereTmp
       $editBox mark set insert "end -11 c"
-      set bb [buttonbox $mainFrame.bb]
-      $bb add Submit -text "Submit" -command "set RETURN_FLAG 1"
-      $bb add Cancel -text "Cancel" -command "set RETURN_FLAG 0"
-      #pack $bb -side top -fill x -expand true
+      
 
-    set mainBB1 [buttonbox $editFrame.mbb1 -padx 0 -pady 0 -orient vertical]
+      # Button box on left of edit box 
+      set mainBB1 [buttonbox $editFrame.mbb1 -padx 0 -pady 0 -orient vertical]
       foreach logical $funcList(Logical) {
 	  set command "$editBox insert insert \"[lindex $logical 1] \""
 	  $mainBB1 add [lindex $logical 0] -text [lindex $logical 0] -padx 0 -pady 0 -command "$command"
       }
-    set mainBB2 [buttonbox $editFrame.mbb2 -padx 0 -pady 0 -orient vertical]
+      
+      # button box to right of main edit box
+      set mainBB2 [buttonbox $editFrame.mbb2 -padx 0 -pady 0 -orient vertical]
       foreach comparison $funcList(Comparison) {
 	  set command "$editBox insert insert \"[lindex $comparison 1] \""
 	  $mainBB2 add [lindex $comparison 0] -text [lindex $comparison 0] -padx 0 -pady 0 -command "$command"
       }
+      
+      # packing children of edit frame
       pack $mainBB1 -side left -fill y
       pack $editBox -side left -fill both -expand true
       pack $mainBB2 -side left -fill y
 
+    # Select Frame
     set selectFrame [frame $mainFrame.sFrame -background black -borderwidth 1]
       set catList [scrolledlistbox $selectFrame.cList -labeltext Categories \
 	      -selectioncommand "updateItemList $selectFrame" -sbwidth 10\
@@ -123,14 +129,30 @@ proc QryBuild {tableSelected whereTmp } {
 	  $logicBox add not -text "NOT selected flags"
 	  $logicBox select only
 	set insertButton [button $flagFrame.iButton -command "addToEditBoxFlags $editBox $flagFrame" -text "Insert"]
+	
+	# packing children of flag Frame
 	pack $srcdstBox $flagBox $logicBox $insertButton -side top -fill both -expand true
+      
+      # packing children of select frame
       pack $metaList $catList $itemList -side left -fill both -expand true
       iwidgets::Labeledwidget::alignlabels $metaList $catList $itemList
+    
+    # Button box for Submit/Cancel
+    set bb [buttonbox $mainFrame.bb]
+      $bb add Submit -text "Submit" -command "set RETURN_FLAG 1"
+      $bb add Cancel -text "Cancel" -command "set RETURN_FLAG 0"
+
+    # pack the qryType box to the top no fill no expand	
     pack $qryTypeBox -side top -fill none -expand false
+    
+    # pack the main edit frame to the top fill and expand
     pack $editFrame -side top -fill both -expand yes
-    #pack  $mainBB1 $mainBB2 -side top -fill none -expand false
+
+    # pack the select frame and submit/cancel box to the top fill and expand
     pack  $selectFrame $bb -side top -fill both -expand true -pady 1
     eval $metaList insert 0 $mlst
+
+    #pack the main frame
     pack $mainFrame -side top -pady 1 -expand true -fill both
 update
 
