@@ -1217,10 +1217,10 @@ if { ![info exists USERS_FILE] } {
   }
 } else {
   if { ![file exists $USERS_FILE] } {
-    puts "ERROR: $USERS_FILE does not exist"
     if { [info exists ADDUSER] && $ADDUSER } {
       CreateUsersFile $USERS_FILE
     } else {
+      puts "ERROR: $USERS_FILE does not exist"
       DisplayUsage $argv0
     }
   }
@@ -1251,9 +1251,16 @@ if {$DAEMON} { Daemonize }
 
 # Get archived alerts from the DB
 if { $DBPASS == "" } {
-  set dbSocketID [mysqlconnect -host $DBHOST -user $DBUSER -port $DBPORT]
+  set connectCmd "-host $DBHOST -user $DBUSER -port $DBPORT"
+  #set dbSocketID [mysqlconnect -host $DBHOST -user $DBUSER -port $DBPORT]
 } else {
-  set dbSocketID [mysqlconnect -host $DBHOST -user $DBUSER -port $DBPORT -password $DBPASS]
+  #set dbSocketID [mysqlconnect -host $DBHOST -user $DBUSER -port $DBPORT -password $DBPASS]
+  set connectCmd "-host $DBHOST -user $DBUSER -port $DBPORT -password $DBPASS"
+}
+if [catch {eval mysqlconnect $connectCmd} dbSocketID] {
+  puts "ERROR: Unable to connect to $DBHOST on $DBPORT: Make sure mysql is running."
+  puts "$dbSocketID"
+  exit
 }
 # See if the DB we want to use exists
 if { [catch {mysqluse $dbSocketID $DBNAME} noDBError] } {
