@@ -1,7 +1,7 @@
 <?php
 /*
- * Copyright (C) 2002,2003,2004 <bamm@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/incident_categories.php,v 1.1 2004/04/05 10:02:33 mboman Exp $
+ * Copyright (C) 2003,2004 Richard Bejtlich (sguil at taosecurity.com, http://www.taosecurity.com). All Rights Reserved.
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/incident_categories.php,v 1.2 2004/04/05 14:29:30 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
