@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.119 2004/06/29 03:15:56 bamm Exp $ #
+# $Id: sguil.tk,v 1.120 2004/06/29 21:42:22 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1816,7 +1816,7 @@ set topFrame [frame .topFrame]
 
 
 pack $topFrame -side top -fill x -padx 0 -pady 0
-wm title . "$VERSION"
+wm title . "$VERSION - $SERVERHOST"
 
 set eventPane [panedwindow .eventPane -width 1000 -height 700]
   $eventPane add eventLists -margin 0
@@ -2681,6 +2681,7 @@ while {$CONNECTED == 0} {
     puts $socketID $finalCheck
     set USERID [lindex [gets $socketID] 1]
   } 
+  wm title . "$VERSION - Connected To $SERVERHOST"
   fileevent $socketID readable [list ServerCommandRcvd $socketID]
   SendToSguild "SendDBInfo"
   SendToSguild "SendSensorList"

@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.101 2004/06/29 03:15:57 bamm Exp $ #
+# $Id: sguild,v 1.102 2004/06/29 21:42:23 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -61,7 +61,7 @@ proc DisplayUsage { cmdName } {
   puts "         \[-O <filename>\] \[-C <directory\]"
   puts "       $cmdName \[-u <filename\] \[-adduser <username>\] \[-deluser <username\]"
   puts "  -c <filename>: PATH to the sguild config (sguild.conf) file."
-  puts "  -a <filename>: PATH to the sguild config (autocat.conf) file."
+  puts "  -a <filename>: PATH to the autocat config (autocat.conf) file."
   puts "  -g <filename>: PATH to the sguild global queries (sguild.queries) file."
   puts "  -u <filename>: PATH to the sguild users (sguild.users) file."
   puts "  -P <filename>: Name of file to write the PID to."
