@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.83 2004/03/30 19:40:27 bamm Exp $ #
+# $Id: sguild,v 1.84 2004/04/13 21:08:58 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -69,12 +69,13 @@ proc DisplayUsage { cmdName } {
   puts "  -D Runs sguild in daemon mode."
   puts "  -adduser <username>: Add user to sguild.users"
   puts "  -deluser <username>: Delete user from sguild.users"
+  puts "  -A <filename>: PATH to sguild.access file."
   puts "  -h Display this help"
   CleanExit
 }
 proc HupTrapped {} {
   global DEBUG AUTOCAT_FILE GLOBAL_QRY_FILE GLOBAL_QRY_LIST clientList
-  global acRules acCat 
+  global acRules acCat ACCESS_FILE
   if { $DEBUG } { puts "HUP signal caught." }
   # Reload auto cat rules
   if { $DEBUG } { puts "Reloading AutoCat rules: $AUTOCAT_FILE" }
@@ -96,6 +97,7 @@ proc HupTrapped {} {
   foreach clientSocket $clientList {
     SendSocket $clientSocket "GlobalQryList $GLOBAL_QRY_LIST"
   }
+  LoadAccessFile $ACCESS_FILE
 }
 proc LoadAutoCatFile { filename } {
   set i 0
@@ -117,6 +119,25 @@ proc LoadAutoCatFile { filename } {
       }
     }
   }
+}
+# Load up the access list. Right now it is just a list of IP addrs
+proc LoadAccessFile { filename } {
+  global ACCESS_LIST DEBUG
+  if {$DEBUG} { puts -nonewline "Loading access list: $filename " }
+  set ACCESS_LIST ""
+  set ANYFLAG 0
+  for_file line $filename {
+    # Ignore comments (#)
+    if { $ANYFLAG == 0 && ![regexp ^# $line] } {
+      if { $line == "any" || $line == "ANY" } {
+        set ACCESS_LIST ANY
+        set ANYFLAG 1
+      } else {
+        lappend ACCESS_LIST $line
+      }
+    }
+  }
+  if {$DEBUG} { puts ": Done " }
 }
 proc RemoveAutoCatRule { rid } {
   global acRules acCat DEBUG
@@ -677,6 +698,18 @@ proc SendDBInfo { socketID } {
     catch {SendSocket $socketID "TableColumns $tableName $tableArray($tableName)"} tmpError
   }
 }
+proc ValidateClientAccess { ipaddr } {
+  global ACCESS_LIST DEBUG
+  if {$DEBUG} {puts "Validating client access: $ipaddr"}
+  set RFLAG 0
+  if { $ACCESS_LIST == "ANY" } {
+    set RFLAG 1
+  }
+  if { [info exists ACCESS_LIST] && [lsearch -exact $ACCESS_LIST $ipaddr] >= 0 } {
+    set RFLAG 1
+  } 
+  return $RFLAG
+}
 #
 # ClientConnect: Sets up comms for client/server
 #
@@ -686,6 +719,14 @@ proc ClientConnect { socketID IPAddr port } {
   if {$DEBUG} {
     puts "Client Connect: $IPAddr $port $socketID"
   }
+  # Check the client access list
+  if { ![ValidateClientAccess $IPAddr] } {
+    SendSocket $socketID "Connection Refused."
+    catch {close $socketID} tmpError
+    if {$DEBUG} { puts "Invalid access attempt from $IPAddr" }
+    return
+  }
+  if {$DEBUG} { puts "Valid client access: $IPAddr" }
   set socketInfo($socketID) "$IPAddr $port"
   fconfigure $socketID -buffering line
   # Do version checks
@@ -1369,6 +1410,7 @@ foreach arg $argv {
         -O { set state openssl }
         -o { set OPENSSL 1 }
         -C { set state certs }
+        -A { set state accessfile }
         -adduser { set state adduser }
         -deluser { set state deluser }
         default { DisplayUsage $argv0 }
@@ -1381,8 +1423,9 @@ foreach arg $argv {
     pid_file { set PID_FILE $arg; set state flag }
     openssl { set OPENSSL 1; set TLS_PATH $arg; set state flag }
     certs { set CERTS_PATH $arg; set state flag }
-    adduser { set ADDUSER 1; set userName $arg }
-    deluser { set DELUSER 1; set userName $arg }
+    adduser { set ADDUSER 1; set userName $arg; set state flag }
+    deluser { set DELUSER 1; set userName $arg; set state flag }
+    accessfile { set ACCESS_FILE $arg; set state flag }
     default { DisplayUsage $argv0 }
   }
 }
@@ -1493,6 +1536,21 @@ if { [info exists ADDUSER] && $ADDUSER } {
 if { [info exists DELUSER] && $DELUSER} {
   DelUser $userName $USERS_FILE
   CleanExit
+}
+# Load accessfile
+if { ![info exists ACCESS_FILE] } {
+  # Check the defaults
+  if { [file exists /etc/sguild/sguild.access] } {
+    set ACCESS_FILE "/etc/sguild/sguild.access"
+  } elseif { [file exists ./sguild.access] } {
+    set ACCESS_FILE "./sguild.access"
+  } else {
+    puts "ERROR: No sguild.access file found."
+    DisplayUsage $argv0   
+  }
+}
+if { [file exists $ACCESS_FILE] } {
+  LoadAccessFile $ACCESS_FILE
 }
 # Load auto cat config
 if { ![info exists AUTOCAT_FILE] } {

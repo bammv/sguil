@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.104 2004/03/19 20:33:58 bamm Exp $ #
+# $Id: sguil.tk,v 1.105 2004/04/13 21:08:56 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -155,7 +155,10 @@ proc ConnectToSguild {} {
       puts "ERROR: $serverVersion"
       return -code error "$serverVersion"
     }
-    if { $serverVersion != $tmpVERSION } {
+    if { $serverVersion == "Connection Refused." } {
+      puts $serverVersion
+      return -code error $serverVersion
+    } elseif { $serverVersion != $tmpVERSION } {
       return -code error "Mismatched versions.\nSERVER: ($serverVersion)\nCLIENT: ($tmpVERSION)"
     }
     puts $socketID "$tmpVERSION"

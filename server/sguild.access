@@ -1,0 +1,8 @@
+#
+# This file contains ip addresses, one per line, of
+# hosts that are ALLOWED access to sguild. If you wish
+# to allow any host, the use the term ANY on a line by
+# itself. 
+# ----------------------------------------------------
+# 192.168.8.1
+ANY
