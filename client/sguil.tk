@@ -1,4 +1,4 @@
-#!/usr/local/bin/wishx
+#!/usr/bin/wishx
 
 ####################################################################
 # Snort GUI for Lamerz [sguil] - A tcl/tk interface to snort       #

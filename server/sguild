@@ -1,4 +1,4 @@
-#!/usr/local/bin/tclsh8.3
+#!/usr/bin/tcl
 
 # Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -30,8 +30,8 @@ set MAX_PS_ROWS 200
 set DBNAME sguildb
 set DBHOST localhost
 set DBPORT 1211
-set DBUSER flatty 
-set DBPASS "J6O6P6Y"
+set DBUSER root 
+set DBPASS "dbpasswd"
 
 ######################## END GLOBALS ################################
 

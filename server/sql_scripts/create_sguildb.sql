@@ -1,6 +1,6 @@
-CREATE DATABASE IF NOT EXISTS sguildb;
-
-USE sguildb;
+-- Users may want to use a different DB name.
+-- CREATE DATABASE IF NOT EXISTS sguildb;
+-- USE sguildb;
 
 CREATE TABLE event
 (
