@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.15 2004/08/05 14:06:39 shalligan Exp $ #
+# $Id: report.tcl,v 1.16 2004/08/06 15:06:05 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -375,11 +375,12 @@ proc BuildPHBReport { sensors datetimestart datetimeend sName sDesc sType sSql s
     toplevel $phbReportOut
     wm geometry $phbReportOut +400+400
     wm title $phbReportOut "Sensor Summary Report"
-    set reportText [text $phbReportOut.reportText]
+    set reportText [scrolledtext $phbReportOut.reportText]
     set reportButtonBox [buttonbox $phbReportOut.reportButtonBox]
-    $reportButtonBox add reportCloseButton -text "Close" -command "destroy $phbReportOut; return"
-    $reportButtonBox add reportSaveButton -text "Save Report" -command "SavePHBReport $reportText"
-    pack $reportText $reportButtonBox
+    $reportButtonBox add reportCloseButton -text "Close" -command "destroy $phbReportOut; return" -state disabled
+    $reportButtonBox add reportSaveButton -text "Save Report" -command "SavePHBReport $reportText" -state disabled
+    pack $reportText -expand true -fill both
+    pack $reportButtonBox -expand false 
     $reportText insert end "Sensor Summary Report\n"
     $reportText insert end "---------------------\n"
     $reportText insert end "\n"
@@ -387,7 +388,6 @@ proc BuildPHBReport { sensors datetimestart datetimeend sName sDesc sType sSql s
     $reportText insert end "[join $sensors]\n"
     $reportText insert end "\n"
     # Send the Report Request to the server
-    Working
     set k [array size Name]
     for {set i 0 } { $i < $k } {incr i} {
 	if { $Type($i) == "query" } {
@@ -421,7 +421,8 @@ proc BuildPHBReport { sensors datetimestart datetimeend sName sDesc sType sSql s
 	    puts $Sql($i)
 	}
     }
-    Idle
+    $reportButtonBox buttonconfigure reportCloseButton -state active
+    $reportButtonBox buttonconfigure reportSaveButton -state active
 }
 
 proc SavePHBReport { reporttextbox } {
