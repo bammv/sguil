@@ -501,9 +501,11 @@ proc ValidateEvent { status {c_flag {0}} } {
      }
      foreach selectedIndex\
       [lsort -integer -decreasing [$currentSelectedPane.eventIDFrame.list curselection]] {
+      puts "**** DEBUG: $selectedIndex"
        # Get the eventID to be deleted
        set eventID [$currentSelectedPane.eventIDFrame.list get $selectedIndex]
-       lappend deleteEventIDList $eventID
+       puts "**** DEBUG: $eventID"
+	lappend deleteEventIDList $eventID
        # Remove the selected line from the console
        DeleteLine $currentSelectedPane $selectedIndex
        if { [info exists correlateArray($eventID)] } {
@@ -515,10 +517,18 @@ proc ValidateEvent { status {c_flag {0}} } {
        } 
      }
      update
-     if {$DEBUG} {
-       puts "Sending Server: DeleteEventIDList ${eventComment}::${status}::${deleteEventIDList}"
-     }
-     SendToSguild "DeleteEventIDList ${status}::${eventComment}::${deleteEventIDList}"
+     if {$DEBUG} { 
+       if [catch {puts "Sending Server: DeleteEventIDList ${eventComment}::${status}::${deleteEventIDList}"} errorCheck ] {
+
+
+                puts "Stop hitting the keys so fast, Mario. ERROR: $errorCheck" 
+        }       
+     } 
+     if [catch {SendToSguild "DeleteEventIDList ${status}::${eventComment}::${deleteEventIDList}"} errorCheck] { 
+                bell
+		puts "fooo"
+		return
+        } 
      if { [llength [$currentSelectedPane.eventIDFrame.list curselection]] > 1} {
 	 # puts "unslecting multiple events"
 	 UnHighLightListLine $currentSelectedPane
@@ -966,7 +976,7 @@ proc EmailEvents { detail sanatize } {
 		}
 	    } else {
 		set psdata [SimpleQueryCmd\
-			$SERVERHOST $SERVERPORT "GetPSData [lindex [$currentSelectedPane.dateTimeFrame.list get $selectedIndex] 0] [$currentSelectedPane.srcIPFrame.list get $selectedIndex]"]
+			$SERVERHOST $SERVERPORT "GetPSData [lindex [$currentSelectedPane.dateTimeFrame.list get $selectedIndex] 0] [$currentSelectedPane.srcIPFrame.list get $selectedIndex] 200"]
 		for { set i 0 } { $i < [expr [llength $psdata]-1] } {incr i} {
 		    if { $sanatize == 1 } {
 			set psrow1 [lreplace [lindex $psdata $i] 2 2 "a.b.c.d"]
@@ -2128,6 +2138,21 @@ proc InsertRuleData { ruleData } {
   global ruleText referenceButton
   $ruleText component text insert end $ruleData
   $referenceButton configure -state normal
+}
+proc GetDshield {} {
+  global DEBUG BROWSER_PATH currentSelectedPane ACTIVE_EVENT MULTI_SELECT
+  if { $ACTIVE_EVENT && !$MULTI_SELECT} {
+    set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
+    set srcIP [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
+    if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
+	exec $BROWSER_PATH http://www.dshield.org/ipinfo.php?ip=$srcIP &
+    } else {
+      tk_messageBox -type ok -icon warning -message\
+       "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
+        to point your favorite browser."
+      puts "Error: $BROWSER_PATH does not exist or is not executable."
+    }
+  }
 }
 proc GetReference {} {
   global DEBUG ruleText BROWSER_PATH
@@ -3621,7 +3646,9 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
        -text "Show Rule" -variable SHOWRULE -command GetRuleInfo]
       set referenceButton [button $ruleButtonFrame.referenceButton\
        -text "www.snort.org" -command "GetReference" -state disabled]
-      pack $displayPacketButton $displayRuleButton $referenceButton -side left
+       set dshieldButton [button $ruleButtonFrame.dshieldButton\
+       -text "DShield Lookup" -command "GetDshield"]
+      pack $displayPacketButton $displayRuleButton $referenceButton $dshieldButton -side left
     set ruleText [scrolledtext $packetDataFrame.ruleText -hscrollmode static -visibleitems 10x1\
      -sbwidth 10 -vscrollmode none -wrap none]
   set packetFrame [frame $packetDataFrame.packetFrame -background black -borderwidth 1]
