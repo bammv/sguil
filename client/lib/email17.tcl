@@ -405,6 +405,8 @@ proc ::EMail::Send { ToList CCList BCCList Subject Message args } {
   }
   append Headers "From: $EMailFromAddress\n"
   append Headers "Subject: $Subject\n"
+  set timestamp [clock format [clock seconds] -format "%c" -gmt true]
+  append Headers "Date: $timestamp -0000\n"
   set state(Headers) "$Headers"
 
   # --- place the message into the token state variable
