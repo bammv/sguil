@@ -1,4 +1,4 @@
-#!/usr/local/bin/wishx
+#!/usr/bin/wishx
 
 ####################################################################
 # Snort GUI for Lamerz [sguil] - A tcl/tk interface to snort       #
@@ -2670,6 +2670,43 @@ proc CreateSensorCheckButton { winName sensorName } {
   checkbutton $winName.$sensorName -text "$sensorName" -variable sensorSelectArray($sensorName)
   pack $winName.$sensorName -side left -padx 10 -pady 10
 }
+
+proc GetUserName {} {
+  global USERNAME PASSWD
+  set getUserNameWin [toplevel .getUserNameWin -background white]
+  wm title $getUserNameWin "Snort GUI for Lamerz \[sguil\]"
+  set welcomeFrame [frame $getUserNameWin.welcomeFrame -borderwidth 1 -background black]
+  set welcomeLabel [label $welcomeFrame.welcomeLabel -background lightblue\
+   -foreground navy -text \
+   "Snort GUI for Lamerz \[sguil\]\n\
+   \n\
+   Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
+   \n\
+   This program is distributed under the terms of version 1.0 of the\n\
+   Q Public License.  See LICENSE.QPL for further details.\n\
+   \n\
+   This program is distributed in the hope that it will be useful,\n\
+   but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."]
+  pack $welcomeLabel -ipadx 5 -ipady 5
+  pack $welcomeFrame -side top -padx 5 -pady 10
+  set promptFrame [frame $getUserNameWin.promptFrame -background black -borderwidth 1]
+    set userLabel [label $promptFrame.userLabel -text "Please Login" -foreground navy]
+    set userName [entryfield $promptFrame.userName -validate alphanumeric\
+      -labeltext "Username:"\
+      -invalid {ErrorMessage "Please use alphanumeric characters only."}\
+      -textvariable USERNAME]
+    set userPasswd [entryfield $promptFrame.userPasswd\
+      -labeltext "Password:" -textvariable PASSWD -show *]
+    iwidgets::Labeledwidget::alignlabels $userName $userPasswd
+    set userBB [buttonbox $promptFrame.userBB]
+      $userBB add ok -text "Ok" -command "destroy $getUserNameWin"
+      $userBB add exit -text "Exit" -command "CleanExit"
+    pack $userLabel $userName $userPasswd $userBB -side top -fill both -expand true
+  pack $promptFrame -side bottom -pady 5
+  bind [$userPasswd component entry] <Return> { destroy .getUserNameWin }
+  tkwait window $getUserNameWin
+}
 #
 # SensorList: Rcvd a list of sensors from the server. Select which ones we 
 #             want to monitor.
@@ -2680,8 +2717,8 @@ proc SensorList { sensorList } {
   wm title $sensorSelectWindow "Snort GUI for Lamerz \[sguil\]"
   set welcomeFrame [frame $sensorSelectWindow.welcomeFrame -borderwidth 1 -background black]
   set welcomeLabel [label $welcomeFrame.welcomeLabel -background lightblue\
-   -foreground navy -text "\
-   Snort GUI for Lamerz \[sguil\]\n\
+   -foreground navy -text\
+  "Snort GUI for Lamerz \[sguil\]\n\
    \n\
    Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
    \n\
@@ -2690,8 +2727,7 @@ proc SensorList { sensorList } {
    \n\
    This program is distributed in the hope that it will be useful,\n\
    but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\
-  "]
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."]
   pack $welcomeLabel -ipadx 5 -ipady 5
   pack $welcomeFrame -side top -padx 5 -pady 10
   if { $sensorList != "0none0" } {
@@ -3599,6 +3635,16 @@ if [catch {set socketID [socket $SERVERHOST $SERVERPORT]}] {
   exit
 } else {
   fconfigure $socketID -buffering line
+  GetUserName
+  puts $socketID "ValidateUser $USERNAME $PASSWD"
+  set validUserResults [lindex [gets $socketID] 1]
+  while { $validUserResults != "VALID" } {
+    set PASSWD ""
+    ErrorMessage "Invalid USERNAME and/or PASSWORD"
+    GetUserName 
+    puts $socketID "ValidateUser $USERNAME $PASSWD"
+    set validUserResults [lindex [gets $socketID] 1]
+  } 
   fileevent $socketID readable [list ServerCommandRcvd $socketID]
   puts $socketID "SendDBInfo"
   puts $socketID "SendSensorList"

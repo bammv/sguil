@@ -20,8 +20,9 @@ set VERSION "sguil 0.2"
 ########################## PROCS ####################################
 
 proc DisplayUsage { cmdName } {
-  puts "Usage: $cmdName -- -c <filename>"
-  puts "  where <filename> is the PATH to the sguild config file (sguild.conf)"
+  puts "Usage: $cmdName -- -c <filename> -u <filename>"
+  puts "  -c <filename>: PATH to the sguild config (sguild.conf) file."
+  puts "  -p <filename>: PATH to the sguild users (sguild.users) file."
   exit 1
 }
 proc CleanExit {} {
@@ -40,11 +41,35 @@ proc CheckLineFormat { line } {
   return $RETURN
 }   
 
+proc ValidateUser { socketID username passwd } {
+  global USERS_FILE validSockets
+  if { ![file exists $USERS_FILE] } {
+    puts "Fatal Error! Cannot access $USERS_FILE."
+    exit 1
+  } 
+  set VALID 0
+  for_file line $USERS_FILE {
+    if { ![regexp ^# $line] && ![regexp ^$ $line] } {
+      # Probably should check for corrupted info here
+      set splitInfo [split $line :]
+      if { [lindex $splitInfo 0] == $username && [lindex $splitInfo 1] == $passwd } {
+        set VALID 1
+      }
+    }
+  }
+  if {$VALID} {
+    lappend validSockets $socketID
+    SendSocket $socketID "ValidateUser VALID" 
+  } else {
+    set validSockets [ldelete $validSockets $socketID]
+    SendSocket $socketID "ValidateUser INVALID"
+  } 
+}
 #
 # ClientCmdRcvd: Called when client sends commands.
 #
 proc ClientCmdRcvd { socketID } {
-  global DEBUG clientList
+  global DEBUG clientList validSockets
 
   if { [eof $socketID] || [catch {gets $socketID data}] } {
     # Socket closed
@@ -54,6 +79,12 @@ proc ClientCmdRcvd { socketID } {
   } else {
     if {$DEBUG} {puts "Clent Command Recieved: $data"}
     set clientCmd [lindex $data 0]
+    # Check to make the client validated itself
+    if { ($clientCmd != "ValidateUser" && [lsearch -exact $validSockets $socketID] < 0) } {
+      SendSocket $socketID\
+       "InfoMessage {Client does not appear to be logged in. Please exit and log back in.}"
+      return
+    }
     switch -exact $clientCmd {
       SendSensorList { $clientCmd $socketID }
       MonitorSensors { $clientCmd $socketID [lrange $data 1 end] } 
@@ -70,13 +101,14 @@ proc ClientCmdRcvd { socketID } {
       ExecDB { $clientCmd $socketID [lindex $data 1] }
       GetPSData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
       SendDBInfo { $clientCmd $socketID }
+      ValidateUser { ValidateUser $socketID [lindex $data 1] [lindex $data 2]}
       default { puts "Unrecognized command from $socketID: $data" }
     }
   }
 }
 
 proc ClientExitClose { socketID } {
-  global clientList  clientMonitorSockets
+  global clientList  clientMonitorSockets validSockets
   if { [info exists clientList] } {
     set clientList [ldelete $clientList $socketID]
   }
@@ -84,6 +116,9 @@ proc ClientExitClose { socketID } {
     foreach sensorName [array names clientMonitorSockets] {
       set clientMonitorSockets($sensorName) [ldelete $clientMonitorSockets($sensorName) $socketID]
     }
+  }
+  if { [info exists validSockets] } {
+    set validSockets [ldelete $validSockets $socketID]
   }
 }
 
@@ -257,8 +292,6 @@ proc ClientConnect { socketID IPAddr port } {
   }
   fconfigure $socketID -buffering line
   fileevent $socketID readable [list ClientCmdRcvd $socketID]
-  # Send the client a list of tables and column names/info
-  #SendDBInfo $socketID
 } 
 
 proc SensorConnect { socketID IPAddr port } {
@@ -666,20 +699,26 @@ proc CreateDB { DBNAME } {
 
 ###################### MAIN #####################################
 
+set validSockts ""
+
 # Load mysql support.
 package require mysqltcl
 
 # GetOpts
 set state flag
 foreach arg $argv {
+  puts $arg
   switch -- $state {
     flag {
       switch -glob -- $arg {
+        -- { set state flag }
         -c { set state conf }
+        -u { puts "got here"; set state users_file }
         default { DisplayUsage $argv0 }
       }
     }
     conf { set CONF_FILE $arg; set state flag }
+    users_file { puts "getting here";set USERS_FILE $arg; set state flag }
     default { DisplayUsage $argv0 }
   }
 }
@@ -716,6 +755,24 @@ if { [info exists CONF_FILE] } {
   }
 } else {
   DisplayUsage $argv0
+}
+# Check for a valid USERS file
+if { ![info exists USERS_FILE] } {
+  # No users file was specified. Go with the defaults
+  if { [file exists ./sguild.users] } {
+    set USERS_FILE "./sguild.users"
+  } elseif { [file exists /etc/sguil/sguild.users] } {
+    set USERS_FILE "/etc/sguil/sguild.users"
+  } else {
+    puts "ERROR: Could not find a sguild.users file."
+    puts "       Checked in ./ and /etc/sguil/"
+    DisplayUsage $argv0
+  }
+} else {
+  if { ![file exists $USERS_FILE] } {
+    puts "ERROR: $USERS_FILE does not exist"
+    DisplayUsage $argv0
+  }
 }
 
 # Get archived alerts from the DB
