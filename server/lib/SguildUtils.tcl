@@ -1,4 +1,4 @@
-# $Id: SguildUtils.tcl,v 1.5 2005/01/26 17:14:11 shalligan Exp $ #
+# $Id: SguildUtils.tcl,v 1.6 2005/02/03 14:25:58 bamm Exp $ #
 
 proc Daemonize {} {
     global PID_FILE env LOGGER
@@ -152,7 +152,7 @@ proc InetAtoN { ipaddress } {
     set oct2 [lindex $octetlist 1]
     set oct3 [lindex $octetlist 2]
     set oct4 [lindex $octetlist 3]
-    set decIP [expr ($oct1 * 16777216.0) + ($oct2 * 65536.0) + ($oct3 *256.0) + $oct4]
+    set decIP [expr ($oct1 * 16777216.0) + ($oct2 * 65536.0) + ($oct3 * 256.0) + $oct4]
     return $decIP
 }
 
