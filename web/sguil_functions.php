@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.7 2004/04/03 15:22:37 dlowless Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.8 2004/04/03 15:39:12 dlowless Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -111,7 +111,7 @@ function show_alerts( $where_query ) {
 			print("	<td><a href=\"$lookup_url\" target=\"lookup_left\">" . $row['src_ip'] . "</a></td>\n");
 			print("	<td>" . $row['src_port'] . "</td>\n");
 			print("	<td><a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a></td>\n");
-			if ( getprotobynumber($row['ip_proto']) != 'udp' && getprotobynumber($row['ip_proto']) != 'tcp' )
+			if ( (getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto']))=="") || ( getprotobynumber($row['ip_proto']) != 'udp' && getprotobynumber($row['ip_proto']) != 'tcp' ))
 			{
 				print("	<td>" . $row['dst_port'] . "</td>\n");
 			}
