@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.4 2004/10/18 20:49:37 shalligan Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.5 2004/10/27 20:45:55 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -86,8 +86,9 @@ proc ClientExitClose { socketID } {
     }
   }
   if { [info exists socketInfo($socketID)] } {
-    SendSystemInfoMsg sguild "User [lindex $socketInfo($socketID) 2] has disconnected."
+    set tmpUserName [lindex $socketInfo($socketID) 2]
     unset socketInfo($socketID)
+    SendSystemInfoMsg sguild "User $tmpUserName has disconnected."
   }
 }
 
