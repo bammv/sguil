@@ -1,6 +1,6 @@
 #!/bin/sh
 #set -x
-# $Id: log_packets.sh,v 1.12 2004/05/18 02:51:05 creining Exp $ #
+# $Id: log_packets.sh,v 1.13 2004/05/21 14:17:44 shalligan Exp $ #
 
 ################################################
 #                                              #
@@ -29,11 +29,11 @@
 # Path to snort binary
 SNORT_PATH="/usr/local/bin/snort"
 # Directory to log pcap data to (date dirs will be created in here)
-LOG_DIR="/snort_data/dailylogs"
+LOG_DIR="/var/log/snort/dailylogs"
 # Percentage of disk to try and maintain
 MAX_DISK_USE=90
 # Interface to 'listen' to.
-INTERFACE="eth0"
+INTERFACE="vr0"
 # Other options to use when starting snort
 #OPTIONS="-u sguil -g sguil -m 122"
 # Where to store the pid
@@ -97,6 +97,8 @@ stopproc() {
 restart() {
   if [ -f $PIDFILE ]; then
     OLDPID=`cat $PIDFILE`
+    # we need to nuke PIDFILE so that when we call start, it doesn't exit cause it thinks we are already running.
+    PIDFILE="/var/run/nonexistent"
     echo -n "Starting new process..."
     start
     echo -n "Killing old process..."
