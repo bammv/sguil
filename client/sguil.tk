@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.117 2004/06/28 17:20:03 bamm Exp $ #
+# $Id: sguil.tk,v 1.118 2004/06/28 18:05:32 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -163,7 +163,6 @@ proc HeartBeat {} {
 proc ConnectToSguild {} {
   global SERVERHOST SERVERPORT OPENSSL VERSION TLS_PATH DEBUG CONNECTED
 
-  puts "DEBUG ####  in ConnectToSguild $SERVERHOST"
   if [catch {socket $SERVERHOST $SERVERPORT} socketID ] {
     return -code error "Unable to connect to $SERVERHOST on port $SERVERPORT"
   } else {
@@ -1389,7 +1388,7 @@ proc SaveNewFonts {} {
 }
 
 proc GetUserName {} {
-  global USERNAME PASSWD VERSION SERVERHOST
+  global USERNAME PASSWD VERSION SERVERHOST SERVERPORT
   set getUserNameWin [toplevel .getUserNameWin -background white]
   wm title $getUserNameWin "$VERSION"
   set welcomeFrame [frame $getUserNameWin.welcomeFrame -borderwidth 1 -background black]
@@ -1411,19 +1410,22 @@ proc GetUserName {} {
     set userLabel [label $promptFrame.userLabel -text "Please Login" -foreground navy]
     set sguildHost [entryfield $promptFrame.sguildHost -labeltext "Sguild Host: "\
      -textvariable SERVERHOST]
+    set sguildPort [entryfield $promptFrame.sguildPort -labeltext "Sguild Port: "\
+     -textvariable SERVERPORT]
     set userName [entryfield $promptFrame.userName -validate alphanumeric\
       -labeltext "Username:"\
       -invalid {ErrorMessage "Please use alphanumeric characters only."}\
       -textvariable USERNAME]
     set userPasswd [entryfield $promptFrame.userPasswd\
       -labeltext "Password:" -textvariable PASSWD -show *]
-    iwidgets::Labeledwidget::alignlabels $sguildHost $userName $userPasswd
+    iwidgets::Labeledwidget::alignlabels $sguildHost $sguildPort $userName $userPasswd
     set userBB [buttonbox $promptFrame.userBB]
       $userBB add ok -text "Ok" -command "destroy $getUserNameWin"
       $userBB add exit -text "Exit" -command "CleanExit"
-    pack $userLabel $sguildHost $userName $userPasswd $userBB\
+    pack $userLabel $sguildHost $sguildPort $userName $userPasswd $userBB\
      -side top -fill both -expand true
   pack $promptFrame -side bottom -pady 5
+  focus -force $userName
   bind [$userPasswd component entry] <Return> { destroy .getUserNameWin }
   tkwait window $getUserNameWin
 }
@@ -1659,6 +1661,11 @@ if { ![info exists CONF_FILE] } {
     set CONF_FILE $env(HOME)/sguil.conf
   } elseif { [file exists ./sguil.conf] } {
     set CONF_FILE ./sguil.conf
+  } elseif { [file exists /etc/sguil] &&\
+             [file isdirectory /etc/sguil] &&\
+             [file exists /etc/sguil/sguil.conf] &&\
+             [file readable /etc/sguil/sguil.conf] } {
+    set CONF_FILE /etc/sguil/sguil.conf
   } else {
     puts "Couldn't determine where the sguil config file is"
     puts "Looked for $env(HOME)/sguil.conf and ./sguil.conf."
@@ -2648,7 +2655,6 @@ while {$CONNECTED == 0} {
   if [catch { ConnectToSguild } socketID] {
     ErrorMessage $socketID
     GetUserName
-    puts "DEBUG #### $SERVERHOST"
   } else {
     set CONNECTED 1
     break
