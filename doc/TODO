@@ -10,3 +10,5 @@
 *  move query functions out to queryd
 *  OpenSSL sockets
 *  optional threading?
+*  Fix SensorCmdRcvd cmd parsing (use ctoken versus lindex)
+*  Fix msg parsing for curly braces in sguil.tk
