@@ -39,7 +39,7 @@ set MOVEMENT_DIR ""
 set LASTINDEXSELECTED 1
 set MONITORFLAG 0
 set BUSY 0
-
+set currentSelectedPane 0 
 ######################## END GLOBALS ################################
 
 ########################## PROCS ####################################
@@ -1210,16 +1210,20 @@ proc BindSelectionToAllLists { listName } {
 	bind $listName <$buttonEvent> { ReSetMotion }
     }
     foreach buttonEvent { "MouseWheel" "Button-5" "Button-4" } {
-	bind $listName <$buttonEvent> { WheelScroll %D %W [%W nearest %y] %E; break }
+	bind $listName <$buttonEvent> { WheelScroll %D %W "Button"; break }
     }
 }
 #
 # WheelScroll: Scroll all of the lists together on a mousey-wheely-scrolly
 #
-proc WheelScroll { delta winName index eventName} {
-   
-    set parentWin [winfo parent [winfo parent $winName]]
- 
+proc WheelScroll { delta winName source } {
+    global SCROLL_HOME
+    if { $source == "Button" } {
+	set parentWin [winfo parent [winfo parent $winName]]
+    } else {
+	set parentWin $winName
+    }
+    set SCROLL_HOME($parentWin) 0
     # first we have to support Windows and X
     # Windows will trigger on MouseWheel events and delta will be high (at least more than 10)
     # if it is a negative number, then we are looking a a MouseWheel event
@@ -1231,8 +1235,8 @@ proc WheelScroll { delta winName index eventName} {
 	if { $delta == 5 } { set move 3 }
     } else {
 	# MouseWheel Motion (usually Windows generated)
-	if { $delta > 0 } { set move 3 }
-	if { $delta < 0 } { set move -3}
+	if { $delta > 0 } { set move -3 }
+	if { $delta < 0 } { set move 3}
 	if { $delta == 0 } { break } 
     }
     foreach childWin [winfo children $parentWin] {
@@ -1240,6 +1244,9 @@ proc WheelScroll { delta winName index eventName} {
 	    $childWin.list yview scroll $move units
 	}
     }
+    # check scrollbar position, if at the bottom, toggle SCROLL_HOME
+    set scrollbarPosition [lindex [$parentWin.scroll get] 1]
+    if {$scrollbarPosition == 1.0} {set SCROLL_HOME($parentWin) 1}
 }
 
 #
@@ -3603,6 +3610,12 @@ bind . <Key-Down> {
 bind . <Key-Escape> {
   UnSelectPacketOptions
   UnSelectHostLookups
+}
+
+bind . <MouseWheel> {
+    if { $currentSelectedPane != 0 } {
+	WheelScroll %D $currentSelectedPane "MouseWheel"
+    }
 }
 
 # Toggle SOUND when off/on is clicked
