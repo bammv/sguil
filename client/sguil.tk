@@ -1,6 +1,6 @@
 #!/bin/sh
 # Run wish from users PATH \
-exec wish -f "$0" ${1+"$@"}
+exec wish "$0" "$@"
 package require Tclx
 package require sha1
 
@@ -1476,7 +1476,7 @@ proc SingleSelect { winName index } {
   # already been highlighted. We check so that we don't have to
   # go and get the whois etc info
   if { !$MULTI_SELECT && $ACTIVE_EVENT} {
-    if { [lsearch -exact [$currentSelectedPane.eventIDFrame.list curselection] $index] >= 0 } { 
+    if { [$currentSelectedPane.eventIDFrame.list selection includes $index] } { 
       return
     }
   }
@@ -1717,7 +1717,7 @@ proc GetPacketInfo {} {
 }
 proc GetRuleInfo {} {
   global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton MULTI_SELECT SSN_QUERY
-  global CONNECTED
+  global CONNECTED eventArray
   ClearRuleText
   if {$ACTIVE_EVENT && $SHOWRULE && !$MULTI_SELECT && !$SSN_QUERY} {
     if {!$CONNECTED} {
@@ -1725,6 +1725,7 @@ proc GetRuleInfo {} {
       return
     }
     set selectedIndex [$currentSelectedPane.msgFrame.list curselection]
+    puts "DEBUG :: $eventArray([$currentSelectedPane.eventIDFrame.list get $selectedIndex])"
     set message [$currentSelectedPane.msgFrame.list get $selectedIndex]
     set sensorName [$currentSelectedPane.sensorFrame.list get $selectedIndex]
     if {$DEBUG} {puts  "RuleRequest $sensorName $message"}
