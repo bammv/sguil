@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.74 2004/01/02 18:29:21 bamm Exp $ #
+# $Id: sguild,v 1.75 2004/01/07 21:35:12 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -544,9 +544,10 @@ proc SendSocket { socketID command } {
 # SendEvent: Send events to connected clients
 #
 proc SendEvent { eventDataList } {
-  global DEBUG clientList
-  if { [info exists clientList] && [llength $clientList] > 0 } {
-    foreach clientSocket $clientList {
+  global DEBUG clientList clientMonitorSockets
+  set sensorName [lindex $eventDataList 3]
+  if { [info exists clientMonitorSockets($sensorName)] } {
+    foreach clientSocket $clientMonitorSockets($sensorName) {
       catch {SendSocket $clientSocket "InsertEvent $eventDataList"} tmpError
     }
   } else {
