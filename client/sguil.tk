@@ -1,4 +1,4 @@
-#!/usr/bin/wishx
+#!/usr/local/bin/wishx
 
 ####################################################################
 # Snort GUI for Lamerz [sguil] - A tcl/tk interface to snort       #
@@ -15,7 +15,7 @@
 
 ########################## GLOBALS ##################################
 
-set VERSION "sguil 0.2"
+set VERSION "0.2"
 
 set ACTIVE_EVENT 0
 set MULTI_SELECT 0
@@ -68,6 +68,38 @@ proc ServerCommandRcvd { socketID } {
       default { puts "Unrecognized command from $socketID: $data" }
     }
   } 
+}
+proc AboutBox {} {
+    global VERSION
+    set aboutWin .aboutWin
+    if [winfo exists $aboutWin] {
+	wm withdraw $aboutWin
+	wm deiconify $aboutWin
+	return
+    }
+    toplevel $aboutWin
+    wm title $aboutWin "Snort GUI for Lamerz \[sguil\]"
+    set welcomeFrame [frame $aboutWin.welcomeFrame -borderwidth 1 -background black]
+    set welcomeLabel [label $welcomeFrame.welcomeLabel -background lightblue\
+	    -foreground navy -text "\
+	    Snort GUI for Lamerz \[sguil\] Version: $VERSION\n\
+	    \n\
+	    Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
+	    \n\
+	    This program is distributed under the terms of version 1.0 of the\n\
+	    Q Public License.  See LICENSE.QPL for further details.\n\
+	    \n\
+	    This program is distributed in the hope that it will be useful,\n\
+	    but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
+	    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\
+	    "]
+    pack $welcomeLabel -ipadx 5 -ipady 5
+    pack $welcomeFrame -side top -padx 5 -pady 10
+    set actionButtonFrame [frame $aboutWin.actionButtonFrame -background white]
+    set okButton [button $actionButtonFrame.okButton -text "Ok"\
+	    -command "destroy $aboutWin"]
+    pack $okButton -side top
+    pack $actionButtonFrame -side bottom
 }
 proc TableNameList { tmpList } {
   global tableList
@@ -2775,26 +2807,53 @@ proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} }
 
 set topFrame [frame .topFrame]
   set fileMenu [menubutton $topFrame.fileMenu -text File -underline 0 -menu $topFrame.fileMenu.menu]
+  set queryMenu [menubutton $topFrame.queryMenu -text Query -underline 0 -menu $topFrame.queryMenu.menu]
+  set reportMenu [menubutton $topFrame.reportMenu -text Reports -underline 0 -menu $topFrame.reportMenu.menu]
+  set databaseMenu [menubutton $topFrame.databaseMenu -text Database -underline 0 -menu $topFrame.databaseMenu.menu]
   set soundFrame [frame $topFrame.soundFrame]
     set soundLabel [label $soundFrame.label -text "    Sound:"]
     set soundStatus [label $soundFrame.status -text "Off" -foreground red] 
     pack $soundLabel $soundStatus -side left
-  pack $fileMenu $soundFrame -side left
-  set menuList [menu $fileMenu.menu -tearoff 0]
-  $menuList add command -label "Query Event Table" -command "QueryRequest event empty"
-  $menuList add command -label "Query Sessions Table" -command "QueryRequest sessions empty"
-  $menuList add command -label "Show DataBase Tables" -command "ShowDBTables"
-  $menuList add command -label "Display Incident Categories" -command DisplayIncidentCats
-  $menuList add command -label "Send Event Detail via email" -command {EmailEvents 1}
-  $menuList add command -label "Send Event Summary via email" -command {EmailEvents 0}
-  $menuList add command -label "Purge Session Data" -command "DeleteRequest sessions"
+  pack $fileMenu $queryMenu $reportMenu $databaseMenu $soundFrame -side left
+  set fileList [menu $fileMenu.menu -tearoff 0]
+    $fileList add command -label "Display Incident Categories" -command DisplayIncidentCats  
+    $fileList add command -label "Sleep (Ctrl-s)" -command "GoToSleep"
+    $fileList add cascade -label "Change Font" -menu $fileList.font
+    set fontMenu [menu $fileList.font -tearoff 0]
+      $fontMenu add command -label "Standard" -command {ChangeFont ourStandardFont}
+      $fontMenu add command -label "Fixed" -command {ChangeFont ourFixedFont}
+    $fileList add command -label "About SGUIL" -command "AboutBox"
+    $fileList add command -label "Exit" -command CleanExit
+  set queryList [menu $queryMenu.menu -tearoff 0]
+    $queryList add command -label "Query Event Table" -command "QueryRequest event empty"
+    $queryList add command -label "Query Sessions Table" -command "QueryRequest sessions empty"
+    $queryList add cascade -label "Query by Category" -menu $queryList.category
+    set categoryMenu [menu $queryList.category -tearoff 0]
+      $categoryMenu add command -label "Cat I: Unauthorized Root Access"\
+	      -command "QueryRequest event category 11"
+      $categoryMenu add command -label "Cat II: Unauthorized User Access"\
+	      -command "QueryRequest event category 12"
+      $categoryMenu add command -label "Cat III: Attempted Unauthorized Access"\
+	      -command "QueryRequest event category 13"
+      $categoryMenu add command -label "Cat IV: Successful Denial of Service Attack"\
+	      -command "QueryRequest event category 14"
+      $categoryMenu add command -label "Cat V: Poor Security Practice or Policy Violation"\
+	      -command "QueryRequest event category 15"
+      $categoryMenu add command -label "Cat VI: Reconnaissance/Probes/Scans"\
+	      -command "QueryRequest event category 16"
+      $categoryMenu add command -label "Cat VII: Virus Infection"\
+	      -command "QueryRequest event category 17"
+    $queryList add command -label "Show DataBase Tables" -command "ShowDBTables"
+  set reportList [menu $reportMenu.menu -tearoff 0]
+    $reportList add command -label "Send Event Detail via email" -command {EmailEvents 1}
+    $reportList add command -label "Send Event Summary via email" -command {EmailEvents 0}
+  set databaseList [menu $databaseMenu.menu -tearoff 0]
+    $databaseList add command -label "Purge Session Data" -command "DeleteRequest sessions"
   #$menuList add command -label "License" -command "DisplayLicense"
-  $menuList add command -label "Sleep (Ctrl-s)" -command "GoToSleep"
-  $menuList add cascade -label "Change Font" -menu $menuList.font
-  $menuList add command -label "Exit" -command CleanExit
-  set fontMenu [menu $menuList.font -tearoff 0]
-  $fontMenu add command -label "Standard" -command {ChangeFont ourStandardFont}
-  $fontMenu add command -label "Fixed" -command {ChangeFont ourFixedFont}
+
+
+
+
 pack $topFrame -side top -fill x -padx 0 -pady 0
 wm title . "Snort GUI for Lamerz \[sguil\]"
 
