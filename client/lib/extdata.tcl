@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.13 2004/11/12 22:58:02 bamm Exp $
+# $Id: extdata.tcl,v 1.14 2004/12/06 16:09:20 bamm Exp $
 
 proc GetRuleInfo {} {
   global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT SSN_QUERY
@@ -273,11 +273,15 @@ proc XscriptMainMsg { winName data } {
     set XSCRIPTDATARCVD($winName) 1
   }
   switch -exact -- $data {
-     HDR { set SESSION_STATE($winName) HDR }
-     SRC { set SESSION_STATE($winName) SRC }
-     DST { set SESSION_STATE($winName) DST }
-     DEBUG { set SESSION_STATE($winName) DEBUG }
-     DONE { unset SESSION_STATE($winName); unset XSCRIPTDATARCVD($winName); $winName configure -cursor left_ptr }
+     HDR    { set SESSION_STATE($winName) HDR }
+     SRC    { set SESSION_STATE($winName) SRC }
+     DST    { set SESSION_STATE($winName) DST }
+     DEBUG  { set SESSION_STATE($winName) DEBUG }
+     DONE   { unset SESSION_STATE($winName)
+              unset XSCRIPTDATARCVD($winName)
+              InsertXscriptData $winName DEBUG "Finished."
+              $winName configure -cursor left_ptr
+            }
      ERROR { set SESSION_STATE($winName) ERROR }
      default { InsertXscriptData $winName $SESSION_STATE($winName) $data }
   }
