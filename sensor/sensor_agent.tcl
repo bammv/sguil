@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.19 2004/06/15 18:22:40 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.20 2004/06/16 18:59:08 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -14,7 +14,7 @@ exec tclsh "$0" "$@"
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 #
-# Config options moved to sensor_agent.tcl.
+# Config options moved to sensor_agent.conf.
 #
 
 # Don't touch these
