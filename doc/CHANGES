@@ -1,8 +1,12 @@
-# $Id: CHANGES,v 1.37 2004/06/11 15:19:58 bamm Exp $ #
+# $Id: CHANGES,v 1.38 2004/06/29 03:15:57 bamm Exp $ #
 
-sguil-0.4.1 (CVS HEAD)
+sguil-0.5.0 (29 Jun 2004)
 
  General
+  * The spp_stream4 patch was modified to include ip protocol
+    in its output. If you are using stream4 keepstats, then you
+    MUST RECOMPILE SNORT with the new patch.
+
   * xscriptd functions have been moved into sguild. Sguild now
     requests/gets pcap files via sensor_agent.tcl. If you are 
     upgrading from an older sguil version, make sure you update
@@ -29,9 +33,10 @@ sguil-0.4.1 (CVS HEAD)
 
  sguil.tk
   * Added the ip_proto (Pr) field for session and sancp queries - bamm
+  * Sguild server can be modified at login prompt. - bamm
   * List of users monitoring available sensors added to the 
     "select sensors" display. -bamm
-  * Username and UserID displayed in the top bar. - bamm
+  * Servername, Username and UserID displayed in the top bar. - bamm
 
  Database sql scripts
   * Bumped to version 0.9 to include ip_proto field for the sessions

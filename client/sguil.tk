@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.118 2004/06/28 18:05:32 bamm Exp $ #
+# $Id: sguil.tk,v 1.119 2004/06/29 03:15:56 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -19,7 +19,7 @@ exec wish "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.4.1"
+set VERSION "SGUIL-0.5.0"
 
 # Load extended tcl
 if [catch {package require Tclx} tclxVersion] {
@@ -207,12 +207,12 @@ proc UpdateUserName { userName userID } {
 proc ReconnectToSguild {} {
   global CONNECTED USERNAME PASSWD socketID monitorList
   if [catch {ConnectToSguild} socketID] {
-    ErrorMessage "${socketID}. Will try again in 10 secs."
+    InsertSystemInfoMsg sguil.tk "${socketID}. Will try again in 60 secs."
     set CONNECTED 0
-    after 10000 ReconnectToSguild
+    after 60000 ReconnectToSguild
   } else {
     set CONNECTED 1
-    InfoMessage "Reconnected to sguild. Reauthenticating client."
+    InfoMessage "Reconnected to sguild. Press 'OK' to Reauthenticate client."
     SendToSguild "ValidateUser $USERNAME"
     set saltNonce [gets $socketID]
     set tmpSalt [lindex $saltNonce 0]
