@@ -30,12 +30,6 @@ CREATE TABLE event
   ip_ttl	TINYINT UNSIGNED,
   ip_csum	SMALLINT UNSIGNED,
   last_modified	DATETIME,
-  serverity_criticality	TINYINT UNSIGNED,
-  serverity_lethality	TINYINT UNSIGNED,
-  serverity_system_cm	TINYINT	UNSIGNED,
-  serverity_network_cm	TINYINT UNSIGNED,
-  src_abuse_record_id	BIGINT UNSIGNED,
-  dst_abuse_record_id	BIGINT UNSIGNED,
   abuse_queue		enum('Y','N'),
   abuse_sent		enum('Y','N'),
   PRIMARY KEY (sid,cid),
@@ -48,8 +42,6 @@ CREATE TABLE event
   INDEX timestamp (timestamp),
   INDEX signature (signature),
   INDEX status (status),
-  INDEX src_abuse_record_id (src_abuse_record_id),
-  INDEX dst_abuse_record_id (dst_abuse_record_id),
   INDEX abuse_queue (abuse_queue),
   INDEX abuse_sent (abuse_sent)
 );
@@ -184,4 +176,4 @@ CREATE TABLE version
   installed	DATETIME
 );
 
-INSERT INTO version (version, installed) VALUES ("0.5", now());
+INSERT INTO version (version, installed) VALUES ("0.6", now());
