@@ -1,6 +1,14 @@
 CVS-HEAD
 
   sguil.tk
+    * Fixed Mouse-Wheel scrolling in X and Windows (geek2)
+
+    * Added a GUI Query Builder, for easy SQL editing. (geek2)	
+    
+    * Changed the Comm's to use ctoken instead of l{range,index}
+      so random word boundry characters in UserMessages or Event
+      descriptions doesn't pop errors. (geek2)
+    
     * Fixed fcopy bug for Ethereal requests (thanks
       Tim Slighter).
 
