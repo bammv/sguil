@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: log_packets.sh,v 1.10 2004/01/02 17:42:52 bamm Exp $ #
+# $Id: log_packets.sh,v 1.11 2004/03/09 21:36:49 bamm Exp $ #
 
 ################################################
 #                                              #
@@ -123,21 +123,27 @@ cleandisk() {
     # Can't use -t on the ls since the mod time changes each time we
     # delete a file. Good thing we use YYYY-MM-DD so we can sort.
     OLDEST_DIR=`ls | sort | head -1`
-    cd $OLDEST_DIR
-    OLDEST_FILE=`ls -t | tail -1`
-    if [ $OLDEST_FILE ]; then
-      echo "  Removing file: $OLDEST_DIR/$OLDEST_FILE"
-      rm -f $OLDEST_FILE
+    if [ $OLDEST_DIR = ".." ] || [ $OLDEST_DIR = "." ]; then
+      # Ack, we rm'd all of our raw data files/dirs.
+      echo "ERROR: No pcap directories found in $LOG_DIR."
+      echo "Something else must be hogging the diskspace."
     else
-      echo "  Removing empty dir: $OLDEST_DIR"
-      cd ..; rm -rf $OLDEST_DIR
+      cd $OLDEST_DIR
+      OLDEST_FILE=`ls -t | tail -1`
+      if [ $OLDEST_FILE ]; then
+        echo "  Removing file: $OLDEST_DIR/$OLDEST_FILE"
+        rm -f $OLDEST_FILE
+      else
+        echo "  Removing empty dir: $OLDEST_DIR"
+        cd ..; rm -rf $OLDEST_DIR
+      fi
+      # Run cleandisk again as rm'ing one file might been enough
+      # but we wait 5 secs in hopes any open writes are done.
+      sync
+      echo "  Waiting 5 secs for disk to sync..."
+      sleep 5
+      cleandisk
     fi
-    # Run cleandisk again as rm'ing one file might been enough
-    # but we wait 5 secs in hopes any open writes are done.
-    sync
-    echo "  Waiting 5 secs for disk to sync..."
-    sleep 5
-    cleandisk
   else
     echo "Done."
   fi
