@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.156 2004/12/02 15:09:53 shalligan Exp $ #
+# $Id: sguil.tk,v 1.157 2004/12/06 21:18:21 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -819,12 +819,19 @@ proc DeleteTab { eventTabs tabName } {
   # no event is active anymore
   if [regexp "^$tabName" $currentSelectedPane] { set ACTIVE_EVENT 0 }
 
+  set totalTabs [llength [$eventTabs childsite]]
   set tabIndex [lsearch -exact [$eventTabs childsite] $tabName]
+
   $eventTabs delete $tabIndex
-  if {$tabIndex > 2} {
-    $eventTabs prev
-  } else {
-    $eventTabs select 0
+
+  if { $tabIndex < [expr $totalTabs - 1] } {
+    $eventTabs select $tabIndex
+  } else { 
+    if { $tabIndex == 2 } {
+      $eventTabs select 0
+    } else {
+      $eventTabs select [expr $tabIndex - 1]
+    }
   }
 }
 
