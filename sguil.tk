@@ -461,6 +461,7 @@ proc InsertUdpHdr { data } {
 proc InsertIcmpHdr { data pldata } {
   global typeIcmpHdrFrame codeIcmpHdrFrame chksumIcmpHdrFrame
   global idIcmpHdrFrame seqIcmpHdrFrame
+  global icmpDecodeFrame icmpHdrFrame
   $typeIcmpHdrFrame.text insert 0.0 [lindex $data 0]
   $codeIcmpHdrFrame.text insert 0.0 [lindex $data 1]
   $chksumIcmpHdrFrame.text insert 0.0 [lindex $data 2]
@@ -474,7 +475,6 @@ proc InsertIcmpHdr { data pldata } {
   if {[lindex $data 0] == "3" || [lindex $data 0] == "11"} {
 	if {[lindex $data 1] == "0" || [lindex $data 1] == "4" || [lindex $data 1] == "9" || [lindex $data 1] == "13" || [lindex $data 1] == "1" || [lindex $data 1] == "3"} {
 	    global protoIcmpDecodeFrame sipIcmpDecodeFrame sportIcmpDecodeFrame dipIcmpDecodeFrame dportIcmpDecodeFrame
-	    global icmpDecodeFrame icmpHdrFrame
 	    
 	    #  There may be 32-bits of NULL padding at the start of the payload
 	    set offset 0
