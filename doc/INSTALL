@@ -88,7 +88,9 @@ future, rules will be localized in the DB, for now each rule file
 must be kept on the sguild server based on the hostname. Don't
 forget to copy these rule files over after installing the sensor.
 
-4) Start the daemon, it will send a query to the DB to get
+4) Add users to sguild.users file.
+
+5) Start the daemon, it will send a query to the DB to get
 any archived alerts and then echo "Waiting for events from sensors."
 
 
