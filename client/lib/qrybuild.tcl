@@ -69,8 +69,9 @@ proc updateCatList { selectFrame } {
      
     $selectFrame.cList delete list 0 end
     $selectFrame.cList delete entry 0 end
+    $selectFrame.iList delete 0 end
     
-    set funcList [list Common Strings Comparision]
+    set funcList [list Common Strings Comparision DateTime]
     set sel [$selectFrame.mList get]
 
     if {$sel == "Tables"} { 
@@ -85,13 +86,16 @@ proc updateItemList { selectFrame} {
     
     $selectFrame.iList delete 0 end
     #$selectFrame.iList delete entry 0 end
-    
+    set funcList(Common) [list INET_ATON() LIMIT LIKE() AND OR NOT]
+    set funcList(Strings) [list LIKE REGEXP RLIKE]
+    set funcList(Comparision) [list AND OR NOT = != < > <> <=> BETWEEN()]
+    set funcList(DateTime) [list TO_DAYS() UNIX_TIMESTAMP() UTC_TIMESTAMP()]
     eval set sel [$selectFrame.cList get]
     
     if { [$selectFrame.mList get] == "Tables" } {
 	eval $selectFrame.iList insert 0 $tableColumnArray($sel)
     } else {
-	# SQL and other Functions listed here
+	eval $selectFrame.iList insert 0 $funcList($sel)
     }
 }
 
