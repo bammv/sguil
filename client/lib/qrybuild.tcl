@@ -34,7 +34,7 @@ proc QryBuild {tableSelected whereTmp } {
 	    [list YESTERDAY '[lindex [GetCurrentTimeStamp "1 day ago"] 0]']]
     set funcList(Categories) [list {CATI event.status=11} {CATII event.status=12} {CATIII event.status=13} \
 	    {CATIV event.status=14} {CATV event.status=15} {CATVI event.status=16} {CATVII event.status=17} \
-	    {CATVIII(NA) event.status=18} {RealTime event.status=1} {Escalated event.status=2}]
+	    {CATVIII(NA) event.status=1} {RealTime event.status=0} {Escalated event.status=2}]
     foreach tableName $tableList {
 	set funcList($tableName) $tableColumnArray($tableName)
     }
