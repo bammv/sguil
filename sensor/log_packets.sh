@@ -17,7 +17,6 @@ TZ=GMT
 export TZ
 
 start() {
-  HOSTNAME=`hostname -s`
   if [ -x $SNORT_PATH ]; then
     if [ ! -d $LOG_DIR ]; then
       mkdir $LOG_DIR
@@ -51,7 +50,6 @@ stop() {
 }
 
 restart() {
-  HOSTNAME=`hostname -s`
   if [ -f $PIDFILE ]; then
     OLDPID=`cat $PIDFILE`
     echo -n "Starting new process..."
