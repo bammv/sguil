@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.106 2004/07/15 17:12:01 bamm Exp $ #
+# $Id: sguild,v 1.107 2004/07/20 21:54:12 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -779,7 +779,7 @@ proc CorrelateEvent { srcip msg } {
 proc EventRcvd { socketID data } {
   global DEBUG EMAIL_EVENTS EMAIL_CLASSES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS eventIDCountArray
   global acRules acCat correlatedEventArray eventIDList
-  set eventDataList [lrange [split $data |] 1 13]
+  set eventDataList [lrange [split $data |] 1 15]
   if { [lindex $eventDataList 2] == "system-info" } {
     if {$DEBUG} {
       puts "SYSTEM INFO: $eventDataList"
@@ -796,7 +796,7 @@ proc EventRcvd { socketID data } {
     flush $socketID
     # Make sure we don't have a dupe. If so, report an error and return.
     set currentEventAID [join [lrange $eventDataList 4 5] .]
-    if { [lsearch $eventIDList $currentEventAID] >= 0] } {
+    if { [lsearch $eventIDList $currentEventAID] >= 0 } {
       # Have a dupe. Could be b/c we just initialized and a sensor
       # was waiting to send us an alert that we pulled from the DB.
       if {$DEBUG} {
