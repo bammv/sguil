@@ -35,7 +35,7 @@ and event driven analysis of IDS alerts.
 %{__install} -d -m0755 \
 	%{buildroot}/etc/sguil \
 	%{buildroot}%{_bindir} \
-	%{buildroot}%{_libdir}/sguil
+	%{buildroot}%{_libdir}/sguil-client
 
 %{__install} client/sguil.tk %{buildroot}%{_bindir}/sguil.tk
 %{__install} client/sguil.conf %{buildroot}/etc/sguil/
