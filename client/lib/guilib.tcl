@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.7 2004/07/26 18:18:39 shalligan Exp $
+# $Id: guilib.tcl,v 1.8 2004/07/26 18:51:53 shalligan Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -606,11 +606,10 @@ proc ErrorMessage { message } {
     tk_messageBox -type ok -icon warning -message "$message"
 }
 proc SearchData {} {
-    global dataSearchText dataTextFrame dataSearchType
+    global dataSearchText dataTextFrame dataSearchType dataSearchCase
     set searchWidget [$dataSearchType get]
-    set searchtext [$dataSearchText get 0.0 end]
-    puts $searchtext
-    puts [string length $searchtext]
+    $searchWidget tag delete highlight
+    set searchtext [$dataSearchText get 0 end]
     if {$searchtext == "" || $searchtext == "\n"} {
 	return
     }
@@ -624,7 +623,11 @@ proc SearchData {} {
     set textinds {}
     while {$stop == 1} {
 	set inds {}
-	set stop [regexp -start $nextchar  -indices -- $searchRegexp [$searchWidget get 0.0 end-1c] inds]
+	if { $dataSearchCase == 0 } {
+	    set stop [regexp -start $nextchar  -indices -- $searchRegexp [$searchWidget get 0.0 end-1c] inds]
+	} else {
+	    set stop [regexp -nocase -start $nextchar  -indices -- $searchRegexp [$searchWidget get 0.0 end-1c] inds]
+	}
 	set nextchar [expr [lindex $inds 1] +1]
 	if {$stop == 1 } {
 	    foreach index $inds {

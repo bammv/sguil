@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.126 2004/07/26 18:18:38 shalligan Exp $ #
+# $Id: sguil.tk,v 1.127 2004/07/26 18:51:52 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2367,14 +2367,16 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
      pack $dataFrameLabel -side left -anchor w -fill y
      pack $dataTextFrame -side left -anchor w -fill both -expand true
     set dataSearchFrame [frame $packetFrame.dataSearchFrame]
-	  set dataSearchText [text $dataSearchFrame.dataSearchText -height 1 -width 20 -background white -font ourFixedFont]
+	  set dataSearchText [entry $dataSearchFrame.dataSearchText -width 20 -background white -font ourFixedFont]
 	  set dataSearchButton [button $dataSearchFrame.dataSearchButton -state disabled -text "Search Packet Payload"\
 	    -command "SearchData"]
 	  set dataSearchType [radiobox $dataSearchFrame.dataSearchType -orient horizontal]
 	    $dataSearchType add $dataHex -text "Hex" 
 	    $dataSearchType add $dataText -text "Text"
 	    $dataSearchType select $dataText
-	  pack $dataSearchText $dataSearchButton $dataSearchType -side left -fill x
+	  set dataSearchCaseCheck [checkbutton $dataSearchFrame.dataSearchCaseCheck -variable dataSearchCase -text "NoCase"]
+  	  
+	  pack $dataSearchText $dataSearchButton $dataSearchType $dataSearchCaseCheck -side left -fill x
      pack $dataSearchFrame -side bottom -anchor s -fill x -expand false
     
     pack $ipHdrFrame $tcpHdrFrame -fill x -side top
