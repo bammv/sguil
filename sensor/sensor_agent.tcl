@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.17 2004/06/11 15:19:59 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.18 2004/06/14 21:21:27 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -20,6 +20,7 @@ exec tclsh "$0" "$@"
 # Don't touch these
 set CONNECTED 0
 set BUSY 0
+set COPY_WAIT 0
 
 proc SendToSguild { data } {
   global sguildSocketID CONNECTED DEBUG
@@ -40,11 +41,14 @@ proc FinishedCopy { fileID socketID bytes {error {}} } {
   set BUSY 0
 }
 proc SendPSDataToSvr { fileName } {
-  global SERVER_HOST SERVER_PORT DEBUG
+  global SERVER_HOST SERVER_PORT DEBUG COPY_WAIT
   if [catch {socket $SERVER_HOST $SERVER_PORT} socketID] {
-    puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT"
-    puts "ERROR: $socketID"
+    if {$DEBUG} {puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT"}
+    if {$DEBUG} {puts "ERROR: $socketID"}
     catch {close $socketID} closeError
+    # Buffers are probably full
+    set COPY_WAIT 1
+    after 10000 set COPY_WAIT 0
   } else {
     fconfigure $socketID -translation binary
     puts $socketID "PSFile [file tail $fileName]"
@@ -57,7 +61,7 @@ proc CopyDataToServer { fileName socketID } {
   set fileID [open $fileName r]
   fconfigure $fileID -translation binary -buffering none
   if [catch {fcopy $fileID $socketID -command [list FinishedCopy $fileID $socketID]} fcopyError] {
-    puts "Error: $fcopyError"
+    if {$DEBUG} {puts "Error: $fcopyError"}
     return
   }
   set BUSY 1
@@ -66,11 +70,14 @@ proc CopyDataToServer { fileName socketID } {
 }
 
 proc SendSsnDataToSvr { type fileName } {
-  global SERVER_HOST SERVER_PORT DEBUG HOSTNAME
+  global SERVER_HOST SERVER_PORT DEBUG HOSTNAME COPY_WAIT
   if [catch {socket $SERVER_HOST $SERVER_PORT} socketID ] {
-    puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT"
-    puts "ERROR: $socketID"
+    if {$DEBUG} {puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT"}
+    if {$DEBUG} {puts "ERROR: $socketID"}
     catch {close $socketID} closeError
+    # Buffers are probably full
+    set COPY_WAIT 1
+    after 10000 set COPY_WAIT 0
   } else {
     fconfigure $socketID -translation binary -buffering none
     puts $socketID "SsnFile $type [file tail $fileName] $HOSTNAME"
@@ -78,12 +85,16 @@ proc SendSsnDataToSvr { type fileName } {
   }
 }
 proc CheckForPortscanFiles {} {
-  global PORTSCAN_DIR PS_CHECK_DELAY_IN_MSECS DEBUG CONNECTED
-  if {$CONNECTED} {
+  global PORTSCAN_DIR PS_CHECK_DELAY_IN_MSECS DEBUG CONNECTED COPY_WAIT
+  if {$CONNECTED && !$COPY_WAIT} {
     if {$DEBUG} {puts "Checking for PS files in $PORTSCAN_DIR."}
     foreach fileName [glob -nocomplain $PORTSCAN_DIR/portscan_log.*] {
       if { [file size $fileName] > 0 } {
-        SendPSDataToSvr $fileName
+        if {$CONNECTED && !$COPY_WAIT} {
+          SendPSDataToSvr $fileName
+        } else {
+          break
+        } 
       } else {
         file delete $fileName
       }
@@ -92,13 +103,17 @@ proc CheckForPortscanFiles {} {
   after $PS_CHECK_DELAY_IN_MSECS CheckForPortscanFiles
 }
 proc CheckForSsnFiles {} {
-  global SSN_DIR S4_KEEP_STATS SANCP SANCP_DIR SSN_CHECK_DELAY_IN_MSECS DEBUG CONNECTED
-  if {$CONNECTED} {
+  global SSN_DIR S4_KEEP_STATS SANCP SANCP_DIR SSN_CHECK_DELAY_IN_MSECS DEBUG CONNECTED COPY_WAIT
+  if {$CONNECTED && !$COPY_WAIT} {
     if { $S4_KEEP_STATS } {
       if {$DEBUG} {puts "Checking for Session files in $SSN_DIR."}
       foreach fileName [glob -nocomplain $SSN_DIR/ssn_log.*] {
         if { [file size $fileName] > 0 } {
-          SendSsnDataToSvr sessions $fileName
+          if {$CONNECTED && !$COPY_WAIT} {
+            SendSsnDataToSvr sessions $fileName
+          } else {
+            break
+          } 
         } else { 
           file delete $fileName
         }
@@ -122,7 +137,7 @@ proc CheckDiskSpace {} {
   if {$CONNECTED} {
     set output [exec df -h $WATCH_DIR]
     set diskUse [lindex [lindex [split $output \n] 1] 4]
-    puts "DiskReport $WATCH_DIR $diskUse"
+    if {$DEBUG} { puts "DiskReport $WATCH_DIR $diskUse" }
     SendToSguild "DiskReport $WATCH_DIR $diskUse"
     after $DISK_CHECK_DELAY_IN_MSECS CheckDiskSpace
   }
@@ -143,8 +158,8 @@ proc RawDataRequest { socketID TRANS_ID sensor timestamp srcIP dstIP srcPort dst
   if { $tmpRawDataFile != "error" } {
     # Copy the file up to sguild.
     if [catch {socket $SERVER_HOST $SERVER_PORT} socketID ] {
-      puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT"
-      puts "ERROR: $socketID"
+      if {$DEBUG} {puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT"}
+      if {$DEBUG} {puts "ERROR: $socketID"}
       catch {close $socketID} closeError
       file delete $tmpRawDataFile
     } else {
@@ -224,15 +239,16 @@ proc ConnectToSguilServer {} {
   global sguildSocketID HOSTNAME CONNECTED
   global SERVER_HOST SERVER_PORT DEBUG
   while {[catch {set sguildSocketID [socket $SERVER_HOST $SERVER_PORT]}] > 0} {
-    puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT."
-    puts "Trying again in 15 seconds"
+    if {$DEBUG} {puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT."}
+    if {$DEBUG} {puts "Trying again in 15 seconds"}
     after 15000
   }
   fconfigure $sguildSocketID -buffering line
   fileevent $sguildSocketID readable [list SguildCmdRcvd $sguildSocketID]
   set CONNECTED 1
   if {$DEBUG} {puts "Connected to $SERVER_HOST"}
-  puts $sguildSocketID "CONNECT $HOSTNAME"
+  if {$DEBUG} {puts $sguildSocketID "CONNECT $HOSTNAME"}
+  flush $sguildSocketID
 }
 proc SguildCmdRcvd { socketID } {
   global DEBUG
@@ -248,7 +264,7 @@ proc SguildCmdRcvd { socketID } {
     switch -exact -- $sguildCmd {
       PONG	{ if {$DEBUG} {puts "PONG recieved"} }
       RawDataRequest { eval $sguildCmd $socketID [lrange $data 1 end] }
-      default   { puts "Sguil Cmd Unkown: $sguildCmd" }
+      default   { if {$DEBUG} {puts "Sguil Cmd Unkown: $sguildCmd"} }
     }
   }
 }
