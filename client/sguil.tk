@@ -2301,7 +2301,7 @@ proc XscriptServerCmdRcvd { socketID } {
 }
 proc GetXscript { type force } {
   global ACTIVE_EVENT SERVERHOST XSCRIPT_SERVER_PORT DEBUG currentSelectedPane XSCRIPTDATARCVD
-  global socketWinName SESSION_STATE SSN_QUERY
+  global socketWinName SESSION_STATE SSN_QUERY ETHEREAL_STORE_DIR
   global OPENSSL VERSION
   if {!$ACTIVE_EVENT} {return}
   set winName $currentSelectedPane.sensorFrame.list
@@ -2367,12 +2367,12 @@ proc GetXscript { type force } {
     } elseif { $type == "ethereal" } {
       if { $proto != "1" } {
         if { $srcPort > $dstPort } {
-          set tmpFile "/tmp/${dstIP}_${dstPort}-${srcIP}_${srcPort}-${proto}.raw"
+          set tmpFile "$ETHEREAL_STORE_DIR/${dstIP}_${dstPort}-${srcIP}_${srcPort}-${proto}.raw"
         } else {
-          set tmpFile "/tmp/${srcIP}_${srcPort}-${dstIP}_${dstPort}-${proto}.raw"
+          set tmpFile "$ETHEREAL_STORE_DIR/${srcIP}_${srcPort}-${dstIP}_${dstPort}-${proto}.raw"
         }
       } else {
-        set tmpFile "/tmp/${srcIP}_${dstIP}-${proto}.raw"
+        set tmpFile "$ETHEREAL_STORE_DIR/${srcIP}_${dstIP}-${proto}.raw"
       }
       set tmpFileID [open $tmpFile w]
       fconfigure $tmpFileID -translation binary

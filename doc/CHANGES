@@ -1,7 +1,10 @@
 CVS-HEAD
 
   sguil.tk
-    * Fixed fcopy bug for Ethereal requests.
+    * Fixed fcopy bug for Ethereal requests (thanks
+      Tim Slighter).
+
+    * Added better Ethereal config options in (sguil.conf)
 
   sguild
     * Alpha support for emailing events. Need to add better
