@@ -2,13 +2,9 @@
 *  move keepstats to spp_conversation
 *  decodes for icmp redirect
 *  sguild checks schema version
-*  sguild checks sguil.tk version (vice versa)
 *  protocol field for requesting ethereal xscripts
 *  size limit for tcpflow data
 *  auth (including xscript and sensors)
 *  no exit on death
 *  move query functions out to queryd
-*  OpenSSL sockets
 *  optional threading?
-*  Fix SensorCmdRcvd cmd parsing (use ctoken versus lindex)  (done geek2)
-*  Fix msg parsing for curly braces in sguil.tk  (done geek2, although there may be more places this prblem exists)

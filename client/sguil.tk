@@ -19,7 +19,7 @@ package require Tclx
 
 ########################## GLOBALS ##################################
 
-set VERSION "0.2"
+set VERSION "SGUIL-0.2.1"
 
 set ACTIVE_EVENT 0
 set MULTI_SELECT 0
@@ -3806,14 +3806,28 @@ if [catch {set socketID [socket $SERVERHOST $SERVERPORT]}] {
   exit
 } else {
   fconfigure $socketID -buffering line
+  # Version checking
   if {$OPENSSL} {
-    load $TLS_PATH
+    set VERSION "$VERSION OPENSSL ENABLED"
+  } else {
+    set VERSION "$VERSION OPENSSL DISABLED"
+  }     
+  if [catch {gets $socketID} serverVersion] {
+    puts "ERROR: $serverVersion"
+    CleanExit
+  }
+  if { $serverVersion != $VERSION } {
+    puts "ERROR: Mismatched versions.\nSERVER: ($serverVersion)\nCLIENT: ($VERSION)"
+    CleanExit
+  }
+  puts $socketID "$VERSION"
+  if {$OPENSSL} {
+    if { [info exists TLS_PATH] } { load $TLS_PATH }
     package require tls
     tls::import $socketID
   }
   puts $socketID "PING"
   set INIT [gets $socketID]
-  puts $INIT
   if {$DEBUG} {puts "Init successful"}
   GetUserName
   puts $socketID "ValidateUser $USERNAME $PASSWD"

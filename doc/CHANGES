@@ -1,11 +1,22 @@
 CVS-HEAD
   sguild
     * Added -D (daemonize) and -P <pidFile> switches.
-    * Changed sensorCmd to use ctoken to avoid crashes when special chars are in the message
+
+    * Changed sensorCmd to use ctoken to avoid crashes
+      when special chars are in the message
+
+    * Added OpenSSL for client <> server comms.
+
+    * Does version checking with clients
 
   xscriptd
     * Added -D (daemonize) and -P <pidFile> switches.
-    * Using a regexp instead of lindex to test for spp_portscan event, avoids error on special chars
+
+    * Using a regexp instead of lindex to test for spp_portscan
+      event, avoids error on special chars
+
+    * Added OpenSSL for client <> server comms.
+
 
 Version 0.2
   sguil.tk
