@@ -1,4 +1,4 @@
-# $Id: SguildUtils.tcl,v 1.4 2004/11/11 15:44:49 bamm Exp $ #
+# $Id: SguildUtils.tcl,v 1.5 2005/01/26 17:14:11 shalligan Exp $ #
 
 proc Daemonize {} {
     global PID_FILE env LOGGER
@@ -71,6 +71,89 @@ proc GetHostbyAddr { ip } {
     set hostname "Unknown"
   }
   return $hostname
+}
+
+# ValidateIPAddress:  Verifies that a string fits a.b.c.d/n CIDR format.
+#                     the / notation is optional. 
+#                     returns a list with the following elements or 0 if the syntax is invalid:
+#                     { ipaddress } { maskbits } { networknumber } { broadcastaddress }
+#                     for example:
+#                     given 10.2.1.3/24 it will return:
+#                     { 10.2.1.3 } { 24 } { 10.2.1.0 }
+proc ValidateIPAddress { fullip } {
+
+    set valid 0
+    
+    set valid [regexp "^((\\d{1,3})\.(\\d{1,3})\.(\\d{1,3})\.(\\d{1,3}))(/)?(\\d{1,2})?$" \
+	    $fullip foo ipaddress oct1 oct2 oct3 oct4 slash maskbits]
+    if { !$valid } { return 0 }
+    
+    if { $oct1 < 0 || $oct1 > 255 } { set valid 0 }
+    if { $oct2 < 0 || $oct2 > 255 } { set valid 0 }
+    if { $oct3 < 0 || $oct3 > 255 } { set valid 0 }
+    if { $oct4 < 0 || $oct4 > 255 } { set valid 0 }
+    if { $maskbits!="" && ($maskbits < 0 || $maskbits > 32) } { set valid 0 }
+    if { !$valid } { return 0 }
+
+    # if the bitmask is 32 or absent, return the ip address as the network number
+    if { $maskbits=="" || $maskbits == 32 } {
+	set iplist [list $ipaddress 32 $ipaddress $ipaddress]
+    } else { 
+	if { $maskbits > 23 } {
+	    set hostbits [expr 32 - $maskbits]
+	    set hostmask [expr pow(2,$hostbits)]
+	    set netmask [expr 256 - $hostmask]
+	    set netmask [expr round($netmask)]
+	    set netoct [expr $oct4 & $netmask]
+	    set netnumber "${oct1}.${oct2}.${oct3}.${netoct}"
+	    set bcastoct [expr $netoct + round($hostmask) - 1 ]
+	    set bcastaddress "${oct1}.${oct2}.${oct3}.${bcastoct}"
+	} elseif { $maskbits > 15 } {
+	    set hostbits [expr 24 - $maskbits]
+	    set hostmask [expr pow(2,$hostbits)]
+	    set netmask [expr 256 - $hostmask]
+	    set netmask [expr round($netmask)]
+	    set netoct [expr $oct3 & $netmask]
+	    set netnumber "${oct1}.${oct2}.${netoct}.0"
+	    set bcastoct [expr $netoct + round($hostmask) - 1 ]
+	    set bcastaddress "${oct1}.${oct2}.${bcastoct}.255"
+	} elseif { $maskbits > 7 } {
+	    set hostbits [expr 16 - $maskbits]
+	    set hostmask [expr pow(2,$hostbits)]
+	    set netmask [expr 256 - $hostmask]
+	    set netmask [expr round($netmask)]
+	    set netoct [expr $oct3 & $netmask]
+	    set netnumber "${oct1}.${netoct}.0.0"
+	    set bcastoct [expr $netoct + round($hostmask) - 1 ]
+	    set bcastaddress "${oct1}.${bcastoct}.255.255"
+	} else {
+	    set hostbits [expr 8 - $maskbits]
+	    set hostmask [expr pow(2,$hostbits)]
+	    set netmask [expr 256 - $hostmask]
+	    set netmask [expr round($netmask)]
+	    set netoct [expr $oct3 & $netmask]
+	    set netnumber "${netoct}.0.0.0"
+	    set bcastoct [expr $netoct + round($hostmask) - 1 ]
+	    set bcastaddress "${bcastoct}.255.255.255"
+	}
+	set iplist [list $ipaddress $maskbits $netnumber $bcastaddress]
+    }
+
+    return $iplist
+}
+
+#
+# InetAtoN:  Convert a string dotted quad ip address to decimal ala
+#            INET_ATON in mysql
+#
+proc InetAtoN { ipaddress } {
+    set octetlist [split $ipaddress "."]
+    set oct1 [lindex $octetlist 0]
+    set oct2 [lindex $octetlist 1]
+    set oct3 [lindex $octetlist 2]
+    set oct4 [lindex $octetlist 3]
+    set decIP [expr ($oct1 * 16777216.0) + ($oct2 * 65536.0) + ($oct3 *256.0) + $oct4]
+    return $decIP
 }
 
 proc GetCurrentTimeStamp {} {
