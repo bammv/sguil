@@ -120,13 +120,14 @@ proc ClientCmdRcvd { socketID } {
       return
       }
     }
-    set data1 $data
+    set data1 [string trimleft $data]
     # data1 will contain the list from index 1 on. 
     set index1 [ctoken data " "]
-    set data2 $data
+    set data2 [string trimleft $data]
     # data2 now contains only indices 2 on, because ctoken chops tokens off
     set index2 [ctoken data " "]
     # data now contains indicies 3 on
+    set data [string trimleft $data]
     switch -exact $clientCmd {
       DeleteEventID { $clientCmd $socketID $index1 $index2 }
       DeleteEventIDList { $clientCmd $socketID $index1 $index2 $data }
