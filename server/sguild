@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.82 2004/03/19 20:33:59 bamm Exp $ #
+# $Id: sguild,v 1.83 2004/03/30 19:40:27 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -1089,7 +1089,7 @@ proc GetIPData { socketID sid cid } {
 }
 proc GetTcpData { socketID sid cid } {
   set query\
-   "SELECT tcp_seq, tcp_ack, tcp_off, tcp_res, tcp_flags, tcp_win, tcp_csum, tcp_urp\
+   "SELECT tcp_seq, tcp_ack, tcp_off, tcp_res, tcp_flags, tcp_win, tcp_urp, tcp_csum\
    FROM tcphdr\
    WHERE sid=$sid and cid=$cid"
   set queryResults [FlatDBQuery $query]
