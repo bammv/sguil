@@ -1,4 +1,4 @@
-# $Id: CHANGES,v 1.42 2004/11/03 19:10:13 shalligan Exp $ #
+# $Id: CHANGES,v 1.43 2004/11/12 21:57:22 bamm Exp $ #
 
 sguil-0.5.3 (RSN)
 
@@ -19,6 +19,8 @@ sguil-0.5.3 (RSN)
    * Syslog supported for debug output in daemon mode (NOTE NEW sguild.conf) -srh
 
    * Misc prettifying and bugfixifying -srh & bamm
+
+   * Use -d <[0-2] to specify DEBUG level on cmd line - bamm (tks Hanashi)
 
   sguil.tk
    * Added ability to import/query nessus reports: -srh
@@ -48,6 +50,8 @@ sguil-0.5.3 (RSN)
    * Added Right-click "last 1 hour" queries to the sancp and sessions menus -srh
 
    * Added a text search widget for xscripts -srh
+
+   * Use -d <[0-2] to specify DEBUG level on cmd line - bamm (tks Hanashi)
 
    * Bug fixes etc
 

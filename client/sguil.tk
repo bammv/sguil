@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.153 2004/11/04 20:36:02 shalligan Exp $ #
+# $Id: sguil.tk,v 1.154 2004/11/12 21:57:22 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1237,7 +1237,7 @@ proc WakeUp {} {
   bell
 }
 proc DisplayUsage { cmdName } {
-  puts "Usage: $cmdName -- -c <filename>"
+  puts "Usage: $cmdName -- \[-c <filename>\] \[-d <DEBUG level>\]"
   puts "  where <filename> is the PATH to the sguil config file"
   exit 1
 }
@@ -1574,10 +1574,12 @@ foreach arg $argv {
     flag {
       switch -glob -- $arg {
         -c { set state conf }
+        -d { set state debug_level }
         default { DisplayUsage $argv0 }
       }
     }
     conf { set CONF_FILE $arg; set state flag }
+    debug_level { set DEBUG_OVERRIDE 1; set DEBUG $arg; set DEBUG_LEVEL $arg }
     default { DisplayUsage $argv0 }
   }
 }
@@ -1621,6 +1623,11 @@ if { [info exists CONF_FILE] } {
   }
 } else {
   DisplayUsage $argv0
+}
+
+# If DEBUG was specified on the cmd line, we override the conf file here
+if { [info exists DEBUG_OVERRIDE] && [info exists DEBUG_LEVEL] } {
+    set DEBUG $DEBUG_LEVEL
 }
 
 # Load user fonts
