@@ -1,0 +1,439 @@
+      Sguil FAQ
+
+      Table of Contents
+          1.0   Administrivia
+             1.1   Who is responsible for this FAQ?
+             1.2   I have a suggestion...
+
+          2.0   Sguil Basics
+             2.1   What is Sguil?
+             2.2   Can you describe the sguil architecture?
+             2.3   How is sguil different from Snort + ACID or Snort + BASE?
+             2.4   Who wrote sguil?
+             2.5   Where can I find more information/documentation about sguil?
+             2.6   Are there any sguil mailing lists?
+             2.7   What about IRC channels?
+             2.8   How can I try out sguil without installing it all?
+             2.9   I heard sguild is about to be rewritten in perl/C/Java/ADA...
+             2.10   Seriously.  Why Tcl?
+             2.11   What is Network Security Monitoring (NSM)?
+             2.12   Why is it called "sguil"?
+
+          3.0   Installation and Configuration
+             3.1   Where do I get sguil?
+             3.2   Should I use the stable version or the CVS development 
+      release?
+             3.3   What other software does sguil depend on?
+             3.4   This is really complicated.  Is there an installation and 
+      configuration guide?
+             3.5   How can I tell if it's all working right?
+             3.6   How does sguil capture network session information?
+             3.7   Should I use snort or sancp to capture session information?
+
+          4.0   Using Sguil
+             4.1   How do I set up sguil to automatically categorize incoming 
+      alerts?
+             4.2   Can sguil page me when it sees a particular alert?
+
+          5.0   Troubleshooting
+             5.1   Something's not working.  Where do I start?
+             5.2   Putting sguild into debug mode
+             5.3   Putting sensor_agent into debug mode
+             5.4   I'm seeing IPC problems with sguild, and data isn't being 
+      loaded into the database
+
+          6.0   Miscellaneous
+
+      1.0    Administrivia
+          1.1   Who is responsible for this FAQ?
+      In the immediate sense, that would be me, David Bianco, the FAQ editor.  I 
+      use sguil at work, and thought that maintaining this FAQ would be a good 
+      way to give something back to the sguil community. 
+
+      In the larger sense, though, we are all responsible for the FAQ.  It won't 
+      be very good unless people submit their own questions, and perhaps 
+      answers.  If you'd like to contribute, see this question.
+
+          1.2   I have a suggestion...
+      If you have a question or answer to contribute, or would just like to drop 
+      me a line to let me know what you think about the FAQ, please email me at 
+      "david at biancorama d0t com".  No attachements, please.  Plain text email 
+      is very much preferred.  If I use your comments in the FAQ, I'll credit 
+      you, so be sure to let me know how you'd like to be listed.
+
+      2.0    Sguil Basics
+          2.1   What is Sguil?
+      Sguil (pronounced sgweel) is probably best described as an aggregation 
+      system for network security monitoring tools.  It ties your IDS alerts 
+      into a database of TCP/IP sessions, full content packet logs and other 
+      information.  When you've identified an alert that needs more 
+      investigation, the sguil client provides you with seamless access to the 
+      data you need to decide how to handle the situation.  In other words, 
+      sguil simply ties together the outputs of various security monitoring 
+      tools into a single interface, providing you with the most information in 
+      the shortest amount of time.  sguil uses a database backend for most of 
+      its data, which allows you to perform SQL queries against several 
+      different types of security events.
+
+          2.2   Can you describe the sguil architecture?
+      The following is from the sguil website:
+
+            Sguil consist of three main components, a plugin to barnyard 
+            (op_sguil), a GUI server (sguild), and a GUI client (sguil.tk). A 
+            diagram defining how the different components interact with each 
+            other, is available here (vi-Sio is recommended for viewing). Once 
+            installed, these components allow the analyst to view snort events 
+            in near real time. Events can be validated by placing them into one 
+            of seven incident categories or marking the event as having no 
+            further action required (NA). These actions remove the events from 
+            the RealTime tab of all the connected clients but are not deleted 
+            from the database. Archived events can easily be retrieved from the 
+            database through preformatted queries, or the analyst can create a 
+            custom query using SQL. Also included in the sguil package, is a 
+            patch for the portscan preprocessor (logs to a pipe deliminated 
+            file), a patch for the stream4 preprocessor (keepstats type 'db' for 
+            logging pipe deliminated stats to a file), and a tcl script 
+            (sensor_agent.tcl) for loading the modified outputs into the 
+            database. These components give the analyst immediate access to 
+            portscan and session data. The final components are for analyzing 
+            the raw data associated with a given session. Xscriptd is a daemon 
+            that listens for request from sguil.tk and once queried, it parses 
+            raw tcpdump files for packets matching the requested session and 
+            either feeds the stream through tcpflow creating a transcript or 
+            sends the binary data back to the client to be loaded into ethereal. 
+
+
+      A sguil system is composed of a single sguil server and an arbitrary 
+      number of sguil network sensors.  The sensors perform all the security 
+      monitoring tasks and feed information back to the server on a regular 
+      basis.  The  server coordinates this information, stores it in a database 
+      and communicates with sguil clients running on administrators' desktop 
+      machines.  In ASCII terms, this looks like:
+
+
+
+                                          |---------> Sensor #1           
+     Client  ==>  sguil Server =========> |---------> Sensor #2
+                                          |---------> Sensor #3
+      
+      Each sensor monitors a single network link (although you can have multiple 
+      sensors on one physical machine).  They collect several different types of 
+      information:
+
+
+        Snort monitors the link for security events, and logs them to a file on 
+        the local disk.  Security events include not only IDS alerts but 
+        information about TCP/IP sessions and port scans.
+
+        Barnyard takes events from the snort log file and inserts them into 
+        database running on the sguil server in near real-time 
+        A separate instance of snort logs the full content of all network 
+        packets to the local disk (this typically requires a large separate data 
+        partition) 
+        SANCP records TCP/IP sessions and fowards them to the database on the 
+        sguil server 
+        A special sguil agent listens for commands from the sguil server.  These 
+        commands are typically requests for packet data previously logged by 
+        Snort.
+
+          2.3   How is sguil different from Snort + ACID or Snort + BASE?
+      ACID & BASE are both web-based IDS alert management systems.  They let you 
+      browse and search alerts, but don't attempt to offer very much in the way 
+      of data-mining that would allow you to answer questions like, "Was this an 
+      attack attempt or a false positive?", "Was the attempt successful?" or 
+      "What other machines did the attacker try to crack once he got into this 
+      one?".  They pretty much rely on you to do the research necessary to 
+      determine the severity of the situation.  
+
+      Sguil's design centers on providing convenient, quick access to a host of 
+      supporting information, which both saves you time and helps you make 
+      better decisions.  Incidentally, because sguil uses a dedicated client 
+      instead of running through a web browser, you get a richer, more 
+      responsive user interface as well.
+
+      For a more complete answer to this question, I recommend Richard 
+      Bejtlich's post to the snort-users email list.
+
+          2.4   Who wrote sguil?
+      Real working security analysts.  We know your pain.
+
+      Sguil's primary author is Bamm Visscher (AKA "qru" on IRC), but the entire 
+      sguil community contributes in one fashion or another.  
+
+          2.5   Where can I find more information/documentation about sguil?
+
+      Start with the sguil web page, http://www.sguil.org/.  There you'll find 
+      screenshots, a Flash demo,  installation documentation and more.
+
+      Once you've digested that, I highly recommend Richard Bejtlich's The Tao 
+      of Network Security Monitoring.  This book is the best general reference 
+      for the Network Security Monitoring (NSM) methodology, and the sguil 
+      chapter is available for free from Richard's website.
+
+          2.6   Are there any sguil mailing lists?
+      Yes, there are three.  The sguil-users (mirror) list is for general sguil 
+      questions, problems or comments.  There's also a sguil-dev (mirror) list 
+      for developer discussions, and a sguil-cvs (mirror) list that tracks 
+      changes that have been checked into the source tree.  The easiest way to 
+      subscribe to any of these lists is to use the subscription page.  
+
+          2.7   What about IRC channels?
+      The sguil community uses IRC as a primary day-to-day communication method, 
+      and anyone is welcome to join in the discussions.  If you have an IRC 
+      client, connect to irc.freenode.net, then join #snort-gui.  
+
+          2.8   How can I try out sguil without installing it all?
+      You have two options.
+
+      First, try the Flash demo of the sguil client in action.  This is 
+      incomplete right now, but is certainly the easiest way to get a feel for 
+      how this all works.  
+
+      If you want a more interactive approach, you can download and install just 
+      the sguil client from this page.  Once you've got it running, point the 
+      client at the demonstration server at demo.sguil.net on port 7734.  You'll 
+      need to enter a username and password, but you can just make up anything.  
+      The client will ask what sensor you want to monitor (use the one called 
+      "reset"), and then bring up the main console window for you to play around 
+      with.  Once you're connected, check out the "User Messages" pane on the 
+      main window.  On the demonstration server, this gateways to the IRC 
+      channel so you can ask questions, get help or have a developer-led tour of 
+      the system.
+
+          2.9   I heard sguil is about to be rewritten in perl/C/Java/ADA...
+      Yup, any day now.  Honestly.  
+
+          2.10    Seriously.  Why Tcl?
+      qru says:
+
+            Um, cause I have a tcl book. :)
+
+
+
+          2.11   What is Network Security Monitoring (NSM)?
+      NSM is a monitoring methodology that collects several different types of 
+      complementary data and relies on them to make intelligent decisions about 
+      security events.  The emphasis is on collecting as much data as is 
+      practical, then streamlining an analyst's access to the data to help them 
+      get what they need as quickly and easily as possible.  
+
+      For a more detailed explanation, see Chapter 2 of The Tao of Network 
+      Security Monitoring.
+
+          2.12   Why is it called "sguil"?
+      I won't even begin to go into that, but here's the complete answer. 
+
+      3.0    Installation and Configuration
+          3.1   Where do I get sguil?
+      Most people should use the stable released version, available on the 
+      Sourceforge download page. 
+
+      Developers or fearless souls can try the CVS snapshot, which is often 
+      updated several times a day.  You can fetch the latest code with the 
+      following command:
+
+% cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/sguil checkout sguil
+   
+      Check out the sguil download page for pointers to RPMs, ISOs and other 
+      ways to get sguil.
+
+          3.2   Should I use the stable version or the CVS development release?
+      CVS usually works, but you might find some lingering bugs from time to 
+      time.  If you have a healthy tolerance for this sort of thing, try the CVS 
+      version.  You'll always get the latest code, which often includes 
+      significant new features.
+
+      On the other hand, if you need stability more than bleeding edge 
+      functionality, you should definately be using the stable releases.
+
+          3.3   What other software does sguil depend upon?
+      The following table summarizes the different tools that make up sguil and 
+      shows the different types of information they provide:
+
+            Tool
+            Purpose
+            URL
+
+            MySQL 3.x
+            Data storage and retrieval
+            http://www.mysql.com
+
+            Snort 2.x
+            Intrusion detection alerts, scan detection, TCP/IP session records, 
+            packet logging
+            http://www.snort.org
+
+            Barnyard
+            Conduit between Snort and MySQL
+            http://www.snort.org/dl/barnyard
+
+            SANCP
+            TCP/IP session records
+            http://www.metre.net/sancp.html
+
+            Tcpflow
+            Extract an ASCII dump of a given TCP session
+            http://www.circlemud.org/~jelson/software/tcpflow/
+
+            p0f
+            Operating system fingerprinting
+            http://lcamtuf.coredump.cx/p0f.shtml
+
+            tcpdump
+            Extracts individual sessions from packet logs
+            http://www.tcpdump.org
+
+
+
+          3.4   This is really complicated.  Is there an installation and 
+      configuration guide?
+      Yes, there are two that I know of.  The official sguil installation 
+      document is here.  Unfortunately, it skips a few steps, like the 
+      installation of SANCP and p0f.  Richard Bejtlich maintains an installation 
+      guide for FreeBSD systems, although I have personally used it to install 
+      under Linux with no serious issues.  Richard's document is the better of 
+      the two, but it's worthwhile to read both anyway.
+
+          3.5   How can I tell if it's all working right?
+      There's no standardized test suite, but you can get a pretty good 
+      indication by using various client functions.  First, make sure you can 
+      log in, monitor some sensors and actually see some alerts.  That'll show 
+      you that the basic sguil database is working and the sguil server is 
+      responding to your requests.  
+
+      Next, highlight an alert and turn on the "Show Packet Data" and "Show 
+      Rule" buttons.  You should see the packet headers and payload displayed in 
+      the lower right hand pane, and the Snort rule that generated the alert in 
+      the line just above.  If you get these, all the basic alerting data is 
+      working.
+
+      Next, you should check to see if you can generate ASCII transcripts from 
+      the full packet logs.  Select one of the alerts that says where the "Pr" 
+      (protocol) column is listed as "6".  This is a TCP session, and the only 
+      type of session from which you can create ASCII transcripts.  Right-click 
+      in the "sid.cid" column and select "Transcript" from the context menu.  A 
+      new window should appear, and eventually it should contain a copy of the 
+      payload data from that session.  It's worthwhile at this point to also 
+      select "Ethereal" from the same context menu, just to make sure that you 
+      can not only get the transcript but also the raw packets when you need 
+      them.
+
+      Finally, make sure session reporting is working.  Using the same alert as 
+      before, right-click in the "Src IP" column and select Query Event Table -> 
+      Query SrcIP from the context menu.  This generates an SQL query looking 
+      for all Snort alerts that come from that same IP address.  The client will 
+      bring up another window that allows you to modify the SQL query before 
+      running it, but in this case you want to run the query as is, so just 
+      click "Submit".  You may have to wait a few minutes, but eventually you 
+      sguil should return at least one event (the event you originally chose), 
+      and perhaps others as well.  
+
+      Following the instructions from the last paragraph, repeat this procedure 
+      for both the Query Sessions Table -> Query SrcIP and the Query SANCP Table 
+      -> Query SrcIP context menu items as well.  You should receive similar 
+      results.
+
+      If all these tests worked, your sguil installation is working normally.  
+      If any of the tests failed, refer to the Troubleshooting section of this 
+      FAQ for pointers, or ask for help on the mailing list or IRC channel.
+
+          3.6   How does sguil capture network session information?
+      Sguil uses two distinct methods to capture information about network 
+      sessions.  The older method is to patch the source code to snort, and 
+      enable the stream4 preprocessor directive in your snort.conf file.  This 
+      allows snort to log information about TCP sessions it sees into the sguil 
+      database.  The advantage to this method is that it leverages the copy of 
+      snort you're already running.  This works well, but is limited to logging 
+      only TCP sessions.  UDP won't be shown at all.
+
+      The newer method of capturing session data is to use SANCP.  SANCP runs in 
+      a separate process and logs both TCP and UDP, which gives you a much more 
+      complete picture of the traffic on your network.  
+
+      You can run both at the same time if you like, but this can cause 
+      significant database performance loss, since it has to do twice as much 
+      work to insert both session sources into the database.
+
+          3.7   Should I use snort or sancp to capture session information?
+      You are usually much better off running SANCP instead of the snort 
+      preprocessor method. For about the same amount of system overhead, SANCP 
+      gives you a far better picture of who's talking to who.  
+
+      4.0    Using Sguil
+          4.1   How do I set up sguil to automatically categorize incoming 
+      alerts?
+      This is called "automatic categorization", or just "autocat" for short.  
+      Take a look at /etc/sguild/autocat.conf, which contains full instructions. 
+       Once you edit this file, you'll need to restart sguild in order for the 
+      changes to take effect.
+
+          4.2   Can sguil page me when it sees a particular alert?
+      5.0    Troubleshooting
+          5.1   Something's not working.  Where do I start?
+      This is a very hard question, since sguil is pretty complex.  Probably the 
+      best thing to do is to put some of the pieces into debug mode and see what 
+      messages you get.  Sguild and the sensor_agent are the most likely places 
+      to start (see questions 5.2 and 5.3 below).  If that doesn't help, you 
+      might want to drop by the IRC channel and ask for help.
+
+          5.2   Putting sguild into debug mode
+      Locate your sguild.conf file.  This is usually /etc/sguild/sguild.conf, 
+      but the exact location may vary on your installation.  Then edit the line 
+      that says "set DEBUG 0" to "set DEBUG 2" (debug level 1 is far less useful 
+      for troubleshooting) and restart sguild.
+
+      While you're editing sguild.conf, you might also want to make sure you 
+      have "set DAEMON 0" in the configuration as well.  This will prevent 
+      sguild from forking into the background when it starts up, which is useful 
+      when you're running it in debug mode.  If you have "set DAEMON 1" (or if 
+      you use the -D option when starting sguild), you'll also get debug output, 
+      but it will go into syslog.
+
+      Note: Versions of sguil prior to 0.5.3 will syslog your database password 
+      if DEBUG is 2 and sguil runs in daemon mode.  Versions 0.5.3 and newer 
+      will replace it with "xxxxx" in the syslog, but will still show it if 
+      debug output is going to stdout.
+
+          5.3   Putting sensor_agent into debug mode
+      This is just like putting sguild into debug mode, except you edit the 
+      sensor_agent conf file on the machine that runs the sensor you are 
+      debugging.  This is usually /etc/sensor_agent.conf, but this may be 
+      different on your installation.  Edit the line that says "set DEBUG 0" to 
+      read "set DEBUG 1" and restart sensor_agent.
+
+      At this point, you might also want to make sure you have "set DAEMON 0" in 
+      the configuration as well.  This will prevent the sensor_agent process 
+      from forking into the background when it starts up, which is useful for 
+      debugging.  If sensor_agent runs in daemon mode and debugging is turned 
+      on, the messages will go to syslog.
+
+          5.4   I'm seeing IPC problems with sguild, and data isn't being loaded 
+      into the database
+      Benjamin Smee ben at disciplina d0t net has this to say:
+If you are experiencing problems with IPC or seemingly bizare problems with data not being loaded into your DB, thenchances are you have enabled threading in TCL or TCLX. You must DISABLE threading for sguild to work correctly due to the forking nature of how sguild is currently written.
+
+      Sguild versions 0.5.4 and above have been fixed to exit with a warning 
+      message if run inside a threaded Tcl interpreter.  If you are using an 
+      older version of sguil, you may need to recompile Tcl in order to disable 
+      threading.
+
+      6.0    Miscellaneous
+      There are no FAQ entries for this section yet.  Please contact David if 
+      you want to suggest one.
+
+
+
+
+      Version 0.8, Last Updated 13 December 2004
+      FAQ Editor: David J. Bianco david at biancorama d0t com
+
+
+            Sguil is copyrighted by Bamm Visscher -- Copyright 2004 ©
+
+
+
+
+
+
+
+ 
