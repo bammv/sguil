@@ -306,7 +306,7 @@ proc SimpleQueryCmd { host port cmd} {
   close $tmpSocketID
   return $data
 }
-proc EmailEvents {} {
+proc EmailEvents { detail } {
     global ACTIVE_EVENT currentSelectedPane RETURN_FLAG
     global SERVERHOST SERVERPORT EMAIL_FROM
     set RETURN_FLAG 0
@@ -484,20 +484,19 @@ proc EmailEvents {} {
 		$textBox insert end "chksum=[lindex $eventIcmpHdr 2] "
 		$textBox insert end "ID=[lindex $eventIcmpHdr 3] "
 		$textBox insert end "seq=[lindex $eventIcmpHdr 4]\n"
-		
+		puts $eventIcmpHdr
 		# If the ICMP packet is a dest unreachable or a time exceeded,
 		# check to see if it is network, host, port unreachable or admin prohibited or filtered
 		# then show some other stuff
-		
 		if {[lindex $eventIcmpHdr 0] == "3" || [lindex $eventIcmpHdr 0] == "11"} {
 		    if {[lindex $eventIcmpHdr 1] == "0" || [lindex $eventIcmpHdr 1] == "4"\
-			    || [lindex $evetnIcmpHdr 1] == "9" || [lindex $eventIcmpHdr 1] == "13"\
-			    || [lindex $evetnIcmpHdr 1] == "1" || [lindex $eventIcmpHdr 1] == "3"} {
+			    || [lindex $eventIcmpHdr 1] == "9" || [lindex $eventIcmpHdr 1] == "13"\
+			    || [lindex $eventIcmpHdr 1] == "1" || [lindex $eventIcmpHdr 1] == "3"} {
 			
 			#  There may be 32-bits of NULL padding at the start of the payload
 			set offset 0
-			set pldata [lrange eventIcmpHdr 6 end]
-			# puts [string range $pldata 0 7]
+			set pldata [lindex $eventIcmpHdr 5]
+			puts [string range $pldata 0 7]
 			if {[string range $pldata 0 7] == "00000000"} {
 			    set offset 8
 			}
@@ -538,40 +537,42 @@ proc EmailEvents {} {
 		    }
 		}
 	    }
-	    # Get and insert the pack payload all pretty like
-	    set eventPayload [SimpleQueryCmd\
-		    $SERVERHOST $SERVERPORT "GetPayloadData [lindex $eventID 0] [lindex $eventID 1]"]
-	    if { $eventPayload == "error" } {
-		ErrorMessage "Error getting payload data."
-	    }
-	    $textBox insert end "Payload:\n"
-	    if {$eventPayload  == "" || [string length $eventPayload] == 0 || $eventPayload == "{}"} { 
-		$textBox insert end "None.\n"
-	    } else {
-		set dataLength [string length $eventPayload]
-		set asciiStr ""
-		set counter 2
-		for {set i 1} {$i < $dataLength} {incr i 2} {
-		    set currentByte [string range $eventPayload [expr $i - 1] $i]
-		    lappend hexStr $currentByte
-		    set intValue [format "%i" 0x$currentByte]
-		    if { $intValue < 21 || $intValue > 176 } {
-			# Non printable char
-			set currentChar "."
-		    } else {
-			set currentChar [format "%c" $intValue]
-		    }
-		    set asciiStr "$asciiStr$currentChar"
-		    if { $counter == 32 } {
-			$textBox insert end "$hexStr $asciiStr\n"
-			set hexStr ""
-			set asciiStr ""
-			set counter 2
-		    } else {
-			incr counter 2
-		    }
+	    # Get and insert the pack payload all pretty like if detail is set to 1
+	    if { $detail == "1" } {
+		set eventPayload [SimpleQueryCmd\
+			$SERVERHOST $SERVERPORT "GetPayloadData [lindex $eventID 0] [lindex $eventID 1]"]
+		if { $eventPayload == "error" } {
+		    ErrorMessage "Error getting payload data."
 		}
-		$textBox insert end "[format "%-47s %s\n" $hexStr $asciiStr]"
+		$textBox insert end "Payload:\n"
+		if {$eventPayload  == "" || [string length $eventPayload] == 0 || $eventPayload == "{}"} { 
+		    $textBox insert end "None.\n"
+		} else {
+		    set dataLength [string length $eventPayload]
+		    set asciiStr ""
+		    set counter 2
+		    for {set i 1} {$i < $dataLength} {incr i 2} {
+			set currentByte [string range $eventPayload [expr $i - 1] $i]
+			lappend hexStr $currentByte
+			set intValue [format "%i" 0x$currentByte]
+			if { $intValue < 21 || $intValue > 176 } {
+			    # Non printable char
+			    set currentChar "."
+			} else {
+			    set currentChar [format "%c" $intValue]
+			}
+			set asciiStr "$asciiStr$currentChar"
+			if { $counter == 32 } {
+			    $textBox insert end "$hexStr $asciiStr\n"
+			    set hexStr ""
+			    set asciiStr ""
+			    set counter 2
+			} else {
+			    incr counter 2
+			}
+		    }
+		    $textBox insert end "[format "%-47s %s\n" $hexStr $asciiStr]"
+		}
 	    }
 	}
     	    
@@ -2451,7 +2452,8 @@ set topFrame [frame .topFrame]
   $menuList add command -label "Query..." -command "QueryRequest empty"
   $menuList add command -label "Show DataBase Tables" -command "ShowDBTables"
   $menuList add command -label "Display Incident Categories" -command DisplayIncidentCats
-  $menuList add command -label "Send Event Detail via email" -command EmailEvents
+  $menuList add command -label "Send Event Detail via email" -command {EmailEvents 1}
+  $menuList add command -label "Send Event Summary via email" -command {EmailEvents 0}
   #$menuList add command -label "License" -command "DisplayLicense"
   $menuList add command -label "Sleep (Ctrl-s)" -command "GoToSleep"
   $menuList add cascade -label "Change Font" -menu $menuList.font
