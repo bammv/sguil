@@ -4,7 +4,7 @@
 
 proc EmailEvents { detail sanitize } {
     global ACTIVE_EVENT currentSelectedPane RETURN_FLAG REPORTNUM REPORT_RESULTS REPORT_DONE
-    global SERVERHOST SERVERPORT EMAIL_FROM EMAIL_CC EMAIL_HEAD EMAIL_TAIL EMAIL_SUBJECT
+    global SERVERHOST SERVERPORT EMAIL_FROM EMAIL_CC EMAIL_HEAD EMAIL_TAIL EMAIL_SUBJECT DEBUG
     set RETURN_FLAG 0
     incr REPORTNUM
     if {$ACTIVE_EVENT} {
@@ -14,7 +14,6 @@ proc EmailEvents { detail sanitize } {
 	    wm deiconify $editEmail
 	    return
 	}
-	puts "Check1"
 	toplevel $editEmail
 	wm geometry $editEmail +200+200
 	wm title $editEmail "E-Mail Event"
@@ -40,7 +39,7 @@ proc EmailEvents { detail sanitize } {
         iwidgets::Labeledwidget::alignlabels $fromBox $toBox $ccBox $bccBox $subjectBox
 	
 	foreach selectedIndex [$currentSelectedPane.eventIDFrame.list curselection] {
-	    puts "Emailing index: $selectedIndex"
+	    if {$DEBUG} {puts "Emailing index: $selectedIndex"}
 	    set eventID [split [$currentSelectedPane.eventIDFrame.list get $selectedIndex] .]
 	    if {[lindex [$currentSelectedPane.msgFrame.list get $selectedIndex] 0] != "spp_portscan:"} {
 		$textBox insert end "------------------------------------------------------------------------\n"
@@ -57,7 +56,6 @@ proc EmailEvents { detail sanitize } {
 		#
 		# Get the IP hdr details
 		#
-		puts "check2"
 		# Send the Report Request to the server
 		SendToSguild "ReportRequest IP [lindex $eventID 0] [lindex $eventID 1]"
 		
@@ -223,7 +221,7 @@ proc EmailEvents { detail sanitize } {
 		    $textBox insert end "chksum=[lindex $eventIcmpHdr 2] "
 		    $textBox insert end "ID=[lindex $eventIcmpHdr 3] "
 		    $textBox insert end "seq=[lindex $eventIcmpHdr 4]\n"
-		    puts $eventIcmpHdr
+
 		    # If the ICMP packet is a dest unreachable or a time exceeded,
 		    # check to see if it is network, host, port unreachable or admin prohibited or filtered
 		    # then show some other stuff
@@ -235,7 +233,7 @@ proc EmailEvents { detail sanitize } {
 			    #  There may be 32-bits of NULL padding at the start of the payload
 			    set offset 0
 			    set pldata [lindex $eventIcmpHdr 5]
-			    puts [string range $pldata 0 7]
+		
 			    if {[string range $pldata 0 7] == "00000000"} {
 				set offset 8
 			    }
@@ -298,7 +296,6 @@ proc EmailEvents { detail sanitize } {
 		    
 		    set eventPayload [lindex $REPORT_RESULTS 0]
 		    set REPORT_RESULTS ""
-		    puts "are we here? $eventPayload"
 		    if { $eventPayload == "error" } {
 			ErrorMessage "Error getting payload data."
 		    }
@@ -378,10 +375,8 @@ proc EmailEvents { detail sanitize } {
 	    EMail::Init $EmailFrom $HOSTNAME $MAILSERVER
 	    set EMailToken [EMail::Send $EmailTo $EmailCC $EmailBCC $EmailSubj $EmailBody -waitquit 1]
 	    # EMail::Finish $EMailToken
-	    puts $EMailToken
 	    EMail::Query $EMailToken
 	    set EMailError [EMail::GetError $EMailToken]
-	    puts "Error: $EMailError"
 	    if { $EMailError != "unknown" && $EMailError != "" } {
 		ErrorMessage "Error $EMailError sending mail."
 		return

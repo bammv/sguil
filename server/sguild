@@ -513,13 +513,12 @@ proc SendSocket { socketID command } {
 }
 
 #
-# SendEvent: Send events to clients monitoring that sensor
+# SendEvent: Send events to connected clients
 #
 proc SendEvent { eventDataList } {
-  global DEBUG clientMonitorSockets
-  set sensorName [lindex $eventDataList 3]
-  if { [info exists clientMonitorSockets($sensorName)] } {
-    foreach clientSocket $clientMonitorSockets($sensorName) {
+  global DEBUG clientList
+  if { [info exists clientList] && [llength $clientList] > 0 } {
+    foreach clientSocket $clientList {
       catch {SendSocket $clientSocket "InsertEvent $eventDataList"} tmpError
     }
   } else {
@@ -1072,7 +1071,6 @@ proc ReportBuilder { socketID type sid cid } {
 	    catch {SendSocket $socketID "ReportResponse $type $queryResults $portQuery"} tmpError
 	}
 	UDP {
-	    puts "UDP QUERY"
 	    set query\
 		"SELECT udp_len, udp_csum FROM udphdr WHERE sid=$sid and cid=$cid"
 
@@ -1081,7 +1079,6 @@ proc ReportBuilder { socketID type sid cid } {
 	    catch {SendSocket $socketID "ReportResponse $type $queryResults $portQuery"} tmpError
 	}
         ICMP {
-	    puts "ICMP QUERY"
 	    set query\
 		"SELECT event.icmp_type, event.icmp_code, icmphdr.icmp_csum, icmphdr.icmp_id, icmphdr.icmp_seq\
 		FROM event, icmphdr\
@@ -1440,7 +1437,7 @@ if { ![info exists GLOBAL_QRY_FILE] } {
   }
 }
 if { [file exists $GLOBAL_QRY_FILE] } {
-  LoadGlobalQueries $GLOBAL_QRY_FILE
+  LoadGlobalQueries ./sguild.queries
 } else {
   set GLOBAL_QRY_LIST none
 }
