@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: xscriptd,v 1.21 2004/05/26 18:25:11 bamm Exp $ #
+# $Id: xscriptd,v 1.22 2004/06/10 17:55:52 shalligan Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -126,7 +126,7 @@ proc GetRawDataFromSensor { sensor timestamp srcIP srcPort dstIP dstPort proto s
   # First we need to get a list of raw data files on the sensor so we can
   # determine what file to pull the data from. For now we are using ssh to
   # do this. Logfiles are in the format of snort.log.unixtime.
-  set sshID [open "| $SSH -v $sensor cd $REMOTE_LOG_DIR/$date; ls snort.log.*" r]
+  set sshID [open "| $SSH -l $RUSER -v $sensor cd $REMOTE_LOG_DIR/$date; ls snort.log.*" r]
   if {$socketID != "NONE"} { puts $socketID "Remote log files:" }
   while { [gets $sshID data] >= 0 } {
     if {$DEBUG} {puts $data}
