@@ -170,9 +170,23 @@ proc QueryRequest { queryType { incidentCat {NULL} } } {
   }
   set whereStatement [EditWhere $whereTmp]
   if { $whereStatement == "cancel" } { return }
-  DBQueryRequest $whereStatement
+  if { $queryType == "category" } {
+    switch -exact $incidentCat {
+      11 { set winTitle "Cat I" }
+      12 { set winTitle "Cat II" }
+      13 { set winTitle "Cat III" }
+      14 { set winTitle "Cat IV" }
+      15 { set winTitle "Cat V" }
+      16 { set winTitle "Cat VI" }
+      17 { set winTitle "Cat VII" }
+      default { set winTitle "none" }
+    }
+    DBQueryRequest $whereStatement $winTitle
+  } else {
+    DBQueryRequest $whereStatement
+  }
 }
-proc DBQueryRequest { whereStatement } {
+proc DBQueryRequest { whereStatement {winTitle {none} } } {
   global eventTabs QUERY_NUMBER socketID DEBUG
   set selectQuery "SELECT event.status, event.priority, sensor.hostname, event.timestamp,\
    event.sid, event.cid, event.signature,\ 
@@ -180,7 +194,11 @@ proc DBQueryRequest { whereStatement } {
    event.src_port, event.dst_port FROM event, sensor $whereStatement"
   regsub -all {\n} $selectQuery {} selectQuery
   incr QUERY_NUMBER
-  $eventTabs add -label "Query $QUERY_NUMBER" -commnad "SelectTab QR"
+  if { $winTitle == "none" } {
+    $eventTabs add -label "Query $QUERY_NUMBER"
+  } else {
+    $eventTabs add -label "Query $winTitle"
+  }
   set currentTab [$eventTabs childsite end]
   set tabIndex [$eventTabs index end]
   set queryFrame [frame $currentTab.query_$QUERY_NUMBER]
