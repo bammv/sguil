@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.109 2004/05/27 17:14:08 bamm Exp $ #
+# $Id: sguil.tk,v 1.110 2004/05/27 20:11:17 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -90,9 +90,11 @@ proc ServerCommandRcvd { socketID } {
     catch {close $socketID} tmpError
     set CONNECTED 0
     if { [info exists errorCheck] } {
-      ErrorMessage "Lost connection to sguild.\nERROR: $errorCheck\nTrying to reconnect."
+      UpdateUserName "Not Logged In" "*"
+      ErrorMessage "Lost connection to sguild.\nERROR: $errorCheck\nPress Okay to try and reconnect."
     } else {
-      ErrorMessage "Connection to sguild terminated. Trying to reconnect."
+      UpdateUserName "Not Logged In" "*"
+      ErrorMessage "Connection to sguild terminated. Press Okay to try and reconnect."
     }
     ReconnectToSguild
   } else {
@@ -184,6 +186,11 @@ proc ConnectToSguild {} {
     return $socketID
   }
 }
+proc UpdateUserName { userName userID } {
+  global userNameText userIDText
+  $userNameText configure -text $userName
+  $userIDText configure -text $userID
+}
 proc ReconnectToSguild {} {
   global CONNECTED USERNAME PASSWD socketID monitorList
   if [catch {ConnectToSguild} socketID] {
@@ -220,6 +227,7 @@ proc ReconnectToSguild {} {
     SendToSguild "MonitorSensors $monitorList"
     SendToSguild "SendEscalatedEvents"
     SendToSguild "SendGlobalQryList"
+    UpdateUserName "$USERNAME" $USERID
     # SendToSguild "SendReportQryList"
   }
 }
@@ -231,9 +239,11 @@ proc SendToSguild { data } {
     if [catch {puts $socketID $data} errorCheck] {
       catch {close $socketID} tmpError
       if { [info exists errorCheck] } {
-        ErrorMessage "Lost connection to sguild.\nERROR: $errorCheck\nTrying to reconnect."
+        UpdateUserName "Not Logged In" "*"
+        ErrorMessage "Lost connection to sguild.\nERROR: $errorCheck\nPress Okay to try and reconnect."
       } else {
-        ErrorMessage "Connection to sguild terminated. Trying to reconnect."
+        UpdateUserName "Not Logged In" "*"
+        ErrorMessage "Connection to sguild terminated. Press Okay to try and reconnect."
       }
       set CONNECTED 0
       ReconnectToSguild
@@ -1394,9 +1404,12 @@ proc CreateSensorCheckButton { winName sensorName userList } {
     -background lightblue
   lappend cbList $cframe.cb$sensor
   pack $cframe.cb$sensor -side top -fill x
+  # make each win name unique in case a user is logged in more than once
+  set i 0
   foreach user $userList {
-    label $cframe.user$user -text "$user" -foreground darkred -background white
-    pack $cframe.user$user -side top -fill x 
+    label $cframe.user${i}${user} -text "$user" -foreground darkred -background white
+    pack $cframe.user${i}${user} -side top -fill x 
+    incr i
   }
   pack $cframe -side left -padx 10 -pady 10 -anchor n
 }
@@ -1682,10 +1695,19 @@ set topFrame [frame .topFrame]
   set reportMenu [menubutton $topFrame.reportMenu -text Reports -underline 0 -menu $topFrame.reportMenu.menu]
   set databaseMenu [menubutton $topFrame.databaseMenu -text Database -underline 0 -menu $topFrame.databaseMenu.menu]
   set soundFrame [frame $topFrame.soundFrame]
-    set soundLabel [label $soundFrame.label -text "    Sound:"]
+    set soundLabel [label $soundFrame.label -text "   Sound:"]
     set soundStatus [label $soundFrame.status -text "Off" -foreground red] 
     pack $soundLabel $soundStatus -side left
-  pack $fileMenu $queryMenu $reportMenu $databaseMenu $soundFrame -side left
+  set userNameFrame [frame $topFrame.userNameFrame]
+    set userNameLabel [label $userNameFrame.label -text "   UserName:"]
+    set userNameText [label $userNameFrame.unText -text "Not Logged In" -foreground red] 
+    pack $userNameLabel $userNameText -side left
+  set userIDFrame [frame $topFrame.userIDFrame]
+    set userIDLabel [label $userIDFrame.label -text "   UserID:"]
+    set userIDText [label $userIDFrame.uidText -text "*" -foreground red] 
+    pack $userIDLabel $userIDText -side left
+  pack $fileMenu $queryMenu $reportMenu $databaseMenu $soundFrame\
+   $userNameFrame $userIDFrame -side left
   if {$GMTCLOCK } {
     set gmtClock [label $topFrame.gmtClock -text "YYYY-MM-DD HH:MM:SS GMT" -relief groove]
     pack $gmtClock -side right -anchor e -padx 5
@@ -2298,7 +2320,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
 pack $packetDataFrame -fill both -expand true
 set DISPLAYEDDETAIL $packetDataFrame
 pack $detailDataFrame -fill both -expand true
-$ipDataPane fraction 70 30
+$ipDataPane fraction 60 40
 $eventPane fraction 55 45
 $detailPane fraction 40 60
 
@@ -2616,6 +2638,7 @@ if [catch { ConnectToSguild } socketID] {
   update
   SendToSguild "SendEscalatedEvents"
   SendToSguild "SendGlobalQryList"
+  UpdateUserName $USERNAME $USERID
   HeartBeat
   # SendToSguild "SendReportQryList"
 }
