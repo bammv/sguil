@@ -1,6 +1,6 @@
 #!/bin/sh
-
-# $Id: log_packets.sh,v 1.11 2004/03/09 21:36:49 bamm Exp $ #
+#set -x
+# $Id: log_packets.sh,v 1.12 2004/05/18 02:51:05 creining Exp $ #
 
 ################################################
 #                                              #
@@ -19,7 +19,7 @@
 #                                                            #
 # Recommendation for crontab:                                #
 #                                                            #
-# 00 0-23/1 * * * /path/to/log_packets.sh restart            #
+# 00 * * * * /path/to/log_packets.sh restart                 #
 #                                                            #
 ##############################################################
 
@@ -33,7 +33,7 @@ LOG_DIR="/snort_data/dailylogs"
 # Percentage of disk to try and maintain
 MAX_DISK_USE=90
 # Interface to 'listen' to.
-INTERFACE="ed0"
+INTERFACE="eth0"
 # Other options to use when starting snort
 #OPTIONS="-u sguil -g sguil -m 122"
 # Where to store the pid
@@ -52,6 +52,7 @@ TZ=GMT
 export TZ
 
 start() {
+ if [ ! -f $PIDFILE ]; then 
   if [ -x $SNORT_PATH ]; then
     if [ ! -d $LOG_DIR ]; then
       mkdir $LOG_DIR
@@ -76,6 +77,9 @@ start() {
       exit
     fi
   fi 
+ else
+  echo "log_packets.sh already running." 
+ fi
 }
 
 stopproc() {
