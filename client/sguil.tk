@@ -429,8 +429,17 @@ proc SendUserMsg {} {
   SendToSguild "UserMessage $USERMSG"
   [$userMsgEntry component entry] delete 0 end
 }
+
 proc UserMessage { user userMsg } {
-  global userMsgText
+  global userMsgText messageTabs MESSAGE_TAB
+
+  if { [$messageTabs view] != 1 } {
+    # BOING!
+    bell
+    $messageTabs pageconfigure 1 -background red 
+  } else {
+    $messageTabs pageconfigure 1 -background
+  }
   [$userMsgText component text] insert end "\[[lindex [GetCurrentTimeStamp] 1]\] <$user> $userMsg\n"
 }
 proc DisplayIncidentCats {} {
@@ -1317,7 +1326,12 @@ proc GetCurrentTimeStamp { {clockOption {today} } } {
 # By using the syslog facility a whole multitude of sensor status info could
 # be scripted and then logged here.
 proc InsertSystemInfoMsg { sensorName msg } {
-  global systemInfoText
+  global systemInfoText messageTabs
+  if { [$messageTabs view] != 0 } {
+    $messageTabs pageconfigure 0 -background red 
+  } else {
+    $messageTabs pageconfigure 0 -background
+  }
   set timestamp [GetCurrentTimeStamp]
   $systemInfoText insert end "\n\[$timestamp\] $sensorName: $msg"
   $systemInfoText component text see end
@@ -3494,8 +3508,10 @@ $whoisNoneButton invoke
 set messageTabs [tabnotebook [$ipDataPane childsite 1].messageTabs\
  -angle 0 -bevelamount 4 -tabpos n -tabbackground darkgrey]
 pack $messageTabs -side left -expand true -fill both -padx 0 -pady 0
-$messageTabs add -label "System Messages"
-$messageTabs add -label "User Messages"
+$messageTabs add -label "System Messages"\
+ -command "$messageTabs pageconfigure 0 -background darkgrey"
+$messageTabs add -label "User Messages"\
+ -command "$messageTabs pageconfigure 1 -background darkgrey"
 set systemInfoFrame [frame [$messageTabs childsite 0].systemInfoFrame]
 set systemInfoText [scrolledtext $systemInfoFrame.systemInfoText -vscrollmode static -hscrollmode dynamic\
  -wrap word -visibleitems 20x4 -sbwidth 10]
@@ -3503,7 +3519,7 @@ pack $systemInfoText -side top -fill both -expand true
 pack $systemInfoFrame -fill both -expand true
 set userMsgsFrame [frame [$messageTabs childsite 1].userMsgsFrame]
   set userMsgText [scrolledtext $userMsgsFrame.userMsgText -vscrollmode static -hscrollmode dynamic\
-   -wrap word -visibleitems 20x4 -sbwidth 10]
+   -wrap word -visibleitems 20x3 -sbwidth 10]
   set userMsgEntry [entryfield $userMsgsFrame.userMsgEntry -textvariable USERMSG\
    -labeltext "MSG: " -labelpos w -width 20]
   pack $userMsgText -side top -fill both -expand true
