@@ -26,23 +26,35 @@ run everything on a single system.
 Install mysql (http:www.mysql.com) per its installation
 instructions. 
 
+You can either now create the DB structure using the 
+following methods, or skip to 'Installing sguild',
+where it will create the structure for you on init.
+NOTE: If you choose to let sguild create the DB for
+you, then you must still use 'GRANT' to give priv-
+ledges for each sensor.
+
 Create the sguildb:
   Bamm@syn# mysql -u root -p -e "CREATE DATABASE sguildb"
 Make sure each sensor has INSERT and SELECT privledges:
   Bamm@syn# mysql -u root -p -e "GRANT INSERT,SELECT on sguildb.* to root@<sensorip>"
 Build the required tables:
-  Bamm@syn# mysql -u root -p -D sguildb < ./scripts/create_sguildb.sql
+  Bamm@syn# mysql -u root -p -D sguildb < ./server/sql_scripts/create_sguildb.sql
   *NOTE: Verify all is well with: mysql -u root -p -e "show tables"
   +-------------------+
   | Tables_in_sguildb |
   +-------------------+
   | data              |
   | event             |
+  | history           |
   | icmphdr           |
   | portscan          |
   | sensor            |
+  | sessions          |
+  | status            |
   | tcphdr            |
   | udphdr            |
+  | user_info         |
+  | version           |
   +-------------------+
 
 ##########################################
@@ -59,12 +71,18 @@ and adding the package:
   tcl>
 If you receive no errors than all is good.
 
+(NOTE: On OpenBSD you may need to add the line:
+  load /usr/local/lib/libmysqltcl.so.0.0
+prior to the line:
+  package require mysqltcl
+in order for the tcl/tk interpreter to find the package.)
+
 Now edit sguild so the first line contains the correct path to
 the tcl interpreter (ie *!/usr/bin/tcl or #!/usr/local/bin/tclsh8.3).
-Then configure options at the beginning of the script. Pay particular
-attention to the PATH you define for sguild to look for snort rules.
-In the future, rules will be localized in the DB, for now each rule
-file must be kept on the sguild server based on the hostname. Don't
+Then configure options within sguild.conf. Pay particular attention
+to the PATH you define for sguild to look for snort rules.  In the
+future, rules will be localized in the DB, for now each rule file
+must be kept on the sguild server based on the hostname. Don't
 forget to copy these rule files over after installing the sensor.
 Finally, start the daemon, it will send a query to the DB to get
 any archived alerts and then echo "Waiting for events from sensors."
@@ -78,15 +96,6 @@ lesser versions, they may work), tclx 8.3 (I have heard that
 some distros package tclx with the standard tcl libs), and incr tcl (itcl)
 3.2 (including the iwidgets 2.2 set - see http://www.tcltk.com/iwidgets/
 for more info).
-
-Edit sguil.tk, change the first line to reflect the actual location of wish.
-It could be #!/usr/bin/wishx or #!/usr/local/bin/wish or #!/usr/local/bin/wish8.3
-
-(FYI: On OpenBSD you may need to add the line:
-  load /usr/local/lib/libmysqltcl.so.0.0
-prior to the line:
-  package require mysqltcl
-in order for the tcl/tk interpreter to find the package.)
 
 On startup, sguil.tk reads the options in sguil.conf. If a path to
 the sguil.conf file is not provided, it will look in the current dir
@@ -104,22 +113,38 @@ sguil.tk, it will write your new preferences to .sguilrc.
 #Step 4: Install the sensor.#
 #############################
 A. Begin by installing snort -
-  Download the source for snort from http://www.snort.org/dl (sguil has only
-  been tested with version 1.9). Untar the package, change to the preprocessors
-  directory, and make a back up of the portsan preprocessor:
+  Download the source for snort from http://www.snort.org/dl. Untar
+  the package, change to the preprocessors directory, and make a
+  back up of the portscan and stream4 preprocessor:
     Bamm@syn# cd src/preprocessors
     Bamm@syn# cp spp_portscan.c spp_portscan.c.bak
-  Next copy the modified spp_portscan from the sguil source tree to the snort
-  source tree:
-    Bamm@syn# cp <sguil-src>/snort_mods/spp_portscan .
+    Bamm@syn# cp spp_stream4.c spp_stream4.c.bak
+  Next copy the patch files from the sguil source tree to the snort
+  source tree and patch the preprocessors:
+    Bamm@syn# cp <sguil-src>/sensors/snort_mods/2_0/spp_portscan_sguil.patch .
+    Bamm@syn# cp <sguil-src>/sensors/snort_mods/2_0/spp_stream4.patch .
+    Bamm@syn# patch spp_portscan.c < spp_portscan_sguil.patch
+    Bamm@syn# patch spp_stream4.c < spp_stream4_sguil.patch
+  
   Then, compile and install snort as normal.
-  Finally, configure snort to use the new portscan preprocessor and the
-  log_unified output plugin:
-    # Format for the portscan mod is:
-    # preprocessor portscan: $HOME_NET <ports> <secs> <logdir> <hostname>
-    #   <logdir> must exists and will be read by portscan_loader.tcl
-    preprocessor portscan: $HOME_NET 4 3 /snort_data/portscans syn
-    output log_unified: filename snort.log, limit 128
+
+  Finally, configure snort to use the new portscan and stream4 preprocessors
+  and the log_unified output plugin:
+
+    Format for the portscan mod is:
+      preprocessor portscan: $HOME_NET <ports> <secs> <logdir> <hostname>
+        <logdir> must exists and will be read by portscan_loader.tcl
+    EXAMPLE:
+      preprocessor portscan: $HOME_NET 4 3 /snort_data/portscans syn
+
+    Format for the stream4 (keepstats) mod is:
+      keepstats db <log path>
+    EXAMPLE:
+      preprocessor stream4: detect_scans, disable_evasion_alerts, keepstats db /snort_data/ssn_logs
+    
+    Enable unified logging with this line:
+      output log_unified: filename snort.log, limit 128
+
   Make sure all the config files for snort are copied to the appropriate
   directory (ie /etc/snort). 
     Bamm@syn# ls /etc/snort/
@@ -128,18 +153,20 @@ A. Begin by installing snort -
     Bamm@syn# snort -l /snort_data -c /etc/snort/snort.conf -D
   *NOTE: I use a seperate partition /snort_data to do all my logging.
 
-B. Next install and start the tcl script portscan_loader.sh from the sguil/scripts
-directory. Make sure to point the script to the correct interpreter
+B. Next install and start the sensor_agent.tcl from the ./sensor directory.
+Make sure to point the script to the correct interpreter
 (i.e. #!/usr/bin/tcl or #!/usr/local/bin/tclsh8.3) and to configure the
-options correctly. 
+different options. The sensor agent forwards portscan and session data
+files to sguild for loading to the DB.
 
 
 C. Now install Barnyard -
-  Download the source for barnyard from http://www.snort.org/dl/barnyard. Untar
-  the package and add the op_sguil plugin (op_sguil is a modifed op_acid_db
+  Download the source for barnyard from
+   http://www.snort.org/dl/barnyard/barnyard-0.1.0.tar.gz.
+  Untar the package and add the op_sguil plugin (op_sguil is a modifed op_acid_db
   plugin. Sorry Andrew, I really didn't mean to mangle your code that bad).
-    Bamm@syn# cd src/output-plugins
-    Bamm@syn# cp <sguil-src>/barnyard_mods/op_sguil.* .
+    Bamm@syn# cd barnyard/src/output-plugins
+    Bamm@syn# cp <sguil-src>/sensor/barnyard_mods/op_sguil.* .
   Next run configure, and enable mysql support for barnyard it the root of the 
   source tree. (Use the "with" flags if your mysql libs are in a non-standard
   location.)
@@ -176,6 +203,24 @@ C. Now install Barnyard -
     -g /etc/snort/gen-msg.map -s /etc/snort/sid-msg.map -f snort.log -w /etc/snort/waldo.file
 
 
+D. Start log_packets.sh
+
+The script log_packets.sh is used to log the binary data. It is located 
+in the sguil/sensor directory and should be ran on the sensor.  log_packets.sh
+runs snort in 'packet logger' mode. Edit the configurations, start the script
+(./log_packets.sh start), and then add an entry to the crontab to restart
+the script every hour (you can change the interval based on your requirements):
+  # Crontab example
+  00 0-23/1 * * * /usr/local/bin/log_packets.sh restart
+
+NOTE: By default, log_packets.sh is set up to have snort log EVERY packet on
+the network. A bpf filter example is included in the script. Use bpf to tune
+the amount of logging based on the available drive space. It is highly
+recommended to create a seperate partion for logging data to. The sensor agent
+reports currect disk stats to sguild, but the user is responsible for 
+deleting/archiving old data at this time.
+
+
 ###########################
 #Step 5: Install xscriptd.#
 ###########################
@@ -183,13 +228,6 @@ Xscriptd is meant to be ran on the same system as sguild. Its purpose is
 get binary packet data from sensor(s) and generate a transcript using tcpflow
 or forward the binary file to the client to be loaded into ethereal. 
 
-The script log_packets.sh is used to log the binary data. It is located 
-in the ./scripts directory and should be ran on the sensor.  Edit the
-configurations, start the script (./log_packets.sh start), and then
-add an entry to the crontab to restart the script every hour (you can change
-the interval based on your requirements):
-  # Crontab example
-  00 0-23/1 * * * /usr/local/bin/log_packets.sh restart
 
 Setting up xscriptd on a "local" system (one where snort, barnyard, sguild, and
 xscriptd are all run on the same system) is fairly simple. Edit the options
@@ -225,7 +263,7 @@ in xscriptd to reflect this:
 ############
 #   DONE!  #
 ############
-Read the USAGE for information about using the GUI.
+Read the USAGE for information about using sguil.tk.
 
 Bammkkkk
 
