@@ -1,3 +1,4 @@
+# $Id: SguilUtil.tcl,v 1.2 2005/01/24 18:56:27 shalligan Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
