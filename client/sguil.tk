@@ -3606,63 +3606,63 @@ $validateMenu add command -label "Cat VII: Virus Infection(F7)"\
 bind . <F8> {
   ValidateEvent 1
 }
-bind . <Control-Key-F8> {
+bind . <Shift-Key-F8> {
   ValidateEvent 1 1
 }
 # F1 deletes the highlighted event and marks the event as 11 (CatI)
 bind . <F1> {
   ValidateEvent 11
 }
-bind . <Control-Key-F1> {
+bind . <Shift-Key-F1> {
   ValidateEvent 11 1
 }
 # F2 deletes the highlighted event and marks the event as 12 (CatII)
 bind . <F2> {
   ValidateEvent 12
 }
-bind . <Control-Key-F2> {
+bind . <Shift-Key-F2> {
   ValidateEvent 12 1
 }
 # F3 deletes the highlighted event and marks the event as 13 (CatIII)
 bind . <F3> {
   ValidateEvent 13
 }
-bind . <Control-Key-F3> {
+bind . <Shift-Key-F3> {
   ValidateEvent 13 1
 }
 # F4 deletes the highlighted event and marks the event as 14 (CatIV)
 bind . <F4> {
   ValidateEvent 14
 }
-bind . <Control-Key-F4> {
+bind . <Shift-Key-F4> {
   ValidateEvent 14 1
 }
 # F5 deletes the highlighted event and marks the event as 15 (CatV)
 bind . <F5> {
   ValidateEvent 15
 }
-bind . <Control-Key-F5> {
+bind . <Shift-Key-F5> {
   ValidateEvent 15 1
 }
 # F6 deletes the highlighted event and marks the event as 16 (CatVI)
 bind . <F6> {
   ValidateEvent 16
 }
-bind . <Control-Key-F6> {
+bind . <Shift-Key-F6> {
   ValidateEvent 16 1
 }
 # F7 deletes the highlighted event and marks the event as 17 (CatVII)
 bind . <F7> {
   ValidateEvent 17
 }
-bind . <Control-Key-F7> {
+bind . <Shift-Key-F7> {
   ValidateEvent 17 1
 }
 # F9 Escalates the event
 bind . <F9> {
   ValidateEvent 2
 }
-bind . <Control-Key-F9> {
+bind . <Shift-Key-F9> {
   ValidateEvent 2 1
 }
 # Ctl-s initiates Sleep function.
