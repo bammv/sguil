@@ -107,7 +107,8 @@ proc ClientCmdRcvd { socketID } {
     if {$DEBUG} { puts "Socket $socketID closed" }
   } else {
     if {$DEBUG} {puts "Clent Command Recieved: $data"}
-    set clientCmd [lindex $data 0]
+    set origData $data
+    set clientCmd [ctoken data " "]
     # Check to make the client validated itself
     if { $clientCmd != "ValidateUser" && $clientCmd != "GetIcmpData" &&\
          $clientCmd != "GetIPData" && $clientCmd != "GetPayloadData" &&\
@@ -119,26 +120,33 @@ proc ClientCmdRcvd { socketID } {
       return
       }
     }
+    set data1 $data
+    # data1 will contain the list from index 1 on. 
+    set index1 [ctoken data " "]
+    set data2 $data
+    # data2 now contains only indices 2 on, because ctoken chops tokens off
+    set index2 [ctoken data " "]
+    # data now contains indicies 3 on
     switch -exact $clientCmd {
-      DeleteEventID { $clientCmd $socketID [lindex $data 1] [lindex $data 2]}
-      DeleteEventIDList { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lrange $data 3 end] }
-      EventHistoryRequest { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
-      ExecDB { $clientCmd $socketID [lindex $data 1] }
-      GetIcmpData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
-      GetIPData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
-      GetPayloadData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
-      GetPSData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
-      GetTcpData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
-      GetUdpData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
-      MonitorSensors { $clientCmd $socketID [lrange $data 1 end] } 
-      QueryDB { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
-      RuleRequest { $clientCmd $socketID [lindex $data 1] [lrange $data 2 end] }
+      DeleteEventID { $clientCmd $socketID $index1 $index2 }
+      DeleteEventIDList { $clientCmd $socketID $index1 $index2 $data }
+      EventHistoryRequest { $clientCmd $socketID $index1 $index2 $data }
+      ExecDB { $clientCmd $socketID $index1 }
+      GetIcmpData { $clientCmd $socketID $index1 $index2 }
+      GetIPData { $clientCmd $socketID $index1 $index2 }
+      GetPayloadData { $clientCmd $socketID $index1 $index2 }
+      GetPSData { $clientCmd $socketID $index1 $index2 }
+      GetTcpData { $clientCmd $socketID $index1 $index2 }
+      GetUdpData { $clientCmd $socketID $index1 $index2 }
+      MonitorSensors { $clientCmd $socketID $data1 } 
+      QueryDB { $clientCmd $socketID $index1 $index2 }
+      RuleRequest { $clientCmd $socketID $index1 $data2 }
       SendSensorList { $clientCmd $socketID }
       SendEscalatedEvents { $clientCmd $socketID }
       SendDBInfo { $clientCmd $socketID }
-      ValidateUser { ValidateUser $socketID [lindex $data 1] [lindex $data 2]}
+      ValidateUser { ValidateUser $socketID $index1 $index2 }
       PING { puts $socketID "PONG" }
-      default { if {$DEBUG} {puts "Unrecognized command from $socketID: $data"} }
+      default { if {$DEBUG} {puts "Unrecognized command from $socketID: $origData"} }
     }
   }
 }
