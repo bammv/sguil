@@ -1008,9 +1008,9 @@ proc CorrelateEvent { paneName eventID srcIP message } {
         $paneName.countFrame.list itemconfigure $srcIPMatchIndex -background $rowColor
       }
       # if the list index was selected, re-select it
-      #if { [$paneName.eventIDFrame.list selection includes $srcIPMatchIndex] } { 
-#	    $paneName.countFrame.list selection set $srcIPMatchIndex
-#      }
+      if { [$paneName.eventIDFrame.list selection includes $srcIPMatchIndex] } { 
+	    $paneName.countFrame.list selection set $srcIPMatchIndex
+      }
       break
     }
     set srcIPList [lreplace $srcIPList $srcIPMatchIndex $srcIPMatchIndex FILLER]
