@@ -1209,7 +1209,39 @@ proc BindSelectionToAllLists { listName } {
     foreach buttonEvent { "ButtonRelease-1" } {
 	bind $listName <$buttonEvent> { ReSetMotion }
     }
+    foreach buttonEvent { "MouseWheel" "Button-5" "Button-4" } {
+	bind $listName <$buttonEvent> { WheelScroll %D %W [%W nearest %y] %E; break }
+    }
 }
+#
+# WheelScroll: Scroll all of the lists together on a mousey-wheely-scrolly
+#
+proc WheelScroll { delta winName index eventName} {
+   
+    set parentWin [winfo parent [winfo parent $winName]]
+ 
+    # first we have to support Windows and X
+    # Windows will trigger on MouseWheel events and delta will be high (at least more than 10)
+    # if it is a negative number, then we are looking a a MouseWheel event
+    # XWindows (in most cases generate Button-4 or -5 events and delta will be 4 or 5
+    
+    # X-Windows wheel motion
+    if { $delta == 4 || $delta == 5 } {
+	if { $delta == 4 } { set move -3 }
+	if { $delta == 5 } { set move 3 }
+    } else {
+	# MouseWheel Motion (usually Windows generated)
+	if { $delta > 0 } { set move 3 }
+	if { $delta < 0 } { set move -3}
+	if { $delta == 0 } { break } 
+    }
+    foreach childWin [winfo children $parentWin] {
+	if { [winfo name $childWin] != "scroll" } {
+	    $childWin.list yview scroll $move units
+	}
+    }
+}
+
 #
 # ReSetMotion: Reset Motion Vars on a button release
 #
@@ -3572,6 +3604,7 @@ bind . <Key-Escape> {
   UnSelectPacketOptions
   UnSelectHostLookups
 }
+
 # Toggle SOUND when off/on is clicked
 bind $soundStatus <Button-1> {
   if {$SOUND} {
