@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.77 2004/01/30 20:41:39 bamm Exp $ #
+# $Id: sguild,v 1.78 2004/01/30 21:34:04 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -734,7 +734,7 @@ proc GetSensorID { sensorName } {
   set sid [FlatDBQuery "SELECT sid FROM sensor WHERE hostname='$sensorName'"]
   return $sid
 }
-proc RcvSsnFile { socketID tableName fileName sensorName } {
+proc RcvSsnFile { socketID fileName sensorName } {
   global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe
   set sensorID [GetSensorID $sensorName]
   if {$DEBUG} {puts "Recieving session file $fileName."}
@@ -846,7 +846,7 @@ proc SensorCmdRcvd { socketID } {
       PSFile	{ RcvPortscanFile $socketID [lindex $data 1] }
       CONNECT   { SensorAgentConnect $socketID [lindex $data 1] }
       DiskReport { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
-      SsnFile	{ RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3]}
+      SsnFile	{ RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] }
       PING	{ puts $socketID "PONG" }
       default	{ if {$DEBUG} {puts "Sensor Cmd Unkown ($socketID): $sensorCmd"} }
     }
