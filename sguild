@@ -1,4 +1,4 @@
-#!/usr/bin/tcl
+#!/usr/local/bin/tclsh8.3
 
 # Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -30,8 +30,8 @@ set MAX_PS_ROWS 200
 set DBNAME sguildb
 set DBHOST localhost
 set DBPORT 1211
-set DBUSER root
-set DBPASS "dbpasswd"
+set DBUSER flatty 
+set DBPASS "J6O6P6Y"
 
 ######################## END GLOBALS ################################
 
@@ -64,6 +64,7 @@ proc ClientCmdRcvd { socketID } {
       GetIPData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
       GetPayloadData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
       QueryDB { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+      ExecDB { $clientCmd $socketID [lindex $data 1] }
       GetPSData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
       SendDBInfo { $clientCmd $socketID }
       default { puts "Unrecognized command from $socketID: $data" }
@@ -432,6 +433,19 @@ proc GetPSData { socketID timestamp srcIP } {
   mysqlclose $dbSocketID
   SendSocket $socketID "PSDataResults DONE"
 }
+proc ExecDB { socketID query } {
+  global DBNAME DBUSER DBPASS DBPORT DBHOST DEBUG
+  if {$DEBUG} {puts "Sending DB Query: $query"}
+  if { $DBPASS == "" } {
+      set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+  } else {
+      set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+  }
+  set execResults [mysqlexec $dbSocketID $query]
+  mysqlclose $dbSocketID
+  SendSocket $socketID "InfoMessage \{Query deleted $execResults rows.\}"
+}
+ 
 proc QueryDB { socketID clientWinName query } {
   global DBNAME DBUSER DBPASS DBPORT DBHOST DEBUG 
 

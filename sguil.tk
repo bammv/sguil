@@ -390,6 +390,37 @@ proc SimpleQueryCmd { host port cmd} {
   close $tmpSocketID
   return $data
 }
+proc DeleteRequest { deletetype } {
+    global socketID DEBUG RETURN_FLAG
+    set RETURN_FLAG 0
+    set deleteRequest .deleteRequest
+    if { [winfo exists $deleteRequest] } {
+	wm withdraw $deleteRequest
+	wm deiconify $deleteRequest
+	return
+    }
+    toplevel $deleteRequest
+    wm geometry $deleteRequest +200+200
+    if { $deletetype == "sessions" } {
+	wm title $deleteRequest "Purge Session Data"
+	set deleteDate [entryfield $deleteRequest.deleteDate -labeltext "Date:" ]
+	$deleteDate insert end [lindex [GetCurrentTimeStamp "1 month ago"] 0]
+	set buttonBox [buttonbox $deleteRequest.buttonBox]
+	$buttonBox add Run -text "Run" -command "set RETURN_FLAG 1"
+	$buttonBox add cancel -text "Cancel" -command "set RETURN_FLAG 0"
+	pack $deleteDate $buttonBox -side top -fill x -padx 10 -expand 0
+	tkwait variable RETURN_FLAG
+	puts "$RETURN_FLAG"
+	if { $RETURN_FLAG } {
+	    set deleteQuery "DELETE from sessions WHERE sessions.start_time <= '[$deleteDate get]'"
+	    if {$DEBUG} { puts "Sending Server: ExecDB $deleteQuery" }
+	    puts $socketID "ExecDB \{$deleteQuery\}"
+	}
+	destroy $deleteRequest
+	return
+    }
+}
+
 proc EmailEvents { detail } {
     global ACTIVE_EVENT currentSelectedPane RETURN_FLAG
     global SERVERHOST SERVERPORT EMAIL_FROM EMAIL_CC EMAIL_HEAD EMAIL_TAIL EMAIL_SUBJECT
@@ -2756,6 +2787,7 @@ set topFrame [frame .topFrame]
   $menuList add command -label "Display Incident Categories" -command DisplayIncidentCats
   $menuList add command -label "Send Event Detail via email" -command {EmailEvents 1}
   $menuList add command -label "Send Event Summary via email" -command {EmailEvents 0}
+  $menuList add command -label "Purge Session Data" -command "DeleteRequest sessions"
   #$menuList add command -label "License" -command "DisplayLicense"
   $menuList add command -label "Sleep (Ctrl-s)" -command "GoToSleep"
   $menuList add cascade -label "Change Font" -menu $menuList.font
