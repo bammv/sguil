@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.20 2004/10/11 21:45:26 shalligan Exp $ #
+# $Id: report.tcl,v 1.21 2004/10/18 18:21:34 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -266,27 +266,27 @@ proc PHBReport {} {
     toplevel $phbReport
     wm geometry $phbReport +300+300
     wm title $phbReport "Sensor Summary Report"
-    set sensorFrame [frame $phbReport.sensorFrame]
-    set winLabel [label $sensorFrame.label -text "Select Sensor(s) to Monitor"]
+    set sensorFrame [frame $phbReport.sensorFrame -borderwidth 2 -background black -relief raised]
+    set winLabel [label $sensorFrame.label -text "Select Sensor(s) to Report" -background lightblue]
     pack $winLabel -side top -fill both -expand true
      # We create a new frame for every 5 sensors to keep the look clean.
     set i 0
     set boxNumber 0
-    set currentBox [checkbox $sensorFrame.subBox$boxNumber -orient horizontal]
+    set currentBox [checkbox $sensorFrame.subBox$boxNumber -orient horizontal -borderwidth 0 -background lightblue]
     foreach sensorName $monitorList {
       if { $i < 5 } {
-        $currentBox add $sensorName -text [string totitle $sensorName]
+        $currentBox add $sensorName -text [string totitle $sensorName] -selectcolor darkred -activebackground lightblue
         incr i
       } else {
-        pack $currentBox -side top
+        pack $currentBox -side top -fill x -pady 0
         incr boxNumber
-        set currentBox [checkbox $sensorFrame.subBox$boxNumber -orient horizontal]
-        $currentBox add $sensorName -text [string totitle $sensorName]
+        set currentBox [checkbox $sensorFrame.subBox$boxNumber -orient horizontal -borderwidth 0 -background lightblue]
+        $currentBox add $sensorName -text [string totitle $sensorName] -selectcolor darkred -activebackground lightblue
         set i 1
       }
   
     }
-    pack $currentBox -side top -fill x   
+    pack $currentBox -side top -fill x -pady 0 
     set timestampLabelFrame [frame $phbReport.timestampLabelFrame]
         set timeStartLabel [label $timestampLabelFrame.timeStartLabel -text "Start Date/Time"]
         set timeEndLabel [label $timestampLabelFrame.timeEndLabel -text "End Date/Time"]
