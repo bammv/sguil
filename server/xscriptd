@@ -25,7 +25,7 @@ set TCPDUMP "/usr/sbin/tcpdump"
 set TCPFLOW "/usr/bin/tcpflow -c"
 # p0f - (C) Michal Zalewski <lcamtuf@gis.net>, William Stearns <wstearns@pobox.com>
 # If you have p0f (a passive OS fingerprinting system) installed, you can have
-# xscriptd attempt to use it by enabling it here.
+# xscriptd attempt to use it by enabling it here. Get p0f at http://www.stearns.org
 #
 # 1=ON, 0=OFF
 set P0F 1
@@ -38,7 +38,7 @@ set P0F_PATH "/usr/sbin/p0f"
 proc GetRawDataFromLocal { timestamp srcIP srcPort dstIP dstPort proto sensorDir rawDataFileName {socketID {NONE} } } {
   global LOCAL_LOG_DIR REMOTE_LOG_DIR DEBUG TCPDUMP
   set date [lindex $timestamp 0]
-  if {$socketID != "NONE"} { puts $socketID "DEBUG"}
+  if {$socketID != "NONE"} { puts $socketID "DEBUG"; puts $sockeID "Sensor is LOCAL."}
   if { [file exists $REMOTE_LOG_DIR/$date] && [file isdirectory $REMOTE_LOG_DIR/$date] } { 
     if {$DEBUG} {puts "Making a list of local log files"}
     if {$socketID != "NONE"} {puts "Making a list of local log files."}
@@ -93,6 +93,7 @@ proc GetRawDataFromSensor { sensor timestamp srcIP srcPort dstIP dstPort proto s
   if {$DEBUG} {puts "Getting a list of raw data files from $sensor."}
   if {$socketID != "NONE"} { 
     puts $socketID "DEBUG"
+    puts $socketID "Sensors are REMOTE, using ssh for accessing system."
     puts $socketID "Getting a list of raw data files from $sensor."
   }
   if {$DEBUG} {puts "Looking on $sensor in $REMOTE_LOG_DIR/$date."}
@@ -246,6 +247,14 @@ proc XscriptRequest { socketID sensor eventID timestamp srcIP srcPort dstIP dstP
     puts $socketID "Error getting raw data from sensor."
     close $socketID
     return
+  }
+  # Check for P0F if enabled
+  if {$P0F} {
+    if { ![file exists $P0F_PATH] || ![file executable $P0F_PATH] } {
+      puts $socketID "Cannot find p0f in: $P0F_PATH"
+      puts $socketID "OS fingerprint has been disabled"
+      set P0F 0
+    }
   }
   set NODATAFLAG 1
   # We don't have a really good way for make xscripts yet and are unable
