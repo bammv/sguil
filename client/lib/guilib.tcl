@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.12 2004/07/27 14:32:21 shalligan Exp $
+# $Id: guilib.tcl,v 1.13 2004/08/23 23:12:23 bamm Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -492,6 +492,7 @@ proc ScrollHome { paneName } {
 #                          selected across all lists.
 #
 proc BindSelectionToAllLists { listName } {
+    global tcl_platform
     foreach buttonEvent { "Shift-Button-1" } {
 	bind $listName <$buttonEvent> { ShiftSelect %W [%W nearest %y]; break }
     }
@@ -512,6 +513,11 @@ proc BindSelectionToAllLists { listName } {
     }
     foreach buttonEvent { "Button-4" } {
 	bind $listName <$buttonEvent> { WheelScroll %D %W "4"; break }
+    }
+    # We have to manually grab the focus for mouse wheels. On win32.
+
+    if { $tcl_platform(platform) == "windows" } {
+        bind $listName <Enter> { focus %W }
     }
 }    
 proc BindSelectionToAllPSLists { listName } {
