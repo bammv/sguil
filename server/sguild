@@ -231,7 +231,7 @@ proc ClientCmdRcvd { socketID } {
     set data [string trimleft $data]
     switch -exact $clientCmd {
       DeleteEventID { $clientCmd $socketID $index1 $index2 }
-      DeleteEventIDList { $clientCmd $socketID $index1 $index2 $data }
+      DeleteEventIDList { $clientCmd $socketID $data1 }
       EventHistoryRequest { $clientCmd $socketID $index1 $index2 $data }
       ExecDB { $clientCmd $socketID $index1 }
       GetIcmpData { $clientCmd $socketID $index1 $index2 }
@@ -374,9 +374,13 @@ proc AddEventToEventArray { eventDataList } {
   lappend eventIDList $eventID
 }
 
-proc DeleteEventIDList { socketID status comment deleteEventIDList } {
+proc DeleteEventIDList { socketID data } {
   global eventIDArray eventIDList clientList escalateArray escalateIDList
   global userIDArray
+  
+  set status [ctoken data "::"]
+  set comment [ctoken data "::"]
+  set deleteEventIDList [ctoken data "::"]
   puts "status: $status"
   puts "comment: $comment"
   puts "deleteEventIDList: $deleteEventIDList"
