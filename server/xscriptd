@@ -23,10 +23,19 @@ set SCP "/usr/bin/scp"
 set TCPDUMP "/usr/sbin/tcpdump"
 # http://www.circlemud.org/~jelson/software/tcpflow/
 set TCPFLOW "/usr/bin/tcpflow -c"
+# p0f - (C) Michal Zalewski <lcamtuf@gis.net>, William Stearns <wstearns@pobox.com>
+# If you have p0f (a passive OS fingerprinting system) installed, you can have
+# xscriptd attempt to use it by enabling it here.
+#
+# 1=ON, 0=OFF
+set P0F 1
+# Path the the p0f binary. Switches -q and -s <filename> are appended on exec,
+# add any others you may need here.
+set P0F_PATH "/usr/sbin/p0f"
 
 #################### PROCS ######################
 
-proc GetRawDataFromLocal { timestamp srcIP srcPort dstIP dstPort sensorDir rawDataFileName {socketID {NONE} } } {
+proc GetRawDataFromLocal { timestamp srcIP srcPort dstIP dstPort proto sensorDir rawDataFileName {socketID {NONE} } } {
   global LOCAL_LOG_DIR REMOTE_LOG_DIR DEBUG TCPDUMP
   set date [lindex $timestamp 0]
   if {$socketID != "NONE"} { puts $socketID "DEBUG"}
@@ -70,11 +79,15 @@ proc GetRawDataFromLocal { timestamp srcIP srcPort dstIP dstPort sensorDir rawDa
   }
   if {$DEBUG} { puts "Creating unique data file." }
   if {$socketID != "NONE"} { puts $socketID "Creating unique data file." }
-  set tcpdumpFilter "host $srcIP and host $dstIP and port $srcPort and port $dstPort"
+  if {$proto == "1"} {
+    set tcpdumpFilter "host $srcIP and host $dstIP and proto $proto"
+  } else {
+    set tcpdumpFilter "host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto"
+  }
   exec $TCPDUMP -r $REMOTE_LOG_DIR/$date/$logFileName -w $sensorDir/$rawDataFileName $tcpdumpFilter
   return $sensorDir/$rawDataFileName
 }
-proc GetRawDataFromSensor { sensor timestamp srcIP srcPort dstIP dstPort sensorDir rawDataFileName {socketID {NONE} } } {
+proc GetRawDataFromSensor { sensor timestamp srcIP srcPort dstIP dstPort proto sensorDir rawDataFileName {socketID {NONE} } } {
   global LOCAL_LOG_DIR REMOTE_LOG_DIR SSH SCP TCPDUMP DEBUG
   set date [lindex $timestamp 0]
   if {$DEBUG} {puts "Getting a list of raw data files from $sensor."}
@@ -114,10 +127,10 @@ proc GetRawDataFromSensor { sensor timestamp srcIP srcPort dstIP dstPort sensorD
   }
   if {$DEBUG} { puts "Creating unique data file on $sensor." } 
   if {$socketID != "NONE"} { puts $socketID "Creating unique data file on $sensor." }
-  if { $srcPort == "88888" } {
+  if { $proto == "1" } {
       set tcpdumpFilter "host $srcIP and host $dstIP and proto 1"
   } else {
-      set tcpdumpFilter "host $srcIP and host $dstIP and port $srcPort and port $dstPort"
+      set tcpdumpFilter "host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto"
   }  
   eval exec $SSH $sensor $TCPDUMP -r $REMOTE_LOG_DIR/$date/$logFileName -w /tmp/$rawDataFileName $tcpdumpFilter
 
@@ -143,7 +156,7 @@ proc TcpFlowFormat { srcIP srcPort dstIP dstPort } {
   set tmpData [eval format "%03i.%03i.%03i.%03i.%05i-%03i.%03i.%03i.%03i.%05i" $tmpSrcIP $srcPort $tmpDstIP $dstPort]
   return $tmpData
 }
-proc EtherealRequest { socketID sensor eventID timestamp srcIP srcPort dstIP dstPort force } {
+proc EtherealRequest { socketID sensor eventID timestamp srcIP srcPort dstIP dstPort proto force } {
   global DEBUG LOCAL_LOG_DIR REMOTE_LOG_DIR LOCALSENSOR
   set date [lindex $timestamp 0]
   # Check to make sure our dirs exists. We use <rootdir>/date/sensorName/*.raw
@@ -157,16 +170,20 @@ proc EtherealRequest { socketID sensor eventID timestamp srcIP srcPort dstIP dst
   }
   # We always make the highest port the apparent source. This way we don't store
   # two copies of the same raw data.
-  if { $srcPort > $dstPort } {
-    set rawDataFileName "${srcIP}:${srcPort}_${dstIP}:${dstPort}.raw"
+  if { $proto != "1" } {
+    if { $srcPort > $dstPort } {
+      set rawDataFileName "${srcIP}:${srcPort}_${dstIP}:${dstPort}-${proto}.raw"
+    } else {
+      set rawDataFileName "${dstIP}:${dstPort}_${srcIP}:${srcPort}-${proto}.raw"
+    }
   } else {
-    set rawDataFileName "${dstIP}:${dstPort}_${srcIP}:${srcPort}.raw"
+    set rawDataFileName "${srcIP}:${dstIP}-${proto}.raw"
   }
   if { ! [file exists $sensorDir/$rawDataFileName] || $force } {
     if {$LOCALSENSOR} {
-      set rawDataFile [GetRawDataFromLocal $timestamp $srcIP $srcPort $dstIP $dstPort $sensorDir $rawDataFileName]
+      set rawDataFile [GetRawDataFromLocal $timestamp $srcIP $srcPort $dstIP $dstPort $proto $sensorDir $rawDataFileName]
     } else {
-set rawDataFile [GetRawDataFromSensor $sensor $timestamp $srcIP $srcPort $dstIP $dstPort $sensorDir $rawDataFileName]
+set rawDataFile [GetRawDataFromSensor $sensor $timestamp $srcIP $srcPort $dstIP $dstPort $proto $sensorDir $rawDataFileName]
     }
   } else {
     set rawDataFile $sensorDir/$rawDataFileName
@@ -195,6 +212,7 @@ proc CopyDone { rawFileID socketID bytes {error {}} } {
 }
 proc XscriptRequest { socketID sensor eventID timestamp srcIP srcPort dstIP dstPort force } {
   global TCPFLOW DEBUG LOCAL_LOG_DIR REMOTE_LOG_DIR LOCALSENSOR
+  global P0F P0F_PATH
   set date [lindex $timestamp 0]
   # Check to make sure our dirs exists. We use <rootdir>/date/sensorName/*.raw
   set dateDir "$LOCAL_LOG_DIR/$date"
@@ -208,15 +226,15 @@ proc XscriptRequest { socketID sensor eventID timestamp srcIP srcPort dstIP dstP
   # We always make the highest port the apparent source. This way we don't store
   # two copies of the same raw data.
   if { $srcPort > $dstPort } {
-    set rawDataFileName "${srcIP}:${srcPort}_${dstIP}:${dstPort}.raw"
+    set rawDataFileName "${srcIP}:${srcPort}_${dstIP}:${dstPort}-6.raw"
   } else {
-    set rawDataFileName "${dstIP}:${dstPort}_${srcIP}:${srcPort}.raw"
+    set rawDataFileName "${dstIP}:${dstPort}_${srcIP}:${srcPort}-6.raw"
   }
   if { ! [file exists $sensorDir/$rawDataFileName] || $force } {
     if {$LOCALSENSOR} {
-      set rawDataFile [GetRawDataFromLocal $timestamp $srcIP $srcPort $dstIP $dstPort $sensorDir $rawDataFileName $socketID]
+      set rawDataFile [GetRawDataFromLocal $timestamp $srcIP $srcPort $dstIP $dstPort 6 $sensorDir $rawDataFileName $socketID]
     } else {
-      set rawDataFile [GetRawDataFromSensor $sensor $timestamp $srcIP $srcPort $dstIP $dstPort $sensorDir $rawDataFileName $socketID]
+      set rawDataFile [GetRawDataFromSensor $sensor $timestamp $srcIP $srcPort $dstIP $dstPort 6 $sensorDir $rawDataFileName $socketID]
     }
   } else {
     puts $socketID "DEBUG"
@@ -250,8 +268,17 @@ proc XscriptRequest { socketID sensor eventID timestamp srcIP srcPort dstIP dstP
   puts $socketID "Connection ID:\t$eventID"
   puts $socketID "Src IP:\t\t$srcIP\t([GetHostbyAddr $srcIP])"
   puts $socketID "Dst IP:\t\t$dstIP\t([GetHostbyAddr $dstIP])"
-  puts $socketID "Src Port:\t$srcPort"
-  puts $socketID "Dst Port:\t$dstPort"
+  puts $socketID "Src Port:\t\t$srcPort"
+  puts $socketID "Dst Port:\t\t$dstPort"
+  if {$P0F} {
+    puts "Getting HERE"
+    #set p0fID [open "| $P0F_PATH -s $rawDataFile 2>@ stdout"]
+    set p0fID [open "| $P0F_PATH -q -s $rawDataFile"]
+    while { [gets $p0fID data] >= 0 } {
+      puts $socketID "OS Fingerprint:\t$data"
+    }
+    close $p0fID
+  }
   puts $socketID "================================================================================="
   set tcpflowID [open "| $TCPFLOW -r $rawDataFile"]
   set state SRC
