@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.7 2004/11/04 16:41:07 shalligan Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.8 2004/11/04 19:47:12 shalligan Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -391,6 +391,7 @@ proc LoadNessusReports { socketID filename table bytes} {
     # The loader child proc does the LOAD for us.
     puts $loaderWritePipe [list $NESSUS_OUTFILE $cmd]
     flush $loaderWritePipe
+    puts $socketID "InfoMessage Nessus Data sent to loader.  Check server debug for any loading errors."
 }
 
 
