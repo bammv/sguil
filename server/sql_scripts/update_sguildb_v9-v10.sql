@@ -1,4 +1,4 @@
-CREATE TABLE nessus_data IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS nessus_data 
 (
   rid           VARCHAR(40)	NOT NULL,
   port          VARCHAR(40),
@@ -7,7 +7,7 @@ CREATE TABLE nessus_data IF NOT EXISTS
   description		TEXT,
   INDEX rid (rid));
 
-CREATE TABLE nessus IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS nessus 
 (
   uid           INT            NOT NULL,
   rid           VARCHAR(40)    NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE nessus IF NOT EXISTS
   PRIMARY KEY (rid),
   INDEX ip (ip));
 
-CREATE TABLE sancp IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS sancp 
 (
   sid		INT UNSIGNED	NOT NULL,
   sancpid	BIGINT UNSIGNED	NOT NULL,
