@@ -1,6 +1,6 @@
-# $Id: CHANGES,v 1.39 2004/08/09 17:33:16 shalligan Exp $ #
+# $Id: CHANGES,v 1.40 2004/08/10 20:14:06 bamm Exp $ #
 
-sguil-0.5.1 (CVS HEAD)
+sguil-0.5.1 (10 Aug 2004)
 
  General
   * Text based reporting is in.  You can generate reports from 
@@ -18,6 +18,18 @@ sguil-0.5.1 (CVS HEAD)
     Toggle the widget on/off with ctl-f or right-click in the payload
     window.  You can set the default state in sguil.conf.  Default 
     is on. -srh
+
+  * Can use festival directly for those on win32 systems. -bamm
+
+ Sensor
+  * The directory structure on the sensor was changed to
+    $LOG_DIR/$SENSOR_NAME. For example, a sensor called foobar that used
+    /snort_data as its root logging directory would now use /snort_data/foobar.
+    This allows us to run multiple snort instances in ids mode on multiple
+    interfaces without mixing data together by refering to each instance as
+    a different sensor name. Therefore, one could have foobar-eth0, foobar-eth1,
+    ...foobar-ethN logging to seperate directories as well as seperate barnyard
+    and sensor_agent reading from those directories. -bamm
  
 sguil-0.5.0 (29 Jun 2004)
 
