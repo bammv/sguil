@@ -1,5 +1,6 @@
 proc QryBuild {} {
-    global RETURN_FLAG
+    global RETURN_FLAG 
+    global  tableColumnArray tableList funcList
     set RETURN_FLAG 0
 
     # Grab the current pointer locations
@@ -10,7 +11,17 @@ proc QryBuild {} {
     wm title $qryBldWin "Query Builder"
     wm geometry $qryBldWin +[lindex $xy 0]+[lindex $xy 1]
     
+    # Create some arrays for the lists
     set mlst [list Tables Functions]
+    set funcList(main) [list Common Strings Comparison Logical DateTime]
+    set funcList(Common) [list INET_ATON() LIMIT LIKE() AND OR NOT]
+    set funcList(Strings) [list LIKE REGEXP RLIKE]
+    set funcList(Logical) [list AND OR NOT BETWEEN()]
+    set funcList(Comparison) [list = != < > <=>]
+    set funcList(DateTime) [list TO_DAYS() UNIX_TIMESTAMP() UTC_TIMESTAMP()]
+    foreach tableName $tableList {
+	set funcList($tableName) $tableColumnArray($tableName)
+    }
     
     # Main Frame
     set mainFrame [frame $qryBldWin.mFrame -background black -borderwidth 1]
@@ -23,29 +34,45 @@ proc QryBuild {} {
 		-labeltext "Edit Where Clause"]
       $editBox insert end "WHERE event.sid = sensor.sid AND  LIMIT 500"
       $editBox mark set insert "end -11 c"
-      set bb2 [buttonbox $editFrame.bb]
-      $bb2 add Submit -text "Submit" -command "set RETURN_FLAG 1"
-      $bb2 add Cancel -text "Cancel" -command "set RETURN_FLAG 0"
-      pack $editBox $bb2 -side top -fill y -expand true
+      set bb [buttonbox $editFrame.bb]
+      $bb add Submit -text "Submit" -command "set RETURN_FLAG 1"
+      $bb add Cancel -text "Cancel" -command "set RETURN_FLAG 0"
+      pack $editBox $bb -side top -fill y -expand true
 
-
+    set mainBB1 [buttonbox $mainFrame.mbb1 -padx 1 -pady 1]
+      foreach logical $funcList(Logical) {
+	  set command "$editBox insert insert \"$logical \""
+	  $mainBB1 add $logical -text $logical -command "$command"
+      }
+    set mainBB2 [buttonbox $mainFrame.mbb2]
+      foreach comparison $funcList(Comparison) {
+	  set command "$editBox insert insert \"$comparison \""
+	  $mainBB2 add $comparison -text $comparison -command "$command"
+      }
 
     set selectFrame [frame $mainFrame.sFrame]
-      set catList [combobox $selectFrame.cList -labeltext Categories -editable true -selectioncommand "updateItemList $selectFrame"]
-      set metaList [combobox $selectFrame.mList -labeltext Meta -editable false -selectioncommand "updateCatList $selectFrame"]
+      set catList [scrolledlistbox $selectFrame.cList -labeltext Categories \
+	      -selectioncommand "updateItemList $selectFrame" \
+	      -labelpos n -vscrollmode dynamic \
+	      -visibleitems 20x10]
+      set metaList [scrolledlistbox $selectFrame.mList -labeltext Meta \
+	      -selectioncommand "updateCatList $selectFrame" \
+	      -hscrollmode dynamic \
+	      -labelpos n -vscrollmode dynamic \
+	      -visibleitems 20x10]
       set itemList [scrolledlistbox $selectFrame.iList -hscrollmode dynamic \
 	     -dblclickcommand "addToEditBox $editBox $selectFrame" \
 	     -scrollmargin 5 -labeltext "Items" \
-	     -labelpos w -vscrollmode dynamic \
+	     -labelpos n -vscrollmode dynamic \
 	     -visibleitems 20x10]
   
-      set bb [buttonbox $selectFrame.bb]
-        $bb add add -text "Add" -command "addToEditBox $editBox $selectFrame"
-      pack $metaList $catList $itemList $bb -side top -fill y -expand true
+      pack $metaList $catList $itemList -side left -fill both -expand true
       iwidgets::Labeledwidget::alignlabels $metaList $catList $itemList
     
-    pack $selectFrame $editFrame -side left -fill y -expand true
-    eval $metaList insert list 0 $mlst
+    pack $editFrame -side top -fill both -expand yes
+    pack  $mainBB1 $mainBB2 -side top -fill none -expand false 
+    pack  $selectFrame -side top -fill both -expand true
+    eval $metaList insert 0 $mlst
     pack $mainFrame -side top
 
     
@@ -65,48 +92,42 @@ proc QryBuild {} {
 
 
 proc updateCatList { selectFrame } {
-    global tableList 
+    global tableList funcList metaSelection
      
-    $selectFrame.cList delete list 0 end
-    $selectFrame.cList delete entry 0 end
+    $selectFrame.cList delete 0 end
+    #$selectFrame.cList delete entry 0 end
     $selectFrame.iList delete 0 end
     
-    set funcList [list Common Strings Comparision DateTime]
-    set sel [$selectFrame.mList get]
-
+    set sel [$selectFrame.mList getcurselection]
+    set metaSelection $sel
     if {$sel == "Tables"} { 
-	eval $selectFrame.cList insert list 0 $tableList
+	eval $selectFrame.cList insert 0 $tableList
     } else {
-	eval $selectFrame.cList insert list 0 $funcList
+	eval $selectFrame.cList insert 0 $funcList(main)
     }
 }
     
 proc updateItemList { selectFrame} {
-    global  tableColumnArray
+    global funcList catSelection
     
     $selectFrame.iList delete 0 end
     #$selectFrame.iList delete entry 0 end
-    set funcList(Common) [list INET_ATON() LIMIT LIKE() AND OR NOT]
-    set funcList(Strings) [list LIKE REGEXP RLIKE]
-    set funcList(Comparision) [list AND OR NOT = != < > <> <=> BETWEEN()]
-    set funcList(DateTime) [list TO_DAYS() UNIX_TIMESTAMP() UTC_TIMESTAMP()]
-    eval set sel [$selectFrame.cList get]
     
-    if { [$selectFrame.mList get] == "Tables" } {
-	eval $selectFrame.iList insert 0 $tableColumnArray($sel)
-    } else {
-	eval $selectFrame.iList insert 0 $funcList($sel)
-    }
+    eval set sel [$selectFrame.cList getcurselection]
+    set catSelection $sel
+    eval $selectFrame.iList insert 0 $funcList($sel)
 }
 
 proc addToEditBox { editBox selectFrame } {
-
+    global catSelection metaSelection
     set addText [lindex [$selectFrame.iList getcurselection] 0]
     
     #if Meta is set to table, prepend tablename. to the item
-    if {[$selectFrame.mList get] == "Tables"} {
-	set addText "[$selectFrame.cList get].$addText"
+    if {$metaSelection == "Tables"} {
+	set addText "$catSelection.$addText"
     }
     
     $editBox insert insert "$addText "
 }
+
+
