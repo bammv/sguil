@@ -26,23 +26,47 @@ run everything on a single system.
 Install mysql (http:www.mysql.com) per its installation
 instructions. 
 
-You can either now create the DB structure using the 
-following methods, or skip to 'Installing sguild',
-where it will create the structure for you on init.
-NOTE: If you choose to let sguild create the DB for
-you, then you must still use 'GRANT' to give priv-
-ledges for each sensor.
+########## Security Note ##########
+Some operating systems install mysql-server with a 
+'root' admin account and NO passwd. Use the below steps
+to correct this oversight.
 
-NOTE: It's highly recommended that you set your time-
+    shell> mysql -u root mysql
+    mysql> UPDATE user SET Password=PASSWORD('dbpasswd')
+           WHERE user='root';
+    mysql> FLUSH PRIVILEGES;
+
+It is also recommended that you create a 'sguil' user in
+mysql and use that account for your sguil installation.
+
+    shell> mysql -u root -p mysql
+    Enter password:
+    mysql> GRANT ALL PRIVILEGES ON sguildb.*
+           TO sguil@localhost IDENTIFIED BY 'sguilpasswd'
+           WITH GRANT OPTION;
+    mysql> FLUSH PRIVILEGES;
+######## End Security Note ########
+  
+You can either create the DB structure using the 
+below methods now, or skip to 'Installing sguild',
+section where it will prompt to create the DB structure
+for you on init.
+
+NOTE: If you choose to let sguild
+create the DB for you, then you still need to use 'GRANT'
+to give privledges for each sensor to INSERT,SELECT in
+the database.
+
+NOTE-2: It's highly recommended that you set your time-
 zone (TZ) to GMT prior to starting mysqld. This can
 often be done inside you mysqld init script.
 
 Create the sguildb:
-  Bamm@syn# mysql -u root -p -e "CREATE DATABASE sguildb"
+  Bamm@syn# mysql -u sguil -p -e "CREATE DATABASE sguildb"
 Make sure each sensor has INSERT and SELECT privledges:
-  Bamm@syn# mysql -u root -p -e "GRANT INSERT,SELECT on sguildb.* to root@<sensorip>"
+  Bamm@syn# mysql -u sguil -p -e "GRANT INSERT,SELECT on sguildb.* to root@<sensorip>"
 Build the required tables:
-  Bamm@syn# mysql -u root -p -D sguildb < ./server/sql_scripts/create_sguildb.sql
+  Bamm@syn# mysql -u sguil -p -D sguildb < ./server/sql_scripts/create_sguildb.sql
   *NOTE: Verify all is well with: mysql -u root -p -e "show tables"
   +-------------------+
   | Tables_in_sguildb |
@@ -68,11 +92,27 @@ Sguild is a tcl script and I would recommend using tcl-8.3
 or better. I haven't had time to test lesser versions but
 they may work. 
 
-1) Make sure tcl is installed along with the extended (tclx)
-libs (http://tclx.sourceforge.net). Tclx is a common tcl
-extensions and packages can be found for most OSes/distros.
+*NOTE: Sguild DOES NOT require root privileges to run. We
+recommend you create a 'sguil' user and run sguild under
+that account.
 
-2) Sguild requires mysqltcl support and it can
+1) Create the directory /etc/sguild. I recommend using this
+directory for storing all the sguild config files. Copy
+sguild.users, sguild.conf, sguild.queries, and autocat.conf
+to the /etc/sguild directory. If you plan on using OpenSSL
+between the servers and client, don't forget to read the
+README.openssl file in the docs directory.
+
+2) Make sure tcl is installed along with the extended (tclx)
+libs (http://tclx.sourceforge.net). Tclx is a common tcl
+extensions and packages can be found as a package/port for
+most OSes/distros.  To test that tclx is installed:
+  tcl> package require Tclx
+  tcl>
+Any errors indicate that tclx was NOT install or was installed
+incorrectly.
+
+3) Sguild requires mysqltcl support and it can
 be downloaded from http://www.xdobry.de/mysqltcl/. Once
 installed, test that it can be loaded by invoking the tcl
 interpreter (ie /usr/bin/tcl or /usr/local/bin/tclsh8.3)
@@ -87,8 +127,10 @@ prior to the line:
   package require mysqltcl
 in order for the tcl/tk interpreter to find the package.)
 
-3) Edit sguild so the first line contains the correct path to
-the tcl interpreter (ie #!/usr/bin/tcl or #!/usr/local/bin/tclsh8.3).
+4) On startup sguild will attempt to use the tcl interpreter
+(tclsh) from your PATH. You may need to create a link from
+tclsh8.3 (or similar) to tclsh in the appropriate directory.
+(i.e. `ln -s /usr/local/bin/tclsh8.3 /usr/local/bin/tclsh)
 
 4) Configure options within sguild.conf. Pay particular attention
 to the PATH you define for sguild to look for snort rules.  In the
@@ -97,9 +139,31 @@ must be kept on the sguild server based on the hostname. Don't
 forget to copy these rule files over after installing the sensor.
 
 5) Add users to sguild.users file by running `sguild -adduser <username>`
+If you want your users/passwd file to be somewhere other than
+/etc/sguild/sguild.users or ./sguild.users, then use the
+ -u <path> switch. You can delete users using `sguild -deluser <username>`
+Again, specify the path of sguild.users if it is in a non
+default location.
 
-6) Start the daemon, it will send a query to the DB to get
-any archived alerts and then echo "Sguild Initialized."
+6) Now it is time to start sguild. The command `sguild --help`
+will generate a short list of available switches. If you have
+placed your config files in a default location (/etc/sguild or
+./) then you shouldn't need to specify any paths. Command line
+switches like -o (enable OpenSSL) and -D (run as a daemon) 
+override the sguild.conf. If a database has not been created
+yet, you will be prompted to create it at this point:
+
+    shell> ./sguild
+    Error: mysqluse/db server: Unknown database 'sguildb'
+    The database sguildb does not exist. Create it ([y]/n)?:
+    Path to create_sguildb.sql [./sql_scripts/create_sguildb.sql]:
+    Creating the DB sguildb...Okay.
+    Creating the structure for sguildb: ...Done
+    <snip>
+    Sguild Initialized
+
+At this point, sguild is ready to recieve connections from sensors
+and sguil.tk clients.
 
 
 ############################################
@@ -107,46 +171,71 @@ any archived alerts and then echo "Sguild Initialized."
 ############################################
 Sguil.tk is a tcl/tk script. It requires tcl/tk 8.3 (I haven't tested
 lesser versions, they may work), tclx 8.3 (I have heard that
-some distros package tclx with the standard tcl libs), and incr tcl (itcl)
+some distros package tclx with the standard tcl libs), incr tcl (itcl)
 3.2 (including the iwidgets 2.2 set - see http://www.tcltk.com/iwidgets/
-for more info).
+for more info), and the tcllib extension (http://tcllib.sf.net). The
+client - sguil.tk - also runs under win32 using the ActiveState tcl
+libraries (http://www.activestate.com/Products/ActiveTcl/).
 
 On startup, sguil.tk reads the options in sguil.conf. If a path to
-the sguil.conf file is not provided, it will look in the current dir
-and /etc/sguil/sguil.conf by default. To specify the location for
-the sguil.conf, start sguil.tk like so:
-  Bamm@syn# ./sguil.tk -- -c <path>/sguil.conf
+the sguil.conf file is not provided, it will look in the users home
+directory and then the current directory by default. To specify the
+location for the sguil.conf, start sguil.tk like so:
+  shell> ./sguil.tk -- -c <path>/sguil.conf
 Explanations for the different options are within the default conf file.
 
 Along with the config file, sguil.tk will also read $HOME/.sguilrc for
 font information if it exists. Anytime you change the default font in
 sguil.tk, it will write your new preferences to .sguilrc.
 
+NOTE: Until a sensor has been installed and reported its first event,
+there will be no sensors to select for monitoring. It is okay to 
+start sguil.tk this way anyway, just to make sure sguil.tk and 
+sguild can communicate, but remember to restart the client once the
+sensor(s) have been configured and are reporting events to sguild.
+
 
 #############################
 #Step 4: Install the sensor.#
 #############################
 A. Begin by installing snort -
-  Download the source for snort from http://www.snort.org/dl. Untar
-  the package, change to the preprocessors directory, and make a
+
+  Two patches for snort are included in the the sguil tarball. These 
+  patches are NOT required for sguil to function. Instead, they are 
+  used to provide more data to analyst that he/she can view from the
+  sguil console. The two patches include one for spp_stream4 and 
+  another for spp_portscan. The patch for spp_stream4 allows you to
+  configure snort to write session data in a pipe delimiated text
+  file for easy loading by sensor_agent.tcl into the DB. The patch
+  for spp_portscan adds a configuration option to write portscan
+  data to a pipe deliminated file, again for easy loading into the
+  DB. The spp_portscan patch also facilitates the logging of portscan
+  events to log_unified as well as establishes a 'priority' of 5 to
+  those alerts.
+ 
+  
+  First, download the source for snort from http://www.snort.org/dl.
+  Untar the package. If you wish to utilize the sguil patches,
+  change to the preprocessors directory and make a
   back up of the portscan and stream4 preprocessor:
     Bamm@syn# cd src/preprocessors
     Bamm@syn# cp spp_portscan.c spp_portscan.c.bak
     Bamm@syn# cp spp_stream4.c spp_stream4.c.bak
-  Next copy the patch files from the sguil source tree to the snort
+  Then copy the patch files from the sguil source tree to the snort
   source tree and patch the preprocessors:
     Bamm@syn# cp <sguil-src>/sensors/snort_mods/2_0/spp_portscan_sguil.patch .
     Bamm@syn# cp <sguil-src>/sensors/snort_mods/2_0/spp_stream4.patch .
     Bamm@syn# patch spp_portscan.c < spp_portscan_sguil.patch
     Bamm@syn# patch spp_stream4.c < spp_stream4_sguil.patch
   
-  Then, compile and install snort as normal.
+  Now, compile and install snort as normal. You do NOT need to enable
+  mysql when compiling snort as barnyard will handle that function.
 
-  Finally, configure snort to use the new portscan and stream4 preprocessors
+  Next, configure snort to use the new portscan and stream4 preprocessors
   and the log_unified output plugin:
 
     Format for the portscan mod is:
-      preprocessor portscan: $HOME_NET <ports> <secs> <logdir> <hostname>
+      preprocessor portscan: $HOME_NET <ports> <secs> <logdir> <sensorname>
         <logdir> must exists and will be read by portscan_loader.tcl
     EXAMPLE:
       preprocessor portscan: $HOME_NET 4 3 /snort_data/portscans syn
@@ -160,67 +249,23 @@ A. Begin by installing snort -
       output log_unified: filename snort.log, limit 128
 
   Make sure all the config files for snort are copied to the appropriate
-  directory (ie /etc/snort). 
+  directory (ie /etc/snort) and create the appropriate log dirs if you are
+  using the sguil patches.
     Bamm@syn# ls /etc/snort/
     gen-msg.map snort.conf classification.config reference.config sid-msg.map
-  Start snort:
-    Bamm@syn# snort -l /snort_data -c /etc/snort/snort.conf -D -U
+    Bamm@syn# ls /snort_data/
+    portscans  ssn_logs
+   
+  Finally, start snort (best to run snort as a non-root user too. we use -m 122
+  so barnyard can read the unfied_log files without root privs.):
+    Bamm@syn# snort -u sguil -g sguil -l /snort_data -c /etc/snort/snort.conf -U -A none -m 122 -i <interface>
+
   *NOTE: I use a seperate partition /snort_data to do all my logging.
          The -U is to keep all times in GMT (if you don't do this then
          your session data and realtime/pcap data can have different
          times, basically b0rking things.)
 
-B. Next install and start the sensor_agent.tcl from the ./sensor directory.
-Make sure to point the script to the correct interpreter
-(i.e. #!/usr/bin/tcl or #!/usr/local/bin/tclsh8.3) and to configure the
-different options. The sensor agent forwards portscan and session data
-files to sguild for loading to the DB.
-
-
-C. Now install Barnyard -
-  Download the source for barnyard from
-   http://www.snort.org/dl/barnyard/barnyard-0.1.0.tar.gz.
-  Untar the package and add the op_sguil plugin (op_sguil is a modifed op_acid_db
-  plugin. Sorry Andrew, I really didn't mean to mangle your code that bad).
-    Bamm@syn# cd barnyard/src/output-plugins
-    Bamm@syn# cp <sguil-src>/sensor/barnyard_mods/op_sguil.* .
-  Next run configure, and enable mysql support for barnyard it the root of the 
-  source tree. (Use the "with" flags if your mysql libs are in a non-standard
-  location.)
-    Bamm@syn# cd <barnyard-src>
-    Bamm@syn# ./configure --enable-mysql
-  Then cd back into the output-plugins directory, edit the Makefile, and build
-  the object files. This prevents the hand edited Makefile from being over-
-  written during compilation.
-    Bamm@syn# cd src/output-plugins
-    Bamm@syn# vi Makefile
-      Edit the file and append the following to the below variable definitions.
-        libop_a_SOURCES = <blah> op_sguil.c op_sguil.h
-        libop_a_OBJECTS = <blah> op_sguil.o
-    Bamm@syn# vi op_plugbase.c
-      Edit the file like so:
-	~line 26:
-           #ifdef ENABLE_MYSQL
-           #include "op_acid_db.h"
-           #include "op_sguil.h"
-           #endif
-        ~line 47:
-           #ifdef ENABLE_MYSQL
-             AcidDbOpInit();
-             SguilOpInit();
-           #endif
-    Bamm@syn# make
-    Bamm@syn# cd ../..; make
-  Barnyard should now be built and can be installed where you prefer.
-  Edit the barnyard.conf and add the following line to use the sguil plugin:
-    output sguil: mysql, sensor_id 0, database sguildb, server syn, user root,\
-    password dbpasswd, sguild_host syn, sguild_port 7736
-  Start Barnyard:
-    Bamm@syn# /usr/local/bin/barnyard -c /etc/snort/barnyard.conf -d /var/log/snort\
-    -g /etc/snort/gen-msg.map -s /etc/snort/sid-msg.map -f snort.log -w /etc/snort/waldo.file
-
-
-D. Start log_packets.sh
+B. Start log_packets.sh
 
 The script log_packets.sh is used to log the binary data. It is located 
 in the sguil/sensor directory and should be ran on the sensor.  log_packets.sh
@@ -237,6 +282,54 @@ recommended to create a seperate partion for logging data to. The sensor agent
 reports currect disk stats to sguild, but the user is responsible for 
 deleting/archiving old data at this time.
 
+c. Now install Barnyard -
+  Download the source for barnyard from
+   http://www.snort.org/dl/barnyard/barnyard-0.1.0.tar.gz.
+  Untar the package and run the configure script with the --enable-mysql
+  option. (Use the "with" flags if your mysql libs are in a non-standard
+  location.)
+    sguil@syn: ./configure --enable-mysql
+  Next change to the src/output-plugins and copy op_sguil.c and op_sguil.h
+  to the directory:
+    sguil@syn: cd src/output-plugins
+    sguil@syn: cp <sguil-src>/sensor/barnyard_mods/op_sguil.* .
+  Now we need to modify the Makefile and op_plugbase.c to make them aware
+  of op_sguil.
+    sguil@syn: vi Makefile
+      Edit the file and append the following to the below variable definitions.
+        libop_a_SOURCES = <blah> op_sguil.c op_sguil.h
+        libop_a_OBJECTS = <blah> op_sguil.o
+    sguil@syn: vi op_plugbase.c
+      Edit the file like so:
+	~line 26:
+           #ifdef ENABLE_MYSQL
+           #include "op_acid_db.h"
+           #include "op_sguil.h"
+           #endif
+        ~line 47:
+           #ifdef ENABLE_MYSQL
+             AcidDbOpInit();
+             SguilOpInit();
+           #endif
+  Build the plugins first.
+    sguil@syn: make
+  Then the rest of the tree.
+    sguil@syn: cd ../..; make
+  Barnyard should now be built and can be installed whereever you prefer.
+  Edit the barnyard.conf and add the following lines to enable the sguil plugin:
+    config hostname: <yoursensorname>
+    output sguil: mysql, sensor_id 0, database sguildb, server syn, user root,\
+    password dbpasswd, sguild_host syn, sguild_port 7736
+  Start Barnyard:
+    sguil@syn: /usr/local/bin/barnyard -c /etc/snort/barnyard.conf -d /snort_data\
+    -g /etc/snort/gen-msg.map -s /etc/snort/sid-msg.map -f snort.log -w /etc/snort/waldo.file
+
+B. Next install and start the sensor_agent.tcl from the ./sensor directory.
+Make sure to point the script to the correct interpreter
+(i.e. #!/usr/bin/tcl or #!/usr/local/bin/tclsh8.3) and to configure the
+different options. The sensor agent forwards portscan and session data
+files to sguild for loading to the DB.
+
 
 ###########################
 #Step 5: Install xscriptd.#
@@ -248,8 +341,7 @@ or forward the binary file to the client to be loaded into ethereal.
 
 Setting up xscriptd on a "local" system (one where snort, barnyard, sguild, and
 xscriptd are all run on the same system) is fairly simple. Edit the options
-at the beginning of xscriptd (don't for get to specify the correct path to
-the tcl interpreter) and make sure that the LOCALSENSOR var is set to "1".
+at the beginning of xscriptd and make sure that the LOCALSENSOR var is set to "1".
 
 Configuring a "remote" system is a little harder. Xscriptd uses ssh and scp to
 retrieve files file the remote sensor. In order for this process to work, it
