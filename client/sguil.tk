@@ -2295,6 +2295,7 @@ proc GetXscript { type force } {
   if {$SSN_QUERY} {
     set cnxID [$winParents.xidFrame.list get $eventIndex]
     set timestamp [$winParents.startTimeFrame.list get $eventIndex]
+    set proto 6
   } else {
     set proto [$winParents.protoFrame.list get $eventIndex]
     if { $type == "xscript" && $proto != "6" } {
@@ -2883,9 +2884,9 @@ proc CreateSensorCheckButton { winName sensorName } {
 }
 
 proc GetUserName {} {
-  global USERNAME PASSWD
+  global USERNAME PASSWD VERSION
   set getUserNameWin [toplevel .getUserNameWin -background white]
-  wm title $getUserNameWin "Snort GUI for Lamerz \[sguil\]"
+  wm title $getUserNameWin "Snort GUI for Lamerz \[sguil\] - $VERSION"
   set welcomeFrame [frame $getUserNameWin.welcomeFrame -borderwidth 1 -background black]
   set welcomeLabel [label $welcomeFrame.welcomeLabel -background lightblue\
    -foreground navy -text \
@@ -2923,9 +2924,9 @@ proc GetUserName {} {
 #             want to monitor.
 #
 proc SensorList { sensorList } {
-  global MONITORFLAG sensorSelectArray subFrameList
+  global MONITORFLAG sensorSelectArray subFrameList VERSION
   set sensorSelectWindow [toplevel .sensorSelectWindow -background white]
-  wm title $sensorSelectWindow "Snort GUI for Lamerz \[sguil\]"
+  wm title $sensorSelectWindow "Snort GUI for Lamerz \[sguil\] - $VERSION"
   set welcomeFrame [frame $sensorSelectWindow.welcomeFrame -borderwidth 1 -background black]
   set welcomeLabel [label $welcomeFrame.welcomeLabel -background lightblue\
    -foreground navy -text\
@@ -3276,7 +3277,7 @@ set topFrame [frame .topFrame]
 
 
 pack $topFrame -side top -fill x -padx 0 -pady 0
-wm title . "Snort GUI for Lamerz \[sguil\]"
+wm title . "Snort GUI for Lamerz \[sguil\] - $VERSION"
 
 set eventPane [panedwindow .eventPane -width 1000 -height 700]
   $eventPane add eventLists -margin 0
