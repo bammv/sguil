@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.159 2005/01/21 19:11:04 shalligan Exp $ #
+# $Id: sguil.tk,v 1.160 2005/01/24 18:40:46 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -157,14 +157,7 @@ proc ServerCommandRcvd { socketID } {
     }
   } 
 }
-#
-# Send PING/PONG every 60 secs to keep comms open thru pesky FWs.
-#
-proc HeartBeat {} {
-  global CONNECTED
-  if {$CONNECTED} { SendToSguild "PING" }
-  after 60000 HeartBeat
-}
+
 proc ConnectToSguild {} {
   global SERVERHOST SERVERPORT OPENSSL VERSION TLS_PATH DEBUG CONNECTED
 
@@ -378,14 +371,6 @@ proc ValidateEvent { status {c_flag {0}} } {
 }
 
 
-#
-# GetCurrentTimeStamp: Returns date/time in YYYYY-MM-DD HH:MM:SS.
-#
-proc GetCurrentTimeStamp { {clockOption {today} } } {
-  set timestamp [clock format [clock scan "$clockOption"] -gmt true -f "%Y-%m-%d %T"]
-  return $timestamp
-}
-
 # System msgs are pretty bland right now. Would like to add some color tagging.
 # By using the syslog facility a whole multitude of sensor status info could
 # be scripted and then logged here.
@@ -519,20 +504,7 @@ proc IncrEvent { data } {
   }
   ScrollHome $paneName
 }
-proc GetStatusNameByNumber { status } {
-  switch -exact $status {
-    1  { set statusName NA }
-    2  { set statusName ES }
-    11 { set statusName C1 }
-    12 { set statusName C2 }
-    13 { set statusName C3 }
-    14 { set statusName C4 }
-    15 { set statusName C5 }
-    16 { set statusName C6 }
-    17 { set statusName C7 }
-    default { set statusName UN }
-  }
-}
+
 proc InsertQueryResults { paneName results } {
   # If the win doesn't exist then the user must of closed
   # the search so we just return.
@@ -1232,22 +1204,7 @@ proc SortListsBy { clickedListWinName { listType {event} } } {
   }
   update
 }
-proc GoToSleep {} {
-  global SLEEP
-  set SLEEP 1
-  wm iconify .
-}
-proc WakeUp {} {
-  global SLEEP
-  set SLEEP 0
-  wm deiconify .
-  bell
-}
-proc DisplayUsage { cmdName } {
-  puts "Usage: $cmdName -- \[-c <filename>\] \[-d <DEBUG level>\]"
-  puts "  where <filename> is the PATH to the sguil config file"
-  exit 1
-}
+
 proc ParseFontInfo { fontInfo } {
   set fontFamily [lindex $fontInfo 0]
   set fontSize [lindex $fontInfo 1]
@@ -1269,45 +1226,6 @@ proc ParseFontInfo { fontInfo } {
   }
   return "-family {$fontFamily} -size $fontSize -weight $fontWeight -underline $fontUnderline\
    -slant $fontSlant -overstrike $fontOverstrike"
-}
-proc GetCurrentFont { fontOptionsList } {
-  set state flag
-  foreach fontOption $fontOptionsList {
-    switch -- $state {
-      flag {
-      	switch -exact -- $fontOption {
-          -family 	{set state family}
-          -size		{set state size}
-	  -weight	{set state weight}
-	  -slant	{set state slant}
-	  -underline	{set state underline}
-	  -overstrike	{set state overstrike}
-          default	{set state unknown}
-        }
-      }
-      family	{set family $fontOption; set state flag}
-      size	{set size $fontOption; set state flag}
-      weight	{lappend options $fontOption; set state flag}
-      slant	{lappend options $fontOption; set state flag}
-      underline { if {$fontOption} {lappend options underline}; set state flag}
-      overstrike { if {$fontOption} {lappend options overstrike}; set state flag}
-      unknown	{puts "Unknown flag"; set state flag}
-      default	{puts "Unknown option"; set state flag}
-    }
-  }
-  return "{$family} $size [list $options]"
-}
-proc ChangeFont  { fontType } {
-  set newFont [dkf_chooseFont -parent . -title "Font Select" \
-   -initialfont [GetCurrentFont [font configure $fontType]] ]
-  GetCurrentFont [font configure $fontType]
-  if { [llength $newFont] == 0 } { return }
-  eval font configure $fontType [ParseFontInfo $newFont]
-  SaveNewFonts
-}
-proc SaveNewFonts {} {
-  global FONTFILE
-  write_file $FONTFILE "ourStandardFont [font configure ourStandardFont]" "ourFixedFont [font configure ourFixedFont]"
 }
 
 proc GetUserName {} {
@@ -1470,17 +1388,7 @@ proc UnSelectAllSensors {} {
 	$cb deselect
     }
 }
-#
-# CheckLineFormat - Parses CONF_FILE lines to make sure they are formatted
-#                   correctly (set varName value). Returns 1 if good.
-#
-proc CheckLineFormat { line } {
-  
-  set RETURN 1
-  # Right now we just check the length and for "set".
-  if { [llength $line] != 3 || [lindex $line 0] != "set" } { set RETURN 0 }
-  return $RETURN
-}
+
 proc GetEventHistory {} {
   global ACTIVE_EVENT CUR_SEL_PANE socketID 
   if {!$ACTIVE_EVENT} { return }
@@ -1561,16 +1469,6 @@ proc InsertHistoryResults { winName results } {
   $winName.listsFrame.commentFrame.list insert end $comment
 }
 
-proc Working {} {
-  global BUSY
-  . configure -cursor watch
-  set BUSY 1
-}
-proc Idle {} {
-  global BUSY
-  . configure -cursor left_ptr
-  set BUSY 0
-}
 ################################ END PROCS ##################################
 
 ################################ MAIN #######################################
@@ -1660,6 +1558,7 @@ source $SGUILLIB/guilib.tcl
 source $SGUILLIB/extdata.tcl
 source $SGUILLIB/sancp.tcl
 source $SGUILLIB/sound.tcl
+source $SGUILLIB/SguilUtil.tcl
 
 if { $WHOIS_PATH == "SimpleWhois" } {
   source $SGUILLIB/whois.tcl
