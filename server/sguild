@@ -397,13 +397,6 @@ proc RcvPortscanFile { socketID fileName } {
   fcopy $socketID $fileID
   close $fileID
   close $socketID
-  if {$sensorID == 0} {
-    if {$DEBUG} {
-      puts "ERROR: $sensorName is not in DB!!"
-    }
-    SendSystemInfoMsg sguild "ERROR: Received portscan file from unknown sensor - $sensorName"
-    return
-  }
   if {$DEBUG} {puts "Loading $fileName into DB."}
   if {$DBPASS != "" } {
     set cmd "mysql -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
