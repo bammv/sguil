@@ -3,16 +3,18 @@
 # email17.tcl
 
 proc EmailEvents { detail sanitize } {
-    global ACTIVE_EVENT currentSelectedPane RETURN_FLAG
+    global ACTIVE_EVENT currentSelectedPane RETURN_FLAG REPORTNUM REPORT_RESULTS REPORT_DONE
     global SERVERHOST SERVERPORT EMAIL_FROM EMAIL_CC EMAIL_HEAD EMAIL_TAIL EMAIL_SUBJECT
     set RETURN_FLAG 0
+    incr REPORTNUM
     if {$ACTIVE_EVENT} {
-	set editEmail .editEmail
+	set editEmail .editEmail_$REPORTNUM
 	if { [winfo exists $editEmail] } {
 	    wm withdraw $editEmail
 	    wm deiconify $editEmail
 	    return
 	}
+	puts "Check1"
 	toplevel $editEmail
 	wm geometry $editEmail +200+200
 	wm title $editEmail "E-Mail Event"
@@ -55,8 +57,18 @@ proc EmailEvents { detail sanitize } {
 		#
 		# Get the IP hdr details
 		#
-		set eventIpHdr [SimpleQueryCmd\
-			$SERVERHOST $SERVERPORT "GetIPData [lindex $eventID 0] [lindex $eventID 1]"]
+		puts "check2"
+		# Send the Report Request to the server
+		SendToSguild "ReportRequest IP [lindex $eventID 0] [lindex $eventID 1]"
+		
+		# wait for the response to fill in
+		tkwait variable REPORT_DONE
+		# Reset REPORT_DONE to 0 for the next report
+		set REPORT_DONE 0
+
+		set eventIpHdr $REPORT_RESULTS
+		# clear REPORT_RESULTS 
+		set REPORT_RESULTS 0
 		$textBox insert end "IPVer=[lindex $eventIpHdr 2] "
 		$textBox insert end "hlen=[lindex $eventIpHdr 3] "
 		$textBox insert end "tos=[lindex $eventIpHdr 4] "
@@ -80,8 +92,16 @@ proc EmailEvents { detail sanitize } {
 		    # If TCP get the TCP hdr, parse it out and insert
 		    #
 		    if {[$currentSelectedPane.protoFrame.list get $selectedIndex] == "6"} {
-			set eventTcpHdr [SimpleQueryCmd\
-				$SERVERHOST $SERVERPORT "GetTcpData [lindex $eventID 0] [lindex $eventID 1]"]
+			# Send the Report Request to the server
+			SendToSguild "ReportRequest TCP [lindex $eventID 0] [lindex $eventID 1]"
+			
+			# wait for the response to fill in
+			tkwait variable REPORT_DONE
+			# Reset REPORT_DONE to 0 for the next report
+			set REPORT_DONE 0
+			
+			set eventTcpHdr $REPORT_RESULTS
+			set REPORT_RESULTS 0
 			if { $eventTcpHdr == "error"} {
 			    ErrorMessage "Error getting TCP Header Data."
 			}
@@ -166,8 +186,16 @@ proc EmailEvents { detail sanitize } {
 		    # If UDP get the UDP hdr and Insert it
 		    #
 		    if {[$currentSelectedPane.protoFrame.list get $selectedIndex] == "17"} {
-			set eventUdpHdr [ SimpleQueryCmd\
-				$SERVERHOST $SERVERPORT "GetUdpData [lindex $eventID 0] [lindex $eventID 1]"]
+			# Send the Report Request to the server
+			SendToSguild "ReportRequest UDP [lindex $eventID 0] [lindex $eventID 1]"
+			
+			# wait for the response to fill in
+			tkwait variable REPORT_DONE
+			# Reset REPORT_DONE to 0 for the next report
+			set REPORT_DONE 0
+			
+			set eventUDPHdr $REPORT_RESULTS
+			set REPORT_RESULTS 0
 			if { $eventUdpHdr == "error" } {
 			    ErrorMessage "Error getting UDP Header Data."
 			}
@@ -180,8 +208,16 @@ proc EmailEvents { detail sanitize } {
 		# If ICMP get the ICMP hdr and payload, parse and insert
 		#
 		if {[$currentSelectedPane.protoFrame.list get $selectedIndex] == "1"} {
-		    set eventIcmpHdr [ SimpleQueryCmd\
-			    $SERVERHOST $SERVERPORT "GetIcmpData [lindex $eventID 0] [lindex $eventID 1]"]
+		    # Send the Report Request to the server
+		    SendToSguild "ReportRequest ICMP [lindex $eventID 0] [lindex $eventID 1]"
+		    
+		    # wait for the response to fill in
+		    tkwait variable REPORT_DONE
+		    # Reset REPORT_DONE to 0 for the next report
+		    set REPORT_DONE 0
+		    
+		    set eventIcmpHdr $REPORT_RESULTS
+		    set REPORT_RESULTS 0
 		    $textBox insert end "Type=[lindex $eventIcmpHdr 0] "
 		    $textBox insert end "Code=[lindex $eventIcmpHdr 1] "
 		    $textBox insert end "chksum=[lindex $eventIcmpHdr 2] "
@@ -252,8 +288,17 @@ proc EmailEvents { detail sanitize } {
 		}
 		# Get and insert the pack payload all pretty like if detail is set to 1
 		if { $detail == "1" } {
-		    set eventPayload [SimpleQueryCmd\
-			    $SERVERHOST $SERVERPORT "GetPayloadData [lindex $eventID 0] [lindex $eventID 1]"]
+		    # Send the Report Request to the server
+		    SendToSguild "ReportRequest PAYLOAD [lindex $eventID 0] [lindex $eventID 1]"
+		    
+		    # wait for the response to fill in
+		    tkwait variable REPORT_DONE
+		    # Reset REPORT_DONE to 0 for the next report
+		    set REPORT_DONE 0
+		    
+		    set eventPayload [lindex $REPORT_RESULTS 0]
+		    set REPORT_RESULTS 0
+		    puts "are we here? $eventPayload"
 		    if { $eventPayload == "error" } {
 			ErrorMessage "Error getting payload data."
 		    }
@@ -288,9 +333,19 @@ proc EmailEvents { detail sanitize } {
 		    }
 		}
 	    } else {
-		set psdata [SimpleQueryCmd\
-			$SERVERHOST $SERVERPORT "GetPSData [lindex [$currentSelectedPane.dateTimeFrame.list get $selectedIndex] 0] [$currentSelectedPane.srcIPFrame.list get $selectedIndex] 200"]
-		for { set i 0 } { $i < [expr [llength $psdata]-1] } {incr i} {
+		# Send the Report Request to the server
+		SendToSguild "ReportRequest PORTSCAN [lindex [$currentSelectedPane.dateTimeFrame.list get $selectedIndex] 0]\
+			[$currentSelectedPane.srcIPFrame.list get $selectedIndex]"
+		
+		# wait for the response to fill in
+		tkwait variable REPORT_DONE
+		# Reset REPORT_DONE to 0 for the next report
+		set REPORT_DONE 0
+
+		set psdata $REPORT_RESULTS
+		set REPORT_RESULTS 0
+		
+		for { set i 0 } { $i < [llength $psdata] } {incr i} {
 		    if { $sanitize == 1 } {
 			set psrow1 [lreplace [lindex $psdata $i] 2 2 "a.b.c.d"]
 			set psrow [lreplace $psrow1 4 4 "e.f.g.h"]
@@ -338,4 +393,37 @@ proc EmailEvents { detail sanitize } {
     }
 }	
 	
+	
+
+proc ReportResponse { type data } {
+    
+    global REPORT_DONE REPORT_RESULTS COUNTER
+
+    # take the data and format it based on the type of request
+    # when the data is formatted toggle REPORT_DONE to signal the 
+    # requesting proc that the data is ready
+
+    switch -exact $type {
+	IP -
+	TCP -
+	ICMP -
+	PAYLOAD -
+	UDP { 
+	    # UDP, IP, TCP, ICMP and PAYLOAD are all the same
+	    set REPORT_RESULTS $data
+	    set REPORT_DONE 1
+	}
+	PORTSCAN {
+	    # We gotta get tricky here since this data is going to 
+	    # come back in more than one response
+	 
 	    
+	    if { $data != "DONE" } {
+		lappend REPORT_RESULTS $data
+	    } else {
+		set REPORT_DONE 1
+	    }
+	}
+    }
+}
+	

@@ -41,6 +41,7 @@ set MONITORFLAG 0
 set BUSY 0
 set REPORTNUM 0
 set currentSelectedPane 0 
+set COUNTER 0
 ######################## END GLOBALS ################################
 
 ########################## PROCS ####################################
@@ -94,6 +95,7 @@ proc ServerCommandRcvd { socketID } {
       UserMessage { $serverCmd $index1 $data2 }
       PONG { if {$DEBUG} {puts "Comm test successful"  } }
       GlobalQryList { set GLOBAL_QRY_LIST $data1 }
+      ReportResponse { $serverCmd $index1 $data2 }
       default { puts "Unrecognized command from $socketID: $origData" }
     }
   } 

@@ -357,17 +357,19 @@ proc ClientCmdRcvd { socketID } {
     set data2 [string trimleft $data]
     # data2 now contains only indices 2 on, because ctoken chops tokens off
     set index2 [ctoken data " "]
-    # data now contains indicies 3 on
-    set data [string trimleft $data]
+    # data3 now contains indicies 3 on
+    set data3 [string trimleft $data]
+    set index3 [ctoken data " "]
+    set index4 [ctoken data " "]
     switch -exact $clientCmd {
       DeleteEventID { $clientCmd $socketID $index1 $index2 }
       DeleteEventIDList { $clientCmd $socketID $data1 }
-      EventHistoryRequest { $clientCmd $socketID $index1 $index2 $data }
+      EventHistoryRequest { $clientCmd $socketID $index1 $index2 $data3 }
       ExecDB { $clientCmd $socketID $data1 }
       GetIcmpData { $clientCmd $socketID $index1 $index2 }
       GetIPData { $clientCmd $socketID $index1 $index2 }
       GetPayloadData { $clientCmd $socketID $index1 $index2 }
-      GetPSData { $clientCmd $socketID $index1 $index2 $data }
+      GetPSData { $clientCmd $socketID $index1 $index2 $data3 }
       GetTcpData { $clientCmd $socketID $index1 $index2 }
       GetUdpData { $clientCmd $socketID $index1 $index2 }
       MonitorSensors { $clientCmd $socketID $data1 } 
@@ -380,6 +382,7 @@ proc ClientCmdRcvd { socketID } {
       PING { puts $socketID "PONG" }
       UserMessage { UserMsgRcvd $socketID $data1 }
       SendGlobalQryList { SendSocket $socketID "GlobalQryList $GLOBAL_QRY_LIST" }
+      ReportRequest { ReportBuilder $socketID $index1 $index2 $index3 }
       default { if {$DEBUG} {puts "Unrecognized command from $socketID: $origData"} }
     }
   }
@@ -1053,6 +1056,89 @@ proc GetUdpData { socketID sid cid } {
   set queryResults [FlatDBQuery $query]
   set portQuery [FlatDBQuery "SELECT src_port, dst_port FROM event WHERE sid=$sid AND cid=$cid"]
   catch {SendSocket $socketID "InsertUdpHdr $queryResults $portQuery"} tmpError
+}
+
+
+#
+# ReportBuilder:  Receive multiple data requests from the client for report building
+#
+proc ReportBuilder { socketID type sid cid } {
+    switch -exact -- $type {
+	TCP {
+	    set query\
+		"SELECT tcp_seq, tcp_ack, tcp_off, tcp_res, tcp_flags, tcp_win, tcp_csum, tcp_urp\
+		FROM tcphdr\
+		WHERE sid=$sid and cid=$cid"
+	    set queryResults [FlatDBQuery $query]
+	    set portQuery [FlatDBQuery "SELECT src_port, dst_port FROM event WHERE sid=$sid AND cid=$cid"]
+	    catch {SendSocket $socketID "ReportResponse $type $queryResults $portQuery"} tmpError
+	}
+	UDP {
+	    puts "UDP QUERY"
+	    set query\
+		"SELECT udp_len, udp_csum FROM udphdr WHERE sid=$sid and cid=$cid"
+
+	    set queryResults [FlatDBQuery $query]
+	    set portQuery [FlatDBQuery "SELECT src_port, dst_port FROM event WHERE sid=$sid AND cid=$cid"]
+	    catch {SendSocket $socketID "ReportResponse $type $queryResults $portQuery"} tmpError
+	}
+        ICMP {
+	    puts "ICMP QUERY"
+	    set query\
+		"SELECT event.icmp_type, event.icmp_code, icmphdr.icmp_csum, icmphdr.icmp_id, icmphdr.icmp_seq\
+		FROM event, icmphdr\
+		WHERE event.sid=icmphdr.sid AND event.cid=icmphdr.cid AND event.sid=$sid AND event.cid=$cid"
+
+	    set queryResults [FlatDBQuery $query]
+  
+	    set query\
+		"SELECT data_payload FROM data WHERE sid=$sid and cid=$cid"
+  
+	    set plqueryResults [FlatDBQuery $query]
+	    catch {SendSocket $socketID "ReportResponse $type $queryResults $plqueryResults"} tmpError
+	}
+	PAYLOAD {
+	    set query\
+		"SELECT data_payload FROM data WHERE sid=$sid and cid=$cid"
+
+	    set queryResults [FlatDBQuery $query] 
+	    catch {SendSocket $socketID "ReportResponse $type \{$queryResults\}"} tmpError
+	}
+	PORTSCAN {
+	    global DBNAME DBUSER DBPASS DBPORT DBHOST DEBUG
+	    set MAX_PS_ROWS 200
+	    set timestamp $sid
+	    set srcIP $cid
+	    if { $MAX_PS_ROWS == 0 } {
+		set query\
+		    "SELECT * FROM portscan WHERE timestamp > '$timestamp' AND src_ip='$srcIP'"
+	    } else {
+		set query\
+		    "SELECT * FROM portscan WHERE timestamp > '$timestamp' AND src_ip='$srcIP' LIMIT $MAX_PS_ROWS"
+	    }
+	    if {$DEBUG} {puts "Getting PS data: $query"}
+	    if {$DBPASS == ""} {
+		set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+	    } else {
+		set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+	    }
+	    foreach row [mysqlsel $dbSocketID "$query" -list] {
+		catch {SendSocket $socketID "ReportResponse $type $row"} tmpError
+	    }
+	    mysqlclose $dbSocketID
+	    catch {SendSocket $socketID "ReportResponse $type DONE"} tmpError
+       }
+       IP {
+	    set query\
+		"SELECT INET_NTOA(src_ip), INET_NTOA(dst_ip), ip_ver, ip_hlen, ip_tos, ip_len, ip_id,\
+		ip_flags, ip_off, ip_ttl, ip_csum\
+		FROM event\
+		WHERE sid=$sid and cid=$cid"
+
+	    set queryResults [FlatDBQuery $query]
+	    catch {SendSocket $socketID "ReportResponse $type $queryResults"} tmpError
+       }
+    }
 }
 
 #
