@@ -43,7 +43,7 @@ set BUSY 0
 ########################## PROCS ####################################
 
 proc ServerCommandRcvd { socketID } {
-  global DEBUG EMAIL_RESULTS CONNECTED
+  global DEBUG EMAIL_RESULTS CONNECTED GLOBAL_QRY_LIST
 
   if { [eof $socketID] || [catch {gets $socketID data} errorCheck] } {
     #Close the socket and exit
@@ -80,6 +80,7 @@ proc ServerCommandRcvd { socketID } {
       InsertEmailIPHdr { set EMAIL_RESULTS [lrange $data 1 end] }
       UserMessage { $serverCmd [lindex $data 1] [lindex $data 2] }
       PONG { if {$DEBUG} {puts "Comm test successful"  } }
+      GlobalQryList { set GLOBAL_QRY_LIST [lrange $data 1 end] }
       default { puts "Unrecognized command from $socketID: $data" }
     }
   } 
@@ -128,13 +129,25 @@ proc ReconnectToSguild {} {
   } else {
     set CONNECTED 1
     InfoMessage "Reconnected to sguild. Reauthenticating client."
-    SendToSguild "ValidateUser $USERNAME $PASSWD"
+    SendToSguild "ValidateUser $USERNAME"
+    set saltNonce [gets $socketID]
+    set tmpSalt [lindex $saltNonce 0]
+    set tmpNonce [lindex $saltNonce 1]
+    set passwdHash [::sha1::sha1 "${PASSWD}${tmpSalt}"]
+    set finalCheck [::sha1::sha1 "${tmpNonce}${tmpSalt}${passwdHash}"]
+    puts $socketID $finalCheck
     set USERID [lindex [gets $socketID] 1]
     while { $USERID == "INVALID" } {
       set PASSWD ""
       ErrorMessage "Invalid USERNAME and/or PASSWORD"
       GetUserName 
-      SendToSguild "ValidateUser $USERNAME $PASSWD"
+      SendToSguild "ValidateUser $USERNAME"
+      set saltNonce [gets $socketID]
+      set tmpSalt [lindex $saltNonce 0]
+      set tmpNonce [lindex $saltNonce 1]
+      set passwdHash [::sha1::sha1 "${PASSWD}${tmpSalt}"]
+      set finalCheck [::sha1::sha1 "${tmpNonce}${tmpSalt}${passwdHash}"]
+      puts $socketID $finalCheck
       set USERID [lindex [gets $socketID] 1]
     } 
     set CONNECTED 1
@@ -394,6 +407,18 @@ proc DBQueryRequest { whereStatement {winTitle {none} } } {
   $queryFrame configure -cursor watch
   if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
   SendToSguild "QueryDB $queryFrame $selectQuery"
+}
+proc GetStdQuery {} {
+  set data [StdQuery]
+  set query [lindex $data 0]
+  if { $query == "abort" } { return }
+  set whereStatement [EditWhere $query]
+  if { $whereStatement == "cancel" } { return }
+  if { [lindex $data 1] == "sessions" } {
+    SsnQueryRequest $whereStatement
+  } else {
+    DBQueryRequest $whereStatement
+  }
 }
 proc EditWhere { whereTmp } {
   global RETURN_FLAG
@@ -3224,6 +3249,7 @@ option add *Font ourStandardFont
 # Source required sguillibs
 source $SGUILLIB/dkffont.tcl
 source $SGUILLIB/email17.tcl
+source $SGUILLIB/stdquery.tcl
 if { $WHOIS_PATH == "SimpleWhois" } {
   source $SGUILLIB/whois.tcl
 }
@@ -3254,6 +3280,7 @@ namespace import -force iwidgets::buttonbox
 namespace import -force iwidgets::entryfield
 namespace import -force iwidgets::checkbox
 namespace import -force iwidgets::messagedialog
+namespace import -force iwidgets::scrolledlistbox
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
   label $winFrame.label -text "$labelText" -foreground black -background $bgColor -anchor s -height $height
@@ -3288,6 +3315,7 @@ set topFrame [frame .topFrame]
   set queryList [menu $queryMenu.menu -tearoff 0]
     $queryList add command -label "Query Event Table" -command "QueryRequest event empty"
     $queryList add command -label "Query Sessions Table" -command "QueryRequest sessions empty"
+    $queryList add command -label "Standard Queries" -command "GetStdQuery"
     $queryList add cascade -label "Query by Category" -menu $queryList.category
     set categoryMenu [menu $queryList.category -tearoff 0]
       $categoryMenu add command -label "Cat I: Unauthorized Root Access"\
@@ -4077,4 +4105,5 @@ if [catch { ConnectToSguild } socketID] {
   wm deiconify .
   update
   SendToSguild "SendEscalatedEvents"
+  SendToSguild "SendGlobalQryList"
 }

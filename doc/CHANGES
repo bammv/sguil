@@ -13,6 +13,8 @@ CVS-HEAD
     * Modified client authentication. See sguild comments for
       more information. (NOTE: sguil.tk now REQUIRES tcllib)
 
+    * Added initial support for standard queries.
+
   sguild
     * Alpha support for emailing events. 
 
@@ -24,6 +26,8 @@ CVS-HEAD
       sent to the client and returned hash is compared by
       the server. (NOTE: Old sguild.users files will NOT
       work.)
+
+    * Added initial support for standard queries. 
 
   sguild.conf
     * Vars for emailing selected events.

@@ -272,6 +272,12 @@ in xscriptd to reflect this:
   set SSH "/usr/bin/ssh -i /root/.ssh/sensor_key_id_dsa"
   set SCP "/usr/bin/scp" -i /root/.ssh/sensor_key_id_dsa"
 
+NOTE: Don't forget to install tcpflow (http://www.circlemud.org/~jelson/software/tcpflow/)
+and p0f (http://www.stearns.org) and specifity the correct PATHs in the config options
+located at the beginning of xscriptd.
+
+
+
 
 ############
 #   DONE!  #

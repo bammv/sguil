@@ -156,6 +156,15 @@ proc GetRandAlphaNumInt {} {
   }
   return $x
 }
+# Reads file and adds queries to GLOBAL_QRY_LIST
+proc LoadGlobalQueries { fileName } {
+  global GLOBAL_QRY_LIST
+  for_file line $fileName {
+    if { ![regexp ^# $line] && ![regexp ^$ $line] } {
+      lappend GLOBAL_QRY_LIST $line
+    }
+  }
+}
 #
 # CheckLineFormat - Parses CONF_FILE lines to make sure they are formatted
 #                   correctly (set varName value). Returns 1 if good.
@@ -232,7 +241,7 @@ proc GetUserID { username } {
 # ClientCmdRcvd: Called when client sends commands.
 #
 proc ClientCmdRcvd { socketID } {
-  global DEBUG clientList validSockets
+  global DEBUG clientList validSockets GLOBAL_QRY_LIST
 
   if { [eof $socketID] || [catch {gets $socketID data}] } {
     # Socket closed
@@ -282,6 +291,7 @@ proc ClientCmdRcvd { socketID } {
       ValidateUser { ValidateUser $socketID $index1 }
       PING { puts $socketID "PONG" }
       UserMessage { UserMsgRcvd $socketID $data1 }
+      SendGlobalQryList { SendSocket $socketID "GlobalQryList $GLOBAL_QRY_LIST" }
       default { if {$DEBUG} {puts "Unrecognized command from $socketID: $origData"} }
     }
   }
@@ -1225,6 +1235,15 @@ if { [info exists DELUSER] && $DELUSER} {
   DelUser $userName $USERS_FILE
   exit
 }
+# Load global queries.
+if { [file exists /etc/sguild/sguild.queries] } {
+  LoadGlobalQueries /etc/sguild/sguild.queries
+} elseif { [file exists ./sguild.queries] } {
+  LoadGlobalQueries ./sguild.queries
+} else {
+  set GLOBAL_QRY_LIST none
+}
+
 # Deamon
 if {[info exists DAEMON_CONF_OVERRIDE] && $DAEMON_CONF_OVERRIDE} { set DAEMON 1}
 if {$DAEMON} { Daemonize }
