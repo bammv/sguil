@@ -1,4 +1,60 @@
-# $Id: CHANGES,v 1.41 2004/08/12 17:00:36 bamm Exp $ #
+# $Id: CHANGES,v 1.42 2004/11/03 19:10:13 shalligan Exp $ #
+
+sguil-0.5.3 (RSN)
+
+  sguild
+   * Split code into a main sguild file and libs in a ./libs subdir
+     NOTE new sguild.conf variable for the lib dir location -bamm
+   
+   * DB version incremented to 0.10:
+	NEW TALBES: nessus, nessus_data
+	NEW COLUMN: long_desc added to status table for full status descriptions -srh
+   
+   * Storage/retrieval of nessus reports (see sguil.tk changes for details) -srh
+
+   * Checks sensor health via sensor_agent -bamm
+
+   * DEBUG split out into levels.  See sguild.conf for details (NOTE NEW sguild.conf) -srh
+
+   * Syslog supported for debug output in daemon mode (NOTE NEW sguild.conf) -srh
+
+   * Misc prettifying and bugfixifying -srh & bamm
+
+  sguil.tk
+   * Added ability to import/query nessus reports: -srh
+	1)  Import your nessus nbe report files from the Report Menu (only nbe's
+ 		are supported).  This nbe can be for as many ip addresses as you want.
+ 		Keep in mind that it may take a bit of time to import if you are
+ 		importing a whole class C or something.  It uses mysql's LOAD statement
+ 		to get the data in the DB, so it won"t kill mysql during import.
+ 	2)  When you get an event, right click on the ip address in question and
+ 		select Nessus Report.
+ 	3)  If there is a report available for that IP, the date of the
+ 		report(s) will come up in a listbox.  Click the report you wish to view
+ 		and click the "view report" button.
+ 	4)  Sguil will launch your browser (specified by the BROWSER_PATH entry
+ 		in sguil.conf) with the report.
+
+   * Added ability to change sensors without restarting client -srh
+
+   * Prettifyed sensor report dialog -srh
+ 
+   * Added "Unselect all" button to sensor selection dialog -srh
+
+   * Sensor Agent Health checks -bamm
+
+   * Added Right-click queries for RT event by IP address -srh
+
+   * Added Right-click "last 1 hour" queries to the sancp and sessions menus -srh
+
+   * Added a text search widget for xscripts -srh
+
+   * Bug fixes etc
+
+  sensor_agent.tcl
+
+   * Health Checks -bamm
+
 
 sguil-0.5.2 (12 Aug 2004)
 
