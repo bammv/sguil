@@ -166,7 +166,7 @@ proc ClientExitClose { socketID } {
 #
 proc EventRcvd { data } {
   global DEBUG
-
+  puts "IN EventRcvd"
   set eventDataList [lrange [split $data |] 1 end]
   if { [lindex $eventDataList 2] == "system-info" } {
     if {$DEBUG} {
@@ -502,7 +502,11 @@ proc SensorCmdRcvd { socketID } {
     }
   } else {
     if {$DEBUG} { puts "Sensor Data Rcvd: $data" }
-    set sensorCmd [lindex $data 0]
+    set tmpData $data
+    puts "here1"
+    set sensorCmd [ctoken tmpData " "]
+    puts "sensorCmd is $sensorCmd"
+#    set sensorCmd [lindex $data 0]
     switch -exact -- $sensorCmd {
       RTEvent	{ EventRcvd $data }
       PSFile	{ RcvPortscanFile $socketID [lindex $data 1] }
@@ -916,6 +920,8 @@ if { [info exists OPENSSL] && $OPENSSL } {
   # Need sguild.key and sguild.pem
   set PEM [file join $CERTS_PATH sguild.pem]
   set KEY [file join $CERTS_PATH sguild.key]
+  global KEY
+  puts "KEY is $KEY"
   if {![file exists $PEM] || ![file readable $PEM] } {
     puts "ERROR: $PEM does not exist or is not readable"
     DisplayUsage $argv0
