@@ -1,6 +1,6 @@
 #!/bin/sh
 # Run tcl from users PATH \
-exec tcl -f "$0" ${1+"$@"}
+exec tclsh "$0" ${1+"$@"}
 
 # Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -1268,11 +1268,23 @@ proc Daemonize {} {
 set validSockets ""
 
 # Load mysql support.
-package require mysqltcl
+if [catch {package require mysqltcl} mysqltclVersion] {
+  puts "ERROR: The mysqltcl extension does NOT appear to be installed on this sysem."
+  puts "Download it at http://www.xdobry.de/mysqltcl/"
+  exit
+}
 # Load extended tcl
-package require Tclx
+if [catch {package require Tclx} tclxVersion] {
+  puts "ERROR: The tclx extension does NOT appear to be installed on this sysem."
+  puts "Extended tcl (tclx) is available as a port/package for most linux and BSD systems."
+  exit
+}
 # Load sha1 from tcllib
-package require sha1
+if [catch {package require sha1} sha1Version] {
+  puts "ERROR: The sha1 package does NOT appear to be installed on this sysem."
+  puts "The sha1 package is part of the tcllib extension. A port/package is available for most linux and BSD systems."
+  exit
+}
 
 # GetOpts
 set state flag
