@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.5 2004/07/20 20:02:08 shalligan Exp $
+# $Id: guilib.tcl,v 1.6 2004/07/22 13:52:13 bamm Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -505,7 +505,7 @@ proc BindSelectionToAllLists { listName } {
 	bind $listName <$buttonEvent> { WheelScroll %D %W "5"; break }
     }
     foreach buttonEvent { "Button-4" } {
-	bind $linstName <$buttonEvent> { WheelScroll %D %W "4"; break }
+	bind $listName <$buttonEvent> { WheelScroll %D %W "4"; break }
     }
 }    
 proc BindSelectionToAllPSLists { listName } {
@@ -514,7 +514,7 @@ proc BindSelectionToAllPSLists { listName } {
 	bind $listName <$buttonEvent> { WheelScroll %D %W "5"; break }
     }
     foreach buttonEvent { "Button-4" } {
-	bind $linstName <$buttonEvent> { WheelScroll %D %W "4"; break }
+	bind $listName <$buttonEvent> { WheelScroll %D %W "4"; break }
     }
 }
 #
