@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.76 2004/01/09 20:57:50 bamm Exp $ #
+# $Id: sguild,v 1.77 2004/01/30 20:41:39 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -35,7 +35,7 @@ proc ForkLoader {} {
       global DEBUG
       fconfigure $pipeID -buffering line
       if { [eof $pipeID] || [catch {gets $pipeID data}] } {
-        exit
+        CleanExit
       } else {
         set fileName [lindex $data 0]
         set cmd [lindex $data 1]
@@ -157,10 +157,16 @@ proc AutoCat { data } {
   return 0
 }
 proc CleanExit {} {
-  global PID_FILE
+  global PID_FILE FORKD_PIDS
   if { [info exists PID_FILE] && [file exists $PID_FILE] } {
     if [catch {file delete -force $PID_FILE} delError] {
       puts "ERROR: $delError"
+    }
+  }
+  if { [info exists FORKD_PIDS] } {
+    puts "killing child procs..."
+    foreach PID $FORKD_PIDS {
+      kill $PID
     }
   }
   puts "Exiting..."
@@ -171,12 +177,12 @@ proc CreateUsersFile { fileName } {
   if { ![file exists $dirName] || ![file isdirectory $dirName] } {
     if [catch {file mkdir $dirName} dirError] {
       puts "Error: Could not create $dirName: $dirError"
-      exit
+      CleanExit
     }
   }
   if [catch {open $fileName w} fileID] {
     puts "Error: Could not create $fileName: $fileID"
-    exit
+    CleanExit
   } else {
     puts $fileID "#"
     puts $fileID "# WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
@@ -298,7 +304,7 @@ proc ValidateUser { socketID username } {
   fconfigure $socketID -buffering line
   if { ![file exists $USERS_FILE] } {
     puts "Fatal Error! Cannot access $USERS_FILE."
-    exit 1
+    CleanExit
   } 
   set VALID 0
   set nonce [format "%c%c%c" [GetRandAlphaNumInt] [GetRandAlphaNumInt] [GetRandAlphaNumInt] ]
@@ -728,7 +734,7 @@ proc GetSensorID { sensorName } {
   set sid [FlatDBQuery "SELECT sid FROM sensor WHERE hostname='$sensorName'"]
   return $sid
 }
-proc RcvSsnFile { socketID fileName sensorName } {
+proc RcvSsnFile { socketID tableName fileName sensorName } {
   global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe
   set sensorID [GetSensorID $sensorName]
   if {$DEBUG} {puts "Recieving session file $fileName."}
@@ -759,14 +765,14 @@ proc RcvSsnFile { socketID fileName sensorName } {
   close $outFileID
   file delete $DB_OUTFILE
 
-  if {$DEBUG} {puts "Loading $i cnxs from $fileName into DB."}
+  if {$DEBUG} {puts "Loading $i cnxs from $fileName into $tableName."}
   if {$DBPASS != "" } {
     set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
-     -e \"LOAD DATA LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE sessions FIELDS TERMINATED\
+     -e \"LOAD DATA LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE $tableName FIELDS TERMINATED\
      BY '|'\""
   } else {
     set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
-     -e \"LOAD DATA LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE sessions FIELDS TERMINATED\
+     -e \"LOAD DATA LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE $tableName FIELDS TERMINATED\
      BY '|'\""
   }
   # The loader child proc does the LOAD for us.
@@ -840,7 +846,7 @@ proc SensorCmdRcvd { socketID } {
       PSFile	{ RcvPortscanFile $socketID [lindex $data 1] }
       CONNECT   { SensorAgentConnect $socketID [lindex $data 1] }
       DiskReport { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
-      SsnFile	{ RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] }
+      SsnFile	{ RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3]}
       PING	{ puts $socketID "PONG" }
       default	{ if {$DEBUG} {puts "Sensor Cmd Unkown ($socketID): $sensorCmd"} }
     }
@@ -928,7 +934,7 @@ proc ExecDB { socketID query } {
  
 proc QuerydCmdRcvd { pipeID } {
   if { [eof $pipeID] || [catch {gets $pipeID data}] } {
-    exit
+    CleanExit
   } else {
     if [catch {SendSocket [lindex $data 0] [lrange $data 1 end]} tmpErr] { puts "$tmpErr" }
   }
@@ -946,7 +952,7 @@ proc ForkQueryd {} {
       global DEBUG
       fconfigure $inPipeID -buffering line
       if { [eof $inPipeID] || [catch {gets $inPipeID data}] } {
-        exit
+        CleanExit
       } else {
         set dbCmd [lindex $data 3]
         set clientSocketID [lindex $data 0]
@@ -1323,19 +1329,19 @@ set validSockets ""
 if [catch {package require mysqltcl} mysqltclVersion] {
   puts "ERROR: The mysqltcl extension does NOT appear to be installed on this sysem."
   puts "Download it at http://www.xdobry.de/mysqltcl/"
-  exit
+  CleanExit
 }
 # Load extended tcl
 if [catch {package require Tclx} tclxVersion] {
   puts "ERROR: The tclx extension does NOT appear to be installed on this sysem."
   puts "Extended tcl (tclx) is available as a port/package for most linux and BSD systems."
-  exit
+  CleanExit
 }
 # Load sha1 from tcllib
 if [catch {package require sha1} sha1Version] {
   puts "ERROR: The sha1 package does NOT appear to be installed on this sysem."
   puts "The sha1 package is part of the tcllib extension. A port/package is available for most linux and BSD systems."
-  exit
+  CleanExit
 }
 # reset the random
 random seed
@@ -1475,12 +1481,12 @@ if { ![info exists USERS_FILE] } {
 # Called in to add a user only
 if { [info exists ADDUSER] && $ADDUSER } {
   AddUser $userName $USERS_FILE
-  exit
+  CleanExit
 }
 # Called in to delte a user only
 if { [info exists DELUSER] && $DELUSER} {
   DelUser $userName $USERS_FILE
-  exit
+  CleanExit
 }
 # Load auto cat config
 if { ![info exists AUTOCAT_FILE] } {
@@ -1514,10 +1520,12 @@ if {$DAEMON} { Daemonize }
 # Fork a child to load PS/SSN info
 set childPid [ForkLoader]
 if { $childPid == 0 } { vwait LOADER }
+lappend FORKD_PIDS $childPid
 
 # Fork a child to handle queries
 set childPid [ForkQueryd]
 if { $childPid == 0 } { vwait QUERYD }
+lappend FORKD_PIDS $childPid
 fileevent $mainReadPipe readable [list QuerydCmdRcvd $mainReadPipe]
 fconfigure $mainReadPipe -buffering line
 
@@ -1532,20 +1540,20 @@ if { $DBPASS == "" } {
 if [catch {eval mysqlconnect $connectCmd} dbSocketID] {
   puts "ERROR: Unable to connect to $DBHOST on $DBPORT: Make sure mysql is running."
   puts "$dbSocketID"
-  exit
+  CleanExit
 }
 # See if the DB we want to use exists
 if { [catch {mysqluse $dbSocketID $DBNAME} noDBError] } {
   puts "Error: $noDBError"
   # Create the DB or die.
-  if {![CreateDB $DBNAME]} { exit }
+  if {![CreateDB $DBNAME]} { CleanExit }
 }
 # Make sure we have a compatible DB version
 set currentDBVer [FlatDBQuery "SELECT version FROM version"]
 if { $DB_VERSION != $currentDBVer } {
   puts "ERROR: Incompatable DB schema.\nRequired Version: $DB_VERSION\nInstalled Version: $currentDBVer"
   puts "Check the server/sql_scripts directory of the src that came with sguild for scripts to help you upgrade"
-  exit
+  CleanExit
 }
 
 # If emailing of events is enabled, we need to make sure the libs are installed.
@@ -1595,7 +1603,7 @@ set sensorList [FlatDBQuery $sensorQuery]
 # Open a socket for clients to connect to
 if [catch {socket -server ClientConnect $SERVERPORT} serverSocket] {
   puts "ERROR: $serverSocket"
-  exit
+  CleanExit
 }
 # Open a socket for sensors to connect to
 if [catch {socket -server SensorConnect $SENSORPORT} sensorSocket] {
