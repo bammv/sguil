@@ -137,7 +137,7 @@ foreach arg $argv {
                 --noverbose      { set VERBOSE 0 }
                 --home_net_start { set STATE home_net_start }
                 --home_net_end   { set STATE home_net_end }
-                --help           { DispalyUsage $argv0 }
+                --help           { DisplayUsage $argv0 }
                 default          { DisplayUsage $argv0 }
             }
         }
