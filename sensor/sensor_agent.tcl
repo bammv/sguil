@@ -86,6 +86,8 @@ proc CheckForPortscanFiles {} {
       puts $fileName
       if { [file size $fileName] > 0 } {
         SendPSDataToSvr $fileName
+      } else {
+        file delete $fileName
       }
     }
   }
@@ -99,6 +101,8 @@ proc CheckForSsnFiles {} {
       puts $fileName
       if { [file size $fileName] > 0 } {
         SendSsnDataToSvr $fileName
+      } else { 
+        file delete $fileName
       }
     }
   }
