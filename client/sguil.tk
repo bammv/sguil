@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.163 2005/01/31 22:15:25 shalligan Exp $ #
+# $Id: sguil.tk,v 1.164 2005/02/07 19:03:17 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1393,7 +1393,7 @@ proc UnSelectAllSensors {} {
 proc GetEventHistory {} {
   global ACTIVE_EVENT CUR_SEL_PANE socketID 
   if {!$ACTIVE_EVENT} { return }
-  if { CUR_SEL_FRAME(type) != "EVENT" } {InfoMessage "History is available for event data only."; return}
+  if { $CUR_SEL_PANE(type) != "EVENT" } {InfoMessage "History is available for event data only."; return}
   set winName $CUR_SEL_PANE(name).eventIDFrame.list
   set index [$winName curselection]
   if { [$CUR_SEL_PANE(name).statusFrame.list get $index] == "RT" } {
@@ -2372,7 +2372,8 @@ $correlateMenu add command -label "View Correlated Events"\
 # Query Incident Categories Menu
 set statusMenu [ menu .statusMenu -background blue -foreground white\
  -activeforeground blue -activebackground white -tearoff 0 ]
-$statusMenu add command -label "Expire Event (F8)" -command "ValidateEvent 1"
+$statusMenu add command -label "Expire Event As NA (F8)" -command "ValidateEvent 1"
+$statusMenu add command -label "Expire Event As NA With Comment" -command "ValidateEvent 1 1"
 $statusMenu add cascade -label "Quick Query" -menu $statusMenu.quickQueryMenu
 $statusMenu add cascade -label "Advanced Query" -menu $statusMenu.advancedQueryMenu
 
@@ -2401,18 +2402,32 @@ set validateMenu [menu $statusMenu.validateMenu -background blue -foreground whi
 $validateMenu add command -label "Escalate (F9)" -command "ValidateEvent 2"
 $validateMenu add command -label "Cat I: Unauthorized Root Access (F1)"\
   -command "ValidateEvent 11"
+$validateMenu add command -label "Cat I: Add Comment"\
+  -command "ValidateEvent 11 1"
 $validateMenu add command -label "Cat II: Unauthorized User Access (F2)"\
   -command "ValidateEvent 12"
+$validateMenu add command -label "Cat II: Add Comment"\
+  -command "ValidateEvent 12 1"
 $validateMenu add command -label "Cat III: Attempted Unauthorized Access (F3)"\
   -command "ValidateEvent 13"
+$validateMenu add command -label "Cat III: Add Comment"\
+  -command "ValidateEvent 13 1"
 $validateMenu add command -label "Cat IV: Successful Denial of Service Attack (F4)"\
   -command "ValidateEvent 14"
+$validateMenu add command -label "Cat IV: Add Comment"\
+  -command "ValidateEvent 14 1"
 $validateMenu add command -label "Cat V: Poor Security Practice or Policy Violation (F5)"\
   -command "ValidateEvent 15"
+$validateMenu add command -label "Cat V: Add Comment"\
+  -command "ValidateEvent 15 1"
 $validateMenu add command -label "Cat VI: Reconnaissance/Probes/Scans (F6)"\
   -command "ValidateEvent 16"
+$validateMenu add command -label "Cat VI: Add Comment"\
+  -command "ValidateEvent 16 1"
 $validateMenu add command -label "Cat VII: Virus Infection(F7)"\
   -command "ValidateEvent 17"
+$validateMenu add command -label "Cat VII: Add Comment"\
+  -command "ValidateEvent 17 1"
 
 
 ################### GENERAL KEY BINDINGS ########################
