@@ -29,7 +29,9 @@ SNORT_PATH="/usr/local/bin/snort"
 # Directory to log pcap data to (date dirs will be created in here)
 LOG_DIR="/snort_data/dailylogs"
 # Interface to 'listen' to.
-INTERFACE="ed0"
+INTERFACE="eth0"
+# Other options
+OPTIONS="-u sguil -g sguil -m 122"
 # Where to store the pid
 PIDFILE="/var/run/snort_log.pid"
 
@@ -49,15 +51,17 @@ start() {
   if [ -x $SNORT_PATH ]; then
     if [ ! -d $LOG_DIR ]; then
       mkdir $LOG_DIR
+      chmod 777 $LOG_DIR
     fi
     today=`date '+%Y-%m-%d'`
     if [ ! -d $LOG_DIR/$today ]; then
       mkdir $LOG_DIR/$today
+      chmod 777 $LOG_DIR/$today
     fi
     if [ -n FILTER ]; then
-      eval exec $SNORT_PATH -l $LOG_DIR/$today -b -i $INTERFACE $FILTER > /tmp/snort.log 2>&1 &
+      eval exec $SNORT_PATH $OPTIONS -l $LOG_DIR/$today -b -i $INTERFACE $FILTER > /tmp/snort.log 2>&1 &
     else
-      eval exec $SNORT_PATH -l $LOG_DIR/$today -b -i $INTERFACE > /tmp/snort.log 2>&1 &
+      eval exec $SNORT_PATH $OPTIONS -l $LOG_DIR/$today -b -i $INTERFACE > /tmp/snort.log 2>&1 &
     fi
     PID=$!
     if [ $? = 0 ]; then
