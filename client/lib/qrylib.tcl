@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.17 2004/03/19 20:33:58 bamm Exp $ #
+# $Id: qrylib.tcl,v 1.18 2004/06/07 22:29:40 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -70,7 +70,7 @@ proc SsnQueryRequest { whereStatement } {
   if {!$CONNECTED} {ErrorMessage "Not connected to sguild. Query aborted"; return}
   set selectQuery "SELECT sensor.hostname, sessions.xid, sessions.start_time, sessions.end_time,\
    INET_NTOA(sessions.src_ip), sessions.src_port, INET_NTOA(sessions.dst_ip), sessions.dst_port,\
-   sessions.src_pckts, sessions.src_bytes, sessions.dst_pckts, sessions.dst_bytes\
+   sessions.ip_proto, sessions.src_pckts, sessions.src_bytes, sessions.dst_pckts, sessions.dst_bytes\
    FROM sessions INNER JOIN sensor ON sessions.sid=sensor.sid $whereStatement"
   regsub -all {\n} $selectQuery {} selectQuery
   incr SSN_QUERY_NUMBER

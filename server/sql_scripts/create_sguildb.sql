@@ -1,4 +1,4 @@
--- $Id: create_sguildb.sql,v 1.10 2004/03/15 15:01:54 mboman Exp $
+-- $Id: create_sguildb.sql,v 1.11 2004/06/07 22:29:57 bamm Exp $
 -- Users may want to use a different DB name.
 -- CREATE DATABASE IF NOT EXISTS sguildb;
 -- USE sguildb;
@@ -124,6 +124,7 @@ CREATE TABLE sessions (
   dst_ip	INT UNSIGNED NOT NULL, 
   src_port	INT UNSIGNED NOT NULL, 
   dst_port	INT UNSIGNED NOT NULL, 
+  ip_proto	TINYINT UNSIGNED NOT NULL,
   src_pckts	BIGINT UNSIGNED NOT NULL, 
   dst_pckts	BIGINT UNSIGNED NOT NULL, 
   src_bytes	BIGINT UNSIGNED NOT NULL, 
@@ -180,4 +181,4 @@ CREATE TABLE version
   installed	DATETIME
 );
 
-INSERT INTO version (version, installed) VALUES ("0.8", now());
+INSERT INTO version (version, installed) VALUES ("0.9", now());

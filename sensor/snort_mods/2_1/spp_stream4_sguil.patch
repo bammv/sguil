@@ -1,5 +1,5 @@
-*** spp_stream4.c	Wed Sep 10 16:00:50 2003
---- spp_stream4.sguil	Thu Oct 23 08:10:53 2003
+*** spp_stream4.c	Tue Jan 27 11:21:23 2004
+--- spp_stream4.c.sguil	Mon Jun  7 16:27:27 2004
 ***************
 *** 33,38 ****
 --- 33,57 ----
@@ -226,7 +226,7 @@
 +       while (dbsPtr != NULL)
 +       {
 +         DbStats *tmp;
-+         fprintf(dbstats_log, "%llu|%s|%s|%u|%u|%d|%d|%u|%u|%u|%u\n",
++         fprintf(dbstats_log, "%llu|%s|%s|%u|%u|%d|%d|6|%u|%u|%u|%u\n",
 +           dbsPtr->xid, dbsPtr->start_time, dbsPtr->end_time, dbsPtr->cip,
 +           dbsPtr->sip, dbsPtr->cport, dbsPtr->sport,
 +           dbsPtr->cpackets, dbsPtr->spackets, dbsPtr->cbytes, dbsPtr->sbytes);
@@ -245,8 +245,8 @@
   int UpdateStateAsync(Session *, Packet *, u_int32_t);
   
 ***************
-*** 827,832 ****
---- 993,1000 ----
+*** 821,826 ****
+--- 987,994 ----
       AddFuncToPreprocList(ReassembleStream4);
       AddFuncToCleanExitList(Stream4CleanExitFunction, NULL);
       AddFuncToRestartList(Stream4RestartFunction, NULL);    
@@ -256,8 +256,8 @@
   
   void DisplayStream4Config(void) 
 ***************
-*** 941,946 ****
---- 1109,1127 ----
+*** 935,940 ****
+--- 1103,1121 ----
                       stats_log->filename = strdup("snort-unified.stats");
                       OpenStatsFile();
                   } 
@@ -278,7 +278,7 @@
                   {
                       ErrorMessage("Bad stats mode for stream4, ignoring\n");
 ***************
-*** 3148,3159 ****
+*** 3132,3143 ****
       struct tm *lt;
       struct tm *et;
       Session *killme;
@@ -291,7 +291,7 @@
       if(s4data.track_stats_flag == STATS_HUMAN_READABLE)
       {
           lt = localtime((time_t *) &ssn->start_time);
---- 3329,3341 ----
+--- 3313,3325 ----
       struct tm *lt;
       struct tm *et;
       Session *killme;
@@ -306,8 +306,8 @@
       {
           lt = localtime((time_t *) &ssn->start_time);
 ***************
-*** 3181,3186 ****
---- 3363,3376 ----
+*** 3165,3170 ****
+--- 3347,3360 ----
                   ssn->client.bytes_sent);
   
       }
@@ -323,8 +323,8 @@
       {
           lt = localtime((time_t *) &ssn->start_time);
 ***************
-*** 3489,3495 ****
---- 3679,3692 ----
+*** 3485,3491 ****
+--- 3675,3688 ----
       if(s4data.track_stats_flag)
       {
           if(s4data.track_stats_flag != STATS_BINARY)

@@ -1,4 +1,4 @@
-# $Id: sancp.tcl,v 1.1 2004/03/19 20:33:58 bamm Exp $ 
+# $Id: sancp.tcl,v 1.2 2004/06/07 22:29:42 bamm Exp $ 
 #
 # Build a sancp query tab and send the query to sguild.
 #
@@ -8,7 +8,7 @@ proc SancpQueryRequest { whereStatement } {
   if {!$CONNECTED} {ErrorMessage "Not connected to sguild. Query aborted"; return}
   set selectQuery "SELECT sensor.hostname, sancp.sancpid, sancp.start_time, sancp.end_time,\
    INET_NTOA(sancp.src_ip), sancp.src_port, INET_NTOA(sancp.dst_ip), sancp.dst_port,\
-   sancp.src_pkts, sancp.src_bytes, sancp.dst_pkts, sancp.dst_bytes\
+   sancp.ip_proto, sancp.src_pkts, sancp.src_bytes, sancp.dst_pkts, sancp.dst_bytes\
    FROM sancp INNER JOIN sensor ON sancp.sid=sensor.sid $whereStatement"
   regsub -all {\n} $selectQuery {} selectQuery
   incr SANCP_QUERY_NUMBER

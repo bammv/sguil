@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.113 2004/06/07 20:11:05 bamm Exp $ #
+# $Id: sguil.tk,v 1.114 2004/06/07 22:29:35 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -997,6 +997,16 @@ proc CreateSessionLists { ssn_type baseFrame } {
       SortListsBy %W sessions
       LaunchPortQueryMenu %W %Y
     }
+  set ipProtoFrame [frame $baseFrame.ipProtoFrame]
+    set ipProtoLabel [label $ipProtoFrame.label -text "Pr" -background black -foreground white -anchor w]
+    set ipProtoList [listbox $ipProtoFrame.list -width 3 -height 5 -exportselection false\
+     -borderwidth 0 -yscrollcommand "$baseFrame.scroll set"]
+    pack $ipProtoLabel -side top -fill x
+    pack $ipProtoList -side bottom -fill both -expand true
+    BindSelectionToAllLists $ipProtoList
+    bind $ipProtoLabel <Double-Button-1> {
+      SortListsBy %W sessions
+    }
   set srcPcktsFrame [frame $baseFrame.srcPcktsFrame]
     set srcPcktsLabel [label $srcPcktsFrame.label -text "S Pckts" -background black -foreground white -anchor w]
     set srcPcktsList [listbox $srcPcktsFrame.list -width 6 -height 5 -exportselection false\
@@ -1038,10 +1048,10 @@ proc CreateSessionLists { ssn_type baseFrame } {
       SortListsBy %W sessions
     }
   set scroll [scrollbar $baseFrame.scroll -command "MultiScrollBar \"$sensorList $xidList $startTimeList $endTimeList\
-   $srcIPList $srcPortList $dstIPList $dstPortList $srcPcktsList $srcBytesList $dstPcktsList $dstBytesList\""  -width 10]
+   $srcIPList $srcPortList $dstIPList $dstPortList $ipProtoList $srcPcktsList $srcBytesList $dstPcktsList $dstBytesList\""  -width 10]
   pack $scroll -side right -fill y
   pack $sensorFrame $xidFrame $startTimeFrame $endTimeFrame $srcIPFrame $srcPortFrame $dstIPFrame $dstPortFrame\
-   $srcPcktsFrame $srcBytesFrame $dstPcktsFrame $dstBytesFrame -side left -fill both -expand true
+   $ipProtoFrame $srcPcktsFrame $srcBytesFrame $dstPcktsFrame $dstBytesFrame -side left -fill both -expand true
   pack $baseFrame -fill both -expand true
 }
 proc CreateEventLists { baseFrame } {
