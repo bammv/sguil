@@ -8,6 +8,9 @@ CVS-HEAD
 
     * Decode ICMP redirect
 
+    * Added option to change the max number of rows returned
+      for portscan event data. Set the default in sguil.conf.
+
   sguild
     * Added -D (daemonize) and -P <pidFile> switches.
 

@@ -19,7 +19,7 @@ package require Tclx
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.2.1"
+set VERSION "SGUIL-0.2.2"
 
 set ACTIVE_EVENT 0
 set MULTI_SELECT 0
@@ -2015,19 +2015,23 @@ proc ClearPSLists {} {
 }
 proc DisplayPortscanData {} {
   global ACTIVE_EVENT PSINFO currentSelectedPane DEBUG socketID portscanDataFrame MULTI_SELECT
-  global CONNECTED
+  global CONNECTED psMaxRows MAX_PS_ROWS
   ClearPSLists
   if {$ACTIVE_EVENT && $PSINFO && !$MULTI_SELECT} {
     if {!$CONNECTED} {
       ErrorMessage "Not connected to sguild. Cannot request portscan data."
       return 
     }
+    $psMaxRows configure -state normal
     set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
     set srcIP [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
     set timestamp [lindex [$currentSelectedPane.dateTimeFrame.list get $selectedIndex] 0]
-    SendToSguild "GetPSData $timestamp $srcIP"
+    SendToSguild "GetPSData $timestamp $srcIP $MAX_PS_ROWS"
     $portscanDataFrame configure -cursor watch
+  } elseif { !$PSINFO } {
+    $psMaxRows configure -state disabled
   }
+    
 }
 proc InsertPSData { data } {
   global portscanDataFrame portscanLabelListFrame
@@ -3484,8 +3488,14 @@ pack $systemInfoFrame -fill both -expand true
 
 set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
     set portscanDataFrame [frame $detailDataFrame.portscanFrame]
-      set displayPSButton [checkbutton $portscanDataFrame.displayPSButton -variable PSINFO\
-       -command DisplayPortscanData -text "Display Portscan Data"]
+      set psOptionsFrame [frame $portscanDataFrame.psOptionsFrame]
+        set displayPSButton [checkbutton $psOptionsFrame.displayPSButton -variable PSINFO\
+         -command DisplayPortscanData -text "Display Portscan Data"]
+        set psMaxRows [entryfield $psOptionsFrame.psMaxRows -labeltext "Max Rows"\
+         -labelpos e -width 5 -textvariable MAX_PS_ROWS -state disabled]
+        bind [$psMaxRows component entry] <Return> { DisplayPortscanData }
+        if { [info exists MAX_PS_ROWS] && $MAX_PS_ROWS == "" } { set MAX_PS_ROWS 200 }
+        pack $displayPSButton $psMaxRows -side left -padx 10
       set portscanLabelListFrame [frame $portscanDataFrame.portscanLabelListFrame]
         set psSensorFrame [frame $portscanLabelListFrame.psSensorFrame]
           set psSensorLabel [label $psSensorFrame.label -text Sensor -background black -foreground white]
@@ -3539,7 +3549,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
         pack $psScroll -side right -fill y
         pack $psSensorFrame $psDateTimeFrame $psSrcIPFrame $psSrcPortFrame $psDstIPFrame\
          $psDstPortFrame $psDataFrame -side left -fill both -expand true
-      pack $displayPSButton -side top
+      pack $psOptionsFrame -side top
       pack $portscanLabelListFrame -side bottom -fill both -expand true
 
     set packetDataFrame [frame $detailDataFrame.packetDataFrame]
