@@ -1,0 +1,69 @@
+Sguil (pronounced "sgweel") is a graphical interface to snort 
+(www.snort.org), an open source intrusion detection system. 
+The actual interface and GUI server are written in tcl/tk 
+(www.tcl.tk). Sguil also relies on other open source software 
+in order to function properly. 
+
+That list includes barnyard, mysql (www.mysql.com), ethereal 
+(www.ethereal.com), 
+tcpflow (http://www.circlemud.org/~jelson/software/tcpflow/), 
+and awhois.sh (ftp://ftp.weird.com/pub/local/awhois.sh). 
+Sguil currently functions as an analysis interface and has 
+no snort sensor or rule management capabilities. 
+
+We hope to add those features in later releases.
+
+Files are located in the directory named for where they
+will be installed.
+
+./client -- Contains the sguil.tk analysis GUI client and
+its conf file.  There is also a lib subdir which contains
+some tcl scripts that are needed by the client.
+
+./sensor -- Contains 
+	 sensor_agent.tcl --  a script that runs on the
+	 sensor that loads portscan, session, and sensor
+	 statistics to the sguild server.
+	 
+	 log_packets.sh -- a shell script that runs a 
+	 second instance of snort to log all packets 
+	 for correlation.  Meant to be installed in a
+	 crontab.
+	 
+	 ./snort_mods -- patches to snorts portscan and
+	 stream4 preprocessors.  Most of the changes in
+	 these patches are output related and do not 
+	 effect the functionality of the preprocessor.
+
+	 ./barnyad_mods -- A barnyard output plugin 
+	 (op_sguil.{c,h}) and a patch to integrate it.
+	 
+	 ./contrib -- some stuff someone gave us...don't
+	 ask me how to use it.
+
+./server -- Contains 
+	 sguild -- The Sguil Server (again a TCL script)
+	 and its conf file.  This is the brains behind this
+	 whole mess.  This stuff gets installed on the 
+	 database server.  
+	 
+	 sguild.users -- a text file with
+	 username:password pairs.  This is only for history
+	 tracking at this point.  There is no authentication. 
+	 
+	 xscriptd -- A TCL script that takes requests from 
+	 the client for correlation data, goes and gets the 
+	 packets off of the sensor, and then sends them to 
+	 the client.
+	 
+	 ./sql_scripts -- Scripts to create the sguildb 
+	 database structure.
+
+
+./doc -- A bunch of (hopefully) helpful documents.
+
+./contrib -- some more stuff, ya got me.
+
+
+Happy Fun Time!!11!!!!
+
