@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.9 2003/11/19 18:18:13 bamm Exp $ #
+# $Id: report.tcl,v 1.10 2003/12/02 14:48:17 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -371,7 +371,7 @@ proc HumanText { detail sanitize winname curselection } {
 		    # Reset REPORT_DONE to 0 for the next report
 		    set REPORT_DONE 0
 		    
-		    set eventUDPHdr $REPORT_RESULTS
+		    set eventUdpHdr $REPORT_RESULTS
 		    set REPORT_RESULTS ""
 		    if { $eventUdpHdr == "error" } {
 			ErrorMessage "Error getting UDP Header Data."
