@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/config.php,v 1.2 2004/03/31 18:19:18 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/config.php,v 1.3 2004/03/31 20:44:45 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -17,5 +17,35 @@ $dbuser = "snort";
 $dbpass = "snort_password";
 $dbname = "sguildb";
 $use_sancp = 0;
+
+
+$colours = array("#A8A8A8","#FFFFFF","#D2D2D2");
+	
+$status_desc = array(
+			"0"  => "RT",
+			"1"  => "NA",
+			"2"  => "ES",
+			"11" => "C1",
+			"12" => "C2",
+			"13" => "C3",
+			"14" => "C4",
+			"15" => "C5",
+			"16" => "C6",
+			"17" => "C7"
+			);
+							
+$status_colour = array(
+			"0"  => "#FF0000",
+			"1"  => "#ADD7E6",
+			"2"  => "#FFBFCA",
+			"11" => "#CC0000",
+			"12" => "#FF6600",
+			"13" => "#FF9800",
+			"14" => "#CC9800",
+			"15" => "#9898CC",
+			"16" => "#FFCC00",
+			"17" => "#CC66FF"
+			);
+
 
 ?>

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.4 2004/03/31 18:19:18 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.5 2004/03/31 20:44:45 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -14,15 +14,17 @@
 require("config.php");
 
 function DBOpen() {
-	$conn = mysql_connect($GLOBALS['dbhost'], $GLOBALS['dbuser'], $GLOBALS['dbpass']);
+	global $dbhost, $dbuser, $dbpass, $dbname;
+
+	$conn = mysql_connect($dbhost, $dbuser, $dbpass);
 
 	if (!$conn) {
 	   echo "Unable to connect to DB: " . mysql_error();
 	   exit;
 	}
   
-	if (!mysql_select_db($GLOBALS['dbname'])) {
-	   echo "Unable to select " . $GLOBALS['dbname'] . ": " . mysql_error();
+	if (!mysql_select_db($dbname)) {
+	   echo "Unable to select " . $dbname . ": " . mysql_error();
 	   exit;
 	}
 }
@@ -34,26 +36,18 @@ function DBClose($result) {
 
 
 function show_alerts( $where_query ) {
-
+	global $colours, $status_desc, $status_colour;
+	
 	DBOpen();
 
-	$alert_query = "SELECT
-			event.status,
-			event.priority,
-			event.class,
-			sensor.hostname,
-			event.timestamp,
-			event.sid,
-			event.cid,
-			event.signature,
+	$alert_query = "SELECT event.status, event.priority, event.class,
+			sensor.hostname, event.timestamp,
+			event.sid, event.cid, event.signature,
 			INET_NTOA(event.src_ip) as src_ip,
 			INET_NTOA(event.dst_ip) as dst_ip,
-			event.ip_proto,
-			event.src_port,
+			event.ip_proto, event.src_port,
 			event.dst_port
-			FROM
-			event,
-			sensor";
+			FROM event, sensor";
 
 	if ( $where_query == "" ) {
 		$where_query = "WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp ASC LIMIT 50";
@@ -64,7 +58,7 @@ function show_alerts( $where_query ) {
 	$result = mysql_query($sql);
 
 	if (!$result) {
-   	echo "Could not successfully run query ($sql) from DB: " . mysql_error();
+   	echo "Could not successfully run query (" .$sql . ") from DB: " . mysql_error();
    	exit;
 	}
 
@@ -85,41 +79,13 @@ function show_alerts( $where_query ) {
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Sensor&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;sid.cid&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Date/Time&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Src IP&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Src&nbsp;IP&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;SPort&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Dst IP&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Dst&nbsp;IP&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;DPort&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Pr&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Event Message&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Event&nbsp;Message&nbsp;</strong></font></td>\n");
 	print("</tr>\n");
-
-	$colours = array("#A8A8A8","#FFFFFF","#D2D2D2");
-	
-	$status_desc = array(
-							"0"  => "RT",
-							"1"  => "NA",
-							"2"  => "ES",
-							"11" => "C1",
-							"12" => "C2",
-							"13" => "C3",
-							"14" => "C4",
-							"15" => "C5",
-							"16" => "C6",
-							"17" => "C7"
-							);
-							
-	$status_colour = array(
-							"0"  => "#FF0000",
-							"1"  => "#ADD7E6",
-							"2"  => "#FFBFCA",
-							"11" => "#CC0000",
-							"12" => "#FF6600",
-							"13" => "#FF9800",
-							"14" => "#CC9800",
-							"15" => "#9898CC",
-							"16" => "#FFCC00",
-							"17" => "#CC66FF"
-							);
 
 	$i = 0;
 
@@ -143,8 +109,6 @@ function show_alerts( $where_query ) {
 			print("	<td>" . $row['signature'] . "</td>\n");
 			print("</tr>\n");
 			
-
-
 			if( $i++ >= count($colours) ) {
 				$i = 0;
 			}
@@ -161,43 +125,27 @@ function show_sessions( $where_query ) {
 
 	DBOpen();
 
-	if( $GLOBALS['use_sancp'] == 1 ) {
+	global $use_sancp, $colours, $status_colour;
+
+	if( $use_sancp == 1 ) {
 		$base_query =
-			"SELECT
-				sensor.hostname,
-				sancp.sancpid as id,
-				sancp.start_time,
-				sancp.end_time,
-			   INET_NTOA(sancp.src_ip) as src_ip,
-			   sancp.src_port,
-			   INET_NTOA(sancp.dst_ip) as dst_ip,
-			   sancp.dst_port,
-			   sancp.src_pkts,
-			   sancp.src_bytes,
-			   sancp.dst_pkts,
-			   sancp.dst_bytes
+			"SELECT sensor.hostname, sancp.sancpid as id, sancp.start_time, sancp.end_time,
+			   INET_NTOA(sancp.src_ip) as src_ip, sancp.src_port,
+			   INET_NTOA(sancp.dst_ip) as dst_ip, sancp.dst_port,
+			   sancp.src_pkts, sancp.src_bytes,
+			   sancp.dst_pkts, sancp.dst_bytes
 			FROM sancp
-			INNER JOIN
-				sensor ON sancp.sid=sensor.sid";
+			INNER JOIN sensor ON sancp.sid=sensor.sid";
 	} else {
 		$base_query =
 			"SELECT
-				sensor.hostname,
-				sessions.xid as id,
-				sessions.start_time,
-				sessions.end_time,
-			   INET_NTOA(sessions.src_ip) as src_ip,
-			   sessions.src_port,
-			   INET_NTOA(sessions.dst_ip) as dst_ip,
-			   sessions.dst_port,
-			   sessions.src_pckts,
-			   sessions.src_bytes,
-			   sessions.dst_pckts,
-			   sessions.dst_bytes
-			FROM
-				sessions
-			INNER JOIN
-				sensor ON sessions.sid=sensor.sid";
+				sensor.hostname, sessions.xid as id, sessions.start_time, sessions.end_time,
+			   INET_NTOA(sessions.src_ip) as src_ip, sessions.src_port,
+			   INET_NTOA(sessions.dst_ip) as dst_ip, sessions.dst_port,
+			   sessions.src_pckts, sessions.src_bytes,
+			   sessions.dst_pckts, sessions.dst_bytes
+			FROM sessions
+			INNER JOIN sensor ON sessions.sid=sensor.sid";
 	}
 
 	// print the header
@@ -214,46 +162,19 @@ function show_sessions( $where_query ) {
 	print("<tr bgcolor=\"#000000\">\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Sensor&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;ID&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Start Time&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;End Time&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Src IP&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Start&nbsp;Time&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;End&nbsp;Time&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Src&nbsp;IP&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;SPort&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Dst IP&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Dst&nbsp;IP&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;DPort&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;S Packets&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;S Bytes&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;D Packets&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;D Bytes&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;S&nbsp;Packets&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;S&nbsp;Bytes&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;D&nbsp;Packets&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;D&nbsp;Bytes&nbsp;</strong></font></td>\n");
 	print("</tr>\n");
 
-	$colours = array("#A8A8A8","#FFFFFF","#D2D2D2");
 	
-	$status_desc = array(
-							"0"  => "RT",
-							"1"  => "NA",
-							"2"  => "ES",
-							"11" => "C1",
-							"12" => "C2",
-							"13" => "C3",
-							"14" => "C4",
-							"15" => "C5",
-							"16" => "C6",
-							"17" => "C7"
-							);
-							
-	$status_colour = array(
-							"0"  => "#FF0000",
-							"1"  => "#ADD7E6",
-							"2"  => "#FFBFCA",
-							"11" => "#CC0000",
-							"12" => "#FF6600",
-							"13" => "#FF9800",
-							"14" => "#CC9800",
-							"15" => "#9898CC",
-							"16" => "#FFCC00",
-							"17" => "#CC66FF"
-							);
-
 	if ( $where_query == "" ) {
 		printf("</table>\n");
 		printf("No where statement provided.");
@@ -290,8 +211,6 @@ function show_sessions( $where_query ) {
 			print("	<td>" . $row['dst_pckts'] . "</td>\n");
 			print("	<td>" . $row['dst_bytes'] . "</td>\n");
 			print("</tr>\n");
-			
-
 
 			if( $i++ >= count($colours) ) {
 				$i = 0;
