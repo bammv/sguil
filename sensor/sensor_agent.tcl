@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.29 2005/01/31 14:39:27 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.30 2005/01/31 17:52:34 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -112,7 +112,7 @@ proc CheckForSsnFiles {} {
                 # Tell sguild it has a file coming
                 SendToSguild [list SsnFile [file tail $tmpFile] $tmpDate $fileBytes] 
                 BinCopyToSguild $tmpFile
-                file delete $fileName
+                file delete $tmpFile
 
             }
 
@@ -152,7 +152,7 @@ proc CheckForSancpFiles {} {
                 # Tell sguild it has a file coming
                 SendToSguild [list SancpFile $HOSTNAME [file tail $tmpFile] $tmpDate $fileBytes] 
                 BinCopyToSguild $tmpFile
-                file delete $fileName
+                file delete $tmpFile
             }
 
         } else {
