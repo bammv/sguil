@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.121 2004/08/12 14:16:19 bamm Exp $ #
+# $Id: sguild,v 1.122 2004/08/12 15:16:40 shalligan Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -193,12 +193,14 @@ proc AddAutoCatRule { line rid } {
     set tmpVar [ctoken line "||"]
     # Need to test the regexp if we are looking at the sig index
     if { $dIndex == 7 } {
-	if [catch {regexp $tmpVar "XXTESTINGXX"} tmpError] {
-	    puts "Bad regexp in autocat rule $rid Error: $tmpError dropping rule"
-            # Rm any parts from the rule
-            if { [info exists acRules($rid)] } { unset acRules($rid) }
-	    return
-        }
+	if [regexp "^%%REGEXP%%" $tmpVar] {
+	    if [catch {regexp $tmpVar "XXTESTINGXX"} tmpError] {
+		puts "Bad regexp in autocat rule $rid Error: $tmpError dropping rule"
+		# Rm any parts from the rule
+		if { [info exists acRules($rid)] } { unset acRules($rid) }
+		return
+	    }
+	} 
     }
     # All the fields have the option of being 'any'. 
     # If one is, then we basically ignore that field.
@@ -215,16 +217,28 @@ proc AutoCat { data } {
     foreach rule [lrange $acRules($rid) 0 end] {
         set rIndex [lindex $rule 0]
         set rMatch [lindex $rule 1]
-        if { $rIndex != 7 } {
+        # Check if we are looking for a sig msg match (index 7)
+	if { $rIndex != 7 } {
             if { [lindex $data $rIndex] != $rMatch } {
                 set MATCH 0
                 break
             }
         } else {
-            if { ![regexp $rMatch [lindex $data $rIndex]] } {
-                set MATCH 0
-                break
-            }
+	    # Check to see if the rule is a regexp if so
+            # remove the %%REGEXP%% from the rule and use
+	    # regexp to check for a match
+            if [regsub "^%%REGEXP%%" $rMatch "" rMatch] {
+		if { ![regexp $rMatch [lindex $data $rIndex]] } {
+		    set MATCH 0
+		    break
+		}
+	    } else {
+               # msg rule is not a regexp, just do a simple != test
+	       if { [lindex $data $rIndex] != $rMatch } {
+		   set MATCH 0
+		   break
+	       }
+            }   
         }
     }
     if { $MATCH } {
