@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.90 2004/05/26 22:14:16 bamm Exp $ #
+# $Id: sguild,v 1.91 2004/05/27 17:14:10 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -206,7 +206,6 @@ proc AutoCat { data } {
 }
 proc CleanExit {} {
   global PID_FILE FORKD_PIDS
-  puts "DEBUG #### CleanExit Called"
   if { [info exists PID_FILE] && [file exists $PID_FILE] } {
     if [catch {file delete -force $PID_FILE} delError] {
       puts "ERROR: $delError"
@@ -485,7 +484,8 @@ proc UserMsgRcvd { socketID userMsg } {
   }
 }
 proc ClientExitClose { socketID } {
-  global clientList  clientMonitorSockets validSockets socketInfo
+  global clientList  clientMonitorSockets validSockets socketInfo sensorUsers
+  set userName [lindex $socketInfo($socketID) 2]
   if { [info exists clientList] } {
     set clientList [ldelete $clientList $socketID]
   }
@@ -496,6 +496,11 @@ proc ClientExitClose { socketID } {
   }
   if { [info exists validSockets] } {
     set validSockets [ldelete $validSockets $socketID]
+  }
+  if { [array exists sensorUsers] } {
+    foreach sensorName [array names sensorUsers] {
+      set sensorUsers($sensorName) [ldelete $sensorUsers($sensorName) $userName]
+    }
   }
   if { [info exists socketInfo($socketID)] } {
     SendSystemInfoMsg sguild "User [lindex $socketInfo($socketID) 2] has disconnected."
@@ -1353,14 +1358,23 @@ proc ReportBuilder { socketID type sid cid } {
 # SendSensorList: Sends a list of sensors for the end user to select from.
 #
 proc SendSensorList { socketID } {
-  global sensorList
+  global sensorList clientMonitorSockets socketInfo sensorUsers
   set query "SELECT hostname FROM sensor WHERE active='Y'"
   set sensorList [FlatDBQuery $query]
-  if { $sensorList != "" } {
-    puts $socketID "SensorList $sensorList"
+  if { $sensorList == "" } { 
+    # No sensors in the DB yet
+    set fullSensorList "0none0"
   } else {
-    puts $socketID "SensorList 0none0"
+    # create a list of sensors and a list of the sensors users
+    foreach sensor $sensorList {
+      if { ![info exists sensorUsers($sensor)] || $sensorUsers($sensor) == "" } {
+        lappend fullSensorList "$sensor unmonitored"
+      } else {
+        lappend fullSensorList [list $sensor $sensorUsers($sensor)]
+      }
+    }
   }
+  puts $socketID "SensorList $fullSensorList"
 }
 #
 # MonitorSensors: Sends current events to client. Adds client to clientList
@@ -1368,11 +1382,12 @@ proc SendSensorList { socketID } {
 #                 now the client gets everything.
 #
 proc MonitorSensors { socketID sensorList } {
-  global DEBUG clientList clientMonitorSockets connectedAgents socketInfo
+  global DEBUG clientList clientMonitorSockets connectedAgents socketInfo sensorUsers
   if {$DEBUG} {puts "$socketID added to clientList"}
   lappend clientList $socketID
   foreach sensorName $sensorList {
     lappend clientMonitorSockets($sensorName) $socketID
+    lappend sensorUsers($sensorName) [lindex $socketInfo($socketID) 2]
   }
   SendSystemInfoMsg sguild "User [lindex $socketInfo($socketID) 2] is monitoring sensors: $sensorList"
   SendCurrentEvents $socketID

@@ -2,13 +2,13 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.108 2004/05/26 22:16:57 bamm Exp $ #
+# $Id: sguil.tk,v 1.109 2004/05/27 17:14:08 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
 ####################################################################
 
-# Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
+# Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
 # This program is distributed under the terms of version 1.0 of the 
 # Q Public License.  See LICENSE.QPL for further details.
@@ -1347,14 +1347,6 @@ proc SaveNewFonts {} {
   write_file $FONTFILE "ourStandardFont [font configure ourStandardFont]" "ourFixedFont [font configure ourFixedFont]"
 }
 
-proc CreateSensorCheckButton { winName sensorName } {
-  # tcl is picky with window names so prepend a "win" to the sensorname
-  # and sub any .'s out.
-  regsub -all {\.} $sensorName {_} buttonName
-  checkbutton $winName.win$buttonName -text "$sensorName" -variable sensorSelectArray($sensorName)
-  pack $winName.win$buttonName -side left -padx 10 -pady 10
-}
-
 proc GetUserName {} {
   global USERNAME PASSWD VERSION
   set getUserNameWin [toplevel .getUserNameWin -background white]
@@ -1364,7 +1356,7 @@ proc GetUserName {} {
    -foreground navy -text \
    "Sguil - A tcl/tk interface for network security monitoring\n\
    \n\
-   Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
+   Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
    \n\
    This program is distributed under the terms of version 1.0 of the\n\
    Q Public License.  See LICENSE.QPL for further details.\n\
@@ -1391,12 +1383,29 @@ proc GetUserName {} {
   bind [$userPasswd component entry] <Return> { destroy .getUserNameWin }
   tkwait window $getUserNameWin
 }
+proc CreateSensorCheckButton { winName sensorName userList } {
+  global cbList
+  set userList [lindex $userList 0]
+  # tcl is picky with window names so prepend a "win" to the sensorname
+  # and sub any .'s out.
+  regsub -all {\.} $sensorName {_} sensor
+  set cframe [frame $winName.$sensor -background black -borderwidth 1]
+  checkbutton $cframe.cb$sensor -text "$sensorName" -variable sensorSelectArray($sensorName)\
+    -background lightblue
+  lappend cbList $cframe.cb$sensor
+  pack $cframe.cb$sensor -side top -fill x
+  foreach user $userList {
+    label $cframe.user$user -text "$user" -foreground darkred -background white
+    pack $cframe.user$user -side top -fill x 
+  }
+  pack $cframe -side left -padx 10 -pady 10 -anchor n
+}
 #
 # SensorList: Rcvd a list of sensors from the server. Select which ones we 
 #             want to monitor.
 #
 proc SensorList { sensorList } {
-  global MONITORFLAG sensorSelectArray subFrameList VERSION
+  global MONITORFLAG sensorSelectArray VERSION
   set sensorSelectWindow [toplevel .sensorSelectWindow -background white]
   wm title $sensorSelectWindow "$VERSION"
   set welcomeFrame [frame $sensorSelectWindow.welcomeFrame -borderwidth 1 -background black]
@@ -1404,7 +1413,7 @@ proc SensorList { sensorList } {
    -foreground navy -text\
   "Sguil - A tcl/tk interface for network security monitoring\n\
    \n\
-   Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
+   Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
    \n\
    This program is distributed under the terms of version 1.0 of the\n\
    Q Public License.  See LICENSE.QPL for further details.\n\
@@ -1425,17 +1434,16 @@ proc SensorList { sensorList } {
     set i 0
     set frameNumber 0
     set currentFrame [frame $checkButtonFrame.subFrame$frameNumber]
-    lappend subFrameList $currentFrame
-    foreach sensorName $sensorList {
+    foreach sensorNameUsers $sensorList {
+      set sensorName [lindex $sensorNameUsers 0]
       if { $i < 5 } {
-        CreateSensorCheckButton $currentFrame $sensorName
+        CreateSensorCheckButton $currentFrame $sensorName [lrange $sensorNameUsers 1 end]
         incr i
       } else {
         pack $currentFrame -side top
         incr frameNumber
         set currentFrame [frame $checkButtonFrame.subFrame$frameNumber]
-        lappend subFrameList $currentFrame
-        CreateSensorCheckButton $currentFrame $sensorName
+        CreateSensorCheckButton $currentFrame $sensorName [lrange $sensorNameUsers 1 end]
         set i 1
       }
   
@@ -1474,11 +1482,9 @@ proc MonitorSensors { winName } {
   destroy $winName
 }
 proc SelectAllSensors {} {
-  global subFrameList
-  foreach subFrame $subFrameList {
-    foreach checkButton [winfo children $subFrame] {
-      $checkButton invoke
-    }
+  global cbList
+  foreach cb $cbList {
+    $cb invoke
   }
 }
 #
