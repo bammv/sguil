@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.91 2004/05/27 17:14:10 bamm Exp $ #
+# $Id: sguild,v 1.92 2004/05/28 15:47:03 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -700,7 +700,7 @@ proc DeleteEventIDList { socketID data } {
     # Problem is, we could delete a correlated event parent without
     # deleting the children thus leaving alerts that haven't been 
     # dealt with. 
-    catch {SendSocket $socket "DeleteEventIDList $deleteEventIDList"} tmpError
+    catch {SendSocket $socket "DeleteEventIDList $eventID"} tmpError
   }
   set tmpSid [lindex [split $eventID .] 0]
   set tmpCid [lindex [split $eventID .] 1]
