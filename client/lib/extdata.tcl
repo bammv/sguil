@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.18 2005/01/20 20:02:09 shalligan Exp $
+# $Id: extdata.tcl,v 1.19 2005/03/11 15:38:37 shalligan Exp $
 
 proc GetRuleInfo {} {
   global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
@@ -94,8 +94,8 @@ proc GetReference {} {
     puts "Error: Sid $sid is reserved for future use. Error?."
   } else {
     if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
-      exec $BROWSER_PATH http://www.snort.org/snort-db/sid.html?sid=$sid &
-      if {$DEBUG} {puts "$BROWSER_PATH http://www.snort.org/snort-db/sid.html?sid=$sid launched."}
+      exec $BROWSER_PATH http://www.snort.org/pub-bin/sigs.cgi?sid=$sid &
+      if {$DEBUG} {puts "$BROWSER_PATH http://www.snort.org/pub-bin/sigs.cgi?sid=$sid launched."}
     } else {
       tk_messageBox -type ok -icon warning -message\
        "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
