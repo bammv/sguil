@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.6 2004/07/22 13:52:13 bamm Exp $
+# $Id: guilib.tcl,v 1.7 2004/07/26 18:18:39 shalligan Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -200,7 +200,7 @@ proc ClearPacketData {} {
   global typeIcmpHdrFrame codeIcmpHdrFrame chksumIcmpHdrFrame
   global idIcmpHdrFrame seqIcmpHdrFrame sipIcmpDecodeFrame
   global dipIcmpDecodeFrame sportIcmpDecodeFrame dportIcmpDecodeFrame protoIcmpDecodeFrame gipIcmpDecodeFrame
-  global dataText
+  global dataText dataHex dataSearchButton
 
   $srcIPHdrFrame.text delete 0.0 end
   $dstIPHdrFrame.text delete 0.0 end
@@ -249,6 +249,8 @@ proc ClearPacketData {} {
   $dportIcmpDecodeFrame.text delete 0.0 end
   $protoIcmpDecodeFrame.text delete 0.0 end
   $dataText delete 0.0 end
+  $dataHex delete 0.0 end
+  $dataSearchButton configure -state disabled
 }
 proc InsertIPHdr { data } {
   global srcIPHdrFrame dstIPHdrFrame verIPHdrFrame hdrLenIPHdrFrame
@@ -420,10 +422,12 @@ proc InsertIcmpHdr { data pldata } {
 	    
 }
 proc InsertPayloadData { data } {
-  global dataText
+  global dataText dataHex dataSearchButton
   if {[lindex $data 0] == ""} { 
     $dataText insert 0.0 "None."
+    $dataHex insert 0.0 "None."  
   } else {
+    $dataSearchButton configure -state active
     set payload [lindex $data 0]
     set dataLength [string length $payload]
     set asciiStr ""
@@ -440,7 +444,8 @@ proc InsertPayloadData { data } {
       }
       set asciiStr "$asciiStr$currentChar"
       if { $counter == 32 } {
-        $dataText insert end "$hexStr $asciiStr\n"
+	$dataHex insert end "$hexStr\n"  
+        $dataText insert end "$asciiStr\n"
         set hexStr ""
         set asciiStr ""
         set counter 2
@@ -448,7 +453,8 @@ proc InsertPayloadData { data } {
         incr counter 2
       }
     }
-    $dataText insert end "[format "%-47s %s\n" $hexStr $asciiStr]"
+    $dataText insert end $asciiStr
+    $dataHex insert end $hexStr
   }
   Idle
 }
@@ -517,6 +523,15 @@ proc BindSelectionToAllPSLists { listName } {
 	bind $listName <$buttonEvent> { WheelScroll %D %W "4"; break }
     }
 }
+proc BindSelectionToAllDataBoxes { boxName } {
+    
+    foreach buttonEvent { "MouseWheel" "Button-5" } {
+	bind $boxName <$buttonEvent> { WheelDataScroll %D %W "5"; break }
+    }
+    foreach buttonEvent { "Button-4" } {
+	bind $boxName <$buttonEvent> { WheelDataScroll %D %W "4"; break }
+    }
+}
 #
 # WheelScroll: Scroll all of the lists together on a mousey-wheely-scrolly
 #
@@ -549,12 +564,38 @@ proc WheelScroll { delta winName source } {
     }
     foreach childWin [winfo children $parentWin] {
 	if { [winfo name $childWin] != "scroll" } {
+	
 	    $childWin.list yview scroll $move units
 	}
     }
     # check scrollbar position, if at the bottom, toggle SCROLL_HOME
     set scrollbarPosition [lindex [$parentWin.scroll get] 1]
     if {$scrollbarPosition == 1.0} {set SCROLL_HOME($parentWin) 1}
+}
+#
+# WheelDataScroll: Scroll all of the packet data text boxes together on a mousey-wheely-scrolly
+#
+proc WheelDataScroll { delta winName source } {
+    
+    if { $delta == "??" } {
+	set delta $source
+    }
+    # X-Windows wheel motion
+    if { $delta == 4 || $delta == 5 } {
+	if { $delta == 4 } { set move -3 }
+	if { $delta == 5 } { set move 3 }
+    } else {
+	# MouseWheel Motion (usually Windows generated)
+	if { $delta > 0 } { set move -3 }
+	if { $delta < 0 } { set move 3}
+	if { $delta == 0 } { break } 
+    }
+    foreach childWin [winfo children [winfo parent $winName]] {
+	if { [winfo name $childWin] != "scroll" } {
+
+	    $childWin yview scroll $move units
+	}
+    }
 }
 proc InfoMessage { message } {
     puts $message
@@ -564,3 +605,40 @@ proc ErrorMessage { message } {
     puts $message
     tk_messageBox -type ok -icon warning -message "$message"
 }
+proc SearchData {} {
+    global dataSearchText dataTextFrame dataSearchType
+    set searchWidget [$dataSearchType get]
+    set searchtext [$dataSearchText get 0.0 end]
+    puts $searchtext
+    puts [string length $searchtext]
+    if {$searchtext == "" || $searchtext == "\n"} {
+	return
+    }
+    regsub -all {\n} $searchtext {} searchtext
+    set searchRegexp ""
+    for {set i 0} { $i < [string length $searchtext] } { incr i } {
+	set searchRegexp "${searchRegexp}[string range $searchtext $i $i]\\n*"
+    }
+    set stop 1
+    set nextchar 0
+    set textinds {}
+    while {$stop == 1} {
+	set inds {}
+	set stop [regexp -start $nextchar  -indices -- $searchRegexp [$searchWidget get 0.0 end-1c] inds]
+	set nextchar [expr [lindex $inds 1] +1]
+	if {$stop == 1 } {
+	    foreach index $inds {
+		lappend textinds [$searchWidget index "1.0 +$index chars"]
+	    }
+	}
+    }    
+    set i 0
+    while {$i < [llength $textinds] } {
+	$searchWidget tag add highlight [lindex $textinds $i] "[lindex $textinds [expr $i + 1]] + 1 chars"
+    set i [expr $i + 2] 
+    }
+    
+    $searchWidget tag configure highlight -background yellow
+    $searchWidget see [lindex $textinds 0]
+}
+    

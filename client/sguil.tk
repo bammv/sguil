@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.125 2004/07/23 14:11:47 bamm Exp $ #
+# $Id: sguil.tk,v 1.126 2004/07/26 18:18:38 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2352,13 +2352,30 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
     set dataFrame [frame $packetFrame.dataFrame -background black -borderwidth 1]
       set dataFrameLabel [label $dataFrame.dataFrameLabel -text DATA -width 8 -foreground white -background navy]
       set dataTextFrame [frame $dataFrame.dataTextFrame]
-        set dataText [text $dataTextFrame.dataText -height 10 -width 20\
-         -yscrollcommand "$dataFrame.dataScroll set" -background white -font ourFixedFont]
-        set dataScroll [scrollbar $dataFrame.dataScroll -command "$dataText yview" -width 10]
-        pack $dataScroll -side right -fill y
+        set dataText [text $dataTextFrame.dataText -height 10 -width 16\
+         -yscrollcommand "$dataFrame.dataScroll set"\
+	    -background white -font ourFixedFont]
+	set dataHex [text $dataTextFrame.dataHex -height 10 -width 47\
+ 	 -yscrollcommand "$dataFrame.dataScroll set"\
+	 -background white -font ourFixedFont]
+        set dataScroll [scrollbar $dataFrame.dataScroll -command "MultiScrollBar \"$dataHex $dataText\"" -width 10]
+	pack $dataScroll -side right -fill y
+	pack $dataHex -side left -fill both -expand true
         pack $dataText -side left -fill both -expand true
+	BindSelectionToAllDataBoxes $dataHex
+	BindSelectionToAllDataBoxes $dataText
      pack $dataFrameLabel -side left -anchor w -fill y
      pack $dataTextFrame -side left -anchor w -fill both -expand true
+    set dataSearchFrame [frame $packetFrame.dataSearchFrame]
+	  set dataSearchText [text $dataSearchFrame.dataSearchText -height 1 -width 20 -background white -font ourFixedFont]
+	  set dataSearchButton [button $dataSearchFrame.dataSearchButton -state disabled -text "Search Packet Payload"\
+	    -command "SearchData"]
+	  set dataSearchType [radiobox $dataSearchFrame.dataSearchType -orient horizontal]
+	    $dataSearchType add $dataHex -text "Hex" 
+	    $dataSearchType add $dataText -text "Text"
+	    $dataSearchType select $dataText
+	  pack $dataSearchText $dataSearchButton $dataSearchType -side left -fill x
+     pack $dataSearchFrame -side bottom -anchor s -fill x -expand false
     
     pack $ipHdrFrame $tcpHdrFrame -fill x -side top
     pack $dataFrame -fill both -expand true -side bottom
