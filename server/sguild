@@ -13,7 +13,7 @@ exec tcl -f "$0" ${1+"$@"}
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.2.5"
+set VERSION "SGUIL-0.2.6"
 set DB_VERSION "0.6"
 
 # Config options moved to sguild.conf
@@ -168,38 +168,56 @@ proc CheckLineFormat { line } {
   return $RETURN
 }   
 
-proc ValidateUser { socketID username passwd } {
+proc ValidateUser { socketID username } {
   global USERS_FILE validSockets socketInfo userIDArray
+  fileevent $socketID readable {}
+  fconfigure $socketID -buffering line
   if { ![file exists $USERS_FILE] } {
     puts "Fatal Error! Cannot access $USERS_FILE."
     exit 1
   } 
   set VALID 0
+  set nonce [format "%c%c%c" [GetRandAlphaNumInt] [GetRandAlphaNumInt] [GetRandAlphaNumInt] ]
   for_file line $USERS_FILE {
     if { ![regexp ^# $line] && ![regexp ^$ $line] } {
       # Probably should check for corrupted info here
       set tmpUserName [ctoken line "(.)(.)"]
       set tmpSaltHash [ctoken line "(.)(.)"]
-      set tmpSalt [string range $tmpSaltHash 0 1]
-      set passwdHash [::sha1::sha1 "${passwd}${tmpSalt}"]
-      if { $tmpUserName == $username && $tmpSaltHash == "${tmpSalt}${passwdHash}" } {
+      if { $tmpUserName == $username } {
         set VALID 1
+        set tmpSalt [string range $tmpSaltHash 0 1]
+        set finalCheck [::sha1::sha1 "${nonce}${tmpSaltHash}"]
+        break
       }
     }
   }
   if {$VALID} {
-    set userIDArray($socketID) [GetUserID $username]
-    DBCommand\
-     "UPDATE user_info SET last_login='[GetCurrentTimeStamp]' WHERE uid=$userIDArray($socketID)"
-    lappend validSockets $socketID
-    catch { SendSocket $socketID "UserID $userIDArray($socketID)" } tmpError
-    SendSystemInfoMsg sguild "User $username logged in from [lindex $socketInfo($socketID) 0]"
-    lappend socketInfo($socketID) $username
+    puts $socketID "$tmpSalt $nonce"
+    set finalClient [gets $socketID]
+    if { $finalClient == $finalCheck } {
+      set userIDArray($socketID) [GetUserID $username]
+      DBCommand\
+       "UPDATE user_info SET last_login='[GetCurrentTimeStamp]' WHERE uid=$userIDArray($socketID)"
+      lappend validSockets $socketID
+      catch { SendSocket $socketID "UserID $userIDArray($socketID)" } tmpError
+      SendSystemInfoMsg sguild "User $username logged in from [lindex $socketInfo($socketID) 0]"
+      lappend socketInfo($socketID) $username
+    } else {
+      set validSockets [ldelete $validSockets $socketID]
+      catch {SendSocket $socketID "UserID INVALID"} tmpError
+      SendSystemInfoMsg sguild "User $username denied access from [lindex $socketInfo($socketID) 0]"
+    } 
   } else {
+    #Not a valid user. Make up info.
+    set tmpSalt [format "%c%c" [GetRandAlphaNumInt] [GetRandAlphaNumInt] ]
+    set finalCheck [::sha1::sha1 "${nonce}${tmpSalt}"]
+    puts $socketID "$tmpSalt $nonce"
+    set finalClient [gets $socketID]
     set validSockets [ldelete $validSockets $socketID]
     catch {SendSocket $socketID "UserID INVALID"} tmpError
     SendSystemInfoMsg sguild "User $username denied access from [lindex $socketInfo($socketID) 0]"
-  } 
+  }
+  fileevent $socketID readable [list ClientCmdRcvd $socketID]
 }
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -261,7 +279,7 @@ proc ClientCmdRcvd { socketID } {
       SendSensorList { $clientCmd $socketID }
       SendEscalatedEvents { $clientCmd $socketID }
       SendDBInfo { $clientCmd $socketID }
-      ValidateUser { ValidateUser $socketID $index1 $index2 }
+      ValidateUser { ValidateUser $socketID $index1 }
       PING { puts $socketID "PONG" }
       UserMessage { UserMsgRcvd $socketID $data1 }
       default { if {$DEBUG} {puts "Unrecognized command from $socketID: $origData"} }

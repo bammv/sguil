@@ -7,16 +7,23 @@ CVS-HEAD
     * Added better Ethereal config options in (sguil.conf)
 
     * Added/Modified Dshield lookup (http://www.dshield.org)
-      to sro and dst ip drop down menus. (requested by mboman
+      to src and dst ip drop down menus. (requested by mboman
       added by geek2)
+ 
+    * Modified client authentication. See sguild comments for
+      more information.
 
   sguild
-    * Alpha support for emailing events. Need to add better
-      error checking.
+    * Alpha support for emailing events. 
 
     * Proc SendSensorList now makes sure sensor.active=y.
 
-    * Added a salt to passwd hash
+    * Added a salt to passwd hash in sguild.users. The
+      authentication has been modified so the client never
+      sends the passwd. Instead, the salt and noonce are
+      sent to the client and returned hash is compared by
+      the server. (NOTE: Old sguild.users files will NOT
+      work.)
 
   sguild.conf
     * Vars for emailing selected events.

@@ -2,6 +2,7 @@
 # Run wish from users PATH \
 exec wish -f "$0" ${1+"$@"}
 package require Tclx
+package require tcllib
 
 
 ####################################################################
@@ -19,7 +20,7 @@ package require Tclx
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.2.5"
+set VERSION "SGUIL-0.2.6"
 
 set ACTIVE_EVENT 0
 set MULTI_SELECT 0
@@ -4048,13 +4049,25 @@ if [catch { ConnectToSguild } socketID] {
 } else {
   set CONNECTED 1
   GetUserName
-  SendToSguild "ValidateUser $USERNAME $PASSWD"
+  SendToSguild "ValidateUser $USERNAME"
+  set saltNonce [gets $socketID]
+  set tmpSalt [lindex $saltNonce 0]
+  set tmpNonce [lindex $saltNonce 1]
+  set passwdHash [::sha1::sha1 "${PASSWD}${tmpSalt}"]
+  set finalCheck [::sha1::sha1 "${tmpNonce}${tmpSalt}${passwdHash}"]
+  puts $socketID $finalCheck
   set USERID [lindex [gets $socketID] 1]
   while { $USERID == "INVALID" } {
     set PASSWD ""
     ErrorMessage "Invalid USERNAME and/or PASSWORD"
     GetUserName 
-    SendToSguild "ValidateUser $USERNAME $PASSWD"
+    SendToSguild "ValidateUser $USERNAME"
+    set saltNonce [gets $socketID]
+    set tmpSalt [lindex $saltNonce 0]
+    set tmpNonce [lindex $saltNonce 1]
+    set passwdHash [::sha1::sha1 "${PASSWD}${tmpSalt}"]
+    set finalCheck [::sha1::sha1 "${tmpNonce}${tmpSalt}${passwdHash}"]
+    puts $socketID $finalCheck
     set USERID [lindex [gets $socketID] 1]
   } 
   fileevent $socketID readable [list ServerCommandRcvd $socketID]
