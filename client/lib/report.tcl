@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.24 2004/10/21 14:21:09 bamm Exp $ #
+# $Id: report.tcl,v 1.25 2004/10/21 14:29:23 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -266,7 +266,7 @@ proc PHBReport {} {
     toplevel $phbReport
     wm geometry $phbReport +300+300
     wm title $phbReport "Sensor Summary Report"
-    set sensorFrame [frame $phbReport.sensorFrame -borderwidth 2 -background black -relief raised]
+    set sensorFrame [frame $phbReport.sensorFrame -borderwidth 2 -background lightblue -relief raised]
     set winLabel [label $sensorFrame.label -text "Select Sensor(s) to Report" -background lightblue]
     pack $winLabel -side top -fill both -expand true
      # We create a new frame for every 5 sensors to keep the look clean.
@@ -280,7 +280,7 @@ proc PHBReport {} {
 	    $currentBox add $sensorName -text [string totitle $sensorName] -selectcolor darkred -activebackground lightblue -width 12
 	    incr i
 	} else {
-	    pack $currentBox -side top -fill x -pady 0
+	    pack $currentBox -side top  -anchor w -pady 0
 	    incr boxNumber
 	    set currentBox [checkbox $sensorFrame.subBox$boxNumber -orient horizontal -borderwidth 0 -background lightblue]
 	    lappend sbList $currentBox
@@ -289,7 +289,7 @@ proc PHBReport {} {
 	}
 	
     }
-    pack $currentBox -side top -fill x -pady 0 
+    pack $currentBox -side top -anchor w -pady 0 
     set selectAll [button $sensorFrame.selectAll -text "Select All" -command "ReportSelectAll"]
     pack $selectAll -side top -fill x -pady 0
     set timestampLabelFrame [frame $phbReport.timestampLabelFrame]
