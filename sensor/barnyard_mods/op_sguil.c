@@ -390,6 +390,16 @@ int SguilOpLog(void *context, void *data)
 
 	/* SYSLOG - Changed to SguilSendEvent*/
 	snprintf(ipInfo, 40, "|%u.%u.%u.%u|%u.%u.%u.%u|%u",
+#if defined(WORDS_BIGENDIAN)
+	    (p.iph->ip_src.s_addr & 0xff000000) >> 24,
+	    (p.iph->ip_src.s_addr & 0x00ff0000) >> 16,
+	    (p.iph->ip_src.s_addr & 0x0000ff00) >> 8,
+	    (p.iph->ip_src.s_addr & 0x000000ff),
+	    (p.iph->ip_dst.s_addr & 0xff000000) >> 24,
+	    (p.iph->ip_dst.s_addr & 0x00ff0000) >> 16,
+	    (p.iph->ip_dst.s_addr & 0x0000ff00) >> 8,
+	    (p.iph->ip_dst.s_addr & 0x000000ff),
+#else
 	    (p.iph->ip_src.s_addr & 0x000000ff),
 	    (p.iph->ip_src.s_addr & 0x0000ff00) >> 8,
 	    (p.iph->ip_src.s_addr & 0x00ff0000) >> 16,
@@ -398,6 +408,7 @@ int SguilOpLog(void *context, void *data)
 	    (p.iph->ip_dst.s_addr & 0x0000ff00) >> 8,
 	    (p.iph->ip_dst.s_addr & 0x00ff0000) >> 16,
 	    (p.iph->ip_dst.s_addr & 0xff000000) >> 24,
+#endif
 	    p.iph->ip_proto);
 	strcat(syslogMessage, ipInfo);
 
