@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.11 2004/04/03 17:21:07 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.12 2004/04/03 18:54:34 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -35,12 +35,13 @@ function DBClose($result) {
 }
 
 
-function show_alerts( $where_query ) {
+function show_alerts( $where_query, $aggrigate_result ) {
 	global $colours, $status_desc, $status_colour;
 	
 	DBOpen();
 
-	$alert_query = "SELECT count(event.timestamp) as CNT,event.status, event.priority, event.class,
+	if( $aggrigate_result == 1 ) {
+		$alert_query = "SELECT count(event.timestamp) as CNT, event.status, event.priority, event.class,
 			sensor.hostname, event.timestamp,
 			event.sid, event.cid, event.signature,
 			INET_NTOA(event.src_ip) as src_ip,
@@ -49,10 +50,26 @@ function show_alerts( $where_query ) {
 			event.dst_port
 			FROM event, sensor";
 
-	if ( $where_query == "" ) {
-		$where_query = "WHERE event.sid=sensor.sid AND event.status=0 GROUP BY src_ip,signature ORDER BY event.timestamp DESC LIMIT 50";
-	}
+		if ( $where_query == "" ) {
+			$where_query = "WHERE event.sid=sensor.sid AND event.status=0 GROUP BY src_ip,signature ORDER BY event.timestamp DESC LIMIT 50";
+		}
+		
+	} else {
+		$alert_query = "SELECT '1' AS CNT, event.status, event.priority, event.class,
+			sensor.hostname, event.timestamp,
+			event.sid, event.cid, event.signature,
+			INET_NTOA(event.src_ip) as src_ip,
+			INET_NTOA(event.dst_ip) as dst_ip,
+			event.ip_proto, event.src_port,
+			event.dst_port
+			FROM event, sensor";
 
+		if ( $where_query == "" ) {
+			$where_query = "WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp DESC LIMIT 50";
+		}
+		
+	}
+	
 	$sql = $alert_query . " " . $where_query;
 
 	$result = mysql_query($sql);
