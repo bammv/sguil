@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.122 2004/07/08 18:37:33 bamm Exp $ #
+# $Id: sguil.tk,v 1.123 2004/07/22 14:01:40 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1435,7 +1435,7 @@ proc CreateSensorCheckButton { winName sensorName userList } {
   # tcl is picky with window names so prepend a "win" to the sensorname
   # and sub any .'s out.
   regsub -all {\.} $sensorName {_} sensor
-  set cframe [frame $winName.$sensor -background black -borderwidth 1]
+  set cframe [frame $winName.win$sensor -background black -borderwidth 1]
   checkbutton $cframe.cb$sensor -text "$sensorName" -variable sensorSelectArray($sensorName)\
     -background lightblue
   lappend cbList $cframe.cb$sensor
