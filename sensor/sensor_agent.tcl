@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.28 2005/01/28 15:49:31 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.29 2005/01/31 14:39:27 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -189,24 +189,28 @@ proc BinCopyToSguild { fileName } {
 #
 proc ParseSsnSancpFiles { fileName } {
 
-    global SENSOR_ID HOSTNAME
+    global SENSOR_ID HOSTNAME DEBUG
     
     set inFileID [open $fileName r]
     while { [ gets $inFileID line] >= 0 } {
 
         # Strips out the date
         if { ![regexp {^\d+\|(\d{4}-\d{2}-\d{2})\s.*\|.*$} $line foo date] } {
-             # Corrupt File
-             puts "ERROR"   
+            # Corrupt line in file
+            if { $DEBUG } {
+                 puts "ERROR: Bad line in file: $fileName"   
+                 puts "$line"
+            }
+        } else {
+            set fDate [clock format [clock scan $date] -gmt true -f "%Y%m%d"]
+            # Files can contain data from different start days
+            if { ![info exists outFileID($fDate)] } {
+                set outFile($fDate) "[file dirname $fileName]/parsed.$HOSTNAME.[file tail $fileName].$fDate"
+                set outFileID($fDate) [open $outFile($fDate) w]
+            } 
+            # Prepend sensorID
+            puts $outFileID($fDate) "${SENSOR_ID}|$line"  
         }
-        set fDate [clock format [clock scan $date] -gmt true -f "%Y%m%d"]
-        # Files can contain data from different start days
-        if { ![info exists outFileID($fDate)] } {
-            set outFile($fDate) "[file dirname $fileName]/parsed.$HOSTNAME.[file tail $fileName].$fDate"
-            set outFileID($fDate) [open $outFile($fDate) w]
-        } 
-        # Prepend sensorID
-        puts $outFileID($fDate) "${SENSOR_ID}|$line"  
         
     }
  
