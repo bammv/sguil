@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.3 2004/03/31 08:18:02 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.4 2004/03/31 18:19:18 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -14,23 +14,17 @@
 require("config.php");
 
 function DBOpen() {
-	$dbhost = "localhost";
-	$dbuser = "snort";
-	$dbpass = "snort_password";
-	$dbname = "sguildb";
-
-	$conn = mysql_connect($dbhost, $dbuser, $dbpass);
+	$conn = mysql_connect($GLOBALS['dbhost'], $GLOBALS['dbuser'], $GLOBALS['dbpass']);
 
 	if (!$conn) {
 	   echo "Unable to connect to DB: " . mysql_error();
 	   exit;
 	}
   
-	if (!mysql_select_db($dbname)) {
-	   echo "Unable to select $dbname: " . mysql_error();
+	if (!mysql_select_db($GLOBALS['dbname'])) {
+	   echo "Unable to select " . $GLOBALS['dbname'] . ": " . mysql_error();
 	   exit;
 	}
-
 }
 
 
@@ -87,7 +81,7 @@ function show_alerts( $where_query ) {
 	print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"1\" width=\"100%\">\n");
 	print("<tr bgcolor=\"#000000\">\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;ST&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;CNT&nbsp;</strong></font></td>\n");
+	//print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;CNT&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Sensor&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;sid.cid&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Date/Time&nbsp;</strong></font></td>\n");
@@ -137,7 +131,7 @@ function show_alerts( $where_query ) {
 			
 			print("<tr bgcolor=\"" . $colours[$i] . "\">\n");
 			print("	<td bgcolor=\"" . $status_colour[$row['status']] . "\">" . $status_desc[$row['status']] . "</td>\n");
-			print("	<td>[cnt]</td>\n");
+			//print("	<td>[cnt]</td>\n");
 			print("	<td>" . $row['hostname'] . "</td>\n");
 			print("	<td><a href=\"$detail_url\" target=\"lookup_right\">" . $row['sid'] . "." . $row['cid'] . "</a></td>\n");
 			print("	<td>" . $row['timestamp'] . "</td>\n");
@@ -147,6 +141,154 @@ function show_alerts( $where_query ) {
 			print("	<td>" . $row['dst_port'] . "</td>\n");
 			print("	<td>" . $row['ip_proto'] . "</td>\n");
 			print("	<td>" . $row['signature'] . "</td>\n");
+			print("</tr>\n");
+			
+
+
+			if( $i++ >= count($colours) ) {
+				$i = 0;
+			}
+		}
+	}	
+	print("</table>\n");
+	print("<p>Query returned " . mysql_num_rows($result) . " rows</p>\n");
+
+	DBClose($result);
+}
+
+
+function show_sessions( $where_query ) {
+
+	DBOpen();
+
+	if( $GLOBALS['use_sancp'] == 1 ) {
+		$base_query =
+			"SELECT
+				sensor.hostname,
+				sancp.sancpid as id,
+				sancp.start_time,
+				sancp.end_time,
+			   INET_NTOA(sancp.src_ip) as src_ip,
+			   sancp.src_port,
+			   INET_NTOA(sancp.dst_ip) as dst_ip,
+			   sancp.dst_port,
+			   sancp.src_pkts,
+			   sancp.src_bytes,
+			   sancp.dst_pkts,
+			   sancp.dst_bytes
+			FROM sancp
+			INNER JOIN
+				sensor ON sancp.sid=sensor.sid";
+	} else {
+		$base_query =
+			"SELECT
+				sensor.hostname,
+				sessions.xid as id,
+				sessions.start_time,
+				sessions.end_time,
+			   INET_NTOA(sessions.src_ip) as src_ip,
+			   sessions.src_port,
+			   INET_NTOA(sessions.dst_ip) as dst_ip,
+			   sessions.dst_port,
+			   sessions.src_pckts,
+			   sessions.src_bytes,
+			   sessions.dst_pckts,
+			   sessions.dst_bytes
+			FROM
+				sessions
+			INNER JOIN
+				sensor ON sessions.sid=sensor.sid";
+	}
+
+	// print the header
+	print("<form action=\"" . $_SERVER['PHP_SELF'] . "\" method=\"POST\">\n");
+	print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\">\n");
+	print("<tr><td colspan=\"11\">Query: " .
+		"<input type=\"text\" name=\"query\" size=\"100\" value=\"" . $where_query . "\"> " .
+		"<input name=\"submit\" value=\"Submit\" type=\"submit\"></td></tr>\n");
+	print("</table>\n");
+	print("</form>\n");
+	print("<hr>\n");	
+
+	print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"1\" width=\"100%\">\n");
+	print("<tr bgcolor=\"#000000\">\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Sensor&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;ID&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Start Time&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;End Time&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Src IP&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;SPort&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Dst IP&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;DPort&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;S Packets&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;S Bytes&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;D Packets&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;D Bytes&nbsp;</strong></font></td>\n");
+	print("</tr>\n");
+
+	$colours = array("#A8A8A8","#FFFFFF","#D2D2D2");
+	
+	$status_desc = array(
+							"0"  => "RT",
+							"1"  => "NA",
+							"2"  => "ES",
+							"11" => "C1",
+							"12" => "C2",
+							"13" => "C3",
+							"14" => "C4",
+							"15" => "C5",
+							"16" => "C6",
+							"17" => "C7"
+							);
+							
+	$status_colour = array(
+							"0"  => "#FF0000",
+							"1"  => "#ADD7E6",
+							"2"  => "#FFBFCA",
+							"11" => "#CC0000",
+							"12" => "#FF6600",
+							"13" => "#FF9800",
+							"14" => "#CC9800",
+							"15" => "#9898CC",
+							"16" => "#FFCC00",
+							"17" => "#CC66FF"
+							);
+
+	if ( $where_query == "" ) {
+		printf("</table>\n");
+		printf("No where statement provided.");
+		return(0);
+	}
+
+	$sql = $base_query . " " . $where_query;
+
+	$result = mysql_query($sql);
+
+	if (!$result) {
+   	echo "Could not successfully run query ($sql) from DB: " . mysql_error();
+   	exit;
+	}
+
+	$i = 0;
+
+	if (mysql_num_rows($result) > 0) {
+		while ($row = mysql_fetch_assoc($result)) {
+		
+			$lookup_url="hostlookup.php?src_ip=" . $row['src_ip'] . "&dst_ip=" . $row['dst_ip'];
+			
+			print("<tr bgcolor=\"" . $colours[$i] . "\">\n");
+			print("	<td>" . $row['hostname'] . "</td>\n");
+			print("	<td>" . $row['id'] . "</td>\n");			
+			print("	<td>" . $row['start_time'] . "</td>\n");
+			print("	<td>" . $row['end_time'] . "</td>\n");
+			print("	<td><a href=\"$lookup_url\" target=\"lookup_left\">" . $row['src_ip'] . "</a></td>\n");
+			print("	<td>" . $row['src_port'] . "</td>\n");
+			print("	<td><a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a></td>\n");
+			print("	<td>" . $row['dst_port'] . "</td>\n");
+			print("	<td>" . $row['src_pckts'] . "</td>\n");
+			print("	<td>" . $row['src_bytes'] . "</td>\n");
+			print("	<td>" . $row['dst_pckts'] . "</td>\n");
+			print("	<td>" . $row['dst_bytes'] . "</td>\n");
 			print("</tr>\n");
 			
 
