@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.71 2003/12/07 15:48:36 bamm Exp $ #
+# $Id: sguild,v 1.72 2003/12/10 19:52:40 bamm Exp $ #
 
 # Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -580,9 +580,7 @@ proc DeleteEventIDList { socketID data } {
   global eventIDArray eventIDList clientList escalateArray escalateIDList
   global userIDArray
   
-  set status [ctoken data "::"]
-  set comment [ctoken data "::"]
-  set deleteEventIDList [ctoken data "::"]
+  regexp {^(.*)::(.*)::(.*)$} $data allMatch status comment deleteEventIDList
   set count 0
   set updateTmp ""
   foreach socket $clientList {
