@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.7 2004/06/14 17:44:36 bamm Exp $
+# $Id: extdata.tcl,v 1.8 2004/07/15 16:28:03 creining Exp $
 
 proc GetRuleInfo {} {
   global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT SSN_QUERY
@@ -111,8 +111,8 @@ proc GetIcat {} {
   # parse the sig for the cve
   regexp {cve,([^;]*)} $signature match cve
   if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
-        exec $BROWSER_PATH http://icat.nist.gov/icat.cfm?cvename=$cve &
-  if {$DEBUG} {puts "$BROWSER_PATH http://icat.nist.gov/icat.cfm?cvename=$cve launched."}
+        exec $BROWSER_PATH http://icat.nist.gov/icat.cfm?cvename=CVE-$cve &
+  if {$DEBUG} {puts "$BROWSER_PATH http://icat.nist.gov/icat.cfm?cvename=CVE-$cve launched."}
   } else {
     tk_messageBox -type ok -icon warning -message\
     "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
