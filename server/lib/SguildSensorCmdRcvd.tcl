@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.4 2004/10/28 19:49:33 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.5 2004/11/30 21:03:45 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global connectedAgents agentSensorName
@@ -66,11 +66,11 @@ proc RcvSsnFile { socketID tableName fileName sensorName } {
   InfoMessage "Loading $i cnxs from $fileName into $tableName."
   if {$DBPASS != "" } {
     set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
-     -e \"LOAD DATA LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE $tableName FIELDS TERMINATED\
+     -e \"LOAD DATA CONCURRENT LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE $tableName FIELDS TERMINATED\
      BY '|'\""
   } else {
     set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
-     -e \"LOAD DATA LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE $tableName FIELDS TERMINATED\
+     -e \"LOAD DATA CONCURRENT LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE $tableName FIELDS TERMINATED\
      BY '|'\""
   }
   # The loader child proc does the LOAD for us.
@@ -90,11 +90,11 @@ proc RcvPortscanFile { socketID fileName } {
   InfoMessage "Loading $fileName into DB."
   if {$DBPASS != "" } {
     set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
-     -e \"LOAD DATA LOCAL INFILE '$PS_OUTFILE' INTO TABLE portscan FIELDS TERMINATED\
+     -e \"LOAD DATA CONCURRENT LOCAL INFILE '$PS_OUTFILE' INTO TABLE portscan FIELDS TERMINATED\
      BY '|'\""
   } else {
     set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
-     -e \"LOAD DATA LOCAL INFILE '$PS_OUTFILE' INTO TABLE portscan FIELDS TERMINATED\
+     -e \"LOAD DATA CONCURRENT LOCAL INFILE '$PS_OUTFILE' INTO TABLE portscan FIELDS TERMINATED\
      BY '|'\""
   }
   # The loader child proc does the LOAD for us.
