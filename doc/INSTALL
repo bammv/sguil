@@ -33,6 +33,10 @@ NOTE: If you choose to let sguild create the DB for
 you, then you must still use 'GRANT' to give priv-
 ledges for each sensor.
 
+NOTE: It's highly recommended that you set your time-
+zone (TZ) to GMT prior to starting mysqld. This can
+often be done inside you mysqld init script.
+
 Create the sguildb:
   Bamm@syn# mysql -u root -p -e "CREATE DATABASE sguildb"
 Make sure each sensor has INSERT and SELECT privledges:

@@ -51,6 +51,13 @@ CVS-HEAD
 
     * Added initial support for standard queries. 
 
+    * Auto-categorizing of alerts introduced.
+
+    * Updates last_uid field (version 0.7 of DB required).
+
+    * kill -HUP <sguild.pid> now reloads autocat.conf and
+      sguild.queries.
+
   sguild.conf
     * Vars for emailing selected events.
 
