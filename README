@@ -16,9 +16,12 @@ We hope to add those features in later releases.
 Files are located in the directory named for where they
 will be installed.
 
-./client -- Contains the sguil.tk analysis GUI client and
-its conf file.  There is also a lib subdir which contains
-some tcl scripts that are needed by the client.
+./client -- Contains
+	 sguil.tk -- Analysis GUI client and
+	 its conf file. 
+	 
+	 ./lib -- contains some tcl scripts 
+	 that are needed by the client.
 
 ./sensor -- Contains 
 	 sensor_agent.tcl --  a script that runs on the
