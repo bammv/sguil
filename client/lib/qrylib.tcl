@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.16 2003/11/19 18:18:13 bamm Exp $ #
+# $Id: qrylib.tcl,v 1.17 2004/03/19 20:33:58 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -55,8 +55,10 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } } {
     } else {
        DBQueryRequest $whereStatement
     }
-  } else {
+  } elseif { $tableName == "sessions" } {
     SsnQueryRequest $whereStatement
+  } elseif { $tableName == "sancp" } {
+    SancpQueryRequest $whereStatement
   }
 }
 #
@@ -78,7 +80,7 @@ proc SsnQueryRequest { whereStatement } {
   set queryFrame [frame $currentTab.ssnquery_${SSN_QUERY_NUMBER} -background black -borderwidth 1]
   $eventTabs select end
   # Here is where we build the session display lists.
-  CreateSessionLists $queryFrame
+  CreateSessionLists sessions $queryFrame
   set buttonFrame [frame $currentTab.buttonFrame]
   set whereText [text $buttonFrame.text -height 1 -background white -wrap none]
   $whereText insert 0.0 $whereStatement

@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.103 2004/02/26 16:16:55 shalligan Exp $ #
+# $Id: sguil.tk,v 1.104 2004/03/19 20:33:58 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -60,6 +60,8 @@ set MULTI_SELECT 0
 set QUERY_NUMBER 0
 set SSN_QUERY_NUMBER 0
 set SSN_QUERY 0
+set SANCP_QUERY_NUMBER 0
+set SANCP_QUERY 0
 set SLEEP 0
 set SOUND 0
 set FONTFILE "$env(HOME)/.sguilrc"
@@ -103,7 +105,7 @@ proc ServerCommandRcvd { socketID } {
     set index1 [ctoken data " "]
     set data2 [string trimleft $data]
    
-    switch -exact $serverCmd {
+    switch -exact -- $serverCmd {
       InsertEvent { $serverCmd $data1 }
       InsertSystemInfoMsg { $serverCmd $index1 $data2 }
       InsertRuleData { $serverCmd $data1 }
@@ -127,10 +129,10 @@ proc ServerCommandRcvd { socketID } {
       InsertHistoryResults { $serverCmd $index1 $data2 }
       InsertEmailIPHdr { set EMAIL_RESULTS $data1 }
       UserMessage { $serverCmd $index1 $data2 }
-      PONG { if {$DEBUG} {puts "Comm test successful"  } }
+      PONG { if {$DEBUG} {puts "Comm test successful"} }
       GlobalQryList { set GLOBAL_QRY_LIST $data1 }
-      # ReportQryList { set REPORT_QRY_LIST $data1 }
       ReportResponse { $serverCmd $index1 $data2 }
+      InsertSancpFlags { $serverCmd $index1 $data2 }
       default { puts "Unrecognized command from $socketID: $origData" }
     }
   } 
@@ -810,9 +812,9 @@ proc InsertPSData { data } {
 }
 proc GetPacketInfo {} {
   global ACTIVE_EVENT PACKETINFO currentSelectedPane socketID DEBUG MULTI_SELECT SSN_QUERY
-  global CONNECTED
+  global CONNECTED SANCP_QUERY
   ClearPacketData
-  if {$ACTIVE_EVENT && $PACKETINFO && !$MULTI_SELECT && !$SSN_QUERY} {
+  if {$ACTIVE_EVENT && $PACKETINFO && !$MULTI_SELECT && !$SSN_QUERY && !$SANCP_QUERY} {
     if {!$CONNECTED} {
       ErrorMessage "Not connected to sguild. Cannot make a request for packet data."
       return
@@ -892,7 +894,7 @@ proc DeleteTab { eventTabs tabName } {
 }
 
 
-proc CreateSessionLists { baseFrame } {
+proc CreateSessionLists { ssn_type baseFrame } {
   global SCROLL_HOME
   set SCROLL_HOME($baseFrame) 0
   set sensorFrame [frame $baseFrame.sensorFrame]
@@ -906,8 +908,12 @@ proc CreateSessionLists { baseFrame } {
       SortListsBy %W sessions 
     }
   set xidFrame [frame $baseFrame.xidFrame]
-    set xidLabel [label $xidFrame.label -text "Ssn ID" -background black -foreground white -anchor w]
-    set xidList [listbox $xidFrame.list -width 10 -height 5 -exportselection false\
+    if { $ssn_type == "sancp" } {
+      set xidLabel [label $xidFrame.label -text "Sancp ID" -background black -foreground white -anchor w]
+    } else {
+      set xidLabel [label $xidFrame.label -text "Ssn ID" -background black -foreground white -anchor w]
+    }
+    set xidList [listbox $xidFrame.list -width 20 -height 5 -exportselection false\
      -borderwidth 0 -yscrollcommand "$baseFrame.scroll set"]
     pack $xidLabel -side top -fill x
     pack $xidList -side bottom -fill both -expand true
@@ -1498,9 +1504,9 @@ proc CheckLineFormat { line } {
   return $RETURN
 }
 proc GetEventHistory {} {
-  global ACTIVE_EVENT currentSelectedPane SSN_QUERY socketID
+  global ACTIVE_EVENT currentSelectedPane SSN_QUERY SANCP_QUERY socketID 
   if {!$ACTIVE_EVENT} { return }
-  if {$SSN_QUERY} {InfoMessage "History not available for sessions."; return}
+  if {$SSN_QUERY || $SANCP_QUERY } {InfoMessage "History is available for event data only."; return}
   set winName $currentSelectedPane.eventIDFrame.list
   set index [$winName curselection]
   if { [$currentSelectedPane.statusFrame.list get $index] == "RT" } {
@@ -1662,6 +1668,7 @@ source $SGUILLIB/qrybuild.tcl
 source $SGUILLIB/sellib.tcl
 source $SGUILLIB/guilib.tcl
 source $SGUILLIB/extdata.tcl
+source $SGUILLIB/sancp.tcl
 if { $WHOIS_PATH == "SimpleWhois" } {
   source $SGUILLIB/whois.tcl
 }
@@ -1701,6 +1708,7 @@ set topFrame [frame .topFrame]
   set queryList [menu $queryMenu.menu -tearoff 0]
     $queryList add command -label "Query Event Table" -command "QueryRequest event empty"
     $queryList add command -label "Query Sessions Table" -command "QueryRequest sessions empty"
+    $queryList add command -label "Query Sancp Table" -command "QueryRequest sancp empty"
     $queryList add command -label "Standard Queries" -command "StdQuery"
     $queryList add command -label "Query Builder" -command "InvokeQryBuild empty empty"
     $queryList add cascade -label "Query by Category" -menu $queryList.category
@@ -2000,6 +2008,9 @@ set USER_MSG_SCROLL 1
 
 
 set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
+    #
+    # Portscan Detail
+    #
     set portscanDataFrame [frame $detailDataFrame.portscanFrame]
       set psOptionsFrame [frame $portscanDataFrame.psOptionsFrame]
         set displayPSButton [checkbutton $psOptionsFrame.displayPSButton -variable PSINFO\
@@ -2072,6 +2083,72 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
       pack $psOptionsFrame -side top
       pack $portscanLabelListFrame -side bottom -fill both -expand true
 
+    #
+    # Sancp Data
+    #
+    set sancpFrame [frame $detailDataFrame.sancpFrame]
+      set sancpSelect [checkbutton $sancpFrame.cbutton \
+       -text "Display Sancp Details" -variable SANCPINFO -command GetSancpData]
+      pack $sancpSelect -side top -fill x
+      set sancpFlagsFrame [frame $sancpFrame.sancpFlagsFrame]
+      set sancpSrcFlagsFrame [frame $sancpFlagsFrame.srcFlagsFrame -background black -borderwidth 1]
+        set srcSancpLabel [label $sancpSrcFlagsFrame.srcLabel\
+         -text "Source\nFlags\nSummary" -width 8\
+         -foreground white -background deepskyblue]
+        set r2SrcSancpFrame [frame $sancpSrcFlagsFrame.r1]
+          LabelText $r2SrcSancpFrame 1 "R\n2" 3
+        set r1SrcSancpFrame [frame $sancpSrcFlagsFrame.r0]
+          LabelText $r1SrcSancpFrame 1 "R\n1" 3
+        set urgSrcSancpFrame [frame $sancpSrcFlagsFrame.urg]
+          LabelText $urgSrcSancpFrame 1 "U\nR\nG" 3
+        set ackSrcSancpFrame [frame $sancpSrcFlagsFrame.ack]
+          LabelText $ackSrcSancpFrame 1 "A\nC\nK" 3
+        set pshSrcSancpFrame [frame $sancpSrcFlagsFrame.psh]
+          LabelText $pshSrcSancpFrame 1 "P\nS\nH" 3
+        set rstSrcSancpFrame [frame $sancpSrcFlagsFrame.rst]
+          LabelText $rstSrcSancpFrame 1 "R\nS\nT" 3
+        set synSrcSancpFrame [frame $sancpSrcFlagsFrame.syn]
+          LabelText $synSrcSancpFrame 1 "S\nY\nN" 3
+        set finSrcSancpFrame [frame $sancpSrcFlagsFrame.fin]
+          LabelText $finSrcSancpFrame 1 "F\nI\nN" 3
+      pack $srcSancpLabel -side left -anchor w -fill y
+      pack $r2SrcSancpFrame $r1SrcSancpFrame $urgSrcSancpFrame $ackSrcSancpFrame $pshSrcSancpFrame\
+       $rstSrcSancpFrame $synSrcSancpFrame $finSrcSancpFrame -side left -anchor w -fill x -expand true
+      set sancpDstFlagsFrame [frame $sancpFlagsFrame.dstFlagsFrame -background black -borderwidth 1]
+        set dstSancpLabel [label $sancpDstFlagsFrame.srcLabel\
+         -text "Dest\nFlags\nSummary" -width 8\
+         -foreground white -background blue]
+        set r2dstSancpFrame [frame $sancpDstFlagsFrame.r1]
+          LabelText $r2dstSancpFrame 1 "R\n2" 3
+        set r1dstSancpFrame [frame $sancpDstFlagsFrame.r0]
+          LabelText $r1dstSancpFrame 1 "R\n1" 3
+        set urgdstSancpFrame [frame $sancpDstFlagsFrame.urg]
+          LabelText $urgdstSancpFrame 1 "U\nR\nG" 3
+        set ackdstSancpFrame [frame $sancpDstFlagsFrame.ack]
+          LabelText $ackdstSancpFrame 1 "A\nC\nK" 3
+        set pshdstSancpFrame [frame $sancpDstFlagsFrame.psh]
+          LabelText $pshdstSancpFrame 1 "P\nS\nH" 3
+        set rstdstSancpFrame [frame $sancpDstFlagsFrame.rst]
+          LabelText $rstdstSancpFrame 1 "R\nS\nT" 3
+        set syndstSancpFrame [frame $sancpDstFlagsFrame.syn]
+          LabelText $syndstSancpFrame 1 "S\nY\nN" 3
+        set findstSancpFrame [frame $sancpDstFlagsFrame.fin]
+          LabelText $findstSancpFrame 1 "F\nI\nN" 3
+      pack $dstSancpLabel -side left -anchor w -fill y
+      pack $r2dstSancpFrame $r1dstSancpFrame $urgdstSancpFrame $ackdstSancpFrame $pshdstSancpFrame\
+       $rstdstSancpFrame $syndstSancpFrame $findstSancpFrame -side left -anchor w -fill x -expand true
+      pack $sancpSrcFlagsFrame $sancpDstFlagsFrame -side left -padx 10 -fill x
+      set sancpTxtInfo [label $sancpFrame.label\
+       -foreground navy -background skyblue -justify left -wraplength 400\
+       -padx 10  -borderwidth 5 -text\
+       "NOTE: Sancp summarizes data across a session. If any packet within\
+        a session contains one of the above flags, then it will be logged\
+        as so. The above does NOT mean each flag was seen in ONE packet."]
+      pack $sancpFlagsFrame $sancpTxtInfo -side top -pady 10
+      
+    #
+    # Event/Packet Detail
+    #
     set packetDataFrame [frame $detailDataFrame.packetDataFrame]
     set ruleButtonFrame [frame $packetDataFrame.ruleButtonFrame]
       set displayPacketButton [checkbutton $ruleButtonFrame.displayPacketButton\
@@ -2085,7 +2162,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
       pack $displayPacketButton $displayRuleButton $referenceButton $icatButton -side left
     set ruleText [scrolledtext $packetDataFrame.ruleText -hscrollmode static -visibleitems 10x1\
      -sbwidth 10 -vscrollmode none -wrap none]
-  set packetFrame [frame $packetDataFrame.packetFrame -background black -borderwidth 1]
+    set packetFrame [frame $packetDataFrame.packetFrame -background black -borderwidth 1]
     ################ IP HEADER #############################
     set ipHdrFrame [frame $packetFrame.ipHdrFrame -background black -borderwidth 1]
       set ipHdrLabel [label $ipHdrFrame.ipHdrLabel -text IP -width 8 -foreground white -background deepskyblue]
@@ -2244,10 +2321,13 @@ set ipQueryMenu [ menu .ipQueryMenu -background blue -foreground white -activefo
  -activebackground white -tearoff 0 ]
 .ipQueryMenu add cascade -label "Query Event Table" -menu $ipQueryMenu.eventMenu
 .ipQueryMenu add cascade -label "Query Sessions Table" -menu $ipQueryMenu.sessionsMenu
+.ipQueryMenu add cascade -label "Query Sancp Table" -menu $ipQueryMenu.sancpMenu
 .ipQueryMenu add cascade -label "Dshield IP Lookup" -menu $ipQueryMenu.dshieldIPMenu
 menu $ipQueryMenu.eventMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
 menu $ipQueryMenu.sessionsMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
+ -activebackground white
+menu $ipQueryMenu.sancpMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
 menu $ipQueryMenu.dshieldIPMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
@@ -2257,6 +2337,9 @@ $ipQueryMenu.eventMenu add command -label "Query Src To Dst" -command "QueryRequ
 $ipQueryMenu.sessionsMenu add command -label "Query SrcIP" -command "QueryRequest sessions srcip"
 $ipQueryMenu.sessionsMenu add command -label "Query DstIP" -command "QueryRequest sessions dstip"
 $ipQueryMenu.sessionsMenu add command -label "Query Src To Dst" -command "QueryRequest sessions src2dst"
+$ipQueryMenu.sancpMenu add command -label "Query SrcIP" -command "QueryRequest sancp srcip"
+$ipQueryMenu.sancpMenu add command -label "Query DstIP" -command "QueryRequest sancp dstip"
+$ipQueryMenu.sancpMenu add command -label "Query Src To Dst" -command "QueryRequest sancp src2dst"
 $ipQueryMenu.dshieldIPMenu add command -label "SrcIP" -command "GetDshieldIP srcip"
 $ipQueryMenu.dshieldIPMenu add command -label "DstIP" -command "GetDshieldIP dstip"
 
@@ -2404,8 +2487,8 @@ bind . <Control-Key-Left> {
 # Space selects the active event.  Used when navigating using ctrl-arrow
 # Globally grabbing the space bar is bad :)  Bammkkkk
 bind . <Control-Key-space> {
-    if {!$SSN_QUERY} { 
-      set activeIndex [$currentSelectedPane.sensorFrame.list index active]
+    if {!$SSN_QUERY && !$SANCP_QUERY} { 
+      set activeIndex [$currentSelectedPane.eventIDFrame.list index active]
       CtrlSelect $currentSelectedPane.sensorFrame.list $activeIndex
     }
 }

@@ -1,9 +1,12 @@
-# $Id: CHANGES,v 1.32 2004/01/09 20:57:50 bamm Exp $ #
+# $Id: CHANGES,v 1.33 2004/03/19 20:33:58 bamm Exp $ #
 #
 sguil-HEAD
 
   op_sguil.c
     * Bug fix in bounds limit for ipInfo (tks nitzer).
+
+  xscriptd
+    * Authenticates users with sguild.users file.
 
 sguil-0.3.1 (09 Jan 2004)
                                                                                                 

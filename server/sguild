@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.81 2004/02/10 18:36:35 shalligan Exp $ #
+# $Id: sguild,v 1.82 2004/03/19 20:33:59 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -413,6 +413,7 @@ proc ClientCmdRcvd { socketID } {
       UserMessage { UserMsgRcvd $socketID $data1 }
       SendGlobalQryList { SendSocket $socketID "GlobalQryList $GLOBAL_QRY_LIST" }
       ReportRequest { ReportBuilder $socketID $index1 $index2 $index3 }
+      GetSancpFlagData { $clientCmd $socketID $index1 $index2 }
       default { if {$DEBUG} {puts "Unrecognized command from $socketID: $origData"} }
     }
   }
@@ -1068,6 +1069,13 @@ proc UpdateDBStatus { eventID timestamp uid status } {
   }
   set execResults [mysqlexec $dbSocketID $updateString]
   mysqlclose $dbSocketID
+}
+proc GetSancpFlagData { socketID sensorName xid } {
+  set query\
+   "SELECT src_flags, dst_flags FROM sancp INNER JOIN sensor ON sancp.sid=sensor.sid\
+    WHERE sensor.hostname='$sensorName' AND sancp.sancpid=$xid" 
+   set queryResults [FlatDBQuery $query]
+   catch {SendSocket $socketID "InsertSancpFlags $queryResults"}
 }
 proc GetIPData { socketID sid cid } {
   set query\

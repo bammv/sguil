@@ -1,4 +1,4 @@
-# $Id: TODO,v 1.10 2003/12/05 21:04:20 bamm Exp $ #
+# $Id: TODO,v 1.11 2004/03/19 20:33:58 bamm Exp $ #
 
     TODO
 =================================================
@@ -6,8 +6,6 @@
 ** Code Review **
 
 - Performance Items
-  * move query functions out to queryd
-  * move portscan and session loading to loaderd
   * PMPDB
   * threaded version of sguild?
 - Management Console
@@ -17,12 +15,11 @@
 - Other
   * Custom category support
   * size limit for tcpflow data
-  * auth xscript and sensors
+  * auth sensors
   * heartbeat for client/server
   * Move Correlation/Aggregation to sguild
   * Sancp
   * Startup scripts
-  * Disk management in log_packets.sh
   * New op_sguil, no more sensor => DB comms
   * User/Sensor ACLs
   * nessus data (srh)

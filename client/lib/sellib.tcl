@@ -2,7 +2,7 @@
 # Sguil procs that deal with selection and         #
 # Multi-selection of events                        #
 ####################################################
-# $Id: sellib.tcl,v 1.2 2003/11/26 17:56:08 shalligan Exp $
+# $Id: sellib.tcl,v 1.3 2004/03/19 20:33:58 bamm Exp $
 #
 # ReSetMotion: Reset Motion Vars on a button release
 #
@@ -238,7 +238,7 @@ proc SelectNextEvent { paneName index } {
 #
 proc SelectAllLists { winName index } {
   global MULTI_SELECT currentSelectedPane ACTIVE_EVENT DISPLAYEDDETAIL portscanDataFrame packetDataFrame
-  global SSN_QUERY
+  global SSN_QUERY sancpFrame SANCP_QUERY
 
   set ACTIVE_EVENT 1
   set currentSelectedPane [winfo parent [winfo parent $winName]]
@@ -251,10 +251,16 @@ proc SelectAllLists { winName index } {
 
 
   # Check to see if we are working with a session query tab
-  if {[lindex [ split [winfo name $currentSelectedPane] _] 0] == "ssnquery" } { 
+  set winType [lindex [ split [winfo name $currentSelectedPane] _] 0]
+  if { $winType  == "ssnquery" } {
     set SSN_QUERY 1 
+    set SANCP_QUERY 0
+  } elseif { $winType == "sancpquery" } {
+    set SANCP_QUERY 1
+    set SSN_QUERY 0 
   } else {
     set SSN_QUERY 0
+    set SANCP_QUERY 0
   }
 
 #
@@ -264,18 +270,27 @@ proc SelectAllLists { winName index } {
   if { !$MULTI_SELECT } {
     if {$SSN_QUERY} {
       UnSelectPacketOptions
+    } elseif { $SANCP_QUERY } {
+      if { $DISPLAYEDDETAIL != $sancpFrame } {
+        pack forget $DISPLAYEDDETAIL
+        pack $sancpFrame -fill both -expand true
+        set DISPLAYEDDETAIL $sancpFrame
+      }
+      GetSancpData
     } else {
       #puts [regexp "^spp_portscan:" [$currentSelectedPane.msgFrame.list get $index]]
       if { [regexp "^spp_portscan:" [$currentSelectedPane.msgFrame.list get $index]] } {
         if { $DISPLAYEDDETAIL != $portscanDataFrame } {
-          pack forget $packetDataFrame
+          #pack forget $packetDataFrame
+          pack forget $DISPLAYEDDETAIL
           pack $portscanDataFrame -fill both -expand true
         }
         set DISPLAYEDDETAIL $portscanDataFrame
         DisplayPortscanData
       } else {
         if { $DISPLAYEDDETAIL != $packetDataFrame } {
-          pack forget $portscanDataFrame
+          #pack forget $portscanDataFrame
+          pack forget $DISPLAYEDDETAIL
           pack $packetDataFrame -fill both -expand true
           set DISPLAYEDDETAIL $packetDataFrame
         }

@@ -3,13 +3,13 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.4 2004/01/13 21:13:35 bamm Exp $
+# $Id: extdata.tcl,v 1.5 2004/03/19 20:33:58 bamm Exp $
 
 proc GetRuleInfo {} {
   global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT SSN_QUERY
-  global CONNECTED eventArray
+  global CONNECTED eventArray SANCP_QUERY
   ClearRuleText
-  if {$ACTIVE_EVENT && $SHOWRULE && !$MULTI_SELECT && !$SSN_QUERY} {
+  if {$ACTIVE_EVENT && $SHOWRULE && !$MULTI_SELECT && !$SSN_QUERY && !$SANCP_QUERY} {
     if {!$CONNECTED} {
       ErrorMessage "Not connected to sguild. Cannot make rule request."
       return
@@ -256,13 +256,13 @@ proc XscriptServerCmdRcvd { socketID } {
 }
 proc GetXscript { type force } {
   global ACTIVE_EVENT SERVERHOST XSCRIPT_SERVER_PORT DEBUG currentSelectedPane XSCRIPTDATARCVD
-  global socketWinName SESSION_STATE SSN_QUERY ETHEREAL_STORE_DIR
+  global socketWinName SESSION_STATE SSN_QUERY ETHEREAL_STORE_DIR SANCP_QUERY
   global OPENSSL VERSION USERNAME PASSWD
   if {!$ACTIVE_EVENT} {return}
   set winName $currentSelectedPane.sensorFrame.list
   set eventIndex [$winName curselection]
   set winParents [winfo parent [winfo parent $winName]]
-  if {$SSN_QUERY} {
+  if {$SSN_QUERY || $SANCP_QUERY} {
     set cnxID [$winParents.xidFrame.list get $eventIndex]
     set timestamp [$winParents.startTimeFrame.list get $eventIndex]
     set proto 6
