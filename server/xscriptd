@@ -38,7 +38,7 @@ set P0F_PATH "/usr/sbin/p0f"
 proc GetRawDataFromLocal { timestamp srcIP srcPort dstIP dstPort proto sensorDir rawDataFileName {socketID {NONE} } } {
   global LOCAL_LOG_DIR REMOTE_LOG_DIR DEBUG TCPDUMP
   set date [lindex $timestamp 0]
-  if {$socketID != "NONE"} { puts $socketID "DEBUG"; puts $sockeID "Sensor is LOCAL."}
+  if {$socketID != "NONE"} { puts $socketID "DEBUG"; puts $socketID "Sensor is LOCAL."}
   if { [file exists $REMOTE_LOG_DIR/$date] && [file isdirectory $REMOTE_LOG_DIR/$date] } { 
     if {$DEBUG} {puts "Making a list of local log files"}
     if {$socketID != "NONE"} {puts "Making a list of local log files."}
