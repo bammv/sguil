@@ -1,4 +1,4 @@
--- $Id: create_sguildb.sql,v 1.11 2004/06/07 22:29:57 bamm Exp $
+-- $Id: create_sguildb.sql,v 1.12 2004/11/03 19:42:15 shalligan Exp $
 -- Users may want to use a different DB name.
 -- CREATE DATABASE IF NOT EXISTS sguildb;
 -- USE sguildb;
@@ -141,6 +141,7 @@ CREATE TABLE status
 (
   status_id	SMALLINT UNSIGNED NOT NULL,
   description	VARCHAR(255) NOT NULL,
+  long_desc     VARCHAR(255),
   PRIMARY KEY (status_id)
 );
 
@@ -163,16 +164,61 @@ CREATE TABLE user_info
   PRIMARY KEY (uid)
 );
 
-INSERT INTO status (status_id, description) VALUES (0, "New");
-INSERT INTO status (status_id, description) VALUES (1, "No Further Action Required");
-INSERT INTO status (status_id, description) VALUES (2, "Escalated");
-INSERT INTO status (status_id, description) VALUES (11, "Category I");
-INSERT INTO status (status_id, description) VALUES (12, "Category II");
-INSERT INTO status (status_id, description) VALUES (13, "Category III");
-INSERT INTO status (status_id, description) VALUES (14, "Category IV");
-INSERT INTO status (status_id, description) VALUES (15, "Category V");
-INSERT INTO status (status_id, description) VALUES (16, "Category VI");
-INSERT INTO status (status_id, description) VALUES (17, "Category VII");
+CREATE TABLE nessus_data
+(
+  rid           VARCHAR(40)	NOT NULL,
+  port          VARCHAR(40),
+  nessus_id     INT UNSIGNED,
+  level	        VARCHAR(20),
+  description		TEXT,
+  INDEX rid (rid));
+
+CREATE TABLE nessus
+(
+  uid           INT            NOT NULL,
+  rid           VARCHAR(40)    NOT NULL,
+  ip            VARCHAR(15)    NOT NULL,
+  timestart     DATETIME,
+  timeend       DATETIME,
+  PRIMARY KEY (rid),
+  INDEX ip (ip));
+
+CREATE TABLE sancp
+(
+  sid		INT UNSIGNED	NOT NULL,
+  sancpid	BIGINT UNSIGNED	NOT NULL,
+  start_time	DATETIME	NOT NULL,
+  end_time	DATETIME	NOT NULL,
+  duration	INT UNSIGNED	NOT NULL,
+  ip_proto	TINYINT UNSIGNED	NOT NULL,
+  src_ip	INT UNSIGNED,
+  src_port	SMALLINT UNSIGNED,
+  dst_ip	INT UNSIGNED,
+  dst_port	SMALLINT UNSIGNED,
+  src_pkts	INT UNSIGNED	NOT NULL,
+  src_bytes	INT UNSIGNED	NOT NULL,
+  dst_pkts	INT UNSIGNED	NOT NULL,
+  dst_bytes	INT UNSIGNED	NOT NULL,
+  src_flags	TINYINT UNSIGNED	NOT NULL,
+  dst_flags	TINYINT UNSIGNED	NOT NULL,
+  PRIMARY KEY (sid,sancpid),
+  INDEX src_ip (src_ip),
+  INDEX dst_ip (dst_ip),
+  INDEX dst_port (dst_port),
+  INDEX src_port (src_port),
+  INDEX start_time (start_time)
+);
+
+INSERT INTO status (status_id, description, long_desc) VALUES (0, "New", "Real Time Event");
+INSERT INTO status (status_id, description, long_desc) VALUES (1, "No Further Action Required", "No Further Action Required");
+INSERT INTO status (status_id, description, long_desc) VALUES (2, "Escalated", "Escalated");
+INSERT INTO status (status_id, description, long_desc) VALUES (11, "Category I", "Unauthorized Root Access");
+INSERT INTO status (status_id, description, long_desc) VALUES (12, "Category II", "Unauthorized User Access");
+INSERT INTO status (status_id, description, long_desc) VALUES (13, "Category III", "Attempted Unauthorized Access");
+INSERT INTO status (status_id, description, long_desc) VALUES (14, "Category IV", "Successful Denial of Service Attack");
+INSERT INTO status (status_id, description, long_desc) VALUES (15, "Category V", "Poor Security Practice or Policy Violation");
+INSERT INTO status (status_id, description, long_desc) VALUES (16, "Category VI", "Reconnaissance/Probes/Scans");
+INSERT INTO status (status_id, description, long_desc) VALUES (17, "Category VII", "Virus Infection");
 
 
 CREATE TABLE version
@@ -181,4 +227,5 @@ CREATE TABLE version
   installed	DATETIME
 );
 
-INSERT INTO version (version, installed) VALUES ("0.9", now());
+INSERT INTO version (version, installed) VALUES ("0.10", now());
+
