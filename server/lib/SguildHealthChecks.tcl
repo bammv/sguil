@@ -1,4 +1,4 @@
-# $Id: SguildHealthChecks.tcl,v 1.1 2004/10/28 19:49:33 bamm Exp $ #
+# $Id: SguildHealthChecks.tcl,v 1.2 2004/10/28 20:13:58 bamm Exp $ #
 #
 # SensorAgentsHealthCheck is called to initialize the check for connected
 # tunnels. First we send  PING and then go back thru and check who
@@ -70,6 +70,8 @@ proc ReportSensorAgentResponses {} {
 
     global sensorAgentResponse sensorAgentActive
 
+    SendSystemInfoMsg sguild "====== Sensor Agent Status ======"
+    InfoMessage "====== Sensor Agent Status ======"
     foreach sensorName [array names sensorAgentActive] {
        if { $sensorAgentActive($sensorName) == "active" } {
             set message [format "%-20s  %s"\
