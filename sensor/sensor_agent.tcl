@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.20 2004/06/16 18:59:08 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.21 2004/06/24 15:52:22 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -221,6 +221,14 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
     }
   }
   if { ![info exists logFileName] } {
+    if {$DEBUG} {
+      puts "ERROR: Unable to find the matching pcap file based on the time."
+      puts "       The requested event time is: $eventTime"
+      if { $type == "xscript" } {
+        SendToSguild [list XscriptDebugMsg $TRANS_ID "ERROR: Unable to find the matching pcap file based on the time."]
+        SendToSguild [list XscriptDebugMsg $TRANS_ID "The requested event time is: $eventTime"]
+      }
+    }
     return error
   }
   if {$DEBUG} { puts "Creating unique data file." }
