@@ -101,20 +101,21 @@ proc ClientCmdRcvd { socketID } {
       return
     }
     switch -exact $clientCmd {
-      SendSensorList { $clientCmd $socketID }
-      MonitorSensors { $clientCmd $socketID [lrange $data 1 end] } 
-      SendEscalatedEvents { $clientCmd $socketID }
-      RuleRequest { $clientCmd $socketID [lindex $data 1] [lrange $data 2 end] }
       DeleteEventID { $clientCmd $socketID [lindex $data 1] [lindex $data 2]}
-      DeleteEventIDList { $clientCmd $socketID [lindex $data 1] [lrange $data 2 end] }
-      GetUdpData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+      DeleteEventIDList { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lrange $data 3 end] }
+      EventHistoryRequest { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+      ExecDB { $clientCmd $socketID [lindex $data 1] }
       GetIcmpData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
-      GetTcpData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
       GetIPData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
       GetPayloadData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
-      QueryDB { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
-      ExecDB { $clientCmd $socketID [lindex $data 1] }
       GetPSData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+      GetTcpData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+      GetUdpData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+      MonitorSensors { $clientCmd $socketID [lrange $data 1 end] } 
+      QueryDB { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+      RuleRequest { $clientCmd $socketID [lindex $data 1] [lrange $data 2 end] }
+      SendSensorList { $clientCmd $socketID }
+      SendEscalatedEvents { $clientCmd $socketID }
       SendDBInfo { $clientCmd $socketID }
       ValidateUser { ValidateUser $socketID [lindex $data 1] [lindex $data 2]}
       default { puts "Unrecognized command from $socketID: $data" }
@@ -235,9 +236,12 @@ proc AddEventToEventArray { eventDataList } {
   lappend eventIDList $eventID
 }
 
-proc DeleteEventIDList { socketID status deleteEventIDList } {
+proc DeleteEventIDList { socketID status comment deleteEventIDList } {
   global eventIDArray eventIDList clientList escalateArray escalateIDList
   global userIDArray
+  puts "status: $status"
+  puts "comment: $comment"
+  puts "deleteEventIDList: $deleteEventIDList"
   set count 0
   set updateTmp ""
   foreach socket $clientList {
@@ -271,15 +275,19 @@ proc DeleteEventIDList { socketID status deleteEventIDList } {
       set updateTmp "(sid=$sid AND cid=$cid)"
     }
     # Update the history here
-    AddToHistory $sid $cid $userIDArray($socketID) [GetCurrentTimeStamp] $status
+    InsertHistory $sid $cid $userIDArray($socketID) [GetCurrentTimeStamp] $status $comment
     incr count
   }
   regsub -all {\) \(} $updateTmp {) OR (} whereTmp
   UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $status
 }
 
-proc AddToHistory { sid cid uid timestamp status } {
-  DBCommand "INSERT INTO history (sid, cid, uid, timestamp, status) VALUES ( $sid, $cid, $uid, '$timestamp', $status)"
+proc InsertHistory { sid cid uid timestamp status comment} {
+  if {$comment == "none"} {
+    DBCommand "INSERT INTO history (sid, cid, uid, timestamp, status) VALUES ( $sid, $cid, $uid, '$timestamp', $status)"
+  } else {
+    DBCommand "INSERT INTO history (sid, cid, uid, timestamp, status, comment) VALUES ( $sid, $cid, $uid, '$timestamp', $status, '$comment')"
+  }
 }
 
 proc DeleteEventID { socketID eventID status } {
@@ -302,7 +310,7 @@ proc DeleteEventID { socketID eventID status } {
   if { [info exists escalateIDList] } {set escalateIDList [ldelete $escalateIDList $eventID]}
   if { [info exists eventIDArray($eventID)] } { unset eventIDArray($eventID) }
   set eventIDList [ldelete $eventIDList $eventID]
-  AddToHistory [lindex [split $eventID .] 0] [lindex [split $eventID .] 1]\
+  InsertHistory [lindex [split $eventID .] 0] [lindex [split $eventID .] 1]\
    $userIDArray($socketID) [GetCurrentTimeStamp] $status
   UpdateDBStatus $eventID [GetCurrentTimeStamp] $status
 }
@@ -568,6 +576,24 @@ proc FlatDBQuery { query } {
   mysqlclose $dbSocketID
   return $queryResults
 }
+proc EventHistoryRequest { socketID winName sid cid } {
+  global DBNAME DBUSER DBPORT DBHOST DBPASS
+  if { $DBPASS == "" } {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+  } else {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+  }
+  set query "SELECT history.sid, history.cid, user_info.username, history.timestamp, history.status, status.description, history.comment FROM history, user_info, status WHERE history.uid=user_info.uid AND history.status=status.status_id AND history.sid=$sid and history.cid=$cid"
+  if [catch {mysqlsel $dbSocketID "$query" -list} selResults] {
+    SendSocket $socketID "InfoMessage \{$selResults\}"   
+  } else {
+    foreach row $selResults {
+      SendSocket $socketID "InsertHistoryResults $winName $row"
+    }
+  }
+  mysqlclose $dbSocketID
+  SendSocket $socketID "InsertHistoryResults $winName done"
+}
 proc DBCommand { query } {
   global DBNAME DBUSER DBPORT DBHOST DBPASS
 
@@ -578,6 +604,7 @@ proc DBCommand { query } {
   }
 
   mysqlexec $dbSocketID $query
+  mysqlclose $dbSocketID
   return 
 }
 proc UpdateDBStatusList { whereTmp timestamp status } {

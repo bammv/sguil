@@ -65,6 +65,7 @@ proc ServerCommandRcvd { socketID } {
       SensorList { $serverCmd [lrange $data 1 end] }
       TableNameList { $serverCmd [lrange $data 1 end] }
       TableColumns { $serverCmd [lindex $data 1] [lrange $data 2 end] }
+      InsertHistoryResults { $serverCmd [lindex $data 1] [lrange $data 2 end] }
       default { puts "Unrecognized command from $socketID: $data" }
     }
   } 
@@ -342,10 +343,38 @@ proc DisplayIncidentCats {} {
   $categoryText component text insert end "Category VI\tReconnaissance/Probes/Scans\n"
   $categoryText component text insert end "Category VII\tVirus Infection\n"
 }
-proc ValidateEvent { status } {
+proc GetComment {} {
+  global COMMENT_FLAG
+  set COMMENT_FLAG 0
+  if { [winfo exists .comment] } {
+    destroy .comment
+  }
+  toplevel .comment
+  wm title .comment "Add Comment To Event History"
+  entryfield .comment.e -labeltext "Add a short comment for the event:" -labelpos n -width 80
+  buttonbox .comment.bb
+    .comment.bb add ok -text "Okay" -command "set COMMENT_FLAG 1"
+    .comment.bb add cancel -text "Cancel" -command "set COMMENT_FLAG 0"
+  pack .comment.e .comment.bb -side top
+  bind [.comment.e component entry] <Return> { set COMMENT_FLAG 1 }
+  tkwait variable COMMENT_FLAG
+  if {$COMMENT_FLAG} {
+    set comment [[.comment.e component entry] get]
+  } else {
+    set comment ""
+  } 
+  destroy .comment
+  return $comment
+}
+proc ValidateEvent { status {c_flag {0}} } {
   global ACTIVE_EVENT currentSelectedPane eventArray correlateArray socketID DEBUG
   global MULTI_SELECT
+  set eventComment none
   if {$ACTIVE_EVENT} {
+     if { $status == 2 || $c_flag } {
+       set eventComment [GetComment]
+       if { $eventComment == "" } { InfoMessage "No comment, aborting."; return }
+     }
      foreach selectedIndex\
       [lsort -integer -decreasing [$currentSelectedPane.eventIDFrame.list curselection]] {
        # Get the eventID to be deleted
@@ -362,8 +391,10 @@ proc ValidateEvent { status } {
        } 
      }
      update
-     if {$DEBUG} { puts "Sending Server: DeleteEventIDList $status $deleteEventIDList" }
-     puts $socketID "DeleteEventIDList $status $deleteEventIDList"
+     if {$DEBUG} {
+       puts "Sending Server: DeleteEventIDList \{$eventComment\} $status $deleteEventIDList"
+     }
+     puts $socketID "DeleteEventIDList $status \{$eventComment\} $deleteEventIDList"
      if { [llength [$currentSelectedPane.eventIDFrame.list curselection]] > 1} {
 	 # puts "unslecting multiple events"
 	 UnHighLightListLine $currentSelectedPane
@@ -849,11 +880,11 @@ proc EmailEvents { detail sanatize } {
 	
 	    
 proc LaunchXscriptMenu { winName yRoot} {
-  global ACTIVE_EVENT xscriptMenu MULTI_SELECT
+  global ACTIVE_EVENT eventIDMenut MULTI_SELECT
   if {!$ACTIVE_EVENT || $MULTI_SELECT == 1} { return }
   set selectedIndex { $winName curselection }
   if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
-  tk_popup $xscriptMenu [winfo rootx $winName] [expr $yRoot + 6]
+  tk_popup $eventIDMenut [winfo rootx $winName] [expr $yRoot + 6]
 }
 proc LaunchIPQueryMenu { winName yRoot } {
   global ACTIVE_EVENT ipQueryMenu MULTI_SELECT
@@ -2808,6 +2839,85 @@ proc CheckLineFormat { line } {
   if { [llength $line] != 3 || [lindex $line 0] != "set" } { set RETURN 0 }
   return $RETURN
 }
+proc GetEventHistory {} {
+  global ACTIVE_EVENT currentSelectedPane SSN_QUERY socketID
+  if {!$ACTIVE_EVENT} { return }
+  if {$SSN_QUERY} {InfoMessage "History not available for sessions."; return}
+  set winName $currentSelectedPane.eventIDFrame.list
+  set index [$winName curselection]
+  if { [$currentSelectedPane.statusFrame.list get $index] == "RT" } {
+    InfoMessage "New (RT) events do not have a history."
+    return
+  }
+  set eventID [$winName get $index]
+  set sid [lindex [split $eventID .] 0]
+  set cid [lindex [split $eventID .] 1]
+  set historyWinName .eventHistoryWin_${sid}_${cid}
+  if [winfo exists $historyWinName] {
+    wm withdraw $historyWinName
+    wm deiconify $historyWinName
+    return
+  }
+  CreateHistoryWin $historyWinName
+  puts $socketID "EventHistoryRequest $historyWinName $sid $cid"
+}
+proc CreateHistoryWin {winName } {
+  toplevel $winName
+  wm title $winName "Event History"
+  wm geometry $winName +[winfo rootx .]+[winfo pointery .]
+  set listsFrame [frame $winName.listsFrame -background black -borderwidth 1]
+  set eidFrame [frame $listsFrame.eidFrame]
+    label $eidFrame.label -text "Event ID" -background black -foreground white -anchor w
+    listbox $eidFrame.list -width 10 -height 5 -relief flat -background white
+    pack $eidFrame.label -side top -fill x -anchor e
+    pack $eidFrame.list -side top -fill both -expand true
+  set userFrame [frame $listsFrame.userFrame]
+    label $userFrame.label -text "Username" -background black -foreground white -anchor w
+    listbox $userFrame.list -width 15 -height 5 -relief flat -background white
+    pack $userFrame.label -side top -fill x -anchor e
+    pack $userFrame.list -side top -fill both -expand true
+  set dateFrame [frame $listsFrame.dateFrame]
+    label $dateFrame.label -text "Date/Time" -background black -foreground white -anchor w
+    listbox $dateFrame.list -width 17 -height 5 -relief flat -background white
+    pack $dateFrame.label -side top -fill x -anchor e
+    pack $dateFrame.list -side top -fill both -expand true
+  set statusFrame [frame $listsFrame.statusFrame]
+    label $statusFrame.label -text "ST" -background black -foreground white -anchor w
+    listbox $statusFrame.list -width 3 -height 5 -relief flat -background white
+    pack $statusFrame.label -side top -fill x -anchor e
+    pack $statusFrame.list -side top -fill both -expand true
+  set descFrame [frame $listsFrame.descFrame]
+    label $descFrame.label -text "Description" -background black -foreground white -anchor w
+    listbox $descFrame.list -width 26 -height 5 -relief flat -background white
+    pack $descFrame.label -side top -fill x -anchor e
+    pack $descFrame.list -side top -fill both -expand true
+  set commentFrame [frame $listsFrame.commentFrame]
+    label $commentFrame.label -text "Comment" -background black -foreground white -anchor w
+    listbox $commentFrame.list -width 50 -height 5 -relief flat -background white
+    pack $commentFrame.label -side top -fill x -anchor e
+    pack $commentFrame.list -side top -fill both -expand true
+  pack $eidFrame $userFrame $dateFrame $statusFrame $descFrame\
+   -side left -fill y
+  pack $commentFrame\
+   -side left -fill both -expand true
+
+  button $winName.close -text "Close" -command "destroy $winName"
+  pack $listsFrame -side top -fill both -expand true
+  pack $winName.close -side top
+
+}
+proc InsertHistoryResults { winName results } {
+  if { $results == "done" } { return }
+  if { ![winfo exists $winName] } { CreateHistoryWin $winName }
+  $winName.listsFrame.eidFrame.list insert end "[lindex $results 0].[lindex $results 1]"
+  $winName.listsFrame.userFrame.list insert end [lindex $results 2]
+  $winName.listsFrame.dateFrame.list insert end [lindex $results 3]
+  $winName.listsFrame.statusFrame.list insert end [lindex $results 4]
+  $winName.listsFrame.descFrame.list insert end [lindex $results 5]
+  set comment [lindex $results 6]
+  if { $comment == ""} { set comment none }
+  $winName.listsFrame.commentFrame.list insert end $comment
+}
 
 proc Working {} {
   global BUSY
@@ -3413,12 +3523,13 @@ $eventPane fraction 55 45
 $detailPane fraction 40 60
 
 # Xscript Menu
-set xscriptMenu [ menu .xscriptMenu -background blue -foreground white -activeforeground blue\
+set eventIDMenut [ menu .eventIDMenut -background blue -foreground white -activeforeground blue\
  -activebackground white -tearoff 0 ]
-$xscriptMenu add command -label "Transcript" -command "GetXscript xscript 0"
-$xscriptMenu add command -label "Transcript (force new)" -command "GetXscript xscript 1"
-$xscriptMenu add command -label "Ethereal" -command "GetXscript ethereal 0"
-$xscriptMenu add command -label "Ethereal (force new)" -command "GetXscript ethereal 1"
+$eventIDMenut add command -label "Event History" -command "GetEventHistory"
+$eventIDMenut add command -label "Transcript" -command "GetXscript xscript 0"
+$eventIDMenut add command -label "Transcript (force new)" -command "GetXscript xscript 1"
+$eventIDMenut add command -label "Ethereal" -command "GetXscript ethereal 0"
+$eventIDMenut add command -label "Ethereal (force new)" -command "GetXscript ethereal 1"
 
 # IPQuery Menu
 set ipQueryMenu [ menu .ipQueryMenu -background blue -foreground white -activeforeground blue\
@@ -3494,37 +3605,64 @@ $validateMenu add command -label "Cat VII: Virus Infection(F7)"\
 bind . <F8> {
   ValidateEvent 1
 }
+bind . <Control-Key-F8> {
+  ValidateEvent 1 1
+}
 # F1 deletes the highlighted event and marks the event as 11 (CatI)
 bind . <F1> {
   ValidateEvent 11
+}
+bind . <Control-Key-F1> {
+  ValidateEvent 11 1
 }
 # F2 deletes the highlighted event and marks the event as 12 (CatII)
 bind . <F2> {
   ValidateEvent 12
 }
+bind . <Control-Key-F2> {
+  ValidateEvent 12 1
+}
 # F3 deletes the highlighted event and marks the event as 13 (CatIII)
 bind . <F3> {
   ValidateEvent 13
+}
+bind . <Control-Key-F3> {
+  ValidateEvent 13 1
 }
 # F4 deletes the highlighted event and marks the event as 14 (CatIV)
 bind . <F4> {
   ValidateEvent 14
 }
+bind . <Control-Key-F4> {
+  ValidateEvent 14 1
+}
 # F5 deletes the highlighted event and marks the event as 15 (CatV)
 bind . <F5> {
   ValidateEvent 15
+}
+bind . <Control-Key-F5> {
+  ValidateEvent 15 1
 }
 # F6 deletes the highlighted event and marks the event as 16 (CatVI)
 bind . <F6> {
   ValidateEvent 16
 }
+bind . <Control-Key-F6> {
+  ValidateEvent 16 1
+}
 # F7 deletes the highlighted event and marks the event as 17 (CatVII)
 bind . <F7> {
   ValidateEvent 17
 }
+bind . <Control-Key-F7> {
+  ValidateEvent 17 1
+}
 # F9 Escalates the event
 bind . <F9> {
   ValidateEvent 2
+}
+bind . <Control-Key-F9> {
+  ValidateEvent 2 1
 }
 # Ctl-s initiates Sleep function.
 bind . <Control-Key-s> {
