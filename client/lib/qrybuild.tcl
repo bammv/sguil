@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.29 2005/01/26 15:53:08 shalligan Exp $ #
+# $Id: qrybuild.tcl,v 1.30 2005/01/27 14:38:06 shalligan Exp $ #
 proc QryBuild {tableSelected whereTmp } {
     global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList
@@ -428,6 +428,7 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
 	    destroy $ipAddressWin
 	    InvokeQryBuild $SELECTEDTABLE $tmpWhere
 	} else {
+	    destroy $ipAddressWin
 	    if { $SELECTEDTABLE == "event" } {
 		DBQueryRequest $tmpWhere
 	    } elseif { $SELECTEDTABLE == "sessions" } {
