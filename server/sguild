@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.134 2004/12/10 15:46:46 bamm Exp $ #
+# $Id: sguild,v 1.135 2004/12/13 16:48:25 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -93,6 +93,15 @@ proc QuerydCmdRcvd { pipeID } {
 set validSockets ""
 set clientList {}
 set LOGGER ""
+
+# Check to see if tcl was compiled w/threading enabled.
+# Fork and thread don't play nice together so we bail 
+# w/an error if threading was enabled
+if { [info exists ::tcl_platform(threaded)] } {
+    puts "ERROR: This version of tcl was compile with threading enabled.\
+          Sguil is NOT compatible with threading."
+}
+
 # Check for the existance of logger 
 foreach path [split $env(PATH) :] {
     if { [file exists $path/logger] && [file executable $path/logger] } { set LOGGER $path/logger }
