@@ -70,7 +70,7 @@ start() {
   fi 
 }
 
-stop() {
+stopproc() {
   if [ -f $PIDFILE ]; then
     kill `cat $PIDFILE`
     if [ $? = 0 ]; then
@@ -106,7 +106,7 @@ case "$1" in
     start
     ;;
   stop)
-    stop
+    stopproc
     ;;
   restart)
     restart
