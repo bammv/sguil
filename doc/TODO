@@ -1,4 +1,4 @@
-# $Id: TODO,v 1.9 2003/11/19 18:18:14 bamm Exp $ #
+# $Id: TODO,v 1.10 2003/12/05 21:04:20 bamm Exp $ #
 
     TODO
 =================================================
@@ -23,3 +23,6 @@
   * Sancp
   * Startup scripts
   * Disk management in log_packets.sh
+  * New op_sguil, no more sensor => DB comms
+  * User/Sensor ACLs
+  * nessus data (srh)
