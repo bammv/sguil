@@ -438,6 +438,7 @@ proc OptimizeTables {} {
     set tables1 [list data icmphdr sensor status tcphdr udphdr]
     foreach t [lsort $tables1] {
 	$checkBox1 add $t -text [string totitle $t]
+	
     }
     set checkBox2 [checkbox $optimizeTables.checkBox2]
     set tables2 [list event portscan sessions]
@@ -467,12 +468,12 @@ proc OptimizeTables {} {
 		    puts $optimizeQuery
 		}
 	    }
-	    messagedialog .optimizeConfirm -title "Confirm" -text "WARNING: Optimization can cause tables to corrupt.  If you don't know how to fix corruption, DO NOT PROCEED." -modality global
-	    if { [.optimizeConfirm activate] } {
+	  set answer [tk_messageBox -title confirm -type okcancel -icon warning -message "WARNING: Optimization can cause tables to corrupt.  If you don't know how to fix corruption, DO NOT PROCEED."]
+	    if { $answer == "ok" } {
 		if {$DEBUG} { puts "Send Server: ExecDB $optimizeQuery" }
 		puts $socketID "ExecDB \{$optimizeQuery\}"
 	    }
-	    destroy .optimizeConfirm
+	   
 	}
 	destroy $optimizeTables
 	return
