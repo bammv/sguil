@@ -1,4 +1,4 @@
-/* $Id: op_sguil.c,v 1.11 2005/03/03 21:07:44 bamm Exp $ */
+/* $Id: op_sguil.c,v 1.12 2005/03/04 22:44:09 bamm Exp $ */
 
 /*
 ** Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@sguil.net> 
@@ -316,17 +316,29 @@ int OpSguil_Log(void *context, void *ul_data)
                         break;
 
                     default:
-                        for(i = 0; i < 18; ++i)
+                        for(i = 0; i < 17; ++i)
                         {
                             Tcl_DStringAppendElement(&list, "");
                         }
                         break;
                 }
 
-                /* Add payload data */
-                OpSguil_AppendPayloadData(&list, &p);
             }
         }
+        else
+        {
+
+            /* No IP Header. */
+            int i;
+            for(i = 0; i < 31; ++i)
+            {
+                Tcl_DStringAppendElement(&list, "");
+            }
+        }
+
+        /* Add payload data */
+        OpSguil_AppendPayloadData(&list, &p);
+
     }
     else
     {
