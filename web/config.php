@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/config.php,v 1.4 2004/04/03 16:21:46 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/config.php,v 1.5 2004/04/04 17:01:42 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -19,6 +19,7 @@ $dbname = "sguildb";
 $use_sancp = 0;
 
 $whois_command="/usr/bin/jwhois";
+$max_sig_length = 20;
 
 $colours = array("#A8A8A8","#FFFFFF","#D2D2D2");
 	

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/alerts.php,v 1.6 2004/04/03 21:07:49 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/alerts.php,v 1.7 2004/04/04 17:01:42 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -24,7 +24,8 @@
 		$url=$_SERVER['PHP_SELF'] .
 			"?query=" . $_REQUEST['query'] .
 			"&auto_refresh=" . $_REQUEST['auto_refresh'] .
-			"&autorefresh_interval=" . $_REQUEST['autorefresh_interval'];
+			"&autorefresh_interval=" . $_REQUEST['autorefresh_interval'] .
+			"&aggrigate=" . $_REQUEST['aggrigate'];
 			
 			printf("	<meta http-equiv=\"refresh\" content=\"" . $_REQUEST['autorefresh_interval'] . "; URL=" . $url ."\">\n");
 	}

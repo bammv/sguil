@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/alert_detail.php,v 1.3 2004/04/03 18:54:34 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/alert_detail.php,v 1.4 2004/04/04 17:01:42 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -28,39 +28,40 @@ require("sguil_functions.php");
 ?>
 
 <table cellpadding="0" cellspacing="0" border="1" width="100%">
+	<tr><td colspan="2">&nbsp;Displaying alert <?php print($_REQUEST['sid'] . "." . $_REQUEST['cid']); ?></td></tr>
 	<tr><td bgcolor="#00BFFF" align="center"><font color="#FFFFFF"><strong>&nbsp;IP&nbsp;</strong></font></td><td bgcolor="#ADD7E6"><?php
 		$proto = alert_details_ip($_REQUEST['sid'],$_REQUEST['cid']);
 	?></td></tr>
 	
-	<tr><?php
+	<?php
 	
 	if( $proto == 1 ) {
 		?>
-	   <td bgcolor="#0000FF" align="center"><font color="#FFFFFF"><strong>&nbsp;ICMP&nbsp;</strong></font></td><td bgcolor="#ADD7E6">
+	   <tr><td bgcolor="#0000FF" align="center"><font color="#FFFFFF"><strong>&nbsp;ICMP&nbsp;</strong></font></td><td bgcolor="#ADD7E6">
 		<?php
 		alert_details_icmp($_REQUEST['sid'],$_REQUEST['cid']);
  		?>
- 		</td>
+ 		</td></tr>
  		<?php
 	} else if ( $proto == 6 ) {
 	   ?>
-	   <td bgcolor="#0000FF" align="center"><font color="#FFFFFF"><strong>&nbsp;TCP&nbsp;</strong></font></td><td bgcolor="#ADD7E6">
+	   <tr><td bgcolor="#0000FF" align="center"><font color="#FFFFFF"><strong>&nbsp;TCP&nbsp;</strong></font></td><td bgcolor="#ADD7E6">
 	   <?php
 		alert_details_tcp($_REQUEST['sid'],$_REQUEST['cid']);
 		?>
-		</td>
+		</td></tr>
 		<?php
 	} else if ( $proto == 17 ) {
 		?>
-	   <td bgcolor="#0000FF" align="cente"><font color="#FFFFFF"><strong>&nbsp;UDP&nbsp;</strong></font></td><td bgcolor="#ADD7E6">
+	   <tr><td bgcolor="#0000FF" align="cente"><font color="#FFFFFF"><strong>&nbsp;UDP&nbsp;</strong></font></td><td bgcolor="#ADD7E6">
 	   <?php
 		alert_details_udp($_REQUEST['sid'],$_REQUEST['cid']);
 		?>
-		</td>
+		</td></tr>
 		<?php
 	}
 	
-	?></tr>
+	?>
 	<tr><td bgcolor="#00007F" align="center"><font color="#FFFFFF"><strong>&nbsp;DATA&nbsp;</strong></font></td><td bgcolor="#ADD7E6"><?php
 	
 	alert_details_payload($_REQUEST['sid'],$_REQUEST['cid']);

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.13 2004/04/03 19:31:51 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.14 2004/04/04 17:01:42 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -12,6 +12,7 @@
  */
  
 require("config.php");
+include("lib/geoip.inc");
 
 function DBOpen() {
 	global $dbhost, $dbuser, $dbpass, $dbname;
@@ -84,6 +85,7 @@ function show_alerts( $where_query, $aggrigate_result ) {
 	print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\">\n");
 	print("<tr><td colspan=\"11\">Query: " .
 		"<input type=\"text\" name=\"query\" size=\"100\" value=\"" . $where_query . "\"> " .
+		"<input type=\"hidden\" name=\"aggrigate\" value=\"" . $_REQUEST['aggrigate'] . "\"> " .
 		"<input name=\"submit\" value=\"Submit\" type=\"submit\">" .
 		"<input type=\"checkbox\" name=\"auto_refresh\" value=\"1\"");
 	if( $_REQUEST['auto_refresh'] == 1 ) {
@@ -98,16 +100,16 @@ function show_alerts( $where_query, $aggrigate_result ) {
 
 	print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"1\" width=\"100%\">\n");
 	print("<tr bgcolor=\"#000000\">\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;ST&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;CNT&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Sensor&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;sid.cid&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Date/Time&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Src&nbsp;IP&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;SPort&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Dst&nbsp;IP&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;DPort&nbsp;</strong></font></td>\n");
-	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Pr&nbsp;</strong></font></td>\n");
+	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;ST&nbsp;</strong></font></td>\n");
+	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;CNT&nbsp;</strong></font></td>\n");
+	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;Sensor&nbsp;</strong></font></td>\n");
+	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;sid.cid&nbsp;</strong></font></td>\n");
+	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;Date/Time&nbsp;</strong></font></td>\n");
+	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;Src&nbsp;IP&nbsp;</strong></font></td>\n");
+	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;SPort&nbsp;</strong></font></td>\n");
+	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;Dst&nbsp;IP&nbsp;</strong></font></td>\n");
+	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;DPort&nbsp;</strong></font></td>\n");
+	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;Pr&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Event&nbsp;Message&nbsp;</strong></font></td>\n");
 	print("</tr>\n");
 
@@ -124,20 +126,32 @@ function show_alerts( $where_query, $aggrigate_result ) {
 			print("	<td>&nbsp;" . $row['CNT'] . "&nbsp;</td>\n");
 			print("	<td>&nbsp;" . $row['hostname'] . "&nbsp;</td>\n");
 			print("	<td>&nbsp;<a href=\"$detail_url\" target=\"lookup_right\">" . $row['sid'] . "." . $row['cid'] . "</a>&nbsp;</td>\n");
-			print("	<td>&nbsp;" . $row['timestamp'] . "</td>\n");
-			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['src_ip'] . "</a>&nbsp;</td>\n");
-			print("	<td>&nbsp;" . $row['src_port'] . "&nbsp;</td>\n");
-			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a>&nbsp;</td>\n");
-			if ( (getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto']))=="") || ( getprotobynumber($row['ip_proto']) != 'udp' && getprotobynumber($row['ip_proto']) != 'tcp' ))
-			{
-				print("	<td>&nbsp;" . $row['dst_port'] . "&nbsp;</td>\n");
-			}
+			print("	<td>&nbsp;" . str_replace(" ", "&nbsp;", $row['timestamp']) . "&nbsp;</td>\n");
+			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['src_ip'] . "</a>&nbsp;(" . getcountrycodebyaddr($row['src_ip']) . ")&nbsp;</td>\n");
+			
+			if ( ( getservbyport( $row['src_port'] ,getprotobynumber($row['ip_proto']))=="") || ( getprotobynumber($row['ip_proto']) != 'udp' && getprotobynumber($row['ip_proto']) != 'tcp' ))
+				print("	<td>&nbsp;" . $row['src_port'] . "&nbsp;</td>\n");
 			else
-			{
-				print("	<td>&nbsp;" . $row['dst_port'] ." (" .getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto'])) . ")&nbsp;</td>\n");
-			}
-			print("	<td>" . $row['ip_proto'] ."&nbsp;(" . getprotobynumber($row['ip_proto']). ")" . "&nbsp;</td>\n");
-			print("	<td>" . $row['signature'] . "&nbsp;</td>\n");
+				print("	<td>&nbsp;" . $row['src_port'] ."&nbsp;(" .getservbyport ( $row['src_port'] , getprotobynumber($row['ip_proto'])) . ")&nbsp;</td>\n");
+
+			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a>&nbsp;(" . getcountrycodebyaddr($row['dst_ip']) . ")&nbsp;</td>\n");
+
+			if ( (getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto']))=="") || ( getprotobynumber($row['ip_proto']) != 'udp' && getprotobynumber($row['ip_proto']) != 'tcp' ))
+				print("	<td>&nbsp;" . $row['dst_port'] . "&nbsp;</td>\n");
+			else
+				print("	<td>&nbsp;" . $row['dst_port'] ."&nbsp;(" .getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto'])) . ")&nbsp;</td>\n");
+
+			print("	<td>&nbsp;" . $row['ip_proto'] ."&nbsp;(" . getprotobynumber($row['ip_proto']). ")" . "&nbsp;</td>\n");
+			
+			//global $max_sig_length;
+			//if( $max_sig_length > 0 && strlen($row['signature']) > $max_sig_length ) {
+			//	$fstring = "%" . $max_sig_lengh - 3 . "s";
+			//	sprintf($signature, "%20s", $row['signature']);
+			//	print("	<td>&nbsp;" . $signature . "&nbsp;</td>\n");
+			//} else {
+				print("	<td>&nbsp;" . $row['signature'] . "&nbsp;</td>\n");
+			//}
+			
 			print("</tr>\n");
 			
 			if( $i++ >= count($colours) ) {
@@ -234,7 +248,7 @@ function show_sessions( $where_query ) {
 			print("	<td>&nbsp;" . $row['id'] . "&nbsp;</td>\n");			
 			print("	<td>&nbsp;" . $row['start_time'] . "&nbsp;</td>\n");
 			print("	<td>&nbsp;" . $row['end_time'] . "&nbsp;</td>\n");
-			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['src_ip'] . "</a>&nbsp;</td>\n");
+			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['src_ip'] . "</a>&nbsp;(" . getcountrycodebyaddr($row['src_ip']) . ")&nbsp;</td>\n");
 
 			$service_name = getservbyport( $row['src_port'] , 'tcp' );
 			
@@ -243,7 +257,7 @@ function show_sessions( $where_query ) {
 			else 
 				print("	<td>&nbsp;" . $row['src_port'] ." (" . $service_name . ")&nbsp;</td>\n");
 			
-			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a>&nbsp;</td>\n");
+			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a>&nbsp;(" . getcountrycodebyaddr($row['dst_ip']) . ")&nbsp;</td>\n");
 
 			$service_name = getservbyport( $row['dst_port'] , 'tcp' );
 			
@@ -294,17 +308,17 @@ function alert_details_ip($sid,$cid) {
 		print("<form action=\"" . $_SERVER['PHP_SELF'] . "\" method=\"POST\">\n");
 		print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\">\n");
 		print("	<tr>\n");
-		print("		<td bgcolor=\"#ADD7E6\">Source IP</td>\n");
-		print("		<td bgcolor=\"#ADD7E6\">Dest IP</td>\n");
-		print("		<td bgcolor=\"#ADD7E6\">Ver</td>\n");
-		print("		<td bgcolor=\"#ADD7E6\">HL</td>\n");
-		print("		<td bgcolor=\"#ADD7E6\">TOS</td>\n");
-		print("		<td bgcolor=\"#ADD7E6\">len</td>\n");
-		print("		<td bgcolor=\"#ADD7E6\">ID</td>\n");
-		print("		<td bgcolor=\"#ADD7E6\">Flags</td>\n");
-		print("		<td bgcolor=\"#ADD7E6\">Offset</td>\n");
-		print("		<td bgcolor=\"#ADD7E6\">TTL</td>\n");
-		print("		<td bgcolor=\"#ADD7E6\">Checksum</td>\n");
+		print("		<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;Source IP</td>\n");
+		print("		<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;Dest IP</td>\n");
+		print("		<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;Ver</td>\n");
+		print("		<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;HL</td>\n");
+		print("		<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;TOS</td>\n");
+		print("		<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;len</td>\n");
+		print("		<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;ID</td>\n");
+		print("		<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;Flags</td>\n");
+		print("		<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;Offset</td>\n");
+		print("		<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;TTL</td>\n");
+		print("		<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;Checksum</td>\n");
 		print("	</tr>\n");
 		print("	<tr>\n");
 		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"src_ip\" value=\"" . $row['src_ip'] . "\" size=\"16\"></td>\n");
@@ -349,23 +363,23 @@ function alert_details_tcp($sid,$cid) {
 		print("<form action=\"" . $_SERVER['PHP_SELF'] . "\" method=\"POST\">\n");
 		print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\">\n");
 		print("<tr>\n");
-		print("	<td bgcolor=\"#ADD7E6\">Source<br>Port</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">Dest<br>Port</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">R<br>1</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">R<br>0</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">U<br>R<br>G</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">A<br>C<br>K</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">P<br>S<br>H</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">R<br>S<br>T</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">S<br>Y<br>N</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">F<br>I<br>N</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">Seq #</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">Ack #</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">Offset</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">Res</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">Window</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">Urp</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">ChkSum</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;Source Port</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;Dest Port</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\" align=\"center\">R<br>1</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\" align=\"center\">R<br>0</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\" align=\"center\">U<br>R<br>G</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\" align=\"center\">A<br>C<br>K</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\" align=\"center\">P<br>S<br>H</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\" align=\"center\">R<br>S<br>T</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\" align=\"center\">S<br>Y<br>N</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\" align=\"center\">F<br>I<br>N</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;Seq #</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;Ack #</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;Offset</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;Res</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;Window</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;Urp</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" valign=\"bottom\">&nbsp;ChkSum</td>\n");
 		print("</tr>\n");
 		print("<tr>\n");
 		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"sport\" value=\"" . $row['src_port'] . "\" size=\"6\"></td>\n");
@@ -462,11 +476,11 @@ function alert_details_icmp($sid,$cid) {
 		print("<form action=\"" . $_SERVER['PHP_SELF'] . "\" method=\"POST\">\n");
 		print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\">\n");
 		print("<tr>\n");
-		print("	<td bgcolor=\"#ADD7E6\">Type</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">Code</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">ChkSum</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">ID</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\" colspan=\"2\">Seq#</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\">&nbsp;Type</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\">&nbsp;Code</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\">&nbsp;ChkSum</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\">&nbsp;ID</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" colspan=\"2\">&nbsp;Seq#</td>\n");
 		print("</tr>\n");
 		print("<tr>\n");
 		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"type\" value=\"" . $row['icmp_type'] . "\" size=\"3\"></td>\n");
@@ -677,6 +691,82 @@ function alert_details_payload($sid, $cid) {
 		print("</form>\n");
 	
 	DBClose($result);
+}
+
+function getcountrycodebyaddr($ip) {
+	$gi = geoip_open("data/GeoIP.dat",GEOIP_STANDARD);
+	$result = geoip_country_code_by_addr($gi, "$ip");
+	geoip_close($gi);
+	
+	if ( $result == "" ) {
+		// No result.
+		if( is_rfc1918($ip) )
+			$result = "rfc1918";
+		else if( is_rfc3171($ip) )
+			$result = "rfc3171";
+		else
+			$result = "Unknown";
+	}
+	
+	return( $result );
+}
+
+function getcountrynamebyaddr($ip) {
+	$gi = geoip_open("data/GeoIP.dat",GEOIP_STANDARD);
+	$result = geoip_country_name_by_addr($gi, "$ip");
+	geoip_close($gi);
+	
+	if ( $result == "" ) {
+		// No result.
+		if( is_rfc1918($ip) )
+			$result = "rfc1918";
+		else
+			$result = "Unknown";
+	}
+	
+	return( $result );
+}
+
+function is_rfc1918($ip) {
+	// Is the IP in the 10.x.x.x reserved network?
+	if( ( ip2long($ip) >= ip2long("10.0.0.0")) &&
+		 ( ip2long($ip) <= ip2long("10.255.255.255")))
+	{
+		$result = 1;
+	}
+	// Is the IP in the 172.16.x.x-172.31.x.x reserved network?
+	else if( ( ip2long($ip) >= ip2long("172.16.0.0")) &&
+				( ip2long($ip) <= ip2long("172.31.255.255")))
+	{
+		$result = 1;
+	}
+	// Is the IP in the 192.168.x.x reserved network?
+	else if( ( ip2long($ip) >= ip2long("192.168.0.0")) &&
+				( ip2long($ip) <= ip2long("192.168.255.255")))
+	{
+		$result = 1;
+	}
+	else
+	{
+		$result = 0;
+	}
+
+	return( $result);
+}
+
+function is_rfc3171($ip) {
+	// Is the IP in the 224.0.0.0-239.255.255.255 reserved network?
+	if( ( ip2long($ip) >= ip2long("224.0.0.0")) &&
+		 ( ip2long($ip) <= ip2long("239.255.255.255")))
+	{
+		$result = 1;
+	}
+	else
+	{
+		$result = 0;
+	}
+
+	return( $result);
 }
 
 ?>
