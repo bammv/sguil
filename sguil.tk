@@ -1,4 +1,4 @@
-#!/usr/bin/wishx
+#!/usr/local/bin/wishx
 
 ####################################################################
 # Snort GUI for Lamerz [sguil] - A tcl/tk interface to snort       #
@@ -1557,9 +1557,9 @@ proc SingleSelect { winName index } {
 }
 
 proc SelectNextEvent { paneName index } {
-
+    global ACTIVE_EVENT
   set listSize [$paneName.eventIDFrame.list size]
-  if { $listSize == 0 } { return }
+  if { $listSize == 0 } { set ACTIVE_EVENT 0; return }
   if { $index < $listSize  } {
     SelectAllLists $paneName.eventIDFrame.list $index
   } elseif { $index > 0 } {
