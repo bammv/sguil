@@ -272,6 +272,7 @@ proc DisplayIncidentCats {} {
 }
 proc ValidateEvent { status } {
   global ACTIVE_EVENT currentSelectedPane eventArray correlateArray socketID DEBUG
+  global MULTI_SELECT
   if {$ACTIVE_EVENT} {
      foreach selectedIndex\
       [lsort -integer -decreasing [$currentSelectedPane.eventIDFrame.list curselection]] {
@@ -288,13 +289,15 @@ proc ValidateEvent { status } {
          unset correlateArray($eventID)
        } 
      }
-     SelectNextEvent $currentSelectedPane $selectedIndex
+     update
      if {$DEBUG} { puts "Sending Server: DeleteEventIDList $status $deleteEventIDList" }
      puts $socketID "DeleteEventIDList $status $deleteEventIDList"
      if { [llength [$currentSelectedPane.eventIDFrame.list curselection]] > 1} {
 	 # puts "unslecting multiple events"
 	 UnHighLightListLine $currentSelectedPane
      } 
+     set MULTI_SELECT 0
+     SelectNextEvent $currentSelectedPane $selectedIndex
   }
 }
 #
@@ -1019,7 +1022,7 @@ proc DeleteEventID { eventID } {
   foreach arrayName [array names rtPaneArray] {
     set eventIDList [$rtPaneArray($arrayName).eventIDFrame.list get 0 end]
     set eventIDIndex [lsearch -exact $eventIDList $eventID]
-    if { $eventIDIndex >= 0 } { DeleteLine $rtPaneArray($arrayName) $eventIDIndex }
+    if { $eventIDIndex >= 1 } { DeleteLine $rtPaneArray($arrayName) $eventIDIndex }
   }
   set escalatedIDList [$escalateFrame.eventIDFrame.list get 0 end]
   set escalatedIDIndex [lsearch -exact $escalatedIDList $eventID]
@@ -2420,22 +2423,9 @@ option add *Font ourStandardFont
 source $SGUILLIB/dkffont.tcl
 source $SGUILLIB/email17.tcl
 
-# Connect to the server
-if [catch {set socketID [socket $SERVERHOST $SERVERPORT]}] {
-  puts "Unable to connect to $SERVERHOST on port $SERVERPORT."
-  exit
-} else {
-  fconfigure $socketID -buffering line
-  fileevent $socketID readable [list ServerCommandRcvd $socketID]
-  puts $socketID "SendDBInfo"
-  puts $socketID "SendSensorList"
-  wm withdraw .
-  tkwait variable MONITORFLAG
-  puts $socketID "SendEscalatedEvents"
-}
-
 ############################# GUI ############################################
 
+wm withdraw .
 
 option add *textBackground white
 option add *selectBackground $SELECTBACKGROUND
@@ -2988,9 +2978,6 @@ $validateMenu add command -label "Cat VII: Virus Infection(F7)"\
   -command "ValidateEvent 17"
 
 
-update
-wm deiconify .
-
 ################### GENERAL KEY BINDINGS ########################
 
 # F8 deletes the highlighted event
@@ -3126,4 +3113,21 @@ bind $soundStatus <Button-1> {
       InfoMessage "/dev/speech was not found. Download and install speechd from www.speechio.org."
     }
   }
+}
+#########################################################################
+
+#################### Connect To The Server ##############################
+
+if [catch {set socketID [socket $SERVERHOST $SERVERPORT]}] {
+  puts "Unable to connect to $SERVERHOST on port $SERVERPORT."
+  exit
+} else {
+  fconfigure $socketID -buffering line
+  fileevent $socketID readable [list ServerCommandRcvd $socketID]
+  puts $socketID "SendDBInfo"
+  puts $socketID "SendSensorList"
+  tkwait variable MONITORFLAG
+  wm deiconify .
+  update
+  puts $socketID "SendEscalatedEvents"
 }
