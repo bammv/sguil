@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/alerts.php,v 1.5 2004/04/03 18:54:34 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/alerts.php,v 1.6 2004/04/03 21:07:49 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -34,7 +34,7 @@
 <body>
 
 <?php
-	if( $_REQUEST['aggrigate'] != "" )
+	if( $_REQUEST['aggrigate'] == "" || $_REQUEST['aggrigate'] == "0" )
 		$aggrigate = 0;
 	else
 		$aggrigate = 1;
