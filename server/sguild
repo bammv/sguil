@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.112 2004/08/04 21:07:10 shalligan Exp $ #
+# $Id: sguild,v 1.113 2004/08/06 16:19:55 shalligan Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -77,7 +77,7 @@ proc DisplayUsage { cmdName } {
   CleanExit
 }
 proc HupTrapped {} {
-  global DEBUG AUTOCAT_FILE GLOBAL_QRY_FILE GLOBAL_QRY_LIST clientList ROPORT_QRY_LIST
+  global DEBUG AUTOCAT_FILE GLOBAL_QRY_FILE GLOBAL_QRY_LIST clientList REPORT_QRY_FILE REPORT_QRY_LIST
   global acRules acCat ACCESS_FILE
   if { $DEBUG } { puts "HUP signal caught." }
   # Reload auto cat rules

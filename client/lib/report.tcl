@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.16 2004/08/06 15:06:05 shalligan Exp $ #
+# $Id: report.tcl,v 1.17 2004/08/06 16:19:55 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -262,7 +262,7 @@ proc PHBReport {} {
 	return
     }
     toplevel $phbReport
-    wm geometry $phbReport +200+200
+    wm geometry $phbReport +300+300
     wm title $phbReport "Sensor Summary Report"
     
     set sensorBox [checkbox $phbReport.sensorBox -labeltext "Select a Sensor" -orient horizontal]
@@ -292,6 +292,8 @@ proc PHBReport {} {
     set reportBox [disjointlistbox $reportFrame.reportBox -lhslabeltext "Select Report Elements"\
 	    -rhslabeltext "Selected Report Elements"]
 	$reportBox insertlhs $rList
+    $reportBox component lhs configure -visibleitems 30x12
+    $reportBox component rhs configure -visibleitems 30x12
     set orderButton [buttonbox $reportFrame.oBox -orient vertical]
       $orderButton add up -text "\u2191" -command "MoveReportUp $reportFrame"
       $orderButton add down -text "\u2193" -command "MoveReportDown $reportFrame"
@@ -328,6 +330,8 @@ proc PHBReport {} {
 #	puts $datetimeend
 	destroy $phbReport
 	BuildPHBReport $sensors $datetimestart $datetimeend sName sDesc sType sSql sFields
+    } else {
+	destroy $phbReport
     }
     return
 }
