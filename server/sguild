@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.114 2004/08/06 16:28:36 shalligan Exp $ #
+# $Id: sguild,v 1.115 2004/08/06 16:33:32 shalligan Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -1821,7 +1821,7 @@ proc Daemonize {} {
 ###################### MAIN #####################################
 
 set validSockets ""
-
+set clientList {}
 # Load mysql support.
 if [catch {package require mysqltcl} mysqltclVersion] {
   puts "ERROR: The mysqltcl extension does NOT appear to be installed on this sysem."
