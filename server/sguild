@@ -27,6 +27,7 @@ proc DisplayUsage { cmdName } {
   puts "         \[-O <filename>\] \[-C <directory\]"
   puts "       $cmdName \[-u <filename\] \[-adduser <username>\] \[-deluser <username\]"
   puts "  -c <filename>: PATH to the sguild config (sguild.conf) file."
+  puts "  -a <filename>: PATH to the sguild config (autocat.conf) file."
   puts "  -u <filename>: PATH to the sguild users (sguild.users) file."
   puts "  -P <filename>: Name of file to write the PID to."
   puts "                 Default is /var/run/sguild.pid"
@@ -38,6 +39,67 @@ proc DisplayUsage { cmdName } {
   puts "  -deluser <username>: Delete user from sguild.users"
   puts "  -h Display this help"
   CleanExit
+}
+proc LoadAutoCatFile { filename } {
+  global AUTOID
+  set AUTOID [GetUserID auto]
+  set i 0
+  for_file line $filename {
+    if ![regexp ^# $line] {
+      set cTime [ctoken line "||"]
+      if { $cTime != "none" && $cTime != "NONE" } {
+        set cTimeSecs [clock scan "$cTime" -gmt true]
+        if { $cTimeSecs > [clock seconds] } {
+          # Set up the removal
+          set DELAY [expr ($cTimeSecs - [clock seconds]) * 1000]
+          after $DELAY RemoveAutoCatRule $i
+          AddAutoCatRule $line $i
+          incr i
+        }
+      } else {
+        AddAutoCatRule $line $i
+        incr i
+      }
+    }
+  }
+}
+proc RemoveAutoCatRule { rid } {
+  global acRules acCat DEBUG
+  if {$DEBUG} { puts "Removing Rule: $acRules($rid)" }
+  unset acRules($rid)
+  unset acCat($rid)
+}
+proc AddAutoCatRule { line rid } {
+  global acRules acCat DEBUG
+  if {$DEBUG} {puts "Adding AutoCat Rule: $line"}
+  foreach dIndex [list 8 11 9 12 7] {
+    set tmpVar [ctoken line "||"]
+    if { $tmpVar != "any" && $tmpVar != "ANY" } {
+      lappend acRules($rid) [list $dIndex $tmpVar]
+    }
+  }
+  set acCat($rid) [ctoken line "||"]
+}
+proc AutoCat { data } {
+  global acRules acCat DEBUG AUTOID
+  foreach rid [array names acRules] {
+    set MATCH 1
+    foreach rule [lrange $acRules($rid) 0 end] {
+      set rIndex [lindex $rule 0]
+      set rMatch [lindex $rule 1]
+      if { [lindex $data $rIndex] != $rMatch } {
+        set MATCH 0
+        break
+      } 
+    }
+    if { $MATCH } {
+      if {$DEBUG} {puts "AUTO MARKING EVENT AS : $acCat($rid)"}
+      UpdateDBStatus "[lindex $data 5].[lindex $data 6]" [GetCurrentTimeStamp] $acCat($rid)
+      InsertHistory [lindex $data 5] [lindex $data 6] $AUTOID [GetCurrentTimeStamp] $acCat($rid) "Auto Update"
+      return 1
+    }
+  }
+  return 0
 }
 proc CleanExit {} {
   global PID_FILE
@@ -334,12 +396,12 @@ proc ClientExitClose { socketID } {
 #
 proc EventRcvd { socketID data } {
   global DEBUG EMAIL_EVENTS EMAIL_CLASSES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS
+  global acRules acCat
   set eventDataList [lrange [split $data |] 1 end]
   if { [lindex $eventDataList 2] == "system-info" } {
     if {$DEBUG} {
       puts "SYSTEM INFO: $eventDataList"
     }
-    puts "$socketID : CONFIRM system msg"
     puts $socketID "CONFIRM system msg"
     set sensorName [lindex $eventDataList 3]
     set message [lindex $eventDataList 5]
@@ -348,19 +410,22 @@ proc EventRcvd { socketID data } {
     if {$DEBUG} {
       puts "Alert Received: $eventDataList"
     }
-    puts "$socketID : CONFIRM [lindex $eventDataList 6]"
     puts $socketID "CONFIRM [lindex $eventDataList 6]"
     flush $socketID
     AddEventToEventArray $eventDataList
-    SendEvent $eventDataList
-    if { $EMAIL_EVENTS } {
-      #Ug-ly. Things will get better when the rules are in the DB.
-      set sid [lindex $eventDataList 13]
-      set class [lindex $eventDataList 2]
-      if { ([lsearch -exact $EMAIL_CLASSES $class] >= 0\
-           && [lsearch -exact $EMAIL_DISABLE_SIDS $sid] < 0)
-           || [lsearch -exact $EMAIL_ENABLE_SIDS $sid] >= 0 } {
-        EmailEvent $eventDataList
+    # I we don't have any auto-cat rules, or we don't match on
+    # the autocat, then we send off the rule
+    if { ![array exists acRules] || ![AutoCat $eventDataList] } {
+      SendEvent $eventDataList
+      if { $EMAIL_EVENTS } {
+        #Ug-ly. Things will get better when the rules are in the DB.
+        set sid [lindex $eventDataList 13]
+        set class [lindex $eventDataList 2]
+        if { ([lsearch -exact $EMAIL_CLASSES $class] >= 0\
+             && [lsearch -exact $EMAIL_DISABLE_SIDS $sid] < 0)
+             || [lsearch -exact $EMAIL_ENABLE_SIDS $sid] >= 0 } {
+          EmailEvent $eventDataList
+        }
       }
     }
   }
@@ -1111,6 +1176,7 @@ foreach arg $argv {
         -- { set state flag }
         -h { DisplayUsage $argv0}
         -c { set state conf }
+        -a { set state autocat }
         -u { set state users_file }
         -D { set DAEMON_CONF_OVERRIDE 1 }
         -P { set state pid_file }
@@ -1123,6 +1189,7 @@ foreach arg $argv {
       }
     }
     conf { set CONF_FILE $arg; set state flag }
+    autocat { set AUTOCAT_FILE $arg; set state flag }
     users_file { set USERS_FILE $arg; set state flag }
     pid_file { set PID_FILE $arg; set state flag }
     openssl { set OPENSSL 1; set TLS_PATH $arg; set state flag }
@@ -1239,6 +1306,17 @@ if { [info exists ADDUSER] && $ADDUSER } {
 if { [info exists DELUSER] && $DELUSER} {
   DelUser $userName $USERS_FILE
   exit
+}
+# Load auto cat config
+if { ![info exists AUTOCAT_FILE] } {
+   if { [file exists /etc/sguild/autocat.conf] } {
+     set AUTOCAT_FILE "/etc/sguild/autocat.conf"
+   } else {
+     set AUTOCAT_FILE "./autocat.conf"
+   }
+}
+if { [file exists $AUTOCAT_FILE] } {
+  LoadAutoCatFile $AUTOCAT_FILE
 }
 # Load global queries.
 if { [file exists /etc/sguild/sguild.queries] } {
