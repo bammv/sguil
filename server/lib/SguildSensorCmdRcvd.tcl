@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.1 2004/10/05 15:23:20 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.2 2004/10/07 19:36:15 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global DEBUG connectedAgents agentSensorName
@@ -34,7 +34,8 @@ proc SensorCmdRcvd { socketID } {
 }
 
 proc RcvSsnFile { socketID tableName fileName sensorName } {
-  global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe   set sensorID [GetSensorID $sensorName]
+  global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe
+  set sensorID [GetSensorID $sensorName]
   if {$DEBUG} {puts "Receiving session file $fileName."}
   fconfigure $socketID -translation binary
   set DB_OUTFILE $TMPDATADIR/$fileName
