@@ -8,9 +8,9 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } } {
   global currentSelectedPane
   set timestamp [lindex [GetCurrentTimeStamp "1 week ago"] 0]
   if { $tableName == "event" } {
-    set whereTmp "WHERE $tableName.sid=sensor.sid AND $tableName.timestamp > '$timestamp' AND "
+    set whereTmp "WHERE $tableName.timestamp > '$timestamp' AND "
   } else {
-    set whereTmp "WHERE $tableName.sid=sensor.sid AND $tableName.start_time > '$timestamp' AND "
+    set whereTmp "WHERE $tableName.start_time > '$timestamp' AND "
   }
   if { $queryType == "srcip" } {
     set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
@@ -68,7 +68,7 @@ proc SsnQueryRequest { whereStatement } {
   set selectQuery "SELECT sensor.hostname, sessions.xid, sessions.start_time, sessions.end_time,\
    INET_NTOA(sessions.src_ip), sessions.src_port, INET_NTOA(sessions.dst_ip), sessions.dst_port,\
    sessions.src_pckts, sessions.src_bytes, sessions.dst_pckts, sessions.dst_bytes\
-   FROM sessions, sensor $whereStatement"
+   FROM sessions INNER JOIN sensor ON sessions.sid=sensor.sid $whereStatement"
   regsub -all {\n} $selectQuery {} selectQuery
   incr SSN_QUERY_NUMBER
   $eventTabs add -label "Ssn Query $SSN_QUERY_NUMBER"
@@ -118,21 +118,21 @@ proc DBQueryRequest { whereStatement {winTitle {none} } } {
    event.src_port, event.dst_port"
   # Parse the WHERE and determine what tables we need to SELECT from.
   # We'll always have 'event' and 'sensor'.
-  set fromQuery " FROM event, sensor"
+  set fromQuery " FROM event INNER JOIN sensor ON event.sid=sensor.sid"
   if { [regexp {\s+user_info\.} $whereStatement] } {
-    set fromQuery "$fromQuery, user_info"
+    set fromQuery "$fromQuery INNER JOIN user_info ON user_info.uid=event.last_uid"
   }
   if { [regexp {\s+tcphdr\.} $whereStatement] } {
-    set fromQuery "$fromQuery, tcphdr"
+    set fromQuery "$fromQuery INNER JOIN tcphdr ON event.sid=tcphdr.sid AND event.cid=tcphdr.cid"
   }
   if { [regexp {\s+udphdr\.} $whereStatement] } {
-    set fromQuery "$fromQuery, udphdr"
+    set fromQuery "$fromQuery INNER JOIN udphdr ON event.sid=udphdr.sid AND event.cid=udphdr.cid"
   }
   if { [regexp {\s+icmphdr\.} $whereStatement] } {
-    set fromQuery "$fromQuery, icmphdr"
+    set fromQuery "$fromQuery INNER JOIN icmphdr ON event.sid=icmphdr.sid AND event.cid=icmphdr.cid"
   }
   if { [regexp {\s+data\.} $whereStatement] } {
-    set fromQuery "$fromQuery, data"
+    set fromQuery "$fromQuery INNER JOIN data ON event.sid=data.sid AND event.cid=data.cid"
   }
   set selectQuery "$selectQuery $fromQuery $whereStatement"
   regsub -all {\n} $selectQuery {} selectQuery
