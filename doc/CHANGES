@@ -1,0 +1,200 @@
+Version CVS-Head
+  sguil.tk
+    * Added decodes for ICMP Type 3 (dest Unreachable) and 11 (time exceeded)
+  sguild
+    * changed GetIcmpData to return the payload so we can parse it out 
+    
+    * Proc CreateDB added. Sguild will create the required database
+      if it doesn't exists (on request).
+
+Version 0.2
+  sguil.tk
+    * Dialog for selecting sensor(s) on to monitor added
+      to initialization.
+
+    * Fixed escalate bug where events weren't removed from all
+      connected clients.
+
+    * Added a Show DB Tables function to assist analyst in 
+      creating queries.
+
+  sguild
+    * Added procs and changes required for monitoring specific
+      sensors.
+
+    * Fixed escalate bug where events weren't removed from all
+      connected clients.
+
+    * Gets DB table info on init in support of the "Show DB
+      Tables" function added to sguil.tk.
+
+  op_sguil.c
+    * Added "nospin" option for those users who want barnyard
+      to continue processesing events if unable to connect to
+      sguild.
+
+Version 0.1
+  sguil.tk
+    * MulitiSelect functionality added by Steve Halligan (geek2)
+      shalligan@333tech.com.
+
+    * Removed : from temporary raw data file name for use with
+      Windows.
+
+Version 0.1 BETA 4
+  *NOTE: This version requires a slight modification to
+          the sguil.conf [addition of the CATEGORY_COLOR(ES)]
+
+  sguild
+    * Fixed GetPSData bug (didn't close mysql socket).
+   
+    * Now handles escalated events (very beta right
+      now).
+
+  sguil.tk
+    * Added an Escalation tab. Use F9 or right click->
+      Update Event Status->Escalate to move alerts into
+      this tab. Allows analyst to easily "bookmark"
+      alerts for later review while keeping the RT
+      screen clear.
+
+ 
+
+Version 0.1 BETA 3
+
+  sguil.tk
+    * Ctrl-left/right arrow selects previous/next tab
+
+    * Added a "force new" option for generating xscripts. This
+      forces xscriptd to ignore any locally archived sessions
+      and try to get a new one. Useful where a xscript was
+      generated mid session and the analyst wants to see if
+      more acty has occurred.
+
+    * The transcript window now shows debug messages (per geek2).
+
+  xscriptd
+    * Added a "force new" option for generating xscripts. See
+      above for more info.
+
+    * Sends debug message for the transcript window.
+
+Version 0.1 BETA 2
+  sguil.tk
+    * Added event query menu and template (right
+      click on selected event in the Event Type
+     column).
+
+    * Query templates pop up under mouse position.
+
+    * Unselected tabs are now darker. Oooo pretty.
+
+  sguild
+    * Fixed portscan passwd bug.
+
+Version 0.1 BETA 1
+  LICENSE
+    * When sguil is finally released, it will
+      be done so over the QPL. BY is licensed under
+      the QPL, therefore op_sguil must be released
+      under that license and it's easier just to use
+      one license for everything.
+
+    * spp_portscan mod introduced as well as a loader
+      for the DB and an interface to the data within
+      sguil.tk.
+
+  xscriptd
+    * Bugfix: close tcpflowID bug.
+
+  op_sguil.c
+    * Slight change in SguilSendEvent format.
+
+  sguild
+    * Slight change in SensorRcvdCmd format.
+    * Sguild recieves data from portscan_loader.tcl and
+      LOADs the data into the DB.
+
+  sguil.tk
+    * Fixed non-TCP ethereal bug.
+
+Version 0.1 ALPHA 6:
+
+  sguil.tk
+    * Change Font added to the File menu. Standard is
+      applied to most of the GUI while Fixed is for the
+      packet data text box.
+
+  sguild
+    * Syslog is no longer used for sending and sguild now
+      opens port 7736 for and op_sguil is connects/sends
+      RT events directly to sguild.
+
+  op_sguil.c
+    * SguilSendEvents() was added and all syslog references
+      were removed. See comments in op_sguil.c for more info.
+
+Version 0.1 ALPHA 5:
+
+  sguil.tk
+    * Bugfix: Alerts couldn't be marked as CatI-VII
+    * Bugfix: Alerts updated from the query results tab
+      were not being passed to the DB.
+
+  sguild
+    * Bugfix: sguild wasn't closing cnxs to mysql 
+      after a query.
+
+Version 0.1 ALPHA 4:
+  sguil.tk
+    * Added a default color for NA alerts (bugfix).
+    * Added speech support. Requires speechd available
+      at http://www.speechio.org.
+    * Fixed xscript cmd interpretation bug.
+    * Added a text box to the query tabs to display the
+      query statement. Modifying the query and pressing
+      <Enter> will run a new query.
+    * Query's can now be sorted by double clicking on 
+      the list label (ie Src IP, Dst IP, etc).
+
+  xscriptd
+    * Fixed xscript cmd interpretation bug.
+
+
+Version 0.1 ALPHA 3:
+  Added xscriptd. See INSTALL for more info.
+
+  sguil.tk
+    * Added transcript and ethereal support
+      (xscriptd). See INSTALL for details. This
+      stuff is real alpha so let me know about
+      any problems.
+    * Added a SLEEP function. When used (selected
+      from File or Ctrl-s) the GUI will be iconified
+      and will beep/deiconify when it receives a new
+      event.
+
+Version 0.1 ALPHA 2: 
+
+  Added a USAGE file.
+
+  sguild:
+    * Added DBPASS for mysql passwd.
+    * Updates the DB multiple events at a time.
+    * Fixed open file handle bug.
+
+  sguil.tk
+    * Sends a list of events to be expired rather than
+      one at a time when expiring correlated events.
+    * Select previous alert when expiring bottom alert.
+    * Up/Down arrows select previous/next alert in pane.
+    * Escape key deselects all options.
+    * Alerts can be expired or caterogized into an
+      incident category (CatI-CatVII). F1-F7 are the 'hot'
+      keys.
+
+  op_sguil.c
+    * Fixed unknown class_type bug.
+
+Version 0.1 ALPHA 1:
+  * Initial (private) release: 23 Sep 2002.

@@ -1,0 +1,19 @@
+Quick guide on how to use the patch_barnyard.sh script.
+
+This script assumes that you have installed the sguil tarball/cvs tree
+(the whole tree) on the machine you build barnyard on. You run it
+as:
+
+./patch_barnyard.sh /path/where/you/have/the/barnyard/source/tree \
+/path/where/you/have/sguil/source/tree
+
+Example:
+
+./patch_barnyard.sh /usr/local/src/barnyard /usr/local/src/sguil
+
+If you only copied the 'barnyard_mods' directory to your
+sensor you have to apply the patch by hand. 
+
+1) Copy op_sguil.* to barnyard/src/output-plugins/
+2) Change directory to the root directory of barnyard source
+3) Execute 'patch -p0 < /path/to/barnyard.patch'

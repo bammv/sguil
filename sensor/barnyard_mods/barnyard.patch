@@ -1,0 +1,39 @@
+Index: src/output-plugins/op_plugbase.c
+===================================================================
+RCS file: /cvsroot/barnyard/barnyard/src/output-plugins/op_plugbase.c,v
+retrieving revision 1.1.1.1
+diff -u -3 -r1.1.1.1 op_plugbase.c
+--- src/output-plugins/op_plugbase.c	2 Dec 2002 20:51:38 -0000	1.1.1.1
++++ src/output-plugins/op_plugbase.c	12 Jan 2003 16:47:35 -0000
+@@ -26,6 +26,7 @@
+ #include "op_log_pcap.h"
+ #ifdef ENABLE_MYSQL
+ #include "op_acid_db.h"
++#include "op_sguil.h"
+ #endif
+ #include "op_alert_csv.h"
+ 
+@@ -44,6 +45,7 @@
+     LogPcapOpInit();
+ #ifdef ENABLE_MYSQL
+     AcidDbOpInit();
++    SguilOpInit();
+ #endif
+     AlertCSVOpInit();
+     return;
+Index: src/output-plugins/Makefile.am
+===================================================================
+RCS file: /cvsroot/barnyard/barnyard/src/output-plugins/Makefile.am,v
+retrieving revision 1.1.1.1
+diff -u -3 -r1.1.1.1 Makefile.am
+--- src/output-plugins/Makefile.am	2 Dec 2002 20:51:36 -0000	1.1.1.1
++++ src/output-plugins/Makefile.am	12 Jan 2003 16:47:35 -0000
+@@ -5,6 +5,7 @@
+ op_decode.h op_fast.h op_plugbase.h op_logdump.h \
+ op_alert_syslog.c op_alert_syslog.h op_log_pcap.c op_log_pcap.h \
+ op_acid_db.c op_acid_db.h \
+-op_alert_csv.c op_alert_csv.h
++op_alert_csv.c op_alert_csv.h \
++op_sguil.c op_sguil.h
+ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src @extra_incl@
+ 
