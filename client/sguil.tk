@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.131 2004/07/27 14:41:27 shalligan Exp $ #
+# $Id: sguil.tk,v 1.132 2004/07/27 15:09:19 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2586,6 +2586,10 @@ bind . <Control-Key-s> {
 # Ctl-q launches Std query window
 bind . <Control-Key-q> {
   GetStdQuery
+}
+# Ctl-f shows/hides the packet search frame
+bind . <Control-Key-f> {
+  ShowHideSearch
 }
 # Ctl right/left arrow selects next/prev tab
 bind . <Control-Key-Right> {
