@@ -1,0 +1,76 @@
+#!/bin/bash
+#
+# Init file for sensor_agent.tcl 
+#
+# chkconfig: 2345 40 60
+# description: Sguil sensor agent daemon
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+prog="sensor_agent.tcl"
+RETVAL=0
+
+SENSOR_AGENT=/usr/sbin/${prog}
+CONF=/etc/sensor_agent.conf
+
+start()
+{
+	if [ -f /var/run/sensoragent.pid ]; then
+	  echo "sensor_agent.tcl already running"
+	  exit
+        fi
+	if [ -x $SENSOR_AGENT ] && [ -f $CONF ]; then
+	 echo -n $"Starting $prog:"
+	 nohup $SENSOR_AGENT -c $CONF > /dev/null 2>&1 &
+         echo $! > /var/run/sensoragent.pid
+         if [ $? = 0 ]; then
+	   echo " [ OK ]"
+	 else
+	   echo " [ Failed ]"
+	 fi
+	else
+	 echo "can't find sensor_agent.tcl or sensor_agent.conf"
+	fi
+}
+
+stop()
+{
+	if [ -f /var/run/sensoragent.pid ]; then
+	  echo -n $"Stopping $prog:"
+	  kill `cat /var/run/sensoragent.pid`
+	  rm -f /var/run/sensoragent.pid
+          if [ $? = 0 ]; then
+	    echo " [ OK ]"
+	  else
+	    echo " [ Failed ]"
+	  fi
+	else
+	  echo "sensor_agent.tcl doesn't appear to be running"	
+	fi
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		sleep 1
+		start
+		;;
+	status)
+		if [ -f /var/run/sensoragent.pid ]; then
+		  echo "sensor_agent.tcl is running"
+		else
+		  echo "sensor_agent.tcl stopped"
+		fi
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|status}"
+		RETVAL=1
+esac
+exit $RETVAL
