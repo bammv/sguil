@@ -269,8 +269,8 @@ proc SsnQueryRequest { whereStatement } {
   pack $closeButton $whereText -side bottom -fill x
   pack $queryFrame -side top
   $queryFrame configure -cursor watch
-  if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame \{$selectQuery\}" }
-  puts $socketID "QueryDB $queryFrame \{$selectQuery\}"
+  if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
+  puts $socketID "QueryDB $queryFrame $selectQuery"
 }
 proc DBQueryRequest { whereStatement {winTitle {none} } } {
   global eventTabs QUERY_NUMBER socketID DEBUG
@@ -303,8 +303,8 @@ proc DBQueryRequest { whereStatement {winTitle {none} } } {
   pack $closeButton $whereText -side bottom -fill x
   pack $queryFrame -side top
   $queryFrame configure -cursor watch
-  if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame \{$selectQuery\}" }
-  puts $socketID "QueryDB $queryFrame \{$selectQuery\}"
+  if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
+  puts $socketID "QueryDB $queryFrame $selectQuery"
 }
 proc EditWhere { whereTmp } {
   global RETURN_FLAG
@@ -404,9 +404,9 @@ proc ValidateEvent { status {c_flag {0}} } {
      }
      update
      if {$DEBUG} {
-       puts "Sending Server: DeleteEventIDList \{$eventComment\} $status $deleteEventIDList"
+       puts "Sending Server: DeleteEventIDList $eventComment $status $deleteEventIDList"
      }
-     puts $socketID "DeleteEventIDList $status \{$eventComment\} $deleteEventIDList"
+     puts $socketID "DeleteEventIDList $status $eventComment $deleteEventIDList"
      if { [llength [$currentSelectedPane.eventIDFrame.list curselection]] > 1} {
 	 # puts "unslecting multiple events"
 	 UnHighLightListLine $currentSelectedPane
@@ -519,7 +519,7 @@ proc OptimizeTables {} {
 	  set answer [tk_messageBox -title confirm -type okcancel -icon warning -message "WARNING: Optimization can cause tables to corrupt.  If you don't know how to fix corruption, DO NOT PROCEED."]
 	    if { $answer == "ok" } {
 		if {$DEBUG} { puts "Send Server: ExecDB $optimizeQuery" }
-		puts $socketID "ExecDB \{$optimizeQuery\}"
+		puts $socketID "ExecDB $optimizeQuery"
 	    }
 	   
 	}
@@ -552,7 +552,7 @@ proc DeleteRequest { deletetype } {
 	if { $RETURN_FLAG } {
 	    set deleteQuery "DELETE from sessions WHERE sessions.start_time <= '[$deleteDate get]'"
 	    if {$DEBUG} { puts "Sending Server: ExecDB $deleteQuery" }
-	    puts $socketID "ExecDB \{$deleteQuery\}"
+	    puts $socketID "ExecDB $deleteQuery"
 	}
 	destroy $deleteRequest
 	return

@@ -139,7 +139,7 @@ proc ClientCmdRcvd { socketID } {
       GetTcpData { $clientCmd $socketID $index1 $index2 }
       GetUdpData { $clientCmd $socketID $index1 $index2 }
       MonitorSensors { $clientCmd $socketID $data1 } 
-      QueryDB { $clientCmd $socketID $index1 $index2 }
+      QueryDB { $clientCmd $socketID $index1 $data2 }
       RuleRequest { $clientCmd $socketID $index1 $data2 }
       SendSensorList { $clientCmd $socketID }
       SendEscalatedEvents { $clientCmd $socketID }
