@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.131 2004/11/12 21:41:31 bamm Exp $ #
+# $Id: sguild,v 1.132 2004/11/12 21:45:44 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -45,6 +45,7 @@ proc DisplayUsage { cmdName } {
   puts "  -adduser <username>: Add user to sguild.users"
   puts "  -deluser <username>: Delete user from sguild.users"
   puts "  -A <filename>: PATH to sguild.access file."
+  puts "  -d <0|1|2>: Set DEBUG level"
   puts "  -h Display this help"
   CleanExit
 }
@@ -142,6 +143,7 @@ foreach arg $argv {
         -C { set state certs }
         -A { set state accessfile }
         -l { set state sguild_lib }
+        -d { set state debug_level }
         -adduser { set state adduser }
         -deluser { set state deluser }
         default { DisplayUsage $argv0 }
@@ -158,6 +160,7 @@ foreach arg $argv {
     adduser { set ADDUSER 1; set userName $arg; set state flag }
     deluser { set DELUSER 1; set userName $arg; set state flag }
     accessfile { set ACCESS_FILE $arg; set state flag }
+    debug_level { set DEBUG_OVERRIDE 1; set DEBUG_LEVEL $arg; set DEBUG $arg; set state flag }
     default { DisplayUsage $argv0 }
   }
 }
@@ -232,6 +235,11 @@ if { [info exists CONF_FILE] } {
   }
 } else {
   DisplayUsage $argv0
+}
+
+# If DEBUG was specified on the cmd line, we override the conf file here
+if { [info exists DEBUG_OVERRIDE] && [info exists DEBUG_LEVEL] } {
+    set DEBUG $DEBUG_LEVEL
 }
 
 # Source the libs
