@@ -38,7 +38,7 @@ set BUSY 0
 ########################## PROCS ####################################
 
 proc ServerCommandRcvd { socketID } {
-  global DEBUG
+  global DEBUG EMAIL_RESULTS
 
   if { [eof $socketID] || [catch {gets $socketID data} errorCheck] } {
     #Close the socket and exit
@@ -66,9 +66,15 @@ proc ServerCommandRcvd { socketID } {
       TableNameList { $serverCmd [lrange $data 1 end] }
       TableColumns { $serverCmd [lindex $data 1] [lrange $data 2 end] }
       InsertHistoryResults { $serverCmd [lindex $data 1] [lrange $data 2 end] }
+      InsertEmailIPHdr { set EMAIL_RESULTS [lrange $data 1 end] }
       default { puts "Unrecognized command from $socketID: $data" }
     }
   } 
+}
+proc UpdateClock {} {
+  global gmtClock
+  $gmtClock configure -text "[GetCurrentTimeStamp] GMT"
+  after 1000 UpdateClock
 }
 proc AboutBox {} {
     global VERSION
@@ -433,6 +439,7 @@ proc ValidateEvent { status {c_flag {0}} } {
 #  udp_len, udp_csum, src_port, dst_port
 #
 proc SimpleQueryCmd { host port cmd} {
+  global socketID EMAIL_RESULTS
   if [catch {set tmpSocketID [socket $host $port]} connectError] {
     return "error"
   } 
@@ -3040,6 +3047,11 @@ set topFrame [frame .topFrame]
     set soundStatus [label $soundFrame.status -text "Off" -foreground red] 
     pack $soundLabel $soundStatus -side left
   pack $fileMenu $queryMenu $reportMenu $databaseMenu $soundFrame -side left
+  if {$GMTCLOCK } {
+    set gmtClock [label $topFrame.gmtClock -text "YYYY-MM-DD HH:MM:SS GMT" -relief groove]
+    pack $gmtClock -side right -anchor e -padx 5
+    UpdateClock
+  }
   set fileList [menu $fileMenu.menu -tearoff 0]
     $fileList add command -label "Display Incident Categories" -command DisplayIncidentCats  
     $fileList add command -label "Sleep (Ctrl-s)" -command "GoToSleep"
