@@ -24,7 +24,7 @@ proc QryBuild {} {
     }
     
     # Main Frame
-    set mainFrame [frame $qryBldWin.mFrame -background black -borderwidth 1]
+    set mainFrame [frame $qryBldWin.mFrame -background #dcdcdc -borderwidth 1]
 
     
     
@@ -34,21 +34,21 @@ proc QryBuild {} {
 		-labeltext "Edit Where Clause"]
       $editBox insert end "WHERE event.sid = sensor.sid AND  LIMIT 500"
       $editBox mark set insert "end -11 c"
-      #set bb [buttonbox $editFrame.bb]
-      #$bb add Submit -text "Submit" -command "set RETURN_FLAG 1"
-      #$bb add Cancel -text "Cancel" -command "set RETURN_FLAG 0"
+      set bb [buttonbox $mainFrame.bb]
+      $bb add Submit -text "Submit" -command "set RETURN_FLAG 1"
+      $bb add Cancel -text "Cancel" -command "set RETURN_FLAG 0"
       pack $editBox -side top -fill both -expand true
       #pack $bb -side top -fill x -expand true
 
-    set mainBB1 [buttonbox $mainFrame.mbb1]
+    set mainBB1 [buttonbox $mainFrame.mbb1 -padx 0 -pady 0]
       foreach logical $funcList(Logical) {
 	  set command "$editBox insert insert \"$logical \""
-	  $mainBB1 add $logical -text $logical -padx 1 -pady 1 -command "$command"
+	  $mainBB1 add $logical -text $logical -padx 0 -pady 0 -command "$command"
       }
-    set mainBB2 [buttonbox $mainFrame.mbb2]
+    set mainBB2 [buttonbox $mainFrame.mbb2 -padx 0 -pady 0]
       foreach comparison $funcList(Comparison) {
 	  set command "$editBox insert insert \"$comparison \""
-	  $mainBB2 add $comparison -text $comparison -padx 1 -pady 1 -command "$command"
+	  $mainBB2 add $comparison -text $comparison -padx 0 -pady 0 -command "$command"
       }
 
     set selectFrame [frame $mainFrame.sFrame -background black -borderwidth 1]
@@ -71,8 +71,8 @@ proc QryBuild {} {
       iwidgets::Labeledwidget::alignlabels $metaList $catList $itemList
     
     pack $editFrame -side top -fill both -expand yes
-    pack  $mainBB1 $mainBB2 -side top -fill x -expand false
-    pack  $selectFrame -side top -fill both -expand true
+    pack  $mainBB1 $mainBB2 -side top -fill none -expand false
+    pack  $selectFrame $bb -side top -fill both -expand true
     eval $metaList insert 0 $mlst
     pack $mainFrame -side top
 
