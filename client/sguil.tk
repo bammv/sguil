@@ -1216,6 +1216,12 @@ proc BindSelectionToAllLists { listName } {
     foreach buttonEvent { "MouseWheel" "Button-5" "Button-4" } {
 	bind $listName <$buttonEvent> { WheelScroll %D %W "Button"; break }
     }
+}    
+proc BindSelectionToAllPSLists { listName } {
+
+    foreach buttonEvent { "MouseWheel" "Button-5" "Button-4" } {
+	    bind $listName <$buttonEvent> { WheelScroll %D %W "Button"; break }
+	}
 }
 #
 # WheelScroll: Scroll all of the lists together on a mousey-wheely-scrolly
@@ -3194,7 +3200,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
            -background white -yscrollcommand "$portscanLabelListFrame.scroll set"]
           pack $psSensorLabel -side top -fill x
           pack $psSensorList -side bottom -fill both -expand true
-	  BindSelectionToAllLists $psSensorList
+	  BindSelectionToAllPSLists $psSensorList
         set psDateTimeFrame [frame $portscanLabelListFrame.psDateTimeFrame]
           set psDateTimeLabel [label $psDateTimeFrame.label -text TimeStamp -background black\
            -foreground white]
@@ -3202,14 +3208,14 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
            -background white -yscrollcommand "$portscanLabelListFrame.scroll set"]
           pack $psDateTimeLabel -side top -fill x
           pack $psDateTimeList -side bottom -fill both -expand true
-           BindSelectionToAllLists $psDateTimeList
+           BindSelectionToAllPSLists $psDateTimeList
         set psSrcIPFrame [frame $portscanLabelListFrame.psSrcIPFrame]
           set psSrcIPLabel [label $psSrcIPFrame.label -text SrcIP -background black -foreground white]
           set psSrcIPList [listbox $psSrcIPFrame.list -width 15 -height 5 -borderwidth 0\
            -background white -yscrollcommand "$portscanLabelListFrame.scroll set"]
           pack $psSrcIPLabel -side top -fill x
           pack $psSrcIPList -side bottom -fill both -expand true
-	   BindSelectionToAllLists $psSrcIPList
+	   BindSelectionToAllPSLists $psSrcIPList
         set psSrcPortFrame [frame $portscanLabelListFrame.psSrcPortFrame]
           set psSrcPortLabel [label $psSrcPortFrame.label -text SrcPort -background black\
            -foreground white]
@@ -3217,14 +3223,14 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
            -background white -yscrollcommand "$portscanLabelListFrame.scroll set"]
           pack $psSrcPortLabel -side top -fill x
           pack $psSrcPortList -side bottom -fill both -expand true
-	 BindSelectionToAllLists $srcPortList  
+	 BindSelectionToAllPSLists $srcPortList  
         set psDstIPFrame [frame $portscanLabelListFrame.psDstIPFrame]
           set psDstIPLabel [label $psDstIPFrame.label -text DstIP -background black -foreground white]
           set psDstIPList [listbox $psDstIPFrame.list -width 15 -height 5 -borderwidth 0\
            -background white -yscrollcommand "$portscanLabelListFrame.scroll set"]
           pack $psDstIPLabel -side top -fill x
           pack $psDstIPList -side bottom -fill both -expand true
-	   BindSelectionToAllLists $psDstIPList
+	   BindSelectionToAllPSLists $psDstIPList
         set psDstPortFrame [frame $portscanLabelListFrame.psDstPortFrame]
           set psDstPortLabel [label $psDstPortFrame.label -text DstPort -background black\
            -foreground white]
@@ -3232,7 +3238,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
            -background white -yscrollcommand "$portscanLabelListFrame.scroll set"]
           pack $psDstPortLabel -side top -fill x
           pack $psDstPortList -side bottom -fill both -expand true
-	   BindSelectionToAllLists $psDstPortList
+	   BindSelectionToAllPSLists $psDstPortList
         set psDataFrame [frame $portscanLabelListFrame.psDataFrame]
           set psDataLabel [label $psDataFrame.label -text "Scan Info" -background black\
            -foreground white]
@@ -3240,7 +3246,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
            -background white -yscrollcommand "$portscanLabelListFrame.scroll set"]
           pack $psDataLabel -side top -fill x
           pack $psDataList -side bottom -fill both -expand true
-	   BindSelectionToAllLists $psDataList
+	   BindSelectionToAllPSLists $psDataList
         set psScroll [scrollbar $portscanLabelListFrame.scroll -command "MultiScrollBar \"$psSensorList\
          $psDateTimeList $psSrcIPList $psSrcPortList $psDstIPList $psDstPortList $psDataList\""\
          -width 10]
