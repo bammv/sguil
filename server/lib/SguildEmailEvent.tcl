@@ -1,4 +1,4 @@
-# $Id: SguildEmailEvent.tcl,v 1.4 2004/11/22 19:01:02 bamm Exp $ #
+# $Id: SguildEmailEvent.tcl,v 1.5 2004/11/22 23:53:57 bamm Exp $ #
 
 proc EmailEvent { dataList } {
 
@@ -8,6 +8,7 @@ proc EmailEvent { dataList } {
     # the sguild.conf
     set msg [lindex $dataList 7]
     set sn [lindex $dataList 3]
+    set eid "[lindex $dataList 5].[lindex $dataList 6]"
     set t [lindex $dataList 4]
     set sip [lindex $dataList 8]
     set dip [lindex $dataList 9]
