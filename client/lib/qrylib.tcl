@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.19 2004/07/08 18:19:31 taosecurity Exp $ #
+# $Id: qrylib.tcl,v 1.20 2004/10/12 20:33:48 shalligan Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -8,10 +8,15 @@
 proc QueryRequest { tableName queryType { incidentCat {NULL} } } {
   global currentSelectedPane
   set timestamp [lindex [GetCurrentTimeStamp "1 week ago"] 0]
+  set hourago [GetCurrentTimeStamp "1 hour ago"]
   if { $tableName == "event" } {
     set whereTmp "WHERE $tableName.timestamp > '$timestamp' AND "
   } else {
-    set whereTmp "WHERE $tableName.start_time > '$timestamp' AND "
+      if { ( $queryType == "srcip" || $queryType == "dstip" || $queryType == "src2dst" ) && $incidentCat == 1 } {
+	  set whereTmp "WHERE $tableName.start_time > '$hourago' AND "
+      } else {
+	  set whereTmp "WHERE $tableName.start_time > '$timestamp' AND "
+      }  
   }
   if { $queryType == "srcip" } {
     set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]

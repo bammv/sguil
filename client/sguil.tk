@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.143 2004/10/11 21:45:26 shalligan Exp $ #
+# $Id: sguil.tk,v 1.144 2004/10/12 20:33:46 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2447,12 +2447,18 @@ menu $ipQueryMenu.nessusMenu -tearoff 0 -background blue -foreground white -acti
 $ipQueryMenu.eventMenu add command -label "Query SrcIP" -command "QueryRequest event srcip"
 $ipQueryMenu.eventMenu add command -label "Query DstIP" -command "QueryRequest event dstip"
 $ipQueryMenu.eventMenu add command -label "Query Src To Dst" -command "QueryRequest event src2dst"
-$ipQueryMenu.sessionsMenu add command -label "Query SrcIP" -command "QueryRequest sessions srcip"
-$ipQueryMenu.sessionsMenu add command -label "Query DstIP" -command "QueryRequest sessions dstip"
-$ipQueryMenu.sessionsMenu add command -label "Query Src To Dst" -command "QueryRequest sessions src2dst"
-$ipQueryMenu.sancpMenu add command -label "Query SrcIP" -command "QueryRequest sancp srcip"
-$ipQueryMenu.sancpMenu add command -label "Query DstIP" -command "QueryRequest sancp dstip"
-$ipQueryMenu.sancpMenu add command -label "Query Src To Dst" -command "QueryRequest sancp src2dst"
+$ipQueryMenu.sessionsMenu add command -label "Query SrcIP" -command "QueryRequest sessions srcip 0"
+$ipQueryMenu.sessionsMenu add command -label "Query SrcIP/1 hour" -command "QueryRequest sessions srcip 1"
+$ipQueryMenu.sessionsMenu add command -label "Query DstIP" -command "QueryRequest sessions dstip 0"
+$ipQueryMenu.sessionsMenu add command -label "Query DstIP/1 hour" -command "QueryRequest sessions dstip 1"
+$ipQueryMenu.sessionsMenu add command -label "Query Src To Dst" -command "QueryRequest sessions src2dst 0"
+$ipQueryMenu.sessionsMenu add command -label "Query Src To Dst/1 hour" -command "QueryRequest sessions src2dst 1"
+$ipQueryMenu.sancpMenu add command -label "Query SrcIP" -command "QueryRequest sancp srcip 0"
+$ipQueryMenu.sancpMenu add command -label "Query SrcIP/1 Hour" -command "QueryRequest sancp srcip 1"
+$ipQueryMenu.sancpMenu add command -label "Query DstIP" -command "QueryRequest sancp dstip 0"
+$ipQueryMenu.sancpMenu add command -label "Query DstIP/1 Hour" -command "QueryRequest sancp dstip 1"
+$ipQueryMenu.sancpMenu add command -label "Query Src To Dst" -command "QueryRequest sancp src2dst 0"
+$ipQueryMenu.sancpMenu add command -label "Query Src To Dst/1 Hour" -command "QueryRequest sancp src2dst 1"
 $ipQueryMenu.dshieldIPMenu add command -label "SrcIP" -command "GetDshieldIP srcip"
 $ipQueryMenu.dshieldIPMenu add command -label "DstIP" -command "GetDshieldIP dstip"
 $ipQueryMenu.nessusMenu add command -label "SrcIP" -command "NessusReport srcip"
