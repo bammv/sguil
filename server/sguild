@@ -275,7 +275,7 @@ proc ClientCmdRcvd { socketID } {
       DeleteEventID { $clientCmd $socketID $index1 $index2 }
       DeleteEventIDList { $clientCmd $socketID $data1 }
       EventHistoryRequest { $clientCmd $socketID $index1 $index2 $data }
-      ExecDB { $clientCmd $socketID $index1 }
+      ExecDB { $clientCmd $socketID $data1 }
       GetIcmpData { $clientCmd $socketID $index1 $index2 }
       GetIPData { $clientCmd $socketID $index1 $index2 }
       GetPayloadData { $clientCmd $socketID $index1 $index2 }
