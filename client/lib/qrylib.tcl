@@ -38,17 +38,19 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } } {
   set whereStatement [lindex $tmpWhereStatement 1]
   set tableName [lindex $tmpWhereStatement 0]
   if { $whereStatement == "cancel" } { return }
+  if { $tableName == "event" } {
   if { $queryType == "category" } {
-    switch -exact $incidentCat {
-      11 { set winTitle "Cat I" }
-      12 { set winTitle "Cat II" }
-      13 { set winTitle "Cat III" }
-      14 { set winTitle "Cat IV" }
-      15 { set winTitle "Cat V" }
-      16 { set winTitle "Cat VI" }
-      17 { set winTitle "Cat VII" }
-      default { set winTitle "none" }
-    }
+      switch -exact $incidentCat {
+	  11 { set winTitle "Cat I" }
+	  12 { set winTitle "Cat II" }
+	  13 { set winTitle "Cat III" }
+	  14 { set winTitle "Cat IV" }
+	  15 { set winTitle "Cat V" }
+	  16 { set winTitle "Cat VI" }
+	  17 { set winTitle "Cat VII" }
+	  default { set winTitle "none" }
+      }
+  }
     DBQueryRequest $whereStatement $winTitle
   } else {
     if { $tableName == "event" } {
