@@ -91,12 +91,7 @@
 
 INSTALLING A SENSOR
 
-1)  Follow instructions in main INSTALL file. EXCEPT
- 	a)  the log_packets.sh script won't run with the preinstalled shells.
-		Install bash from the ports tree and change the first line of
-		log_packets.sh to read #!/usr/local/bin/bash or whereever you install it.  
-		***INSERT long discussion about not using bash as your root shell
-		and if you do make sure it is static and on the / partition***
+1)  Follow instructions in main INSTALL file.
 
 
 INSTALLING THE CLIENT
