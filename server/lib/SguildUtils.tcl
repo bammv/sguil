@@ -1,4 +1,4 @@
-# $Id: SguildUtils.tcl,v 1.3 2004/10/18 17:05:56 shalligan Exp $ #
+# $Id: SguildUtils.tcl,v 1.4 2004/11/11 15:44:49 bamm Exp $ #
 
 proc Daemonize {} {
     global PID_FILE env LOGGER
@@ -155,5 +155,7 @@ proc LogMessage { msg } {
 #  SyslogFacility conf option
 proc Syslog { msg level } {
     global SYSLOGFACILITY
-    catch { exec logger -t "SGUILD" -p "$SYSLOGFACILITY.$level" $msg } logError
+    # clean up mysql passwds
+    regsub -all {password=\w+} $msg "password=XXXXXXXX " newMsg
+    catch { exec logger -t "SGUILD" -p "$SYSLOGFACILITY.$level" $newMsg } logError
 }
