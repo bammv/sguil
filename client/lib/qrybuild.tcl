@@ -30,26 +30,28 @@ proc QryBuild {} {
     
     set editFrame [frame $mainFrame.eFrame -background black -borderwidth 1]
       set editBox [scrolledtext $editFrame.eBox -textbackground white -vscrollmode dynamic \
-		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 80x10 -textfont ourFixedFont \
+		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 60x10 -textfont ourFixedFont \
 		-labeltext "Edit Where Clause"]
       $editBox insert end "WHERE event.sid = sensor.sid AND  LIMIT 500"
       $editBox mark set insert "end -11 c"
       set bb [buttonbox $mainFrame.bb]
       $bb add Submit -text "Submit" -command "set RETURN_FLAG 1"
       $bb add Cancel -text "Cancel" -command "set RETURN_FLAG 0"
-      pack $editBox -side top -fill both -expand true
       #pack $bb -side top -fill x -expand true
 
-    set mainBB1 [buttonbox $mainFrame.mbb1 -padx 0 -pady 0]
+    set mainBB1 [buttonbox $editFrame.mbb1 -padx 0 -pady 0 -orient vertical]
       foreach logical $funcList(Logical) {
 	  set command "$editBox insert insert \"$logical \""
 	  $mainBB1 add $logical -text $logical -padx 0 -pady 0 -command "$command"
       }
-    set mainBB2 [buttonbox $mainFrame.mbb2 -padx 0 -pady 0]
+    set mainBB2 [buttonbox $editFrame.mbb2 -padx 0 -pady 0 -orient vertical]
       foreach comparison $funcList(Comparison) {
 	  set command "$editBox insert insert \"$comparison \""
 	  $mainBB2 add $comparison -text $comparison -padx 0 -pady 0 -command "$command"
       }
+      pack $mainBB1 -side left -fill y
+      pack $editBox -side left -fill both -expand true
+      pack $mainBB2 -side left -fill y
 
     set selectFrame [frame $mainFrame.sFrame -background black -borderwidth 1]
       set catList [scrolledlistbox $selectFrame.cList -labeltext Categories \
@@ -71,10 +73,10 @@ proc QryBuild {} {
       iwidgets::Labeledwidget::alignlabels $metaList $catList $itemList
     
     pack $editFrame -side top -fill both -expand yes
-    pack  $mainBB1 $mainBB2 -side top -fill none -expand false
-    pack  $selectFrame $bb -side top -fill both -expand true
+    #pack  $mainBB1 $mainBB2 -side top -fill none -expand false
+    pack  $selectFrame $bb -side top -fill both -expand true -pady 1
     eval $metaList insert 0 $mlst
-    pack $mainFrame -side top
+    pack $mainFrame -side top -pady 1
 
     
 
