@@ -63,7 +63,7 @@ proc ValidateUser { socketID username passwd } {
      "UPDATE user_info SET last_login='[GetCurrentTimeStamp]' WHERE uid=$userIDArray($socketID)"
     lappend validSockets $socketID
     SendSocket $socketID "UserID $userIDArray($socketID)" 
-    SendSystemInfoMsg sguild "User $username validated from [lindex $socketInfo($socketID) 0]"
+    SendSystemInfoMsg sguild "User $username logged in from [lindex $socketInfo($socketID) 0]"
     lappend socketInfo($socketID) $username
   } else {
     set validSockets [ldelete $validSockets $socketID]
