@@ -42,7 +42,7 @@ proc CheckLineFormat { line } {
 }   
 
 proc ValidateUser { socketID username passwd } {
-  global USERS_FILE validSockets
+  global USERS_FILE validSockets socketInfo userIDArray
   if { ![file exists $USERS_FILE] } {
     puts "Fatal Error! Cannot access $USERS_FILE."
     exit 1
@@ -58,12 +58,27 @@ proc ValidateUser { socketID username passwd } {
     }
   }
   if {$VALID} {
+    set userIDArray($socketID) [GetUserID $username]
+    DBCommand\
+     "UPDATE user_info SET last_login='[GetCurrentTimeStamp]' WHERE uid=$userIDArray($socketID)"
     lappend validSockets $socketID
-    SendSocket $socketID "ValidateUser VALID" 
+    SendSocket $socketID "UserID $userIDArray($socketID)" 
+    SendSystemInfoMsg sguild "User $username validated from [lindex $socketInfo($socketID) 0]"
+    lappend socketInfo($socketID) $username
   } else {
     set validSockets [ldelete $validSockets $socketID]
-    SendSocket $socketID "ValidateUser INVALID"
+    SendSocket $socketID "UserID INVALID"
+    SendSystemInfoMsg sguild "User $username denied access from [lindex $socketInfo($socketID) 0]"
   } 
+}
+proc GetUserID { username } {
+  set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
+  if { $uid == "" } {
+    DBCommand\
+     "INSERT INTO user_info (username, last_login) VALUES ('$username', '[GetCurrentTimeStamp]')"
+    set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
+  }
+  return $uid
 }
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -108,7 +123,7 @@ proc ClientCmdRcvd { socketID } {
 }
 
 proc ClientExitClose { socketID } {
-  global clientList  clientMonitorSockets validSockets
+  global clientList  clientMonitorSockets validSockets socketInfo
   if { [info exists clientList] } {
     set clientList [ldelete $clientList $socketID]
   }
@@ -119,6 +134,10 @@ proc ClientExitClose { socketID } {
   }
   if { [info exists validSockets] } {
     set validSockets [ldelete $validSockets $socketID]
+  }
+  if { [info exists socketInfo($socketID)] } {
+    SendSystemInfoMsg sguild "User [lindex $socketInfo($socketID) 2] has disconnected."
+    unset socketInfo($socketID)
   }
 }
 
@@ -218,6 +237,7 @@ proc AddEventToEventArray { eventDataList } {
 
 proc DeleteEventIDList { socketID status deleteEventIDList } {
   global eventIDArray eventIDList clientList escalateArray escalateIDList
+  global userIDArray
   set count 0
   set updateTmp ""
   foreach socket $clientList {
@@ -240,21 +260,31 @@ proc DeleteEventIDList { socketID status deleteEventIDList } {
     if { [info exists eventIDArray($eventID)] } { unset eventIDArray($eventID) }
     set eventIDList [ldelete $eventIDList $eventID]
     set splitID [split $eventID .]
+    set sid [lindex $splitID 0]
+    set cid [lindex $splitID 1]
     if { $count < 1000 } {
-      set updateTmp "$updateTmp (sid=[lindex $splitID 0] AND cid=[lindex $splitID 1])"
+      set updateTmp "$updateTmp (sid=$sid AND cid=$cid)"
     } else {
       regsub -all {\) \(} $updateTmp {) OR (} whereTmp
       UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $status
       set count 0
-      set updateTmp ""
+      set updateTmp "(sid=$sid AND cid=$cid)"
     }
+    # Update the history here
+    AddToHistory $sid $cid $userIDArray($socketID) [GetCurrentTimeStamp] $status
     incr count
   }
   regsub -all {\) \(} $updateTmp {) OR (} whereTmp
   UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $status
 }
+
+proc AddToHistory { sid cid uid timestamp status } {
+  DBCommand "INSERT INTO history (sid, cid, uid, timestamp, status) VALUES ( $sid, $cid, $uid, '$timestamp', $status)"
+}
+
 proc DeleteEventID { socketID eventID status } {
   global eventIDArray eventIDList clientList escalateArray escalateIDList
+  global userIDArray
   
   foreach socket $clientList {
     # See comments in DeleteEventIDList
@@ -272,6 +302,8 @@ proc DeleteEventID { socketID eventID status } {
   if { [info exists escalateIDList] } {set escalateIDList [ldelete $escalateIDList $eventID]}
   if { [info exists eventIDArray($eventID)] } { unset eventIDArray($eventID) }
   set eventIDList [ldelete $eventIDList $eventID]
+  AddToHistory [lindex [split $eventID .] 0] [lindex [split $eventID .] 1]\
+   $userIDArray($socketID) [GetCurrentTimeStamp] $status
   UpdateDBStatus $eventID [GetCurrentTimeStamp] $status
 }
 
@@ -286,10 +318,11 @@ proc SendDBInfo { socketID } {
 # ClientConnect: Sets up comms for client/server
 #
 proc ClientConnect { socketID IPAddr port } {
-  global DEBUG
+  global DEBUG socketInfo
   if {$DEBUG} {
     puts "Client Connect: $IPAddr $port $socketID"
   }
+  set socketInfo($socketID) "$IPAddr $port"
   fconfigure $socketID -buffering line
   fileevent $socketID readable [list ClientCmdRcvd $socketID]
 } 
@@ -315,7 +348,13 @@ proc RcvSsnFile { socketID fileName sensorName } {
   fcopy $socketID $fileID
   close $fileID
   close $socketID
-
+  if {$sensorID == 0} {
+    if {$DEBUG} {
+      puts "ERROR: $sensorName is not in DB!!"
+    }
+    SendSystemInfoMsg sguild "ERROR: Received session file from unkown sensor - $sensorName"
+    return
+  }
   set inFileID [open $DB_OUTFILE r]
   set outFileID [open $DB_OUTFILE.tmp w]
   # Use i to keep track of how many lines we loaded into the database for DEBUG.
@@ -358,6 +397,13 @@ proc RcvPortscanFile { socketID fileName } {
   fcopy $socketID $fileID
   close $fileID
   close $socketID
+  if {$sensorID == 0} {
+    if {$DEBUG} {
+      puts "ERROR: $sensorName is not in DB!!"
+    }
+    SendSystemInfoMsg sguild "ERROR: Received portscan file from unknown sensor - $sensorName"
+    return
+  }
   if {$DEBUG} {puts "Loading $fileName into DB."}
   if {$DBPASS != "" } {
     set cmd "mysql -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
@@ -529,23 +575,29 @@ proc FlatDBQuery { query } {
   mysqlclose $dbSocketID
   return $queryResults
 }
+proc DBCommand { query } {
+  global DBNAME DBUSER DBPORT DBHOST DBPASS
+
+  if { $DBPASS == "" } {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+  } else {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+  }
+
+  mysqlexec $dbSocketID $query
+  return 
+}
 proc UpdateDBStatusList { whereTmp timestamp status } {
   global DBNAME DBUSER DBPORT DBHOST DBPASS
-  set startTime [GetCurrentTimeStamp]
   set updateString "UPDATE event SET status=$status, last_modified='$timestamp' WHERE $whereTmp"
-  #set updateString "UPDATE event SET status=$status WHERE $whereTmp"
   if { $DBPASS == "" } {
     set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
   } else {
     set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
   }
   
-  #mysqlexec $dbSocketID "SET AUTOCOMMIT=0"
-  #mysqlexec $dbSocketID "BEGIN"
   set execResults [mysqlexec $dbSocketID $updateString]
-  #mysqlexec $dbSocketID "COMMIT"
   mysqlclose $dbSocketID
-  set endTime [GetCurrentTimeStamp]
 }
 proc UpdateDBStatus { eventID timestamp status } {
   global DBNAME DBUSER DBPORT DBHOST DBPASS
@@ -630,16 +682,17 @@ proc SendSensorList { socketID } {
 #                 now the client gets everything.
 #
 proc MonitorSensors { socketID sensorList } {
-  global DEBUG clientList clientMonitorSockets connectedAgents
+  global DEBUG clientList clientMonitorSockets connectedAgents socketInfo
   if {$DEBUG} {puts "$socketID added to clientList"}
   lappend clientList $socketID
   foreach sensorName $sensorList {
     lappend clientMonitorSockets($sensorName) $socketID
   }
+  SendSystemInfoMsg sguild "User [lindex $socketInfo($socketID) 2] is monitoring sensors: $sensorList"
   SendCurrentEvents $socketID
-  if { [info exists connectedAgents] } {
-    SendSystemInfoMsg sguild "Connected sensors - $connectedAgents"
-  }
+  #if { [info exists connectedAgents] } {
+  #  SendSystemInfoMsg sguild "Connected sensors - $connectedAgents"
+  #}
 }
 
 proc SendEscalatedEvents { socketID } {
@@ -676,7 +729,7 @@ proc CreateDB { DBNAME } {
   set answer [gets stdin]
   if { $answer == "" } { set answer y }
   if { ![regexp {^[yY]} $answer] } { return 0 }
-  set fileName "./scripts/create_sguildb.sql"
+  set fileName "./sql_scripts/create_sguildb.sql"
   puts -nonewline "Path to create_sguildb.sql \[$fileName\]: "
   flush stdout
   set answer [gets stdin]
@@ -696,12 +749,23 @@ proc CreateDB { DBNAME } {
     puts $openFileError
     return 0
   }
-  foreach mysqlCmd [split [read -nonewline $fileID] \;] {
-    puts -nonewline "Creating table [lindex $mysqlCmd 2] in $DBNAME..."
-    if { $mysqlCmd != "" } {mysqlexec $dbSocketID $mysqlCmd}
-    puts "Okay."
+  puts -nonewline "Creating the structure for $DBNAME: "
+  foreach line [split [read $fileID] \n] {
+    puts -nonewline "."
+    if { $line != "" && ![regexp {^--} $line]} {
+      #puts "LINE: $line"
+      if { [regexp {(^.*);\s*$} $line match data] } {
+        lappend mysqlCmd $data
+        #puts "CMD: [join $mysqlCmd]"
+        mysqlexec $dbSocketID [join $mysqlCmd]
+        set mysqlCmd ""
+      } else {
+        lappend mysqlCmd $line
+      }
+    }
   }
   close $fileID
+  puts "Done."
   return 1
 }
 
@@ -787,10 +851,8 @@ if { ![info exists USERS_FILE] } {
 
 # Get archived alerts from the DB
 if { $DBPASS == "" } {
-  #set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
   set dbSocketID [mysqlconnect -host $DBHOST -user $DBUSER -port $DBPORT]
 } else {
-  #set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
   set dbSocketID [mysqlconnect -host $DBHOST -user $DBUSER -port $DBPORT -password $DBPASS]
 }
 # See if the DB we want to use exists

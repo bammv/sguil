@@ -2757,7 +2757,7 @@ proc SensorList { sensorList } {
       }
   
     }
-    pack $currentFrame -side top
+    pack $currentFrame -side top -fill x
   } else {
     label $sensorSelectWindow.noSensorLabel -background white -text\
     "There are No sensors currently in the DB to monitor.\n\
@@ -3638,13 +3638,13 @@ if [catch {set socketID [socket $SERVERHOST $SERVERPORT]}] {
   fconfigure $socketID -buffering line
   GetUserName
   puts $socketID "ValidateUser $USERNAME $PASSWD"
-  set validUserResults [lindex [gets $socketID] 1]
-  while { $validUserResults != "VALID" } {
+  set USERID [lindex [gets $socketID] 1]
+  while { $USERID == "INVALID" } {
     set PASSWD ""
     ErrorMessage "Invalid USERNAME and/or PASSWORD"
     GetUserName 
     puts $socketID "ValidateUser $USERNAME $PASSWD"
-    set validUserResults [lindex [gets $socketID] 1]
+    set USERID [lindex [gets $socketID] 1]
   } 
   fileevent $socketID readable [list ServerCommandRcvd $socketID]
   puts $socketID "SendDBInfo"

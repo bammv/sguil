@@ -162,7 +162,7 @@ CREATE TABLE user_info
 (
   uid		INT UNSIGNED	NOT NULL AUTO_INCREMENT,
   username	VARCHAR(16)	NOT NULL,
-  last_login	TIMESTAMP	NOT NULL,
+  last_login	DATETIME	NOT NULL,
   PRIMARY KEY (uid)
 );
 
