@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.115 2004/08/06 16:33:32 shalligan Exp $ #
+# $Id: sguild,v 1.116 2004/08/09 16:28:06 shalligan Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -201,10 +201,17 @@ proc AutoCat { data } {
     foreach rule [lrange $acRules($rid) 0 end] {
       set rIndex [lindex $rule 0]
       set rMatch [lindex $rule 1]
-      if { [lindex $data $rIndex] != $rMatch } {
-        set MATCH 0
-        break
-      } 
+      if { $rIndex != 7 } {
+	  if { [lindex $data $rIndex] != $rMatch } {
+	      set MATCH 0
+              break
+          }
+      } else {
+          if { ![regexp -expanded $rMatch [lindex $data $rIndex]] } {
+	      set MATCH 0
+	      break
+          }
+      }
     }
     if { $MATCH } {
       if {$DEBUG} {puts "AUTO MARKING EVENT AS : $acCat($rid)"}
@@ -350,7 +357,6 @@ proc LoadReportQueries { fileName } {
     global REPORT_QRY_LIST
     set REPORT_QRY_LIST ""
     for_file line $fileName {
-	puts $line
 	if { ![regexp ^# $line] && ![regexp ^$ $line] } {
 	    set REPORT_QRY_LIST "${REPORT_QRY_LIST}${line}"
 	}
