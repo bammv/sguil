@@ -1,0 +1,63 @@
+Connecting to the Server:
+Once the server (sguild) is running and the client (sguil.tk) can
+connect, you can manage events on a near realtime basis. Events
+populate the panes based on their priority (this is configurable).
+Multiple clients can connect to a server at a time. This client/server
+configuration also allows analyst to connect remotely more easily.
+For example, if an analyst has remote ssh access to the server network,
+he/she can tunnel the client/server comms over ssh.
+(i.e. `ssh mysystem.server.net -L 7734:sguildsystem:7734` now fire up
+sguil.tk and point it toward localhost.)
+ 
+
+
+Managing Events:
+Once an event has been reviewed, its status can be updated and the
+event deleted from the client. To expire an event and set its status
+to 1, select the event to expire->right click in status (ST) column
+->Select Expire from the menu. Events validated as malicious can
+also be placed into one of seven incident categories (see
+File->Display Incident Categories for a description) by selecting
+Update Event Status->Category from the menu. When an event is expired
+or placed into Incident Category, it is removed from all connected
+clients. Hot keys can also be used:
+
+<F1>-<F7>: Place the event into Category I - VII
+<F8>:  Expire the event.
+
+
+Querying the DB:
+Searches can be initiated using different "templates". For a blank
+template, use File->Query. Once selected, a window allowing you to
+edit the query will pop up. Only the WHERE statement can be edited.
+IMPORTANT: DO NOT DELETE THE JOIN (event.sid=sensor.sid), it is 
+required on ALL queries. Other templates are available by selecting
+an event and right clicking on the src/dst ip columns.
+
+Correlated Events:
+Events that have the same src IP and signature/message are correlated
+under the same event in the appropriate RT pane. Each time an event
+is "correlated" the CNT field is incrimented by one. To view all
+the correlated events, select the event->right click on the CNT
+column->View Correlated Events. The shortcut for this info is to
+middle click on the CNT column of a selected event.
+
+Generating Transcripts, loading data into Ethereal:
+Make sure Ethereal is installed on the client system. Select an alert,
+right click on the sid.cid column. Select Transcript or Ethereal. 
+Middle clicking on the sid.cid column of a highlighted event will
+also request a transcript.
+
+
+Other:
+The up/down arrows can be used to select previous/next event in the
+pane. <Esc> will unselect all options (dns, whois, packet date, etc)
+at once.
+
+
+Help or Suggestions:
+Email me at bamm@satx.rr.com or visit #snort-gui on openprojects.net.
+
+
+Bammkkkk
+bamm@satx.rr.com
