@@ -1790,7 +1790,8 @@ proc SelectAllLists { winName index } {
     if {$SSN_QUERY} {
       UnSelectPacketOptions
     } else {
-      if { [lindex [$currentSelectedPane.msgFrame.list get $index] 0] == "spp_portscan:"} {
+      puts [regexp "^spp_portscan:" [$currentSelectedPane.msgFrame.list get $index]]
+      if { [regexp "^spp_portscan:" [$currentSelectedPane.msgFrame.list get $index]] } {
         if { $DISPLAYEDDETAIL != $portscanDataFrame } {
           pack forget $packetDataFrame
           pack $portscanDataFrame -fill both -expand true
