@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.102 2004/06/29 21:42:23 bamm Exp $ #
+# $Id: sguild,v 1.103 2004/06/30 14:53:47 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -102,6 +102,8 @@ proc HupTrapped {} {
   }
   LoadAccessFile $ACCESS_FILE
 }
+# Format for the autocat file is:
+# <erase time>||<sensorName>||<src_ip>||<src_port>||<dst_ip>||<dst_port>||<proto>||<sig msg>||<cat value>
 proc LoadAutoCatFile { filename } {
   set i 0
   for_file line $filename {
@@ -699,14 +701,19 @@ proc TcpFlowFormat { srcIP srcPort dstIP dstPort } {
 
 
 proc UserMsgRcvd { socketID userMsg } {
-  global socketInfo clientList
+  global socketInfo clientList connectedAgents
 
   set userMsg [lindex $userMsg 0]
 
-  # Simple command crap.
+  # Simple command stuff.
+  # Who returns a list of connected users
   if { $userMsg == "who" } {
      foreach client $clientList { lappend usersList [lindex $socketInfo($client) 2] }
-     SendSocket $socketID "UserMessage sguild \{Connected users: $usersList\}" 
+     SendSocket $socketID [list UserMessage sguild "Connected users: $usersList"] 
+  } elseif { $userMsg == "sensors" || $userMsg == "agents" } {
+    if { [info exists connectedAgents] } {
+      SendSocket $socketID [list UserMessage sguild "Connected sensors: $connectedAgents"]
+    }
   } else {
     foreach client $clientList {
       SendSocket $client [list UserMessage [lindex $socketInfo($socketID) 2] $userMsg]
