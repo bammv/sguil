@@ -703,7 +703,7 @@ proc CreateDB { DBNAME } {
 
 ###################### MAIN #####################################
 
-set validSockts ""
+set validSockets ""
 
 # Load mysql support.
 package require mysqltcl
