@@ -2652,7 +2652,7 @@ proc SensorList { sensorList } {
     # Now a frame to contain the checkbutton frames
     set checkButtonFrame [frame $sensorSelectWindow.checkButtonFrame -borderwidth 1 -background black]
     pack $checkButtonFrame -side top -padx 5 -pady 10
-    set winLabel [label $checkButtonFrame.label -text "Select Senor(s) to Monitor"\
+    set winLabel [label $checkButtonFrame.label -text "Select Sensor(s) to Monitor"\
      -foreground navy]
     pack $winLabel -side top -fill both -expand true
     # We create a new frame for every 5 sensors to keep the look clean.
