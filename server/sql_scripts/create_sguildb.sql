@@ -147,6 +147,25 @@ CREATE TABLE status
   PRIMARY KEY (status_id)
 );
 
+CREATE TABLE history
+(
+  sid		INT UNSIGNED	NOT NULL,
+  cid		INT UNSIGNED	NOT NULL,
+  uid		INT UNSIGNED	NOT NULL,
+  timestamp	DATETIME	NOT NULL,
+  status	SMALLINT UNSIGNED	NOT NULL,
+  comment	VARCHAR(255),
+  INDEX log_time (timestamp)
+);
+
+CREATE TABLE user_info
+(
+  uid		INT UNSIGNED	NOT NULL AUTO_INCREMENT,
+  username	VARCHAR(16)	NOT NULL,
+  last_login	TIMESTAMP	NOT NULL,
+  PRIMARY KEY (uid)
+);
+
 INSERT INTO status (status_id, description) VALUES (0, "New");
 INSERT INTO status (status_id, description) VALUES (1, "No Further Action Required");
 INSERT INTO status (status_id, description) VALUES (2, "Escalated");
