@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/hostlookup.php,v 1.2 2004/04/03 15:54:19 dlowless Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/hostlookup.php,v 1.3 2004/04/03 16:21:46 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -11,6 +11,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+	require("config.php");
+	
 ?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -78,7 +80,6 @@
 
 
 
-$whois_command="/usr/bin/jwhois";
 
 if ( $_REQUEST['whois_lookup'] == "src" ) {
 	if (preg_match("/^[\d\.]+$/", $_REQUEST['src_ip'])) {
