@@ -1,4 +1,4 @@
-# $Id: SguilUtil.tcl,v 1.8 2005/01/28 22:03:19 shalligan Exp $
+# $Id: SguilUtil.tcl,v 1.9 2005/02/01 17:13:28 shalligan Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
@@ -203,10 +203,6 @@ proc Idle {} {
 # Requires a valid GPG_PATH in sguil.conf
 proc GpgText { winName sign encrypt text recips sender } {
     global GPG_PATH env
-    puts "sign is $sign"
-    puts "enc is $encrypt"
-    puts "sender is $sender"
-    puts "recips is $recips"
     # get the senders gpg passphrase
     set recipstr ""
     foreach recip $recips {
@@ -222,6 +218,7 @@ proc GpgText { winName sign encrypt text recips sender } {
 	if { [$passPrompt activate] } {
 	    set passphrase [$passPrompt get]
 	} else {
+	    destroy $passPrompt
 	    return cancel
 	}
 	# write the text out to a tempfile
@@ -235,6 +232,7 @@ proc GpgText { winName sign encrypt text recips sender } {
 	    if [ catch {open "| $GPG_PATH -ase --yes --passphrase-fd 0 -u $sender \
 		    --no-tty $recipstr --batch $tempOutFile" r+ } gpgID ] { 
 		ErrorMessage $gpgID
+		destroy $passPrompt
 		return cancel
 	    }
 	    puts $gpgID "$passphrase\n"
@@ -242,7 +240,7 @@ proc GpgText { winName sign encrypt text recips sender } {
 	    if [ catch {close $gpgID } err ] { 
 		if [regexp "gpg:.*skipped.*" $err realerr] {
 		    ErrorMessage "GPG Error: $realerr"
-		    destroy $gpgID
+		    destroy $passPrompt
 		    return cancel
 		} else {
 		    set DONE 1
@@ -252,6 +250,7 @@ proc GpgText { winName sign encrypt text recips sender } {
 	    if [ catch {open "| $GPG_PATH -ae --yes --passphrase-fd 0 -u $sender \
 		    --no-tty $recipstr --batch $tempOutFile" r+ } gpgID ] { 
 		ErrorMessage $gpgID
+		destroy $passPrompt
 		return cancel
 	    }
 	    puts $gpgID "$passphrase\n"
@@ -268,6 +267,7 @@ proc GpgText { winName sign encrypt text recips sender } {
 	} else {
 	    if [ catch {open "| $GPG_PATH --clearsign --yes --passphrase-fd 0 -u $sender --no-tty --batch $tempOutFile" r+ } gpgID ] { 
 		ErrorMessage $gpgID
+		destroy $passPrompt
 		return cancel
 	    }
 	    
