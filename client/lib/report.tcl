@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.22 2004/10/18 22:19:28 shalligan Exp $ #
+# $Id: report.tcl,v 1.23 2004/10/21 14:07:33 bamm Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -348,7 +348,8 @@ proc PHBReport {} {
 	}
 	foreach sensorBox [winfo children $sensorFrame] {
 	    puts $sensorBox
-	    if { [winfo name $sensorBox] != "label" } {
+	    if { [winfo name $sensorBox] != "label" &&\
+                 [winfo name $sensorBox] != "selectAll"} {
 		set sensorSelect [$sensorBox get]
 		foreach s $sensorSelect {
 		    lappend sensors $s
