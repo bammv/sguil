@@ -125,7 +125,7 @@ proc UserQuerySelect { listName } {
   $commentBox clear
   $whereBox clear
   set uIndex [$listName curselection]
-  puts "||$uIndex||"
+  #puts "||$uIndex||"
   $commentBox insert end $uComment($uIndex)
   $whereBox insert end $uWhere($uIndex)
   set STD_QRY_TYPE $uType($uIndex)  
@@ -245,12 +245,18 @@ proc SaveUserQry {type win stdQryWin} {
 proc DelQry {stdQryWin} {
     global USER_QRY_LIST uIndex
     
+    if { [string trim [$stdQryWin.mFrame.lFrame.uList getcurselection]] == ""} {
+	  
+	    InfoMessage "Please Select a User Query to Delete"
+	    return
+	}
     set answer [tk_messageBox -message "ARE YOU SURE you want to delete this query?" -type yesno -icon question]
     if {$answer == "yes"} {
 	set USER_QRY_LIST [lreplace $USER_QRY_LIST $uIndex $uIndex]
 	WriteUserQryFile
 	InsertUserQueries $stdQryWin.mFrame.lFrame.uList
-	$stdQryWin.mFrame.lFrame.uList component listbox selection set $uIndex
+	# The following line will produce an error if this is the first User Query added, lets just ignore it.
+	catch {$stdQryWin.mFrame.lFrame.uList component listbox selection set $uIndex}
     }
 }
 
