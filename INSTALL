@@ -31,7 +31,7 @@ Create the sguildb:
 Make sure each sensor has INSERT and SELECT privledges:
   Bamm@syn# mysql -u root -p -e "GRANT INSERT,SELECT on sguildb.* to root@<sensorip>"
 Build the required tables:
-  Bamm@syn# mysql -u root -p < ./scripts/create_sguildb.sql
+  Bamm@syn# mysql -u root -p -D sguildb < ./scripts/create_sguildb.sql
   *NOTE: Verify all is well with: mysql -u root -p -e "show tables"
   +-------------------+
   | Tables_in_sguildb |
