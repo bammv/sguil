@@ -1,6 +1,6 @@
 #!/bin/sh
 #set -x
-# $Id: log_packets.sh,v 1.16 2004/05/24 15:36:24 shalligan Exp $ #
+# $Id: log_packets.sh,v 1.17 2004/05/24 17:06:02 shalligan Exp $ #
 
 ################################################
 #                                              #
@@ -114,7 +114,7 @@ restart() {
   else
     echo "Error: $PIDFILE does not exist."
     echo "Checking for old process with ps."
-    res=`$PS | $GREP "$SNORT_PATH" | $GREP "$LOG_DIR" | $GREP -v grep | cut -c1-5`
+    res=`$PS | $GREP "$SNORT_PATH" | $GREP "$LOG_DIR" | $GREP -v grep | awk '{print $1}'`
     if [ $res ]; then
 	echo "Old log packets proccess found at pid $res, killing."
 	kill $res
