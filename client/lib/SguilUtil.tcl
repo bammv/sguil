@@ -1,4 +1,4 @@
-# $Id: SguilUtil.tcl,v 1.4 2005/01/25 18:12:12 shalligan Exp $
+# $Id: SguilUtil.tcl,v 1.5 2005/01/26 17:12:12 shalligan Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
@@ -82,7 +82,12 @@ proc InetAtoN { ipaddress } {
     set oct2 [lindex $octetlist 1]
     set oct3 [lindex $octetlist 2]
     set oct4 [lindex $octetlist 3]
-    set decIP [expr ($oct1 * 16777216) + ($oct2 * 65536) + ($oct3 *256) + $oct4]
+    # tcl uses type long for ints and this next expr could very well overflow that
+    # so we have to use float instead
+    set decIP [expr ($oct1 * 16777216.0) + ($oct2 * 65536) + ($oct3 *256) + $oct4]
+    # we don't want the .0 in the query and we can't use round() since it may overflow the int type
+    # so let treat it like a string and lop off the .0
+    set decIP [string trimright $decIP ".0"
     return $decIP
 }
 
