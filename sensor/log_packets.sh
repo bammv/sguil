@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: log_packets.sh,v 1.20 2004/07/08 16:06:25 bamm Exp $ #
+# $Id: log_packets.sh,v 1.21 2004/10/21 21:35:36 bamm Exp $ #
 
 ################################################
 #                                              #
@@ -65,11 +65,11 @@ start() {
       mkdir $LOG_DIR
       chmod 777 $LOG_DIR
     fi
-    if [ ! $LOG_DIR/$HOSTNAME ]; then
+    if [ ! -d $LOG_DIR/$HOSTNAME ]; then
       mkdir $LOG_DIR/$HOSTNAME
       chmod 777 $LOG_DIR/$HOSTNAME
     fi
-    if [ ! $LOG_DIR/$HOSTNAME/dailylogs ]; then
+    if [ ! -d $LOG_DIR/$HOSTNAME/dailylogs ]; then
       mkdir $LOG_DIR/$HOSTNAME/dailylogs
       chmod 777 $LOG_DIR/$HOSTNAME/dailylogs
     fi
