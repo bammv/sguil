@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.24 2004/04/04 20:59:20 dlowless Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.25 2004/04/04 21:46:52 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -37,11 +37,11 @@ function DBClose($result) {
 
 
 function show_alerts( $where_query, $aggregate_result ) {
-	global $colours, $status_desc, $status_colour;
+	global $colours, $status_desc, $status_colour, $max_sig_length;
 
 	$timeparts = explode(" ",microtime());
         $starttime = $timeparts[1].substr($timeparts[0],1);
-	
+
 	DBOpen();
 
 	if( $aggregate_result == 1 ) {
@@ -106,16 +106,17 @@ function show_alerts( $where_query, $aggregate_result ) {
 	print("<hr>\n");	
 
 	print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"1\" width=\"100%\">\n");
+	print("<tr><td colspan=\"15\" align=\"center\">Events updated at " .gmdate("Y-m-d H:i:s O", time()) . "</td></tr>\n");
 	print("<tr bgcolor=\"#000000\">\n");
 	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;ST&nbsp;</strong></font></td>\n");
 	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;CNT&nbsp;</strong></font></td>\n");
 	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;Sensor&nbsp;</strong></font></td>\n");
 	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;sid.cid&nbsp;</strong></font></td>\n");
 	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;Date/Time&nbsp;</strong></font></td>\n");
-	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;Src&nbsp;IP&nbsp;</strong></font></td>\n");
-	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;SPort&nbsp;</strong></font></td>\n");
-	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;Dst&nbsp;IP&nbsp;</strong></font></td>\n");
-	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;DPort&nbsp;</strong></font></td>\n");
+	print("	<td width=\"1\" colspan=\"2\"><font color=\"#FFFFFF\"><strong>&nbsp;Src&nbsp;IP&nbsp;</strong></font></td>\n");
+	print("	<td width=\"1\" colspan=\"2\"><font color=\"#FFFFFF\"><strong>&nbsp;SPort&nbsp;</strong></font></td>\n");
+	print("	<td width=\"1\" colspan=\"2\"><font color=\"#FFFFFF\"><strong>&nbsp;Dst&nbsp;IP&nbsp;</strong></font></td>\n");
+	print("	<td width=\"1\" colspan=\"2\"><font color=\"#FFFFFF\"><strong>&nbsp;DPort&nbsp;</strong></font></td>\n");
 	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;Pr&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Event&nbsp;Message&nbsp;</strong></font></td>\n");
 	print("</tr>\n");
@@ -131,41 +132,37 @@ function show_alerts( $where_query, $aggregate_result ) {
 			print("<tr bgcolor=\"" . $colours[$i] . "\">\n");
 			print("	<td bgcolor=\"" . $status_colour[$row['status']] . "\">&nbsp;" . $status_desc[$row['status']] . "&nbsp;</td>\n");
 			print("	<td>&nbsp;<a href=alerts.php?aggregate=0&src_ip=" . $row['src_ip']."&signature_id=" . $row['signature_id'] . ">" . $row['CNT'] . "</a>&nbsp;</td>\n");
-//			print("	<td>&nbsp;" . $row['CNT'] . "&nbsp;</td>\n");
 			print("	<td>&nbsp;" . $row['hostname'] . "&nbsp;</td>\n");
 			print("	<td>&nbsp;<a href=\"$detail_url\" target=\"lookup_right\">" . $row['sid'] . "." . $row['cid'] . "</a>&nbsp;</td>\n");
 			print("	<td>&nbsp;" . str_replace(" ", "&nbsp;", $row['timestamp']) . "&nbsp;</td>\n");
-			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['src_ip'] . "</a>&nbsp;(" . getcountrycodebyaddr($row['src_ip']) . ")&nbsp;</td>\n");
+
+
+			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['src_ip'] . "</a>&nbsp;</td>");
+			print("  <td>&nbsp;" . getcountrycodebyaddr($row['src_ip']) . "&nbsp;</td>\n");
 			
-			if ( ( getservbyport( $row['src_port'] ,getprotobynumber($row['ip_proto']))=="") || ( getprotobynumber($row['ip_proto']) != 'udp' && getprotobynumber($row['ip_proto']) != 'tcp' ))
-				print("	<td>&nbsp;" . $row['src_port'] . "&nbsp;</td>\n");
-			else
-				print("	<td>&nbsp;" . $row['src_port'] ."&nbsp;(" .getservbyport ( $row['src_port'] , getprotobynumber($row['ip_proto'])) . ")&nbsp;</td>\n");
+			if ( ( getservbyport( $row['src_port'] ,getprotobynumber($row['ip_proto']))=="") || ( getprotobynumber($row['ip_proto']) != 'udp' && getprotobynumber($row['ip_proto']) != 'tcp' )) {
+				print("	<td>&nbsp;" . $row['src_port'] . "&nbsp;</td>");
+				print("  <td>&nbsp;</td>\n");
+			} else {
+				print("	<td>&nbsp;" . $row['src_port'] ."&nbsp;</td>");
+				print("  <td>&nbsp;" .getservbyport ( $row['src_port'] , getprotobynumber($row['ip_proto'])) . "&nbsp;</td>\n");
+			}
+			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a>&nbsp;</td>");
+			print("  <td>&nbsp;" . getcountrycodebyaddr($row['dst_ip']) . "&nbsp;</td>\n");
 
-			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a>&nbsp;(" . getcountrycodebyaddr($row['dst_ip']) . ")&nbsp;</td>\n");
-
-			if ( (getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto']))=="") || ( getprotobynumber($row['ip_proto']) != 'udp' && getprotobynumber($row['ip_proto']) != 'tcp' ))
-				print("	<td>&nbsp;<a href=http://www.dshield.org/port_report.php?port=" .$row['dst_port']. "&days=70 target=dshield>" . $row['dst_port'] . "</a>&nbsp;</td>\n");
-			else
-				print("	<td>&nbsp;<a href=http://www.dshield.org/port_report.php?port=" .$row['dst_port']. " target=dshield>" . $row['dst_port'] ."&nbsp;(" .getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto'])) . ")</a>&nbsp;</td>\n");
-
+			if ( (getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto']))=="") || ( getprotobynumber($row['ip_proto']) != 'udp' && getprotobynumber($row['ip_proto']) != 'tcp' )) {
+				print("	<td>&nbsp;<a href=http://www.dshield.org/port_report.php?port=" .$row['dst_port']. "&days=70 target=dshield>" . $row['dst_port'] . "</a>&nbsp;</td>");
+				print("  <td>&nbsp;</td>\n");
+			} else {
+				print("	<td>&nbsp;<a href=http://www.dshield.org/port_report.php?port=" .$row['dst_port']. " target=dshield>" . $row['dst_port'] ."&nbsp;</td>");
+				print("  <td>&nbsp;" .getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto'])) . "</a>&nbsp;</td>\n");
+			}
 			print("	<td>&nbsp;" . $row['ip_proto'] ."&nbsp;(" . getprotobynumber($row['ip_proto']). ")" . "&nbsp;</td>\n");
 		
-			if ( strlen ( $row['signature'] ) > 30)
-                        {
-                                $row['signature'] = substr ( $row['signature'], 0, 27 ) . "...";
-                        }
-	
-			//global $max_sig_length;
-			//if( $max_sig_length > 0 && strlen($row['signature']) > $max_sig_length ) {
-			//	$fstring = "%" . $max_sig_lengh - 3 . "s";
-			//	sprintf($signature, "%20s", $row['signature']);
-			//	print("	<td>&nbsp;" . $signature . "&nbsp;</td>\n");
-			//} else {
+			if ( strlen ( $row['signature'] ) > $max_sig_length)
+				$row['signature'] = substr ( $row['signature'], 0, $max_sig_length - 3 ) . "...";
 
-				print("	<td>&nbsp;<a href=http://www.snort.org/snort-db/sid.html?sid=" . $row['signature_id']." target=_new>" . $row['signature'] . "</a>&nbsp;</td>\n");
-
-			//}
+			print("	<td>&nbsp;<a href=http://www.snort.org/snort-db/sid.html?sid=" . $row['signature_id']." target=_new>" . $row['signature'] . "</a>&nbsp;</td>\n");
 			
 			print("</tr>\n");
 			
@@ -177,7 +174,7 @@ function show_alerts( $where_query, $aggregate_result ) {
 
 	$timeparts = explode(" ",microtime());
         $endtime = $timeparts[1].substr($timeparts[0],1);
-	print("<tr><td colspan=\"11\" align=\"center\">Query returned " . mysql_num_rows($result) . " rows in " . round ( bcsub ( $endtime, $starttime, 6 ),3 ) . " seconds</td></tr>\n");
+	print("<tr><td colspan=\"15\" align=\"center\">Query returned " . mysql_num_rows($result) . " rows in " . round ( bcsub ( $endtime, $starttime, 6 ),3 ) . " seconds</td></tr>\n");
 	print("</table>\n");
 	
 	DBClose($result);
@@ -715,6 +712,10 @@ function getcountrycodebyaddr($ip) {
 	$result = geoip_country_code_by_addr($gi, "$ip");
 	geoip_close($gi);
 	
+	if ( $result == "" )
+		$result = "--";
+
+	/*
 	if ( $result == "" ) {
 		// No result.
 		if( is_rfc1918($ip) )
@@ -724,6 +725,7 @@ function getcountrycodebyaddr($ip) {
 		else
 			$result = "Unknown";
 	}
+	*/
 	
 	return( $result );
 }
@@ -732,7 +734,10 @@ function getcountrynamebyaddr($ip) {
 	$gi = geoip_open("data/GeoIP.dat",GEOIP_STANDARD);
 	$result = geoip_country_name_by_addr($gi, "$ip");
 	geoip_close($gi);
-	
+
+	if ( $result == "" )
+		$result = "--";
+	/*	
 	if ( $result == "" ) {
 		// No result.
 		if( is_rfc1918($ip) )
@@ -740,6 +745,7 @@ function getcountrynamebyaddr($ip) {
 		else
 			$result = "Unknown";
 	}
+	*/
 	
 	return( $result );
 }
