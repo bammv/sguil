@@ -50,11 +50,11 @@ echo "00 0-23/1 * * *	root	%{sensor_prefix}/bin/log_packets.sh restart" >> %{bui
 %clean
 %{__rm} -rf %{buildroot}
 
-%post
-crontab -l > /tmp/crontab.$$
+%pre
+grep -q %{sensor_user} /etc/passwd || useradd %{sensor_user}
 
-crontab /tmp/crontab.$$
-rm -f /tmp/crontab.$$
+%postun 
+grep -q %{sensor_user} /etc/passwd && userdel %{sensor_user}
 
 %files
 %defattr(-, root, root, 0755)
