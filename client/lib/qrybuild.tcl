@@ -21,23 +21,28 @@ proc QryBuild {} {
       set editBox [scrolledtext $editFrame.eBox -textbackground white -vscrollmode dynamic \
 		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 80x10 -textfont ourFixedFont \
 		-labeltext "Edit Where Clause"]
-      $editBox insert end "WHERE event.sid = sensor.sid AND "
+      $editBox insert end "WHERE event.sid = sensor.sid AND  LIMIT 500"
+      $editBox mark set insert "end -11 c"
       set bb2 [buttonbox $editFrame.bb]
-    $bb2 add Submit -text "Submit" -command "set RETURN_FLAG 1"
+      $bb2 add Submit -text "Submit" -command "set RETURN_FLAG 1"
+      $bb2 add Cancel -text "Cancel" -command "set RETURN_FLAG 0"
       pack $editBox $bb2 -side top -fill y -expand true
 
 
 
     set selectFrame [frame $mainFrame.sFrame]
-    set itemList [combobox $selectFrame.iList -editable true -dropdown false] 
-    set catList [combobox $selectFrame.cList -labeltext Items -editable true -selectioncommand "updateItemList $selectFrame"]
-    set metaList [combobox $selectFrame.mList -labeltext Categories -editable false -selectioncommand "updateCatList $selectFrame"]
-    
+      set catList [combobox $selectFrame.cList -labeltext Categories -editable true -selectioncommand "updateItemList $selectFrame"]
+      set metaList [combobox $selectFrame.mList -labeltext Meta -editable false -selectioncommand "updateCatList $selectFrame"]
+      set itemList [scrolledlistbox $selectFrame.iList -hscrollmode dynamic \
+	     -dblclickcommand "addToEditBox $editBox $selectFrame" \
+	     -scrollmargin 5 -labeltext "Items" \
+	     -labelpos w -vscrollmode dynamic \
+	     -visibleitems 20x10]
   
       set bb [buttonbox $selectFrame.bb]
-    $bb add add -text "Add" -command "addToEditBox $editBox $itemList"
+        $bb add add -text "Add" -command "addToEditBox $editBox $selectFrame"
       pack $metaList $catList $itemList $bb -side top -fill y -expand true
-    
+      iwidgets::Labeledwidget::alignlabels $metaList $catList $itemList
     
     pack $selectFrame $editFrame -side left -fill y -expand true
     eval $metaList insert list 0 $mlst
@@ -78,21 +83,26 @@ proc updateCatList { selectFrame } {
 proc updateItemList { selectFrame} {
     global  tableColumnArray
     
-    $selectFrame.iList delete list 0 end
-    $selectFrame.iList delete entry 0 end
+    $selectFrame.iList delete 0 end
+    #$selectFrame.iList delete entry 0 end
     
     eval set sel [$selectFrame.cList get]
     
     if { [$selectFrame.mList get] == "Tables" } {
-	eval $selectFrame.iList insert list 0 $tableColumnArray($sel)
+	eval $selectFrame.iList insert 0 $tableColumnArray($sel)
     } else {
 	# SQL and other Functions listed here
     }
 }
 
-proc addToEditBox { editBox itemList } {
+proc addToEditBox { editBox selectFrame } {
 
-    set addText [lindex [$itemList get] 0]
+    set addText [lindex [$selectFrame.iList getcurselection] 0]
     
-    $editBox insert end "$addText "
+    #if Meta is set to table, prepend tablename. to the item
+    if {[$selectFrame.mList get] == "Tables"} {
+	set addText "[$selectFrame.cList get].$addText"
+    }
+    
+    $editBox insert insert "$addText "
 }
