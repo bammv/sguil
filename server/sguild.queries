@@ -3,4 +3,4 @@
 # <name>||<comment>||<query WHERE statement>||<event|sessions>
 Last Modified||Return the events modified in the last 30 mins||WHERE event.sid=sensor.sid AND event.last_modified > DATE_SUB(NOW(), INTERVAL 30 MINUTE) ORDER BY event.last_modified DESC LIMIT 500||event
 DNS Overflow||Looks for TCP DNS sessions with large source bytes. Since DNS requests generally have low byte counts, this could be a buffer overflow||WHERE sessions.sid=sensor.sid AND sessions.start_time > DATE_SUB(NOW(), INTERVAL 1 DAY) AND sessions.dst_port=53 AND sessions.src_bytes > 1000 LIMIT 500||sessions
-Auto Cats||Select event auto updated in the last 10 mins||WHERE event.sid=sensor.sid AND user_info.uid=event.last_uid AND user_info.username='auto' AND timestamp > DATE_SUB(NOW(), INTERVAL 10 MINUTE) LIMIT 500||event
+Auto Cats||Select event auto updated in the last 10 mins||WHERE event.sid=sensor.sid AND user_info.uid=event.last_uid AND user_info.username='auto' AND event.last_modified > DATE_SUB(NOW(), INTERVAL 10 MINUTE) LIMIT 500||event

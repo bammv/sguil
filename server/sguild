@@ -28,6 +28,7 @@ proc DisplayUsage { cmdName } {
   puts "       $cmdName \[-u <filename\] \[-adduser <username>\] \[-deluser <username\]"
   puts "  -c <filename>: PATH to the sguild config (sguild.conf) file."
   puts "  -a <filename>: PATH to the sguild config (autocat.conf) file."
+  puts "  -g <filename>: PATH to the sguild global queries (sguild.queries) file."
   puts "  -u <filename>: PATH to the sguild users (sguild.users) file."
   puts "  -P <filename>: Name of file to write the PID to."
   puts "                 Default is /var/run/sguild.pid"
@@ -39,6 +40,31 @@ proc DisplayUsage { cmdName } {
   puts "  -deluser <username>: Delete user from sguild.users"
   puts "  -h Display this help"
   CleanExit
+}
+proc HupTrapped {} {
+  global DEBUG AUTOCAT_FILE GLOBAL_QRY_FILE GLOBAL_QRY_LIST clientList
+  global acRules acCat 
+  if { $DEBUG } { puts "HUP signal caught." }
+  # Reload auto cat rules
+  if { $DEBUG } { puts "Reloading AutoCat rules: $AUTOCAT_FILE" }
+  # Clear the current rules
+  if [info exists acRules] { unset acRules }
+  if [info exists acCat] { unset acCat }
+  if { [ file exists $AUTOCAT_FILE] } {
+    LoadAutoCatFile $AUTOCAT_FILE
+  }
+  # reload global queries.
+  if { $DEBUG } { puts "Reloaded Global Queries: $GLOBAL_QRY_FILE" }
+  # Clear the current list
+  set GLOBAL_QRY_LIST ""
+  if { [file exists $GLOBAL_QRY_FILE] } {
+    LoadGlobalQueries ./sguild.queries
+  } else {
+    set GLOBAL_QRY_LIST none
+  }
+  foreach clientSocket $clientList {
+    SendGlobalQryList { SendSocket $clientSocket "GlobalQryList $GLOBAL_QRY_LIST" }
+  }
 }
 proc LoadAutoCatFile { filename } {
   global AUTOID
@@ -1177,6 +1203,7 @@ foreach arg $argv {
         -h { DisplayUsage $argv0}
         -c { set state conf }
         -a { set state autocat }
+        -g { set state gquery }
         -u { set state users_file }
         -D { set DAEMON_CONF_OVERRIDE 1 }
         -P { set state pid_file }
@@ -1190,6 +1217,7 @@ foreach arg $argv {
     }
     conf { set CONF_FILE $arg; set state flag }
     autocat { set AUTOCAT_FILE $arg; set state flag }
+    gquery { set GLOBAL_QRY_FILE $arg; set state flag }
     users_file { set USERS_FILE $arg; set state flag }
     pid_file { set PID_FILE $arg; set state flag }
     openssl { set OPENSSL 1; set TLS_PATH $arg; set state flag }
@@ -1319,9 +1347,14 @@ if { [file exists $AUTOCAT_FILE] } {
   LoadAutoCatFile $AUTOCAT_FILE
 }
 # Load global queries.
-if { [file exists /etc/sguild/sguild.queries] } {
-  LoadGlobalQueries /etc/sguild/sguild.queries
-} elseif { [file exists ./sguild.queries] } {
+if { ![info exists GLOBAL_QRY_FILE] } {
+  if { [file exists /etc/sguild/sguild.queries] } {
+    set GLOBAL_QRY_FILE "/etc/sguild/sguild.queries"
+  } else {
+    set GLOBAL_QRY_FILE "./sguild.queries"
+  }
+}
+if { [file exists $GLOBAL_QRY_FILE] } {
   LoadGlobalQueries ./sguild.queries
 } else {
   set GLOBAL_QRY_LIST none
@@ -1374,8 +1407,10 @@ if {$DEBUG} {
 }
 foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=0" -list] {
   if {$DEBUG} {puts "Archived Alert: $row"}
-  AddEventToEventArray $row
-  SendEvent $row
+  if { ![array exists acRules] || ![AutoCat $row] } {
+    AddEventToEventArray $row
+    SendEvent $row
+  }
 }
 if {$DEBUG} {
   puts "Querying DB for escalated events..."
@@ -1408,6 +1443,8 @@ if [catch {socket -server SensorConnect $SENSORPORT} sensorSocket] {
   puts "ERROR: $sensorSocket"
 }
 puts "Sguild Initialized."
+
+signal trap {HUP} HupTrapped
 
 # Infinate wait
 vwait FOREVER
