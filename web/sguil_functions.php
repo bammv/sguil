@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.19 2004/04/04 19:17:23 dlowless Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.20 2004/04/04 20:03:26 dlowless Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -147,7 +147,12 @@ function show_alerts( $where_query, $aggregate_result ) {
 				print("	<td>&nbsp;<a href=http://www.dshield.org/port_report.php?port=" .$row['dst_port']. " target=dshield>" . $row['dst_port'] ."&nbsp;(" .getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto'])) . ")</a>&nbsp;</td>\n");
 
 			print("	<td>&nbsp;" . $row['ip_proto'] ."&nbsp;(" . getprotobynumber($row['ip_proto']). ")" . "&nbsp;</td>\n");
-			
+		
+			if ( strlen ( $row['signature'] ) > 30)
+                        {
+                                $row['signature'] = substr ( $row['signature'], 0, 27 ) . "...";
+                        }
+	
 			//global $max_sig_length;
 			//if( $max_sig_length > 0 && strlen($row['signature']) > $max_sig_length ) {
 			//	$fstring = "%" . $max_sig_lengh - 3 . "s";
