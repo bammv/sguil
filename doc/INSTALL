@@ -1,4 +1,4 @@
-# $Id: INSTALL,v 1.15 2004/04/21 18:44:11 bamm Exp $ #
+# $Id: INSTALL,v 1.16 2004/06/24 15:56:53 bamm Exp $ #
  
 Sguil should be installed in the following order:
 
@@ -6,18 +6,17 @@ Step 1: Install mysql and create the sguil database.
 Step 2: Install the GUI server (sguild).
 Step 3: Install the GUI client (sguil.tk).
 Step 4: Install the sensor.
-Step 5: Install xscriptd.
 
 NOTE: Everything can be installed on a single system,
 or the different services can be split up between 
 different systems. For instance, snort and barnyard
 can be installed on one sytem (the sensor), the GUI
-server and xscriptd on another system, the database
-on yet another system, and the client could be run
-on a number of different systems. The configuration
-is flexible and the number of systems required depends
-on the resources needed. Large networks will benefit
-by splitting the different processes up on different
+server on another system, the database on yet another
+system, and the client could be run on a number of
+different systems. The configuration is flexible and
+the number of systems required depends on the
+resources needed. Large networks will benefit by
+splitting the different processes up on different
 sytems, while a home user should easily be able to
 run everything on a single system.
  
@@ -143,6 +142,7 @@ to the PATH you define for sguild to look for snort rules.  In the
 future, rules will be localized in the DB, for now each rule file
 must be kept on the sguild server based on the hostname. Don't
 forget to copy these rule files over after installing the sensor.
+As of version 0.4.1, the xscript functions were moved into sguild.
 
 5) Add users to sguild.users file by running `sguild -adduser <username>`
 If you want your users/passwd file to be somewhere other than
@@ -343,55 +343,15 @@ c. Now install Barnyard -
     -g /etc/snort/gen-msg.map -s /etc/snort/sid-msg.map -f snort.log -w /etc/snort/waldo.file
 
 B. Next install and start the sensor_agent.tcl from the ./sensor directory.
-Make sure to point the script to the correct interpreter
-(i.e. #!/usr/bin/tcl or #!/usr/local/bin/tclsh8.3) and to configure the
-different options. The sensor agent forwards portscan and session data
-files to sguild for loading to the DB.
-
-
-###########################
-#Step 5: Install xscriptd.#
-###########################
-Xscriptd is meant to be run on the same system as sguild. Its purpose is
-to get binary packet data from sensor(s) and generate a transcript using tcpflow
-or forward the binary file to the client to be loaded into ethereal. 
-
-
-Setting up xscriptd on a "local" system (one where snort, barnyard, sguild, and
-xscriptd are all run on the same system) is fairly simple. Edit the options
-at the beginning of xscriptd and make sure that the LOCALSENSOR var is set to "1".
-
-Configuring a "remote" system is a little harder. Xscriptd uses ssh and scp to
-retrieve files file the remote sensor. In order for this process to work, it
-needs access to a valid ssh identy file that requires no passphrase. Follow these
-steps to create one:
-  #Shown using dsa
-  Bamm@syn# ssh-keygen -t dsa
-  Generating public/private dsa key pair.
-  Enter file in which to save the key (/root/.ssh/id_dsa): 
-  Enter passphrase (empty for no passphrase): <Press Return Here> 
-  Enter same passphrase again: <Return again, we want an empty passphrase>
-  Your identification has been saved in /root/.ssh/id_dsa.
-  Your public key has been saved in /root/.ssh/id_dsa.pub.
-  The key fingerprint is:
-  7f:39:32:c4:74:d7:f9:55:ad:a0:d3:d3:ba:2d:ba:45 drea@syn.bamm.net
-
-Now append the public key (id_dsa.pub) to the .ssh/authorized_keys2 file on the remote
-sensor. You must now ssh to the remote sensor and make sure that the user that
-xscriptd will run as can log in without any interaction. You may have to specify
-a path to the private identity file (id_dsa). If so, make sure you modify the options
-in xscriptd to reflect this:
-  # Path to different execs here. If you need to send flags then put them here also
-  # set SSH "/usr/bin/ssh -p 1234"
-  set SSH "/usr/bin/ssh -i /root/.ssh/sensor_key_id_dsa"
-  set SCP "/usr/bin/scp" -i /root/.ssh/sensor_key_id_dsa"
-
-NOTE: Don't forget to install tcpflow (http://www.circlemud.org/~jelson/software/tcpflow/)
-and p0f (http://www.stearns.org) and specifity the correct PATHs in the config options
-located at the beginning of xscriptd.
-
-
-
+The configuration file sensor_agent.conf should be configured appropriately.
+You can define the location of the config file with the -c switch. By default
+sensor_agent.tcl will look in /etc and the current working directory if the -c
+switch is not specified. On startup sensor_agent.tcl will attempt to use the
+tcl interpreter (tclsh) from your PATH. You may need to create a link from
+tclsh8.3 (or similar) to tclsh in the appropriate directory.  (i.e.`ln -s
+/usr/local/bin/tclsh8.3 /usr/local/bin/tclsh). The sensor agent forwards
+portscan and session data files to sguild for loading to the DB. It also is
+the main communications link between the sensor and sguild.
 
 ############
 #   DONE!  #
