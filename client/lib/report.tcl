@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.28 2004/12/02 16:37:13 shalligan Exp $ #
+# $Id: report.tcl,v 1.29 2004/12/02 16:40:15 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -363,6 +363,7 @@ proc PHBReport {} {
 	}
 	if {$sensors == ""} {
 	    ErrorMessage "Error.  You need to select at least one sensor"
+	    destroy $phbReport
 	    return
 	}
 	set datetimestart "[clock format [$dateStart get -clicks] -f "%Y-%m-%d"] [$timeStart get]"
