@@ -502,11 +502,14 @@ proc SensorCmdRcvd { socketID } {
     }
   } else {
     if {$DEBUG} { puts "Sensor Data Rcvd: $data" }
+    # note that ctoken changes the string that it is operating on 
+    # so instead of re-writing all of the proc to move up one in 
+    # the index when looking at $data, I wrote $data to $tmpData
+    # before using ctoken.  Probably should drop this and fix the
+    # procs, but that can happen later
     set tmpData $data
-    puts "here1"
     set sensorCmd [ctoken tmpData " "]
-    puts "sensorCmd is $sensorCmd"
-#    set sensorCmd [lindex $data 0]
+    # set sensorCmd [lindex $data 0]
     switch -exact -- $sensorCmd {
       RTEvent	{ EventRcvd $data }
       PSFile	{ RcvPortscanFile $socketID [lindex $data 1] }
