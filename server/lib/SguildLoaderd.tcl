@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.10 2005/01/28 15:49:32 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.11 2005/01/28 17:48:41 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -55,7 +55,7 @@ proc CreateNewSancpTable { tableName } {
 
     LogMessage "loaderd: Creating sancp table: $tableName."
     set createQuery "                                      \
-        CREATE TABLE $tableName                            \
+        CREATE TABLE `$tableName`                          \
         (                                                  \
         sid           INT UNSIGNED            NOT NULL,    \
         sancpid       BIGINT UNSIGNED         NOT NULL,    \
