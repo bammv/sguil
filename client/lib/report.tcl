@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.12 2004/02/10 20:34:38 shalligan Exp $ #
+# $Id: report.tcl,v 1.13 2004/07/14 13:08:47 bamm Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -99,6 +99,7 @@ proc ExportResults { currentTab type } {
     set SepList [list , | || <TAB> HUMAN-READABLE]
     eval $exportCBox insert list end $SepList
     $exportCBox insert entry end ","
+    wm geometry $exportPromptWin +[winfo pointerx .]+[winfo pointery .]
     pack $exportCBox $checkBox
     $exportPromptWin activate
     
@@ -117,11 +118,17 @@ proc ExportResults { currentTab type } {
     if { $filename == "" } {return}
     
     if {$SepChar == "HUMAN-READABLE" } {
-	if { $type == "event"} { set OutputText [ExportHumanText $winname] }
-	if { $type == "ssn"} { set OutputText [ExportHumanSSNText $winname] }
+	if { $type == "event"} {
+          set OutputText [ExportHumanText $winname]
+	} elseif { $type == "ssn" || $type == "sancp" } {
+          set OutputText [ExportHumanSSNText $winname]
+        }
     } else {
-	if { $type == "event"} {set OutputText [ExportDelimitedText $winname $SepChar $quote $header]}
-	if { $type == "ssn" } {set OutputText [ExportDelimitedSSNText $winname $SepChar $quote $header]}
+	if { $type == "event"} {
+          set OutputText [ExportDelimitedText $winname $SepChar $quote $header]
+	} elseif { $type == "ssn" || $type == "sancp" } {
+          set OutputText [ExportDelimitedSSNText $winname $SepChar $quote $header]
+        }
     }
     if [catch {open $filename w} fileID] {
 	puts "Error: Could not create/open $filename: $fileID"
