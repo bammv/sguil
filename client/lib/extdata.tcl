@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.11 2004/10/11 21:45:26 shalligan Exp $
+# $Id: extdata.tcl,v 1.12 2004/10/14 18:51:21 shalligan Exp $
 
 proc GetRuleInfo {} {
   global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT SSN_QUERY
@@ -195,20 +195,73 @@ proc ClearWhoisData {} {
   $whoisText delete 0.0 end
 }
 proc CreateXscriptWin { winName } {
-  toplevel $winName
-  menubutton $winName.menubutton -underline 0 -text File -menu $winName.menubutton.menu
-  menu $winName.menubutton.menu -tearoff 0
-  $winName.menubutton.menu add command -label "Save As" -command "SaveXscript $winName"
-  $winName.menubutton.menu add command -label "Close Window" -command "destroy $winName"
-  scrolledtext $winName.sText -vscrollmode dynamic -hscrollmode dynamic -wrap word\
-   -visibleitems 85x30 -sbwidth 10
-  $winName.sText tag configure hdrTag -foreground black -background "#00FFFF"
-  $winName.sText tag configure srcTag -foreground blue
-  $winName.sText tag configure dstTag -foreground red
+    toplevel $winName
+    menubutton $winName.menubutton -underline 0 -text File -menu $winName.menubutton.menu
+    menu $winName.menubutton.menu -tearoff 0
+    $winName.menubutton.menu add command -label "Save As" -command "SaveXscript $winName"
+    $winName.menubutton.menu add command -label "Close Window" -command "destroy $winName"
+    scrolledtext $winName.sText -vscrollmode dynamic -hscrollmode dynamic -wrap word\
+	    -visibleitems 85x30 -sbwidth 10
+    $winName.sText tag configure hdrTag -foreground black -background "#00FFFF"
+    $winName.sText tag configure srcTag -foreground blue
+    $winName.sText tag configure dstTag -foreground red
+    set dataSearchFrame [frame $winName.dataSearchFrame -bd 0]
+    set dataSearchText [entryfield $dataSearchFrame.dataSearchText -width 20 -background white]
+    set dataSearchButton [button $dataSearchFrame.dataSearchButton -text "Search Packet Payload"\
+	    -command "SearchXscript $winName"]
+    set dataSearchCaseCheck [checkbutton $dataSearchFrame.dataSearchCaseCheck -variable dataSearchCase -text "NoCase"]
+    pack $dataSearchText $dataSearchButton $dataSearchCaseCheck -side left -fill x
+    
   scrolledtext $winName.debug -vscrollmode dynamic -hscrollmode none -wrap word\
    -visibleitems 85x5 -sbwidth 10 -labeltext "Debug Messages" -textbackground lightblue
   pack $winName.menubutton -side top -anchor w
-  pack $winName.sText $winName.debug -side top -fill both -expand true
+  pack $winName.sText $winName.debug $winName.dataSearchFrame -side top -fill both -expand true
+}
+
+proc SearchXscript { winName } {
+    global dataSearchCase
+    set searchWidget $winName.sText
+    $searchWidget tag delete highlight
+    set searchtext [$winName.dataSearchFrame.dataSearchText get]
+    if {$searchtext == "" || $searchtext == "\n"} {
+	return
+    }
+    regsub -all {\n} $searchtext {} searchtext
+    set searchRegexp ""
+    for {set i 0} { $i < [string length $searchtext] } { incr i } {
+	set searchRegexp "${searchRegexp}[string range $searchtext $i $i]\\n*"
+    }
+    set stop 1
+    set nextchar 0
+    set textinds {}
+    while {$stop == 1} {
+	set inds {}
+	if { $dataSearchCase == 0 } {
+	    set stop [regexp -start $nextchar  -indices -- $searchRegexp [$searchWidget get 0.0 end-1c] inds]
+	} else {
+	    set stop [regexp -nocase -start $nextchar  -indices -- $searchRegexp [$searchWidget get 0.0 end-1c] inds]
+	}
+	set nextchar [expr [lindex $inds 1] +1]
+	if {$stop == 1 } {
+	    foreach index $inds {
+		lappend textinds [$searchWidget index "1.0 +$index chars"]
+	    }
+	}
+    }    
+    set i 0
+    puts $textinds
+    if { [llength $textinds] == 0 } { 
+	InfoMessage "Search string $searchtext not found."
+	return 
+    }
+
+    while {$i < [llength $textinds] } {
+	$searchWidget tag add highlight [lindex $textinds $i] "[lindex $textinds [expr $i + 1]] + 1 chars"
+    set i [expr $i + 2] 
+    }
+    
+    $searchWidget tag configure highlight -background yellow
+    $searchWidget see [lindex $textinds 0]
 }
 proc XscriptMainMsg { winName data } {
   global XSCRIPTDATARCVD SESSION_STATE
