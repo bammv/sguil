@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.116 2004/06/24 19:11:56 bamm Exp $ #
+# $Id: sguil.tk,v 1.117 2004/06/28 17:20:03 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -163,6 +163,7 @@ proc HeartBeat {} {
 proc ConnectToSguild {} {
   global SERVERHOST SERVERPORT OPENSSL VERSION TLS_PATH DEBUG CONNECTED
 
+  puts "DEBUG ####  in ConnectToSguild $SERVERHOST"
   if [catch {socket $SERVERHOST $SERVERPORT} socketID ] {
     return -code error "Unable to connect to $SERVERHOST on port $SERVERPORT"
   } else {
@@ -199,7 +200,8 @@ proc ConnectToSguild {} {
   }
 }
 proc UpdateUserName { userName userID } {
-  global userNameText userIDText
+  global userNameText userIDText serverNameText SERVERHOST
+  $serverNameText configure -text $SERVERHOST
   $userNameText configure -text $userName
   $userIDText configure -text $userID
 }
@@ -1387,7 +1389,7 @@ proc SaveNewFonts {} {
 }
 
 proc GetUserName {} {
-  global USERNAME PASSWD VERSION
+  global USERNAME PASSWD VERSION SERVERHOST
   set getUserNameWin [toplevel .getUserNameWin -background white]
   wm title $getUserNameWin "$VERSION"
   set welcomeFrame [frame $getUserNameWin.welcomeFrame -borderwidth 1 -background black]
@@ -1407,17 +1409,20 @@ proc GetUserName {} {
   pack $welcomeFrame -side top -padx 5 -pady 10
   set promptFrame [frame $getUserNameWin.promptFrame -background black -borderwidth 1]
     set userLabel [label $promptFrame.userLabel -text "Please Login" -foreground navy]
+    set sguildHost [entryfield $promptFrame.sguildHost -labeltext "Sguild Host: "\
+     -textvariable SERVERHOST]
     set userName [entryfield $promptFrame.userName -validate alphanumeric\
       -labeltext "Username:"\
       -invalid {ErrorMessage "Please use alphanumeric characters only."}\
       -textvariable USERNAME]
     set userPasswd [entryfield $promptFrame.userPasswd\
       -labeltext "Password:" -textvariable PASSWD -show *]
-    iwidgets::Labeledwidget::alignlabels $userName $userPasswd
+    iwidgets::Labeledwidget::alignlabels $sguildHost $userName $userPasswd
     set userBB [buttonbox $promptFrame.userBB]
       $userBB add ok -text "Ok" -command "destroy $getUserNameWin"
       $userBB add exit -text "Exit" -command "CleanExit"
-    pack $userLabel $userName $userPasswd $userBB -side top -fill both -expand true
+    pack $userLabel $sguildHost $userName $userPasswd $userBB\
+     -side top -fill both -expand true
   pack $promptFrame -side bottom -pady 5
   bind [$userPasswd component entry] <Return> { destroy .getUserNameWin }
   tkwait window $getUserNameWin
@@ -1724,19 +1729,23 @@ set topFrame [frame .topFrame]
   set reportMenu [menubutton $topFrame.reportMenu -text Reports -underline 0 -menu $topFrame.reportMenu.menu]
   set databaseMenu [menubutton $topFrame.databaseMenu -text Database -underline 0 -menu $topFrame.databaseMenu.menu]
   set soundFrame [frame $topFrame.soundFrame]
-    set soundLabel [label $soundFrame.label -text "   Sound:"]
+    set soundLabel [label $soundFrame.label -text "  Sound:"]
     set soundStatus [label $soundFrame.status -text "Off" -foreground red] 
     pack $soundLabel $soundStatus -side left
+  set serverNameFrame [frame $topFrame.serverNameFrame]
+    set serverNameLabel [label $serverNameFrame.label -text "  ServerName:"]
+    set serverNameText [label $serverNameFrame.snText -text "NA" -foreground red]
+    pack $serverNameLabel $serverNameText -side left
   set userNameFrame [frame $topFrame.userNameFrame]
-    set userNameLabel [label $userNameFrame.label -text "   UserName:"]
+    set userNameLabel [label $userNameFrame.label -text "  UserName:"]
     set userNameText [label $userNameFrame.unText -text "Not Logged In" -foreground red] 
     pack $userNameLabel $userNameText -side left
   set userIDFrame [frame $topFrame.userIDFrame]
-    set userIDLabel [label $userIDFrame.label -text "   UserID:"]
+    set userIDLabel [label $userIDFrame.label -text "  UserID:"]
     set userIDText [label $userIDFrame.uidText -text "*" -foreground red] 
     pack $userIDLabel $userIDText -side left
   pack $fileMenu $queryMenu $reportMenu $databaseMenu $soundFrame\
-   $userNameFrame $userIDFrame -side left
+   $serverNameFrame $userNameFrame $userIDFrame -side left
   if {$GMTCLOCK } {
     set gmtClock [label $topFrame.gmtClock -text "YYYY-MM-DD HH:MM:SS GMT" -relief groove]
     pack $gmtClock -side right -anchor e -padx 5
@@ -2632,12 +2641,19 @@ bind $soundStatus <Button-1> {
 
 #################### Connect To The Server ##############################
 
-if [catch { ConnectToSguild } socketID] {
-  ErrorMessage $socketID
-  CleanExit
-} else {
-  set CONNECTED 1
-  GetUserName
+set CONNECTED 0
+# Get login and sguild host info
+GetUserName
+while {$CONNECTED == 0} {
+  if [catch { ConnectToSguild } socketID] {
+    ErrorMessage $socketID
+    GetUserName
+    puts "DEBUG #### $SERVERHOST"
+  } else {
+    set CONNECTED 1
+    break
+  } 
+} 
   SendToSguild "ValidateUser $USERNAME"
   set saltNonce [gets $socketID]
   set tmpSalt [lindex $saltNonce 0]
@@ -2670,4 +2686,3 @@ if [catch { ConnectToSguild } socketID] {
   UpdateUserName $USERNAME $USERID
   HeartBeat
   # SendToSguild "SendReportQryList"
-}
