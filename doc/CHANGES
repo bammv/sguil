@@ -1,4 +1,4 @@
-# $Id: CHANGES,v 1.44 2004/12/02 15:13:13 shalligan Exp $ #
+# $Id: CHANGES,v 1.45 2004/12/02 15:19:07 bamm Exp $ #
 
 sguil-0.5.3 (RSN)
 
@@ -20,7 +20,13 @@ sguil-0.5.3 (RSN)
 
    * Misc prettifying and bugfixifying -srh & bamm
 
-   * Use -d <[0-2] to specify DEBUG level on cmd line - bamm (tks Hanashi)
+   * Use -d [0-2] to specify DEBUG level on cmd line - bamm (tks Hanashi)
+
+   * Added CONCURRENT to LOAD statements - bam (tks Hanashi)
+
+   * More var substitution options for emailing alerts - bamm (paulh request)
+
+   * Option to include the sensor for alert aggregation - bamm
 
   sguil.tk
    * Added ability to import/query nessus reports: -srh
@@ -51,7 +57,7 @@ sguil-0.5.3 (RSN)
 
    * Added a text search widget for xscripts -srh
 
-   * Use -d <[0-2] to specify DEBUG level on cmd line - bamm (tks Hanashi)
+   * Use -d [0-2] to specify DEBUG level on cmd line - bamm (tks Hanashi)
 
    * Bug fixes etc
 
