@@ -999,6 +999,7 @@ proc CorrelateEvent { paneName eventID srcIP message } {
       lappend correlateArray($correlateID) $eventID
       set eventCount [$paneName.countFrame.list get $srcIPMatchIndex]
       incr eventCount
+
       # Update the list
       $paneName.countFrame.list delete $srcIPMatchIndex
       $paneName.countFrame.list insert $srcIPMatchIndex $eventCount
@@ -1006,6 +1007,10 @@ proc CorrelateEvent { paneName eventID srcIP message } {
         set rowColor [lindex [$paneName.dstIPFrame.list itemconfigure $srcIPMatchIndex -background] 4]
         $paneName.countFrame.list itemconfigure $srcIPMatchIndex -background $rowColor
       }
+      # if the list index was selected, re-select it
+      #if { [$paneName.eventIDFrame.list selection includes $srcIPMatchIndex] } { 
+#	    $paneName.countFrame.list selection set $srcIPMatchIndex
+#      }
       break
     }
     set srcIPList [lreplace $srcIPList $srcIPMatchIndex $srcIPMatchIndex FILLER]
