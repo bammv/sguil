@@ -71,6 +71,7 @@ proc ServerCommandRcvd { socketID } {
       TableColumns { $serverCmd [lindex $data 1] [lrange $data 2 end] }
       InsertHistoryResults { $serverCmd [lindex $data 1] [lrange $data 2 end] }
       InsertEmailIPHdr { set EMAIL_RESULTS [lrange $data 1 end] }
+      PONG { if {$DEBUG} {puts "Comm test successful"  } }
       default { puts "Unrecognized command from $socketID: $data" }
     }
   } 
@@ -444,10 +445,14 @@ proc ValidateEvent { status {c_flag {0}} } {
 #
 proc SimpleQueryCmd { host port cmd} {
   global socketID EMAIL_RESULTS
+  global OPENSSL
   if [catch {set tmpSocketID [socket $host $port]} connectError] {
     return "error"
   } 
   fconfigure $tmpSocketID -buffering line
+  if {$OPENSSL} {
+    tls::import $tmpSocketID
+  }
   puts $tmpSocketID $cmd
   if {[lindex $cmd 0] != "GetPSData"} {
       # Index 0 is the returned cmd, index 1 is the data.
@@ -2139,6 +2144,7 @@ proc XscriptServerCmdRcvd { socketID } {
 proc GetXscript { type force } {
   global ACTIVE_EVENT SERVERHOST XSCRIPT_SERVER_PORT DEBUG currentSelectedPane XSCRIPTDATARCVD
   global socketWinName SESSION_STATE SSN_QUERY
+  global OPENSSL
   if {!$ACTIVE_EVENT} {return}
   set winName $currentSelectedPane.sensorFrame.list
   set eventIndex [$winName curselection]
@@ -2165,6 +2171,9 @@ proc GetXscript { type force } {
   if [catch {set socketID [socket $SERVERHOST $XSCRIPT_SERVER_PORT]}] {
     if {$DEBUG} {puts "Unable to connect to xscript server $SERVERHOST on port $XSCRIPT_SERVER_PORT."}
   } else {
+    if {$OPENSSL} {
+      tls::import $socketID
+    }
     if { $type == "xscript"} {
       fconfigure $socketID -buffering line
       fileevent $socketID readable [list XscriptServerCmdRcvd $socketID]
@@ -3791,10 +3800,20 @@ bind $soundStatus <Button-1> {
 #################### Connect To The Server ##############################
 
 if [catch {set socketID [socket $SERVERHOST $SERVERPORT]}] {
-  puts "Unable to connect to $SERVERHOST on port $SERVERPORT."
+  ErrorMessage "Sguil.tk was unable to connect to the specified sguild server.\
+                ($SERVERHOST on port $SERVERPORT)."
   exit
 } else {
   fconfigure $socketID -buffering line
+  if {$OPENSSL} {
+    load $TLS_PATH
+    package require tls
+    tls::import $socketID
+  }
+  puts $socketID "PING"
+  set INIT [gets $socketID]
+  puts $INIT
+  if {$DEBUG} {puts "Init successful"}
   GetUserName
   puts $socketID "ValidateUser $USERNAME $PASSWD"
   set USERID [lindex [gets $socketID] 1]

@@ -20,13 +20,17 @@ set VERSION "sguil 0.2"
 ########################## PROCS ####################################
 
 proc DisplayUsage { cmdName } {
-  puts "Usage: $cmdName \[-D\] \[-c <filename>\] \[-u <filename>\] \[-P <filename>\]"
+  puts "Usage: $cmdName \[-Dh\] \[-c <filename>\] \[-u <filename>\] \[-P <filename>\]"
+  puts "       \[-O <filename>\] \[-C <directory\]"
   puts "  -c <filename>: PATH to the sguild config (sguild.conf) file."
   puts "  -u <filename>: PATH to the sguild users (sguild.users) file."
   puts "  -P <filename>: Name of file to write the PID to."
   puts "                 Default is /var/run/sguild.pid"
+  puts "  -O <filename>: PATH to tls (tcl openssl) lib (libtls1.4.so)"
+  puts "  -C <directory>: Directory that contains sguild.pem and sguild.key"
   puts "  -D Runs sguild in daemon mode."
-  exit 1
+  puts "  -h Display this help"
+  CleanExit
 }
 proc CleanExit {} {
   global PID_FILE
@@ -107,7 +111,7 @@ proc ClientCmdRcvd { socketID } {
     if { $clientCmd != "ValidateUser" && $clientCmd != "GetIcmpData" &&\
          $clientCmd != "GetIPData" && $clientCmd != "GetPayloadData" &&\
          $clientCmd != "GetPSData" && $clientCmd != "GetTcpData" &&\
-         $clientCmd != "GetUdpData" } {
+         $clientCmd != "GetUdpData" && $clientCmd != "PING" } {
       if { [lsearch -exact $validSockets $socketID] < 0 } {
         SendSocket $socketID\
          "InfoMessage {Client does not appear to be logged in. Please exit and log back in.}"
@@ -132,6 +136,7 @@ proc ClientCmdRcvd { socketID } {
       SendEscalatedEvents { $clientCmd $socketID }
       SendDBInfo { $clientCmd $socketID }
       ValidateUser { ValidateUser $socketID [lindex $data 1] [lindex $data 2]}
+      PING { puts $socketID "PONG" }
       default { if {$DEBUG} {puts "Unrecognized command from $socketID: $data"} }
     }
   }
@@ -349,13 +354,33 @@ proc SendDBInfo { socketID } {
 #
 proc ClientConnect { socketID IPAddr port } {
   global DEBUG socketInfo
+  global OPENSSL KEY PEM
   if {$DEBUG} {
     puts "Client Connect: $IPAddr $port $socketID"
   }
   set socketInfo($socketID) "$IPAddr $port"
   fconfigure $socketID -buffering line
-  fileevent $socketID readable [list ClientCmdRcvd $socketID]
+  if {$OPENSSL} {
+    tls::import $socketID -server true -keyfile $KEY -certfile $PEM
+    fileevent $socketID readable [list HandShake $socketID ClientCmdRcvd]
+  } else {
+    fileevent $socketID readable [list ClientCmdRcvd $socketID]
+  } 
 } 
+proc HandShake { socketID cmd } {
+  if {[eof $socketID]} {
+    close $socketID
+    ClientExitClose socketID
+  } elseif { [catch {tls::handshake $socketID} results] } {
+    puts "ERROR: $results"
+    close $socketID
+    ClientExitClose socketID
+  } elseif {$results == 1} {
+    puts "Handshake complete for $socketID"
+    fileevent $socketID readable [list $cmd $socketID]
+  }
+}
+
 
 proc SensorConnect { socketID IPAddr port } {
   global DEBUG
@@ -849,18 +874,59 @@ foreach arg $argv {
     flag {
       switch -glob -- $arg {
         -- { set state flag }
+        -h { DisplayUsage }
         -c { set state conf }
         -u { set state users_file }
         -D { set DAEMON_CONF_OVERRIDE 1 }
         -P { set state pid_file }
+        -O { set state openssl }
+        -C { set state certs }
         default { DisplayUsage $argv0 }
       }
     }
     conf { set CONF_FILE $arg; set state flag }
     users_file { set USERS_FILE $arg; set state flag }
     pid_file { set PID_FILE $arg; set state flag }
+    openssl { set OPENSSL 1; set TLS_PATH $arg; set state flag }
+    certs { set CERTS_PATH $arg; set state flag }
     default { DisplayUsage $argv0 }
   }
+}
+
+# Check openssl requirements if enabled
+if { [info exists OPENSSL] && $OPENSSL } {
+  # Need a path to the tls libs
+  if { ![info exists TLS_PATH] } {
+    puts "ERROR: A path to the tls libs is required"
+    DisplayUsage $argv0
+  }
+  if [catch {load $TLS_PATH} tlsError] {
+    puts "ERROR: Unable to load tls libs ($TLS_PATH): $tlsError"
+    DisplayUsage $argv0
+  }
+  package require tls
+  # Check for certs
+  if {![info exists CERTS_PATH]} {
+    set CERTS_PATH /etc/sguild/certs
+  }
+  if {![file exists $CERTS_PATH] || ![file isdirectory $CERTS_PATH]} {
+    puts "ERROR: $CERTS_PATH does not exist or is not a directory"
+    DisplayUsage $argv0
+  }
+  # Need sguild.key and sguild.pem
+  set PEM [file join $CERTS_PATH sguild.pem]
+  set KEY [file join $CERTS_PATH sguild.key]
+  if {![file exists $PEM] || ![file readable $PEM] } {
+    puts "ERROR: $PEM does not exist or is not readable"
+    DisplayUsage $argv0
+  }
+  if {![file exists $KEY] || ![file readable $KEY] } {
+    puts "ERROR: $KEY does not exist or is not readable"
+    DisplayUsage $argv0
+  }
+  # If we get this far we should be good.
+} else {
+  set OPENSSL 0
 }
 
 if { ![info exists CONF_FILE] } {

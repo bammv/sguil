@@ -1,0 +1,123 @@
+######## This doc covers implementing openssl via the tls package in sguil ###########
+
+Step 1: Download the OpenSSL Tcl Extension (TLS).
+  
+  The source and some precompiled binaries are available at:
+
+    http://sourceforge.net/project/showfiles.php?group_id=13248&release_id=40542
+
+  Support is also provided in FreeBSDs ports system or by package:
+ 
+    pkg_add -v ftp://ftp.freebsd.org/pub/FreeBSD/ports/packages/devel/tcltls-1.4_1.tgz
+
+
+Step 2: Install and test tls:
+
+  Linux Example:
+
+    Bamm@syn: tar xzvf tls1.4.1-linux-x86.tar.gz
+    tls1.4/
+    tls1.4/pkgIndex.tcl
+    tls1.4/tls.tcl
+    tls1.4/libtls1.4.so
+    Bamm@syn: su -
+    Password:
+    Bamm@syn# mv /src/tls1.4 /usr/lib
+    Bamm@syn# exit
+    Bamm@syn: tcl
+    tcl>load /usr/lib/tls1.4/libtls1.4.so
+    tcl>package require tls
+    1.4
+    tcl>
+
+
+############### Server (sguild/xscriptd only) ###############
+
+Create a server cert with `openssl`:
+ (I used http://www-itg.lbl.gov/~boverhof/openssl_certs.html as a reference)
+
+Step 1: Generate a CA
+  Bamm@syn: openssl req -out CA.pem -new -x509
+  Using configuration from /usr/share/ssl/openssl.cnf
+  Generating a 1024 bit RSA private key
+  .++++++
+  .................................................++++++
+  writing new private key to 'privkey.pem'
+  Enter PEM pass phrase:
+  Verifying password - Enter PEM pass phrase:
+  -----
+  You are about to be asked to enter information that will be incorporated
+  into your certificate request.
+  What you are about to enter is what is called a Distinguished Name or a DN.
+  There are quite a few fields but you can leave some blank
+  For some fields there will be a default value,
+  If you enter '.', the field will be left blank.
+  -----
+  Country Name (2 letter code) [AU]:US
+  State or Province Name (full name) [Some-State]:Texas
+  Locality Name (eg, city) []:
+  Organization Name (eg, company) [Internet Widgits Pty Ltd]:sguild
+  Organizational Unit Name (eg, section) []:
+  Common Name (eg, your name or your server's hostname) []:
+  Email Address []:
+
+Step 2: Generate a server certificate/key pair:
+  Bamm@syn: openssl genrsa -out sguild.key 1024
+  Generating RSA private key, 1024 bit long modulus
+  ..++++++
+  ...............++++++
+  e is 65537 (0x10001)
+
+  Bamm@syn: openssl req -key sguild.key -new -out sguild.req
+  Using configuration from /usr/share/ssl/openssl.cnf
+  You are about to be asked to enter information that will be incorporated
+  into your certificate request.
+  What you are about to enter is what is called a Distinguished Name or a DN.
+  There are quite a few fields but you can leave some blank
+  For some fields there will be a default value,
+  If you enter '.', the field will be left blank.
+  -----
+  Country Name (2 letter code) [AU]:US
+  State or Province Name (full name) [Some-State]:Texas
+  Locality Name (eg, city) []:
+  Organization Name (eg, company) [Internet Widgits Pty Ltd]:sguild
+  Organizational Unit Name (eg, section) []:
+  Common Name (eg, your name or your server's hostname) []:
+  Email Address []:
+
+  Please enter the following 'extra' attributes
+  to be sent with your certificate request
+  A challenge password []:
+  An optional company name []:
+
+  Bamm@syn: openssl x509 -req -in sguild.req -CA CA.pem -CAkey privkey.pem -CAserial file.sr1 -out sguild.pem
+  ****** NOTE: 'file.sr1' contains a two digit number like "44"
+  Signature ok
+  subject=/C=US/ST=Texas/O=sguild
+  Getting CA Private Key
+  Enter PEM pass phrase:
+
+
+Step 3: Move sguild.pem and sguild.key to /etc/sguild/certs
+        (or specify the path using -C /path/to/certs/ when starting sguild/xscriptd)
+  Bamm@syn: mkdir /etc/sguild/certs
+  Bamm@syn: mv sguild.key sguild.pem /etc/sguild/certs/
+
+
+#######################################################################
+
+Finally, start sguild:
+
+  Bamm@syn# ./sguild -O /usr/lib/tls1.4/libtls1.4.so
+
+xscriptd:
+
+  Bamm@syn# ./xscriptd -O /usr/lib/tls1.4/libtls1.4.so
+
+sguil.tk
+
+  Edit sguil.conf:
+    # Set up OpenSSL here (read ./doc/OPENSSL.README)
+    # 0=off 1=on
+    set OPENSSL 1
+    set TLS_PATH /usr/lib/tls1.4/libtls1.4.so

@@ -311,9 +311,27 @@ proc XscriptRequest { socketID sensor eventID timestamp srcIP srcPort dstIP dstP
 }
 proc ClientConnect { socketID IPAddr port } {
   global DEBUG
+  global OPENSSL KEY PEM
   if {$DEBUG} { puts "Client Connect: $IPAddr $port $socketID" }
   fconfigure $socketID -buffering line
-  fileevent $socketID readable [list ClientCmdRcvd $socketID]
+  if {$OPENSSL} {
+    tls::import $socketID -server true -keyfile $KEY -certfile $PEM
+    fileevent $socketID readable [list HandShake $socketID ClientCmdRcvd]
+  } else {
+    fileevent $socketID readable [list ClientCmdRcvd $socketID]
+  }
+}
+proc HandShake { socketID cmd } {
+  puts "HANDSHAKE"
+  if {[eof $socketID]} {
+    close $socketID
+  } elseif { [catch {tls::handshake $socketID} results] } {
+    puts "ERROR: $results"
+    close $socketID
+  } elseif {$results == 1} {
+    puts "Handshake complete for $socketID"
+    fileevent $socketID readable [list $cmd $socketID]
+  }
 }
 proc ClientCmdRcvd { socketID } {
   global DEBUG
@@ -384,12 +402,51 @@ foreach arg $argv {
         -- { set state flag }
         -D { set DAEMON 1 }
         -P { set state pid_file }
+        -O { set state openssl }
+        -C { set state certs }
         default { DisplayUsage $argv0 }
       }
     }
     pid_file { set PID_FILE $arg; set state flag }
+    openssl { set OPENSSL 1; set TLS_PATH $arg; set state flag }
+    certs { set CERTS_PATH $arg; set state flag }
     default { DisplayUsage $argv0 }
   }
+}
+# Check openssl requirements if enabled
+if { [info exists OPENSSL] && $OPENSSL } {
+  # Need a path to the tls libs
+  if { ![info exists TLS_PATH] } {
+    puts "ERROR: A path to the tls libs is required"
+    DisplayUsage $argv0
+  }
+  if [catch {load $TLS_PATH} tlsError] {
+    puts "ERROR: Unable to load tls libs ($TLS_PATH): $tlsError"
+    DisplayUsage $argv0
+  }
+  package require tls
+  # Check for certs
+  if {![info exists CERTS_PATH]} {
+    set CERTS_PATH /etc/sguild/certs
+  }
+  if {![file exists $CERTS_PATH] || ![file isdirectory $CERTS_PATH]} {
+    puts "ERROR: $CERTS_PATH does not exist or is not a directory"
+    DisplayUsage $argv0
+  }
+  # Need sguild.key and sguild.pem
+  set PEM [file join $CERTS_PATH sguild.pem]
+  set KEY [file join $CERTS_PATH sguild.key]
+  if {![file exists $PEM] || ![file readable $PEM] } {
+    puts "ERROR: $PEM does not exist or is not readable"
+    DisplayUsage $argv0
+  }
+  if {![file exists $KEY] || ![file readable $KEY] } {
+    puts "ERROR: $KEY does not exist or is not readable"
+    DisplayUsage $argv0
+  }
+  # If we get this far we should be good.
+} else {
+  set OPENSSL 0
 }
 if {[info exists DAEMON] && $DAEMON} { Daemonize }
 
