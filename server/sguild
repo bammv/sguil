@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.93 2004/06/01 20:50:33 bamm Exp $ #
+# $Id: sguild,v 1.94 2004/06/07 20:11:21 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -690,7 +690,7 @@ proc AddEventToEventArray { eventDataList } {
 proc DeleteEventIDList { socketID data } {
   global eventIDArray eventIDList clientList escalateArray escalateIDList
   global userIDArray correlatedEventArray eventIDCountArray 
-  
+
   regexp {^(.*)::(.*)::(.*)$} $data allMatch status comment eidList
   set updateTmp ""
   foreach socket $clientList {
@@ -722,14 +722,14 @@ proc DeleteEventIDList { socketID data } {
       }
     }
   }  
+  # Number of events we should be updating
+  set eidListSize [llength $tmpEidList]
   # Now we have a complete list of event IDs. Loop thru them and update our current VARs
   # and send escalate notices if needed
-  puts "DEBUG #### tmpEidList : $tmpEidList"
   foreach tmpEid $tmpEidList {
     # If status == 2 then escalate
     if {$status == 2} {
       lappend escalateIDList $tmpEid
-      puts "DEBUG #### tmpEid : $tmpEid"
       if [info exists eventIDArray($tmpEid)] {
         set escalateArray($tmpEid) $eventIDArray($tmpEid)
       } else {
@@ -750,7 +750,16 @@ proc DeleteEventIDList { socketID data } {
   }
   # Finally we update the DB
   regsub -all {\) \(} $updateTmp {) OR (} whereTmp
-  UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $userIDArray($socketID) $status
+  set tmpUpdated [UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $userIDArray($socketID) $status]
+  # See if the number of rows updated matched the number of events we 
+  # meant to update
+  if { $tmpUpdated != $eidListSize } {
+    catch {SendSocket $socketID "ErrorMessage ERROR: Some events may not have been updated. Event(s) may be missing from DB. See sguild output for more information."} tmpError
+    puts "ERROR: Number of updates mismatched number of events."
+    puts "       Number of EVENTS:  $eidListSize"
+    puts "       Number of UPDATES: $tmpUpdated"
+    puts "       WHERE: $whereTmp"
+  }
   # Update the history here
   foreach tmpEid $tmpEidList {
     set tmpSid [lindex [split $tmpEid .] 0]
@@ -1214,6 +1223,7 @@ proc UpdateDBStatusList { whereTmp timestamp uid status } {
   
   set execResults [mysqlexec $dbSocketID $updateString]
   mysqlclose $dbSocketID
+  return $execResults
 }
 proc UpdateDBStatus { eventID timestamp uid status } {
   global DBNAME DBUSER DBPORT DBHOST DBPASS

@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.112 2004/06/03 20:32:20 bamm Exp $ #
+# $Id: sguil.tk,v 1.113 2004/06/07 20:11:05 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -124,6 +124,7 @@ proc ServerCommandRcvd { socketID } {
       InsertPayloadData { $serverCmd $data1 }
       InsertQueryResults { $serverCmd $index1 $data2 }
       InfoMessage { $serverCmd $data1 }
+      ErrorMessage { $serverCmd $data1 }
       PSDataResults { InsertPSData $data1 }
       InsertEscalatedEvent { $serverCmd $data1 }
       SensorList { $serverCmd $data1 }
