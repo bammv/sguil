@@ -9,6 +9,7 @@ proc ClientSocketTimeOut { host port timeout } {
   if {$WHOIS_CONNECTED == "connected"} {
     return $socketID
   } else {
+    catch {close $socketID} tmpError
     return -code error "Connection to $host timed out"
   }
 }
@@ -24,11 +25,13 @@ proc SimpleWhois { ipAddr } {
   
   # Connect to arin first.
   if [catch {ClientSocketTimeOut $nicSrvr 43 10000} socketID] {
-    puts "ERROR: $socketID"
     return "{ERROR: $socketID}"
   } 
   fconfigure $socketID -buffering line
-  puts $socketID $ipAddr
+  if [catch {puts $socketID $ipAddr} tmpPutsError] {
+    catch {close $socketID} tmpError
+    return "{ERROR: $tmpPutsError}"
+  }
 
   while { ![eof $socketID] && ![catch {gets $socketID data}] } {
     lappend results $data
@@ -74,7 +77,7 @@ proc SimpleWhois { ipAddr } {
 
   if { $nicSrvr != $newNicSrvr } {
     if [catch {ClientSocketTimeOut $newNicSrvr 43 10000} socketID] {
-      return "ERROR: $socketID"
+      return "{ERROR: $socketID}"
     } 
     fconfigure $socketID -buffering line
     puts $socketID $ipAddr
@@ -97,7 +100,7 @@ proc SimpleWhois { ipAddr } {
       # Looks like we got one
       lappend results "\n----- Querying Reassigned Block: $blkName ----\n"
       if [catch {ClientSocketTimeOut $nicSrvr 43 10000} socketID] {
-        return "ERROR: $socketID"
+        return "{ERROR: $socketID}"
       }
       fconfigure $socketID -buffering line
       puts $socketID $netBlk
