@@ -431,9 +431,9 @@ proc GetTcpData { socketID sid cid } {
 }
 proc GetIcmpData { socketID sid cid } {
   set query\
-   "SELECT icmp_type, icmp_code, icmp_csum, icmp_id, icmp_seq\
-   FROM icmphdr\
-   WHERE sid=$sid and cid=$cid"
+   "SELECT event.icmp_type, event.icmp_code, icmphdr.icmp_csum, icmphdr.icmp_id, icmphdr.icmp_seq\
+   FROM event, icmphdr\
+   WHERE event.sid=icmphdr.sid AND event.cid=icmphdr.cid AND event.sid=$sid AND event.cid=$cid"
 
   set queryResults [FlatDBQuery $query]
   
