@@ -111,10 +111,30 @@ proc DBQueryRequest { whereStatement {winTitle {none} } } {
   global eventTabs QUERY_NUMBER socketID DEBUG
   global CONNECTED
   if {!$CONNECTED} {ErrorMessage "Not connected to sguild. Query aborted."; return}
+  
   set selectQuery "SELECT event.status, event.priority, sensor.hostname, event.timestamp,\
    event.sid, event.cid, event.signature,\
    INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto,\
-   event.src_port, event.dst_port FROM event, sensor, user_info $whereStatement"
+   event.src_port, event.dst_port"
+  # Parse the WHERE and determine what tables we need to SELECT from.
+  # We'll always have 'event' and 'sensor'.
+  set fromQuery " FROM event, sensor"
+  if { [regexp {\s+user_info\.} $whereStatement] } {
+    set fromQuery "$fromQuery, user_info"
+  }
+  if { [regexp {\s+tcphdr\.} $whereStatement] } {
+    set fromQuery "$fromQuery, tcphdr"
+  }
+  if { [regexp {\s+udphdr\.} $whereStatement] } {
+    set fromQuery "$fromQuery, udphdr"
+  }
+  if { [regexp {\s+icmphdr\.} $whereStatement] } {
+    set fromQuery "$fromQuery, icmphdr"
+  }
+  if { [regexp {\s+data\.} $whereStatement] } {
+    set fromQuery "$fromQuery, data"
+  }
+  set selectQuery "$selectQuery $fromQuery $whereStatement"
   regsub -all {\n} $selectQuery {} selectQuery
   incr QUERY_NUMBER
   if { $winTitle == "none" } {
