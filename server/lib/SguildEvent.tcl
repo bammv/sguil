@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.8 2005/03/11 21:16:46 shalligan Exp $ #
+# $Id: SguildEvent.tcl,v 1.9 2005/03/15 16:48:36 shalligan Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -27,7 +27,7 @@ proc EventRcvd { eventDataList } {
     if { ![array exists acRules] || ![AutoCat $eventDataList] } {
       # Correlation/aggregation checks here: CorrelateEvent SrcIP Message
       set sensorID [lindex $eventDataList 5]
-      set matchAID [ CorrelateEvent $sensorID [lindex $eventDataList 8] [lindex $eventDataList 7] [lindex $eventDataList 16] [lindex $eventDataList 17]]
+      set matchAID [ CorrelateEvent $sensorID [lindex $eventDataList 8] [lindex $eventDataList 7] [lindex $eventDataList 15] [lindex $eventDataList 16]]
       if { $matchAID == 0 } {
         AddEventToEventArray $eventDataList
         # Clients don't need the sid and rev
@@ -225,7 +225,7 @@ proc CorrelateEvent { sid srcip msg {event_id {NULL}} {event_ref {NULL}} } {
 	}
 	
 	if { $msg == "portscan: Open Port" && [regexp "^portscan:" [lindex $eventIDArray($rteid) 7]] } {
-	    if { [lindex $eventIDArray($rteid) 14] == $event_ref } {
+	    if { [lindex $eventIDArray($rteid) 15] == $event_ref } {
 		set MATCH $rteid
 		break
 	    } else {

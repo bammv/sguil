@@ -74,7 +74,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
     if { $data_payload != "" } { InsertDataPayload $sid $cid $data_payload }
 
     # Send RT Event
-    # RTEvent|st|priority|class_type|hostname|timepstamp|sid|cid|msg|srcip|dstip|ipproto|srcport|dstport|sig_id|rev|u_event_id|u_event_ref
+    # RTEvent|st|priority|class_type|hostname|timestamp|sid|cid|msg|srcip|dstip|ipproto|srcport|dstport|sig_id|rev|u_event_id|u_event_ref
     EventRcvd \
      [list 0 $priority $class_type $sensorName $timestamp $sid $cid $msg $str_sip \
       $str_dip $ip_proto $src_port $dst_port $sig_id $sig_rev $u_event_id $u_event_ref]
