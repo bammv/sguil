@@ -31,7 +31,7 @@ set DBNAME sguildb
 set DBHOST localhost
 set DBPORT 1211
 set DBUSER root
-set DBPASS "dbpasswd"
+set DBPASS "password"
 
 ######################## END GLOBALS ################################
 
@@ -435,7 +435,13 @@ proc GetIcmpData { socketID sid cid } {
    WHERE sid=$sid and cid=$cid"
 
   set queryResults [FlatDBQuery $query]
-  SendSocket $socketID "InsertIcmpHdr $queryResults"
+  
+  set query\
+   "SELECT data_payload FROM data WHERE sid=$sid and cid=$cid"
+  
+  set plqueryResults [FlatDBQuery $query]
+
+  SendSocket $socketID "InsertIcmpHdr $queryResults $plqueryResults"
 }
 proc GetPayloadData { socketID sid cid } {
   set query\

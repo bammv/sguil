@@ -1,3 +1,9 @@
+Version CVS-Head
+  sguil.tk
+    * Added decodes for ICMP Type 3 (dest Unreachable) and 11 (time exceeded)
+  sguild
+    * changed GetIcmpData to return the payload so we can parse it out 
+      
 Version 0.2
   sguil.tk
     * Dialog for selecting sensor(s) on to monitor added
