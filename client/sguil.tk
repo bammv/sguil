@@ -351,6 +351,7 @@ proc GetComment {} {
   }
   toplevel .comment
   wm title .comment "Add Comment To Event History"
+  wm geometry .comment +[expr [winfo rootx .] + 50]+[winfo pointery .]
   entryfield .comment.e -labeltext "Add a short comment for the event:" -labelpos n -width 80
   buttonbox .comment.bb
     .comment.bb add ok -text "Okay" -command "set COMMENT_FLAG 1"
