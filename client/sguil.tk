@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.115 2004/06/11 15:19:57 bamm Exp $ #
+# $Id: sguil.tk,v 1.116 2004/06/24 19:11:56 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -981,6 +981,9 @@ proc CreateSessionLists { ssn_type baseFrame } {
     BindSelectionToAllLists $srcPortList
     bind $srcPortLabel <Double-Button-1> {
       SortListsBy %W sessions
+    }
+    bind $srcPortList <ButtonPress-3> {
+      SingleSelect %W [%W nearest %y]
       LaunchPortQueryMenu %W %Y
     }
   set dstIPFrame [frame $baseFrame.dstIPFrame]
@@ -1006,6 +1009,9 @@ proc CreateSessionLists { ssn_type baseFrame } {
     BindSelectionToAllLists $dstPortList
     bind $dstPortLabel <Double-Button-1> {
       SortListsBy %W sessions
+    }
+    bind $dstPortList <ButtonPress-3> {
+      SingleSelect %W [%W nearest %y]
       LaunchPortQueryMenu %W %Y
     }
   set ipProtoFrame [frame $baseFrame.ipProtoFrame]
