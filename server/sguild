@@ -262,7 +262,10 @@ proc DeleteEventIDList { socketID status comment deleteEventIDList } {
       }
     }
     if { [info exists eventIDArray($eventID)] } { unset eventIDArray($eventID) }
-    set eventIDList [ldelete $eventIDList $eventID]
+    if { [info exists escalateIDList] } {set escalateIDList [ldelete $escalateIDList $eventID]}
+    if [info exists eventIDList] {
+      set eventIDList [ldelete $eventIDList $eventID]
+    }
     set splitID [split $eventID .]
     set sid [lindex $splitID 0]
     set cid [lindex $splitID 1]
