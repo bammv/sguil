@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.117 2004/08/09 17:11:08 shalligan Exp $ #
+# $Id: sguild,v 1.118 2004/08/10 17:46:04 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -511,13 +511,37 @@ proc ClientCmdRcvd { socketID } {
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR DEBUG
   # Check to make sure our dirs exists. We use <rootdir>/date/sensorName/*.raw
+  if { ! [file exists $LOCAL_LOG_DIR] } {
+    if { [catch { file mkdir $LOCAL_LOG_DIR } mkdirError] } {
+      # Problem creating LOCAL_LOG_DIR
+      if { $DEBUG } {
+        puts "Error: Unable to create $LOCAL_LOG_DIR for storing pcap data."
+        puts " $mkdirError"
+      }
+      return -code error $mkdirError
+    }
+  }
   set dateDir "$LOCAL_LOG_DIR/$date"
   if { ! [file exists $dateDir] } {
-    file mkdir $dateDir
+    if { [catch { file mkdir $dateDir } mkdirError] } {
+      # Problem creating dateDir
+      if { $DEBUG } {
+        puts "Error: Unable to create $dateDir for storing pcap data."
+        puts " $mkdirError"
+      }
+      return -code error $mkdirError
+    }
   }
   set sensorDir "$dateDir/$sensor"
   if { ![file exists $sensorDir] } {
-    file mkdir $sensorDir
+    if { [catch { file mkdir $sensorDir }  mkdirError] } {
+      # Problem creating sensorDir
+      if { $DEBUG } {
+        puts "Error: Unable to create $sensorDir for storing pcap data."
+        puts " $mkdirError"
+      }
+      return -code error $mkdirError
+    }
   }
   # We always make the highest port the apparent source. This way we don't store
   # two copies of the same raw data.
@@ -533,7 +557,11 @@ proc EtherealRequest { socketID sensor timestamp srcIP srcPort dstIP dstPort ipP
     # Increment the xscript counter. Gives us a unique way to track the xscript
   incr TRANS_ID
   set date [lindex $timestamp 0]
-  set rawDataFileNameInfo [InitRawFileArchive $date $sensor $srcIP $dstIP $srcPort $dstPort $ipProto]
+  if [catch { InitRawFileArchive $date $sensor $srcIP $dstIP $srcPort $dstPort $ipProto }\
+      rawDataFileNameInfo] {
+    SendSocket $socketID "ErrorMessage Error getting pcap: $rawDataFileNameInfo"
+    return
+  } 
   set sensorDir [lindex $rawDataFileNameInfo 0]
   set rawDataFileName [lindex $rawDataFileNameInfo 1]
   # A list of info we'll need when we generate the actual xscript after the rawdata is returned.
@@ -586,7 +614,17 @@ proc XscriptRequest { socketID sensor winID timestamp srcIP srcPort dstIP dstPor
   # Increment the xscript counter. Gives us a unique way to track the xscript
   incr TRANS_ID
   set date [lindex $timestamp 0]
-  set rawDataFileNameInfo [InitRawFileArchive $date $sensor $srcIP $dstIP $srcPort $dstPort 6]
+  if [catch { InitRawFileArchive $date $sensor $srcIP $dstIP $srcPort $dstPort 6 }\
+      rawDataFileNameInfo] {
+    SendSocket $socketID\
+     "ErrorMessage Please pass the following to your sguild administrator:\
+      Error from sguild while getting pcap: $rawDataFileNameInfo"
+    SendSocket $socketID "XscriptDebugMsg $winID\
+     ErrorMessage Please pass the following to your sguild administrator:\
+     Error from sguild while getting pcap: $rawDataFileNameInfo"
+    SendSocket $socketID "XscriptMainMsg $winID DONE"
+    return
+  } 
   set sensorDir [lindex $rawDataFileNameInfo 0]
   set rawDataFileName [lindex $rawDataFileNameInfo 1]
   # A list of info we'll need when we generate the actual xscript after the rawdata is returned.
@@ -599,6 +637,7 @@ proc XscriptRequest { socketID sensor winID timestamp srcIP srcPort dstIP dstPor
        The sensor $sensor is NOT connected."
       SendSocket $socketID "XscriptDebugMsg $winID ERROR: Unable to request xscript at this time.\
        The sensor $sensor is NOT connected."
+      SendSocket $socketID "XscriptMainMsg $winID DONE"
     }
   } else {
     # The data is archive locally.
