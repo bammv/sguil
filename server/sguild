@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.113 2004/08/06 16:19:55 shalligan Exp $ #
+# $Id: sguild,v 1.114 2004/08/06 16:28:36 shalligan Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -1655,7 +1655,6 @@ proc ReportBuilder { socketID type sid cid } {
 		    set stop 1
 		}
 	    }
-	    puts $cid
 	    set sensor [lindex $cid 0]
 	    set timestart [lindex [lindex $cid 1] 0]
 	    set timeend [lindex [lindex $cid 1] 1]
@@ -1665,16 +1664,14 @@ proc ReportBuilder { socketID type sid cid } {
 	    }
 	    # Macro replacements
 	    regsub -all "%%STARTTIME%%" $sql "'${timestart}'" sql
-	    puts $sql
 	    regsub -all "%%ENDTIME%%" $sql "'${timeend}'" sql
-	    puts $sql
+  
 	    set sensormacro "\( sensor.hostname = '[lindex $sensor 0]' "
 	    for { set i 1 } { $i < [llength $sensor] } { incr i } {
 		set sensormacro "${sensormacro} OR sensor.hostname = '[lindex $sensor $i]' "
 	    }
 	    set sensormacro "${sensormacro} \)"
 	    regsub -all "%%SENSORS%%" $sql $sensormacro sql
-	    puts $sql
 	    
 	    QueryDB $socketID {REPORT BUILDER} $sql
 	}    
