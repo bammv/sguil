@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.147 2004/10/18 20:49:36 shalligan Exp $ #
+# $Id: sguil.tk,v 1.148 2004/10/20 14:21:35 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -257,7 +257,6 @@ proc ChangeSensors {} {
     tkwait variable MONITORFLAG
     wm deiconify .
     update
-    SendToSguild "MonitorSensors $monitorList"
     SendToSguild "SendEscalatedEvents"
     SendToSguild "SendGlobalQryList"
     SendToSguild "SendReportQryList"
