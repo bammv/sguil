@@ -128,7 +128,8 @@ proc ExportResults { currentTab type } {
 	puts $fileID $OutputText
 	close $fileID
     }
-    InfoMessage "File Saved as $filename"
+    tk_messageBox -type ok -icon info -parent $currentTab\
+     -message "File Saved as $filename"
 }
 proc TextReport  { detail sanitize } {
     global ACTIVE_EVENT currentSelectedPane RETURN_FLAG REPORTNUM REPORT_RESULTS REPORT_DONE
@@ -170,7 +171,8 @@ proc TextReport  { detail sanitize } {
 	    puts $fileID $OutputText
 	    close $fileID
 	}
-	InfoMessage "File Saved as $filename"
+        tk_messageBox -type ok -icon info -parent $winname\
+         -message "File Saved as $filename"
     }
 }
 
