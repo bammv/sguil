@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.160 2005/01/24 18:40:46 shalligan Exp $ #
+# $Id: sguil.tk,v 1.161 2005/01/24 21:44:43 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1468,6 +1468,18 @@ proc InsertHistoryResults { winName results } {
   if { $comment == ""} { set comment none }
   $winName.listsFrame.commentFrame.list insert end $comment
 }
+#
+# CheckLineFormat - Parses CONF_FILE lines to make sure they are formatted
+#                   correctly (set varName value). Returns 1 if good.
+#
+proc CheckLineFormat { line } {
+  
+  set RETURN 1
+  # Right now we just check the length and for "set".
+  if { [llength $line] != 3 || [lindex $line 0] != "set" } { set RETURN 0 }
+  return $RETURN
+}
+
 
 ################################ END PROCS ##################################
 

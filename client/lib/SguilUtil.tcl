@@ -1,4 +1,4 @@
-# $Id: SguilUtil.tcl,v 1.2 2005/01/24 18:56:27 shalligan Exp $
+# $Id: SguilUtil.tcl,v 1.3 2005/01/24 21:45:00 shalligan Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
@@ -167,17 +167,6 @@ proc SaveNewFonts {} {
   write_file $FONTFILE "ourStandardFont [font configure ourStandardFont]" "ourFixedFont [font configure ourFixedFont]"
 }
 
-#
-# CheckLineFormat - Parses CONF_FILE lines to make sure they are formatted
-#                   correctly (set varName value). Returns 1 if good.
-#
-proc CheckLineFormat { line } {
-  
-  set RETURN 1
-  # Right now we just check the length and for "set".
-  if { [llength $line] != 3 || [lindex $line 0] != "set" } { set RETURN 0 }
-  return $RETURN
-}
 
 
 proc Working {} {
