@@ -20,13 +20,21 @@ proc QryBuild {tableSelected whereTmp } {
     wm geometry $qryBldWin +[lindex $xy 0]+[lindex $xy 1]
     
     # Create some arrays for the lists
+    # funclist are lists of {LABEL FUNCTION} pairs.  In most cases they will be the same.
     set mlst [list Tables Functions]
-    set funcList(main) [list Common Strings Comparison Logical DateTime]
-    set funcList(Common) [list INET_ATON() LIMIT LIKE AND OR NOT]
-    set funcList(Strings) [list LIKE REGEXP RLIKE]
-    set funcList(Logical) [list AND OR NOT BETWEEN() LIKE]
-    set funcList(Comparison) [list = != < > <=>]
-    set funcList(DateTime) [list TO_DAYS() UNIX_TIMESTAMP() UTC_TIMESTAMP()]
+    set funcList(main) [list Common Strings Comparison Logical DateTime DateMacros]
+    set funcList(maintables) [list Categories]
+    set funcList(Common) [list {INET_ATON() INET_ATON()} {LIMIT LIMIT} {LIKE LIKE} {AND AND} {OR OR} {NOT NOT}]
+    set funcList(Strings) [list {LIKE LIKE} {REGEXP REGEXP} {RLIKE RLIKE}]
+    set funcList(Logical) [list {AND AND} {OR OR} {NOT NOT} {BETWEEN() BETWEEN()} {LIKE LIKE}]
+    set funcList(Comparison) [list {= =} {!= !=} {< <} {> >} {<=> <=>}]
+    set funcList(DateTime) [list {TO_DAYS() TO_DAYS()} {UNIX_TIMESTAMP() UNIX_TIMESTAMP} {UTC_TIMESTAMP() UTC_TIMESTAMP}]
+    set funcList(DateMacros) [list [list TODAYUTC '[lindex [GetCurrentTimeStamp] 0]'] \
+	    [list LASTWEEK '[lindex [GetCurrentTimeStamp "1 week ago"] 0]'] \
+	    [list YESTERDAY '[lindex [GetCurrentTimeStamp "1 day ago"] 0]']]
+    set funcList(Categories) [list {CATI event.status=11} {CATII event.status=12} {CATIII event.status=13} \
+	    {CATIV event.status=14} {CATV event.status=15} {CATVI event.status=16} {CATVII event.status=17} \
+	    {CATVIII(NA) event.status=18} {RealTime event.status=1} {Escalated event.status=2}]
     foreach tableName $tableList {
 	set funcList($tableName) $tableColumnArray($tableName)
     }
@@ -35,9 +43,9 @@ proc QryBuild {tableSelected whereTmp } {
     set mainFrame [frame $qryBldWin.mFrame -background #dcdcdc -borderwidth 1]
 
     
-    set qryTypeBox [radiobox $mainFrame.qTypeBox -orient horizontal -labeltext "Select Query Type" -labelpos n]
-      $qryTypeBox add event -text "Events"
-      $qryTypeBox add session -text "Sessions"
+    set qryTypeBox [radiobox $mainFrame.qTypeBox -orient horizontal -labeltext "Select Query Type" -labelpos n -foreground darkblue]
+      $qryTypeBox add event -text "Events" -selectcolor red -foreground black
+      $qryTypeBox add session -text "Sessions" -selectcolor red -foreground black
    
     if {$SELECTEDTABLE == "event"} {
 	$qryTypeBox select event
@@ -61,13 +69,13 @@ proc QryBuild {tableSelected whereTmp } {
 
     set mainBB1 [buttonbox $editFrame.mbb1 -padx 0 -pady 0 -orient vertical]
       foreach logical $funcList(Logical) {
-	  set command "$editBox insert insert \"$logical \""
-	  $mainBB1 add $logical -text $logical -padx 0 -pady 0 -command "$command"
+	  set command "$editBox insert insert \"[lindex $logical 1] \""
+	  $mainBB1 add [lindex $logical 0] -text [lindex $logical 0] -padx 0 -pady 0 -command "$command"
       }
     set mainBB2 [buttonbox $editFrame.mbb2 -padx 0 -pady 0 -orient vertical]
       foreach comparison $funcList(Comparison) {
-	  set command "$editBox insert insert \"$comparison \""
-	  $mainBB2 add $comparison -text $comparison -padx 0 -pady 0 -command "$command"
+	  set command "$editBox insert insert \"[lindex $comparison 1] \""
+	  $mainBB2 add [lindex $comparison 0] -text [lindex $comparison 0] -padx 0 -pady 0 -command "$command"
       }
       pack $mainBB1 -side left -fill y
       pack $editBox -side left -fill both -expand true
@@ -136,27 +144,39 @@ proc updateCatList { selectFrame } {
 	eval $selectFrame.cList insert 0 $localTableList
     } else {
 	eval $selectFrame.cList insert 0 $funcList(main)
+	if { $SELECTEDTABLE == "event" } {
+	    eval $selectFrame.cList insert end $funcList(maintables)
+	}
     }
 }
     
 proc updateItemList { selectFrame} {
-    global funcList catSelection
+    global funcList catSelection metaSelection
     
     $selectFrame.iList delete 0 end
     #$selectFrame.iList delete entry 0 end
     
     eval set sel [$selectFrame.cList getcurselection]
     set catSelection $sel
-    eval $selectFrame.iList insert 0 $funcList($sel)
+    if {$metaSelection == "Tables"} {
+	eval $selectFrame.iList insert 0 $funcList($sel)
+    } else {
+	foreach i $funcList($sel) {
+	    eval $selectFrame.iList insert end [lindex $i 0]
+	}
+    }
 }
 
 proc addToEditBox { editBox selectFrame } {
-    global catSelection metaSelection
-    set addText [lindex [$selectFrame.iList getcurselection] 0]
+    global catSelection metaSelection funcList
+    
     
     #if Meta is set to table, prepend tablename. to the item
     if {$metaSelection == "Tables"} {
+	set addText [lindex [$selectFrame.iList getcurselection] 0]
 	set addText "$catSelection.$addText"
+    } else {
+	set addText [lindex [lindex $funcList($catSelection) [$selectFrame.iList curselection]]  1]
     }
     
     $editBox insert insert "$addText "
