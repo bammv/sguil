@@ -1,4 +1,4 @@
-# $Id: INSTALL.openbsd,v 1.3 2003/11/19 18:18:14 bamm Exp $ #
+# $Id: INSTALL.openbsd,v 1.4 2004/06/29 18:36:09 shalligan Exp $ #
 <---------------------------------------------------------------------->
 
 **** Set up the Sguil Server ****
@@ -61,7 +61,7 @@
 	
 	a)  Download the tclx-8.3.5 tarball from tclx.sourceforge.net
 	b)  Un-gz and untar
-	c)  ./configure --with-tcl=/usr/local/lib/tcl8.3/
+	c)  ./configure --with-tcl=/usr/local/lib/tcl8.3/ --enable-tk=NO
 	d)  make
 	e)  make install
 
