@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.14 2004/12/06 16:09:20 bamm Exp $
+# $Id: extdata.tcl,v 1.15 2004/12/08 23:03:02 bamm Exp $
 
 proc GetRuleInfo {} {
   global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT SSN_QUERY
@@ -375,7 +375,7 @@ proc GetXscript { type force } {
   set srcPort [$winParents.srcPortFrame.list get $eventIndex]
   set dstIP [$winParents.dstIPFrame.list get $eventIndex]
   set dstPort [$winParents.dstPortFrame.list get $eventIndex]
-  set xscriptWinName ".${sensor}_${cnxID}"
+  set xscriptWinName ".[string tolower ${sensor}]_${cnxID}"
   if { $type == "xscript"} {
     if { ![winfo exists $xscriptWinName] } {
       CreateXscriptWin $xscriptWinName
