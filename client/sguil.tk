@@ -3543,6 +3543,10 @@ set userMsgsFrame [frame [$messageTabs childsite 1].userMsgsFrame]
   bind [$userMsgEntry component entry] <Return> { SendUserMsg }
 pack $userMsgsFrame -side top -fill both -expand true
 $messageTabs select 0
+bind [$userMsgText component vertsb] <ButtonRelease-1> {
+  set scrollbarPosition [lindex [%W get] 1]
+  if {$scrollbarPosition == 1.0} {set USER_MSG_SCROLL 1} else { set USER_MSG_SCROLL 0 }
+}
 set USER_MSG_SCROLL 1
 
 

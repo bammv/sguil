@@ -257,8 +257,14 @@ proc ClientCmdRcvd { socketID } {
 proc UserMsgRcvd { socketID userMsg } {
   global socketInfo clientList
 
-  foreach client $clientList {
-    SendSocket $client "UserMessage [lindex $socketInfo($socketID) 2] $userMsg"
+  # Simple command crap.
+  if { $userMsg == "who" } {
+     foreach client $clientList { lappend usersList [lindex $socketInfo($client) 2] }
+     SendSocket $socketID "UserMessage sguild Connected users: $usersList" 
+  } else {
+    foreach client $clientList {
+      SendSocket $client "UserMessage [lindex $socketInfo($socketID) 2] $userMsg"
+    }
   }
 }
 proc ClientExitClose { socketID } {
