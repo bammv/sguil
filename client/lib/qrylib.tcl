@@ -85,10 +85,15 @@ proc SsnQueryRequest { whereStatement } {
     SsnQueryRequest $whereStatement
     break
   }
-  set closeButton [button $currentTab.close -text "Close Tab" -relief flat -borderwidth 0 -width 1\
+  set buttonFrame [frame $currentTab.buttonFrame]
+  set closeButton [button $buttonFrame.close -text "Close Tab" -relief flat -borderwidth 0 -width 1\
    -foreground white -background black -activebackground black -activeforeground red -pady 0\
    -command "DeleteTab $eventTabs $currentTab"]
-  pack $closeButton $whereText -side bottom -fill x
+  set exportButton [button $buttonFrame.export -text "Export Query Results" -relief flat -borderwidth 0 -width 1\
+	  -foreground white -background black -activebackground black -activeforeground red -pady 0\
+	  -command "ExportResults $queryFrame ssn"]
+  pack $closeButton $exportButton -side left -fill x -expand true
+  pack $buttonFrame $whereText -side bottom -fill x
   pack $queryFrame -side top
   $queryFrame configure -cursor watch
   if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
@@ -124,10 +129,15 @@ proc DBQueryRequest { whereStatement {winTitle {none} } } {
     DBQueryRequest $whereStatement
     break
   }
-  set closeButton [button $currentTab.close -text "Close Tab" -relief flat -borderwidth 0 -width 1\
+  set buttonFrame [frame $currentTab.buttonFrame]
+  set closeButton [button $buttonFrame.close -text "Close Tab" -relief flat -borderwidth 0 -width 1\
    -foreground white -background black -activebackground black -activeforeground red -pady 0\
    -command "DeleteTab $eventTabs $currentTab"]
-  pack $closeButton $whereText -side bottom -fill x
+  set exportButton [button $buttonFrame.export -text "Export Query Results" -relief flat -borderwidth 0 -width 1\
+	  -foreground white -background black -activebackground black -activeforeground red -pady 0\
+	  -command "ExportResults $queryFrame event"]
+  pack $closeButton $exportButton -side left -fill x -expand true
+  pack $buttonFrame $whereText -side bottom -fill x
   pack $queryFrame -side top
   $queryFrame configure -cursor watch
   if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }

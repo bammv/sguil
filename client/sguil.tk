@@ -2848,7 +2848,7 @@ namespace import -force iwidgets::messagedialog
 namespace import -force iwidgets::scrolledlistbox
 namespace import -force iwidgets::combobox
 namespace import -force iwidgets::radiobox
-
+namespace import -force iwidgets::dialogshell
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
   label $winFrame.label -text "$labelText" -foreground black -background $bgColor -anchor s -height $height
   text $winFrame.text  -width $width -background white -height 1
@@ -2902,6 +2902,14 @@ set topFrame [frame .topFrame]
 	      -command "QueryRequest event category 17"
     $queryList add command -label "Show DataBase Tables" -command "ShowDBTables"
   set reportList [menu $reportMenu.menu -tearoff 0]
+    $reportList add cascade -label "Export Events to a Text File (Detail)" -menu $reportList.textDetail
+      set textDetailMenu [menu $reportList.textDetail -tearoff 0]
+      $textDetailMenu add command -label "Normal" -command {TextReport 1 0}
+      $textDetailMenu add command -label "Sanitized" -command {TextReport 1 1}
+    $reportList add cascade -label "Export Events to a Text File (Summary)" -menu $reportList.textSummary
+      set textSummaryMenu [menu $reportList.textSummary -tearoff 0]
+      $textSummaryMenu add command -label "Normal" -command {TextReport 0 0}
+      $textSummaryMenu add command -label "Sanitized" -command {TextReport 0 1}
     $reportList add cascade -label "Send Event Detail via email" -menu $reportList.detail
       set detailMenu [menu $reportList.detail -tearoff 0]
       $detailMenu add command -label "Normal" -command {EmailEvents 1 0}
