@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.23 2004/04/04 20:37:15 dlowless Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.24 2004/04/04 20:59:20 dlowless Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -38,6 +38,9 @@ function DBClose($result) {
 
 function show_alerts( $where_query, $aggregate_result ) {
 	global $colours, $status_desc, $status_colour;
+
+	$timeparts = explode(" ",microtime());
+        $starttime = $timeparts[1].substr($timeparts[0],1);
 	
 	DBOpen();
 
@@ -102,7 +105,7 @@ function show_alerts( $where_query, $aggregate_result ) {
 	print("</form>\n");
 	print("<hr>\n");	
 
-	print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\">\n");
+	print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"1\" width=\"100%\">\n");
 	print("<tr bgcolor=\"#000000\">\n");
 	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;ST&nbsp;</strong></font></td>\n");
 	print("	<td width=\"1\"><font color=\"#FFFFFF\"><strong>&nbsp;CNT&nbsp;</strong></font></td>\n");
@@ -172,7 +175,9 @@ function show_alerts( $where_query, $aggregate_result ) {
 		}
 	}	
 
-	print("<tr><td colspan=\"11\" align=\"center\">Query returned " . mysql_num_rows($result) . " rows</td></tr>\n");
+	$timeparts = explode(" ",microtime());
+        $endtime = $timeparts[1].substr($timeparts[0],1);
+	print("<tr><td colspan=\"11\" align=\"center\">Query returned " . mysql_num_rows($result) . " rows in " . round ( bcsub ( $endtime, $starttime, 6 ),3 ) . " seconds</td></tr>\n");
 	print("</table>\n");
 	
 	DBClose($result);
