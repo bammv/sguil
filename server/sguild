@@ -63,7 +63,7 @@ proc HupTrapped {} {
     set GLOBAL_QRY_LIST none
   }
   foreach clientSocket $clientList {
-    SendGlobalQryList { SendSocket $clientSocket "GlobalQryList $GLOBAL_QRY_LIST" }
+    SendSocket $clientSocket "GlobalQryList $GLOBAL_QRY_LIST"
   }
 }
 proc LoadAutoCatFile { filename } {
