@@ -1,0 +1,134 @@
+<---------------------------------------------------------------------->
+
+**** Set up the Sguil Server ****
+
+1)  Install the mysql server port or package	
+	a) cd /usr/ports/databases/mysql (usually)
+
+	b) env SUBPACKAGE='-server' make install
+
+	c) edit /usr/local/bin/safe_mysqld, add this right after the comments the top:
+		export TZ=GMT
+
+	d) edit /etc/rc.local to start mysql on boot (if desired):
+		add this to the end of the file:
+		/usr/local/bin/safe_mysqld -O key_buffer=64M -O table_cache=256 -O sort_buffer=4M -O record_buffer=1M &
+		(I have found these defaults work well, 
+		YMMV and feel free to tweak.)
+	e) change the mysql root password:
+		/usr/local/bin/mysqladmin -u root password '<newpassword>'
+	
+	e) start the mysql daemon with (or reboot):
+		$safe_mysqld & <-this runs mysql as user _mysql, not root.
+		
+
+2)  Create the sguil database
+	a) mysql -u root -p -e "CREATE DATABASE sguildb"
+	b) grant privs for the sensors:
+		sensor is on localhost:
+		mysql -u root -p -e "GRANT INSERT,SELECT on sguildb.* to sguil@localhost identified by '<sensorpassword>'"
+		sensor is elsewhere:
+		mysql -u root -p -e "GRANT INSERT,SELECT on sguildb.* to sguil@<sensoripaddress> identified by '<sensorpassword>'"
+	c) create the database tables:
+		mysql -u root -p -D sguildb < /path/to/sguil/server/sql_scripts/create_sguildb.sql
+	d) verify that the tables are there:
+		mysql -u root -p -e "show tables" sguildb
+	e) verify that the sensor user can log in and query from the sensor:
+		<on the sensor>#mysql -u sguil -p -h <server ip address> sguildb
+		mysql> select * from version;
+		+---------+---------------------+
+		| version | installed           |
+		+---------+---------------------+
+		| 0.7     | 2003-10-16 14:07:43 |
+		+---------+---------------------+
+		1 row in set (0.06 sec)
+
+3)  Install Tcl 8.3 port:
+	******NOTE******
+	DO NOT use a package, Tclx and mysqltcl need the source to be available
+	and will not build if you use the package.
+
+	a) cd /usr/ports/lang/tcl/8.3
+	b) make
+	c) make install
+
+4)  Install Tclx:
+	****NOTE****
+	If the server is also going to be running the sguil.tk analyst's console,
+	follow the "Installing the Client" Instructions for installing tk and tclx, 
+	unless you really feel like installing it again.
+	
+	a)  Download the tclx-8.3.5 tarball from tclx.sourceforge.net
+	b)  Un-gz and untar
+	c)  ./configure --with-tcl=/usr/local/lib/tcl8.3/
+	d)  make
+	e)  make install
+
+5)  Install MysqlTcl
+	a)  download from *****
+	b)  On my fresh OpenBsd 3.4 install I had to set my CPP environment var to get ./configure to run
+		(Depends on your shell) export CPP=/usr/bin/cpp or set CPP=/usr/bin/cpp
+	c)  ./configure looks for libmysqlclient shared library as libmysqlclient.so and the
+		OpenBSD port installs it as libmysqlclient.so.10.0 so:
+		shell>ln -s /usr/local/lib/mysql/libmysqlclient.so.10.0 /usr/local/lib/mysql/libmysqlclient.so
+	d)  ./configure --with-tcl=/usr/local/lib/tcl8.3/ --with-mysql-include=/usr/local/include/mysql/ --with-mysql-lib=/usr/local/lib/mysql/
+	e) make
+	f) make install
+	g) to test that it got installed:
+		shell>tclsh8.3
+		%package require mysqltcl
+		2.31 <--mysqltcl version should come up here
+		%
+
+6)  Install tcllib port
+	a) cd /usr/ports/deve/tcllib
+	b) make
+	c) make install
+
+7)  Edit sguild.conf (sguild will look for it in /etc/sguild/ or ./)
+8)  run sguild (see main INSTALL file for more details)
+
+
+INSTALLING A SENSOR
+
+1)  Follow instructions in main INSTALL file. EXCEPT
+ 	a)  the log_packets.sh script won't run with the preinstalled shells.
+		Install bash from the ports tree and change the first line of
+		log_packets.sh to read #!/usr/local/bin/bash or whereever you install it.  
+		***INSERT long discussion about not using bash as your root shell
+		and if you do make sure it is static and on the / partition***
+
+
+INSTALLING THE CLIENT
+	
+1)  Install TCL port (see above)
+
+2)  Install tk port
+	******NOTE******
+	DO NOT use a package, Tclx and mysqltcl need the source to be available
+	and will not build if you use the package.
+	shell>cd /usr/ports/x11/tk
+	shell>make
+	shell>make install
+
+3)  Install tclx
+	a) same as above EXCEPT:
+		./configure --with-tcl=/usr/local/lib/tcl8.3/ --with-tk=/usr/local/lib/tk8.3/
+
+4)  Install tcllib port (see above)
+
+5)  Install IWidgets
+	a) download version 3.2 of incr TCL  from sourceforge.net/projects/incrtcl 
+	*****NOTE do not grab the 3.2.1 tarball, it is missing IWidgets*****
+	b) un-tar and cd into the directory
+	c) ./configure --with-tcl=/usr/local/lib/tcl8.3/ --with-tk=/usr/local/lib/tk8.3/
+	d) make
+	e) make install
+
+6)  Edit sguil.conf and run client as per main INSTALL doc.
+
+
+
+Send additions/corrections/etc to shalligan@333tech.com
+
+-srh
