@@ -568,7 +568,7 @@ proc EmailEvents { detail } {
 			    set currentByte [string range $eventPayload [expr $i - 1] $i]
 			    lappend hexStr $currentByte
 			    set intValue [format "%i" 0x$currentByte]
-			    if { $intValue < 21 || $intValue > 176 } {
+			    if { $intValue < 32 || $intValue > 126 } {
 				# Non printable char
 				set currentChar "."
 			    } else {
@@ -898,7 +898,7 @@ proc InsertPayloadData { data } {
       set currentByte [string range $payload [expr $i - 1] $i]
       lappend hexStr $currentByte
       set intValue [format "%i" 0x$currentByte]
-      if { $intValue < 21 || $intValue > 176 } {
+      if { $intValue < 32 || $intValue > 126 } {
         # Non printable char
         set currentChar "."
       } else {
