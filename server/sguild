@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.84 2004/04/13 21:08:58 bamm Exp $ #
+# $Id: sguild,v 1.85 2004/04/15 17:19:14 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -120,20 +120,37 @@ proc LoadAutoCatFile { filename } {
     }
   }
 }
-# Load up the access list. Right now it is just a list of IP addrs
+# Load up the access lists.
 proc LoadAccessFile { filename } {
-  global ACCESS_LIST DEBUG
+  global CLIENT_ACCESS_LIST SENSOR_ACCESS_LIST DEBUG
   if {$DEBUG} { puts -nonewline "Loading access list: $filename " }
-  set ACCESS_LIST ""
-  set ANYFLAG 0
+  set CANYFLAG 0
+  set SANYFLAG 0
   for_file line $filename {
-    # Ignore comments (#)
-    if { $ANYFLAG == 0 && ![regexp ^# $line] } {
-      if { $line == "any" || $line == "ANY" } {
-        set ACCESS_LIST ANY
-        set ANYFLAG 1
+    # Ignore comments (#) and blank lines.
+    if { ![regexp ^# $line] && ![regexp {^\s*$} $line] } {
+      if { [regexp {^\s*client} $line] && $CANYFLAG != "1" } {
+        set ipaddr [lindex $line 1]
+        if { $ipaddr == "ANY" || $ipaddr == "any" } {
+          set CANYFLAG 1
+          set CLIENT_ACCESS_LIST ANY
+          if {$DEBUG} { puts "Client access list set to ALLOW ANY." }
+        } else {
+          if {$DEBUG} { puts "Adding client to access list: $ipaddr" }
+          lappend CLIENT_ACCESS_LIST $ipaddr
+        }
+      } elseif { [regexp {^\s*sensor} $line] && $SANYFLAG != "1" } {
+        set ipaddr [lindex $line 1]
+        if { $ipaddr == "ANY" || $ipaddr == "any" } {
+          set SANYFLAG 1
+          set SENSOR_ACCESS_LIST ANY
+          if {$DEBUG} { puts "Sensor access list set to ALLOW ANY." }
+        } else {
+          if {$DEBUG} { puts "Adding sensor to access list: $ipaddr" }
+          lappend SENSOR_ACCESS_LIST $ipaddr
+        }
       } else {
-        lappend ACCESS_LIST $line
+        if {$DEBUG} { puts "ERROR: Parsing $filename: Format error: $line" }
       }
     }
   }
@@ -698,14 +715,24 @@ proc SendDBInfo { socketID } {
     catch {SendSocket $socketID "TableColumns $tableName $tableArray($tableName)"} tmpError
   }
 }
+proc ValidateSensorAccess { ipaddr } {
+  global SENSOR_ACCESS_LIST DEBUG
+  if {$DEBUG} {puts -nonewline "Validating sensor access: $ipaddr : "}
+  set RFLAG 0
+  if { $SENSOR_ACCESS_LIST == "ANY" } {
+    set RFLAG 1
+  } elseif { [info exists SENSOR_ACCESS_LIST] && [lsearch -exact $SENSOR_ACCESS_LIST $ipaddr] >= 0 } {
+    set RFLAG 1
+  } 
+  return $RFLAG
+}
 proc ValidateClientAccess { ipaddr } {
-  global ACCESS_LIST DEBUG
+  global CLIENT_ACCESS_LIST DEBUG
   if {$DEBUG} {puts "Validating client access: $ipaddr"}
   set RFLAG 0
-  if { $ACCESS_LIST == "ANY" } {
+  if { $CLIENT_ACCESS_LIST == "ANY" } {
     set RFLAG 1
-  }
-  if { [info exists ACCESS_LIST] && [lsearch -exact $ACCESS_LIST $ipaddr] >= 0 } {
+  } elseif { [info exists CLIENT_ACCESS_LIST] && [lsearch -exact $CLIENT_ACCESS_LIST $ipaddr] >= 0 } {
     set RFLAG 1
   } 
   return $RFLAG
@@ -768,6 +795,14 @@ proc HandShake { socketID cmd } {
 proc SensorConnect { socketID IPAddr port } {
   global DEBUG
   if {$DEBUG} {puts "Connect from $IPAddr:$port $socketID"}
+  # Check the client access list
+  if { ![ValidateSensorAccess $IPAddr] } {
+    SendSocket $socketID "Connection Refused."
+    catch {close $socketID} tmpError
+    if {$DEBUG} { puts "Invalid access attempt from $IPAddr" }
+    return
+  }
+  if {$DEBUG} { puts "ALLOWED" }
   fconfigure $socketID -buffering line -blocking 0
   fileevent $socketID readable [list SensorCmdRcvd $socketID]
 }
@@ -1665,13 +1700,24 @@ set sensorList [FlatDBQuery $sensorQuery]
 
 
 # Open a socket for clients to connect to
-if [catch {socket -server ClientConnect $SERVERPORT} serverSocket] {
-  puts "ERROR: $serverSocket"
+if { [info exists BIND_CLIENT_IP_ADDR] && $BIND_CLIENT_IP_ADDR != "" } {
+  set clientSocketCmd "socket -server ClientConnect -myaddr $BIND_CLIENT_IP_ADDR $SERVERPORT"
+} else {
+  set clientSocketCmd "socket -server ClientConnect $SERVERPORT"
+}
+if [catch {eval $clientSocketCmd} serverSocket] {
+  puts "ERROR: Couldn't open client socket: $serverSocket"
   CleanExit
 }
 # Open a socket for sensors to connect to
-if [catch {socket -server SensorConnect $SENSORPORT} sensorSocket] {
-  puts "ERROR: $sensorSocket"
+if { [info exists BIND_SENSOR_IP_ADDR] && $BIND_SENSOR_IP_ADDR != "" } {
+  set sensorSocketCmd "socket -server SensorConnect -myaddr $BIND_SENSOR_IP_ADDR $SENSORPORT"
+} else {
+  set sensorSocketCmd "socket -server SensorConnect $SENSORPORT"
+}
+if [catch {eval $sensorSocketCmd} sensorSocket] {
+  puts "ERROR: Couldn't open sensor socket: $sensorSocket"
+  CleanExit
 }
 puts "Sguild Initialized."
 

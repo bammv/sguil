@@ -1,8 +1,31 @@
+#########################################################################
+#                                                                       #
+# This file is used by sguild for access control. It is read upon init  #
+# or when sguild receives a HUP signal.                                 #
+#                                                                       #
+# By default, sguild will look first for /etc/sguild/sguild.access,     #
+# then ./sguild.access unless the -A /path/to/sguild.access switch      #
+# is used.                                                              #
+#                                                                       #
+######################################################################### 
 #
-# This file contains ip addresses, one per line, of
-# hosts that are ALLOWED access to sguild. If you wish
-# to allow any host, the use the term ANY on a line by
-# itself. 
-# ----------------------------------------------------
-# 192.168.8.1
-ANY
+###############################################
+# Add your sensor IPs here.
+# If don't want to limit access, then use the 
+# keyword 'ANY'.
+#
+# Examples:
+# sensor 192.168.8.254
+###############################################
+sensor ANY
+#
+###############################################
+# Add your clients here.
+# If don't want to limit access, then use the 
+# keyword ANY.
+#
+# Examples:
+# client 192.168.8.1
+# client 127.0.0.1
+###############################################
+client ANY
