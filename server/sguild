@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.103 2004/06/30 14:53:47 bamm Exp $ #
+# $Id: sguild,v 1.104 2004/07/08 16:06:25 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -527,6 +527,7 @@ proc SendEtherealData { fileName TRANS_ID } {
   fconfigure $clientSocketID -translation binary
   fcopy $rFileID $clientSocketID
   fconfigure $clientSocketID -encoding utf-8 -translation {auto crlf}
+  # Old stuff if we need to revert back to Base64 file xfers (yuck)
   #sock12 null /snort_data/archive/2004-06-10/gateway ethereal gateway {2004-06-10 17:21:56}
   #SendSocket $clientSocketID "EtherealDataBase64 [file tail $fileName] BEGIN"
   #set inFileID [open $fileName r]

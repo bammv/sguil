@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: log_packets.sh,v 1.19 2004/06/30 14:34:32 mboman Exp $ #
+# $Id: log_packets.sh,v 1.20 2004/07/08 16:06:25 bamm Exp $ #
 
 ################################################
 #                                              #
@@ -25,10 +25,15 @@
 
 # Edit these for your setup
 
+# Sensors hostname.
+# Note: If running multiple snort instances, then this must be different
+#       for each instance (ie sensor1, sensor2, sensor-eth0, sensor-eth1, etc)
+HOSTNAME="myhost"
 # Path to snort binary
 SNORT_PATH="/usr/local/bin/snort"
 # Directory to log pcap data to (date dirs will be created in here)
-LOG_DIR="/snort_data/dailylogs"
+# Note: The path $HOSTNAME/dailylogs, will be appended to this.
+LOG_DIR="/snort_data"
 # Percentage of disk to try and maintain
 MAX_DISK_USE=90
 # Interface to 'listen' to.
@@ -36,7 +41,7 @@ INTERFACE="eth0"
 # Other options to use when starting snort
 #OPTIONS="-u sguil -g sguil -m 122"
 # Where to store the pid
-PIDFILE="/var/run/snort_log.pid"
+PIDFILE="/var/run/snort_log-${HOSTNAME}.pid"
 # How do we run ps
 PS="ps awx"
 # Where is grep
@@ -60,6 +65,16 @@ start() {
       mkdir $LOG_DIR
       chmod 777 $LOG_DIR
     fi
+    if [ ! $LOG_DIR/$HOSTNAME ]; then
+      mkdir $LOG_DIR/$HOSTNAME
+      chmod 777 $LOG_DIR/$HOSTNAME
+    fi
+    if [ ! $LOG_DIR/$HOSTNAME/dailylogs ]; then
+      mkdir $LOG_DIR/$HOSTNAME/dailylogs
+      chmod 777 $LOG_DIR/$HOSTNAME/dailylogs
+    fi
+    LOG_DIR="$LOG_DIR/$HOSTNAME/dailylogs"
+
     today=`date '+%Y-%m-%d'`
     if [ ! -d $LOG_DIR/$today ]; then
       mkdir $LOG_DIR/$today
