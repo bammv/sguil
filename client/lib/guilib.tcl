@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.11 2004/07/26 19:25:37 shalligan Exp $
+# $Id: guilib.tcl,v 1.12 2004/07/27 14:32:21 shalligan Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -650,4 +650,14 @@ proc SearchData {} {
     $searchWidget tag configure highlight -background yellow
     $searchWidget see [lindex $textinds 0]
 }
-    
+proc ShowHideSearch { } {
+    global dataSearchFrame packetFrame dataFrame
+   
+    if {[winfo ismapped $dataSearchFrame] == 0 } {
+	pack forget $dataFrame
+	pack $dataSearchFrame -side bottom -anchor s -fill x -expand false
+	pack $dataFrame -fill both -expand true -side top
+    } else {
+	pack forget $dataSearchFrame
+    }
+}

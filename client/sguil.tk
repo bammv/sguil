@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.129 2004/07/26 20:52:42 bamm Exp $ #
+# $Id: sguil.tk,v 1.130 2004/07/27 14:32:21 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -83,6 +83,7 @@ set BUSY 0
 set REPORTNUM 0
 set currentSelectedPane 0 
 set COUNTER 0
+set SEARCHFRAME 1
 ######################## END GLOBALS ################################
 
 
@@ -2377,10 +2378,27 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
 	  set dataSearchCaseCheck [checkbutton $dataSearchFrame.dataSearchCaseCheck -variable dataSearchCase -text "NoCase"]
   	  
 	  pack $dataSearchText $dataSearchButton $dataSearchType $dataSearchCaseCheck -side left -fill x
-     pack $dataSearchFrame -side bottom -anchor s -fill x -expand false
-    
+     set dataFrameMenu [menu $dataFrame.dataFrameMenu -tearoff 0]
+      $dataFrameMenu add command -label "Show/Hide Search Frame"\
+	      -command "ShowHideSearch"
+     foreach childWin [winfo children $dataTextFrame] {
+	bind $childWin <ButtonPress-3> {
+	    tk_popup $dataFrameMenu  [winfo rootx %W] [expr %Y +6]
+	}
+     }
+     bind $dataSearchFrame <ButtonPress-3> {
+	    tk_popup $dataFrameMenu  [winfo rootx %W] [expr %Y +6]
+	}
+     foreach childWin [winfo children $dataSearchFrame] {
+	bind $childWin <ButtonPress-3> {
+	    tk_popup $dataFrameMenu  [winfo rootx %W] [expr %Y +6]
+	}
+     }
+     if { $SEARCHFRAME == 1 } {
+	pack $dataSearchFrame -side bottom -anchor s -fill x -expand false
+     }
     pack $ipHdrFrame $tcpHdrFrame -fill x -side top
-    pack $dataFrame -fill both -expand true -side bottom
+    pack $dataFrame -fill both -expand true -side top
     set DISPLAYEDHDR $tcpHdrFrame
      pack $ruleButtonFrame $ruleText -side top -fill x
   pack $packetFrame -side bottom -fill both -expand true
