@@ -1,4 +1,4 @@
-# $Id: INSTALL,v 1.14 2003/12/22 17:17:00 shalligan Exp $ #
+# $Id: INSTALL,v 1.15 2004/04/21 18:44:11 bamm Exp $ #
  
 Sguil should be installed in the following order:
 
@@ -61,9 +61,10 @@ the database.
 
 NOTE-2: It's highly recommended that you set your time-
 zone (TZ) to GMT prior to starting mysqld. This can
-often be done inside you mysqld init script.
+often be done inside your mysqld init script.
 
-Create the sguildb:
+If you want to create the sguild database prior to starting
+sguild for the first time then use these instructions:
   Bamm@syn# mysql -u sguil -p -e "CREATE DATABASE sguildb"
 Make sure each sensor has INSERT and SELECT privledges:
   Bamm@syn# mysql -u sguil -p -e "GRANT INSERT,SELECT on sguildb.* to root@<sensorip>"
@@ -100,10 +101,10 @@ that account.
 
 1) Create the directory /etc/sguild. I recommend using this
 directory for storing all the sguild config files. Copy
-sguild.users, sguild.conf, sguild.queries, and autocat.conf
-to the /etc/sguild directory. If you plan on using OpenSSL
-between the servers and client, don't forget to read the
-README.openssl file in the docs directory.
+sguild.users, sguild.conf, sguild.queries, sguild.access,
+and autocat.conf to the /etc/sguild directory. If you plan
+on using OpenSSL between the servers and client, don't forget
+to read the README.openssl file in the docs directory.
 
 2) Make sure tcl is installed along with the extended (tclx)
 libs (http://tclx.sourceforge.net). Tclx is a common tcl
@@ -113,6 +114,9 @@ most OSes/distros.  To test that tclx is installed:
   tcl>
 Any errors indicate that tclx was NOT install or was installed
 incorrectly.
+
+BUG NOTE: Some systems may require a symlink be made from 
+/usr/lib/libtclx.so to /usr/lib/libtclx8.3.so.
 
 3) Sguild requires mysqltcl support and it can
 be downloaded from http://www.xdobry.de/mysqltcl/. Once
@@ -147,7 +151,11 @@ If you want your users/passwd file to be somewhere other than
 Again, specify the path of sguild.users if it is in a non
 default location.
 
-6) Now it is time to start sguild. The command `sguild --help`
+6) By default the sguild.access file allows any sensor and client
+to connect to sguild. Update this file if you want to add access
+lists.
+
+7) Now it is time to start sguild. The command `sguild --help`
 will generate a short list of available switches. If you have
 placed your config files in a default location (/etc/sguild or
 ./) then you shouldn't need to specify any paths. Command line
@@ -291,6 +299,11 @@ c. Now install Barnyard -
   option. (Use the "with" flags if your mysql libs are in a non-standard
   location.)
     sguil@syn: ./configure --enable-mysql
+
+  NOTE: If you are using barnyard-0.2.0, the sguil output plugin is
+  included and you do NOT need to patch the tree using the below
+  instructions.
+
   Next change to the src/output-plugins and copy op_sguil.c and op_sguil.h
   to the directory:
     sguil@syn: cd src/output-plugins
@@ -318,6 +331,9 @@ c. Now install Barnyard -
   Then the rest of the tree.
     sguil@syn: cd ../..; make
   Barnyard should now be built and can be installed whereever you prefer.
+
+  NOTE: Barnyard-0.2.0 users skip to here.
+
   Edit the barnyard.conf and add the following lines to enable the sguil plugin:
     config hostname: <yoursensorname>
     output sguil: mysql, sensor_id 0, database sguildb, server syn, user root,\

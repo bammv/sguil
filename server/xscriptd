@@ -2,7 +2,17 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: xscriptd,v 1.18 2004/01/13 21:13:35 bamm Exp $ #
+# $Id: xscriptd,v 1.19 2004/04/21 18:44:27 bamm Exp $ #
+
+# Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
+#
+# This program is distributed under the terms of version 1.0 of the
+# Q Public License.  See LICENSE.QPL for further details.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 
 set SERVERPORT 7735
 # sguild and xscriptd should be ran on the same system.

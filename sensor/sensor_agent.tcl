@@ -2,7 +2,16 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.13 2004/02/10 17:25:19 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.14 2004/04/21 18:44:23 bamm Exp $ #
+
+# Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
+#
+# This program is distributed under the terms of version 1.0 of the
+# Q Public License.  See LICENSE.QPL for further details.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 # Name of sguild server
 set SERVER_HOST syn
