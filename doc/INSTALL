@@ -11,7 +11,7 @@ or the different services can be split up between
 different systems. For instance, snort and barnyard
 can be installed on one sytem (the sensor), the GUI
 server and xscriptd on another system, the database
-on yet another system, and the client could be ran
+on yet another system, and the client could be run
 on a number of different systems. The configuration
 is flexible and the number of systems required depends
 on the resources needed. Large networks will benefit
@@ -62,7 +62,9 @@ Build the required tables:
 ##########################################
 Sguild is a tcl script and I would recommend using tcl-8.3
 or better. I haven't had time to test lesser versions but
-they may work. Sguild requires mysqltcl support and it can
+they may work. 
+
+1) Sguild requires mysqltcl support and it can
 be downloaded from http://www.xdobry.de/mysqltcl/. Once
 installed, test that it can be loaded by invoking the tcl
 interpreter (ie /usr/bin/tcl or /usr/local/bin/tclsh8.3)
@@ -77,14 +79,16 @@ prior to the line:
   package require mysqltcl
 in order for the tcl/tk interpreter to find the package.)
 
-Now edit sguild so the first line contains the correct path to
-the tcl interpreter (ie *!/usr/bin/tcl or #!/usr/local/bin/tclsh8.3).
-Then configure options within sguild.conf. Pay particular attention
+2) Edit sguild so the first line contains the correct path to
+the tcl interpreter (ie #!/usr/bin/tcl or #!/usr/local/bin/tclsh8.3).
+
+3) Configure options within sguild.conf. Pay particular attention
 to the PATH you define for sguild to look for snort rules.  In the
 future, rules will be localized in the DB, for now each rule file
 must be kept on the sguild server based on the hostname. Don't
 forget to copy these rule files over after installing the sensor.
-Finally, start the daemon, it will send a query to the DB to get
+
+4) Start the daemon, it will send a query to the DB to get
 any archived alerts and then echo "Waiting for events from sensors."
 
 
@@ -224,8 +228,8 @@ deleting/archiving old data at this time.
 ###########################
 #Step 5: Install xscriptd.#
 ###########################
-Xscriptd is meant to be ran on the same system as sguild. Its purpose is
-get binary packet data from sensor(s) and generate a transcript using tcpflow
+Xscriptd is meant to be run on the same system as sguild. Its purpose is
+to get binary packet data from sensor(s) and generate a transcript using tcpflow
 or forward the binary file to the client to be loaded into ethereal. 
 
 
