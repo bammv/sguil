@@ -67,8 +67,6 @@ proc HupTrapped {} {
   }
 }
 proc LoadAutoCatFile { filename } {
-  global AUTOID
-  set AUTOID [GetUserID auto]
   set i 0
   for_file line $filename {
     if ![regexp ^# $line] {
@@ -833,7 +831,7 @@ proc SensorCmdRcvd { socketID } {
       DiskReport { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
       SsnFile	{ RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] }
       PING	{ puts $socketID "PONG" }
-      default	{ puts "Sensor Cmd Unkown ($socketID): $sensorCmd" }
+      default	{ if {$DEBUG} {puts "Sensor Cmd Unkown ($socketID): $sensorCmd"} }
     }
   }
 }
@@ -1487,6 +1485,9 @@ if { [info exists EMAIL_EVENTS] && $EMAIL_EVENTS } {
   # Just in case the var doesn't get set in sguild.conf
   set EMAIL_EVENTS 0
 }
+
+# Set the AUTOID before we get events.
+set AUTOID [GetUserID auto]
 
 if {$DEBUG} {
   puts "Querying DB for archived events..."
