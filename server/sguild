@@ -1355,7 +1355,7 @@ if { ![info exists GLOBAL_QRY_FILE] } {
   }
 }
 if { [file exists $GLOBAL_QRY_FILE] } {
-  LoadGlobalQueries ./sguild.queries
+  LoadGlobalQueries $GLOBAL_QRY_FILE
 } else {
   set GLOBAL_QRY_LIST none
 }
