@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.133 2004/07/28 20:47:10 shalligan Exp $ #
+# $Id: sguil.tk,v 1.134 2004/07/29 12:39:33 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -618,6 +618,9 @@ proc GetStatusNameByNumber { status } {
   }
 }
 proc InsertQueryResults { paneName results } {
+  # If the win doesn't exist then the user must of closed
+  # the search so we just return.
+  if { ![winfo exists $paneName] } { return }
   set queryType [lindex [split [winfo name $paneName] _] 0]
   if { $queryType == "ssnquery" || $queryType == "sancpquery" } {
     InsertSessionQueryResults $paneName $results

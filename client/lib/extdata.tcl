@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.8 2004/07/15 16:28:03 creining Exp $
+# $Id: extdata.tcl,v 1.9 2004/07/29 12:39:34 bamm Exp $
 
 proc GetRuleInfo {} {
   global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT SSN_QUERY
@@ -302,16 +302,16 @@ proc GetXscript { type force } {
   if {$SSN_QUERY || $SANCP_QUERY} {
     set cnxID [$winParents.xidFrame.list get $eventIndex]
     set timestamp [$winParents.startTimeFrame.list get $eventIndex]
-    set proto 6
+    set proto [$winParents.ipProtoFrame.list get $eventIndex]
   } else {
     set proto [$winParents.protoFrame.list get $eventIndex]
-    if { $type == "xscript" && $proto != "6" } {
-      tk_messageBox -type ok -icon warning -message\
-       "Transcripts can only be generated for TCP traffic at this time."
-      return
-    }
     set cnxID [lindex [split [$winParents.eventIDFrame.list get $eventIndex] .] 1]
     set timestamp [$winParents.dateTimeFrame.list get $eventIndex]
+  }
+  if { $type == "xscript" && $proto != "6" } {
+    tk_messageBox -type ok -icon warning -message\
+     "Transcripts can only be generated for TCP traffic at this time."
+    return
   }
   set sensor [$winParents.sensorFrame.list get $eventIndex]
   set srcIP [$winParents.srcIPFrame.list get $eventIndex]
