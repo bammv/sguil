@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: xscriptd,v 1.16 2003/11/19 18:18:14 bamm Exp $ #
+# $Id: xscriptd,v 1.17 2004/01/09 20:57:50 bamm Exp $ #
 
 set SERVERPORT 7735
 # sguild and xscriptd should be ran on the same system.
@@ -43,7 +43,7 @@ set P0F_PATH "/usr/sbin/p0f"
 ################################################
 
 
-set VERSION "SGUIL-0.3.0"
+set VERSION "SGUIL-0.4.0"
 
 #################### PROCS ######################
 

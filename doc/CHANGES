@@ -1,5 +1,40 @@
-# $Id: CHANGES,v 1.31 2003/11/19 18:18:13 bamm Exp $ #
+# $Id: CHANGES,v 1.32 2004/01/09 20:57:50 bamm Exp $ #
 #
+sguil-HEAD
+
+  op_sguil.c
+    * Bug fix in bounds limit for ipInfo (tks nitzer).
+
+sguil-0.3.1 (09 Jan 2004)
+                                                                                                
+  snort-patches
+    * spp_portscan plays will w/snort-2.1 now (mSplitFree) - bamm
+                                                                                                
+  sguil.tk
+    * Fixed 'cancel'button in Optimize Tables.  -srh
+                                                                                                
+    * Query builder looks for existing window before launching new -srh
+                                                                                                
+    * Fixed typos in reporting. -srh
+                                                                                                
+                                                                                                
+  sguild
+    * Checks /etc/sguild/ for conf files prior to cwd if
+      no PATH was specified. - bamm
+                                                                                                
+    * Bugfixes for SendEvent{} and multiple sensors (tks jlc). - bamm
+                                                                                                
+    * Fixed random seed bug. Thanks Dave Wilburn. - bamm
+                                                                                                
+    * Initial SELECT returns RT events in chronological order
+      (ORDER BY event.timestamp ASC). Thanks Dave. - bamm
+                                                                                                
+    * Fixed parser bug in event comments (colon foo). - bamm
+                                                                                                
+  log_packets.sh
+    * Manages disk space by removing old files as defined limit is
+      approached. - bamm
+                                                                                                
 sguil-0.3.0p1 (11 Nov 2003)
 
   sguil.tk 
