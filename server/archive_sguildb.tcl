@@ -133,7 +133,7 @@ proc DisplayUsage { cmd } {
   puts "  -h:                  Display this help."
   puts "  -q:                  Be quiet (assumes yes to any prompts)."
   puts "  -y:                  Display output, but assume yes to any prompts."
-  puts "  --delete-protscans:  Delete portscans, but don't archive them in a new table."
+  puts "  --delete-portscans:  Delete portscans, but don't archive them in a new table."
   puts "  --event:             (default) Archive event tables (including *hdr, data, history, etc)."
   puts "  --ignore-event:      Ignore archive event tables."
   puts "  --session:           Archive the session table."
@@ -203,10 +203,12 @@ if { ![regexp {^\d{4}-\d{2}-\d{2}} $END_DATE] } {
   exit 1
 }
 # Check for a prefix (not needed if EVENT == 0 and DEL_SESSION OR DEL_SANCP is set)
-if { ![info exists PREFIX] && !$EVENT && !$DEL_SESSION && !$DEL_SANCP } {
-  puts "Error: You must include a prefix for the archive table names."
-  puts "(i.e.:  -p aug_  would create tables like aug_event, aug_tcphdr, etc)"
-  exit 1
+if { ![info exists PREFIX] } { 
+  if { $EVENT || ( $SESSION && !$DEL_SESSION ) || ( $SANCP && !$DEL_SANCP ) } {
+    puts "Error: You must include a prefix for the archive table names."
+    puts "(i.e.:  -p aug_  would create tables like aug_event, aug_tcphdr, etc)"
+    exit 1
+  }
 }
 
 # Write out import info for the user to validate before pressing on
@@ -281,6 +283,17 @@ if { $EVENT } {
     flush stdout
     CreateNewEventTable $DBSOCKETID $PREFIX $END_DATE
     if { !$QUIET } { puts "Success." }
+    
+    #
+    # Check if anything was created.
+    # 
+    set newTableRows [MysqlNumberOfRows ${PREFIX}event $DBSOCKETID]
+    if { $newTableRows == 0 } {
+        # Nothing was archived.
+        if { !$QUIET } { puts "No event data to archive." }
+        exit
+    }
+    if { !$QUIET } { puts "Total Number of rows in ${PREVIX}event: $newTableRows" }
     
     #
     # Delete archived data from the event table
