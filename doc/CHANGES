@@ -20,6 +20,11 @@ CVS-HEAD
 
     * Checks for compatable DB schema
 
+    * Added sha1 support for hashed passwds plus
+      -adduser and -deluser functions. Authentication
+      should now be considered fairly secure when used
+      in conjunction with OpenSSL or ssh tunneling.
+
   xscriptd
     * Added -D (daemonize) and -P <pidFile> switches.
 
