@@ -4,10 +4,15 @@ SNORT_PATH="/usr/local/bin/snort"
 LOG_DIR="/snort_data/dailylogs"
 INTERFACE="ed0"
 PIDFILE="/var/run/snort_log.pid"
-LD_LIBRARY_PATH=/usr/local/lib/mysql
-export LD_LIBRARY_PATH
-#tcpdump not \( src net 66.69.118.83/32 and dst port 80 and "tcp[0:2] > 1024" \) and not
+
+#Some installs may need these
+#LD_LIBRARY_PATH=/usr/local/lib/mysql
+#export LD_LIBRARY_PATH
+
+# Below is an example filter ignore outbound HTTP traffic
+#<cmd> not \( src net 66.69.118.83/32 and dst port 80 and "tcp[0:2] > 1024" \) and not
 #\( src port 80 and dst net 66.69.118.83/32 and "tcp[2:2] > 1024"\)
+
 TZ=GMT
 export TZ
 
