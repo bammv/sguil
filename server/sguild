@@ -14,7 +14,7 @@ exec tcl -f "$0" ${1+"$@"}
 ########################## GLOBALS ##################################
 
 set VERSION "SGUIL-0.2.6"
-set DB_VERSION "0.6"
+set DB_VERSION "0.7"
 
 # Config options moved to sguild.conf
 
@@ -94,7 +94,7 @@ proc AutoCat { data } {
     }
     if { $MATCH } {
       if {$DEBUG} {puts "AUTO MARKING EVENT AS : $acCat($rid)"}
-      UpdateDBStatus "[lindex $data 5].[lindex $data 6]" [GetCurrentTimeStamp] $acCat($rid)
+      UpdateDBStatus "[lindex $data 5].[lindex $data 6]" [GetCurrentTimeStamp] $AUTOID $acCat($rid)
       InsertHistory [lindex $data 5] [lindex $data 6] $AUTOID [GetCurrentTimeStamp] $acCat($rid) "Auto Update"
       return 1
     }
@@ -567,7 +567,7 @@ proc DeleteEventIDList { socketID data } {
       set updateTmp "$updateTmp (sid=$sid AND cid=$cid)"
     } else {
       regsub -all {\) \(} $updateTmp {) OR (} whereTmp
-      UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $status
+      UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $userIDArray($socketID) $status
       set count 0
       set updateTmp "(sid=$sid AND cid=$cid)"
     }
@@ -576,7 +576,7 @@ proc DeleteEventIDList { socketID data } {
     incr count
   }
   regsub -all {\) \(} $updateTmp {) OR (} whereTmp
-  UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $status
+  UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $userIDArray($socketID) $status
 }
 
 proc InsertHistory { sid cid uid timestamp status comment} {
@@ -609,7 +609,7 @@ proc DeleteEventID { socketID eventID status } {
   set eventIDList [ldelete $eventIDList $eventID]
   InsertHistory [lindex [split $eventID .] 0] [lindex [split $eventID .] 1]\
    $userIDArray($socketID) [GetCurrentTimeStamp] $status
-  UpdateDBStatus $eventID [GetCurrentTimeStamp] $status
+  UpdateDBStatus $eventID [GetCurrentTimeStamp] $userIDArray($socketID) $status
 }
 
 proc SendDBInfo { socketID } {
@@ -952,9 +952,9 @@ proc DBCommand { query } {
   mysqlclose $dbSocketID
   return 
 }
-proc UpdateDBStatusList { whereTmp timestamp status } {
+proc UpdateDBStatusList { whereTmp timestamp uid status } {
   global DBNAME DBUSER DBPORT DBHOST DBPASS
-  set updateString "UPDATE event SET status=$status, last_modified='$timestamp' WHERE $whereTmp"
+  set updateString "UPDATE event SET status=$status, last_modified='$timestamp', last_uid='$uid' WHERE $whereTmp"
   if { $DBPASS == "" } {
     set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
   } else {
@@ -964,12 +964,12 @@ proc UpdateDBStatusList { whereTmp timestamp status } {
   set execResults [mysqlexec $dbSocketID $updateString]
   mysqlclose $dbSocketID
 }
-proc UpdateDBStatus { eventID timestamp status } {
+proc UpdateDBStatus { eventID timestamp uid status } {
   global DBNAME DBUSER DBPORT DBHOST DBPASS
   set sid [lindex [split $eventID .] 0]
   set cid [lindex [split $eventID .] 1]
   set updateString\
-   "UPDATE event SET status=$status, last_modified='$timestamp' WHERE sid=$sid AND cid=$cid"
+   "UPDATE event SET status=$status, last_modified='$timestamp', last_uid='$uid' WHERE sid=$sid AND cid=$cid"
   if { $DBPASS == "" } {
     set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
   } else {
@@ -1355,6 +1355,7 @@ if { [catch {mysqluse $dbSocketID $DBNAME} noDBError] } {
 set currentDBVer [FlatDBQuery "SELECT version FROM version"]
 if { $DB_VERSION != $currentDBVer } {
   puts "ERROR: Incompatable DB schema.\nRequired Version: $DB_VERSION\nInstalled Version: $currentDBVer"
+  puts "Check the server/sql_scripts directory of the src that came with sguild for scripts to help you upgrade"
   exit
 }
 
