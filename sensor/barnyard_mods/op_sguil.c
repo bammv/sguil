@@ -1,4 +1,4 @@
-/* $Id: op_sguil.c,v 1.8 2003/11/19 18:18:14 bamm Exp $ */
+/* $Id: op_sguil.c,v 1.9 2004/01/09 19:37:31 bamm Exp $ */
 /*
 ** Copyright (C) 2001-2002 Andrew R. Baker <andrewb@snort.org>
 **
@@ -404,7 +404,7 @@ int SguilOpLog(void *context, void *data)
 
 
 	/* SYSLOG - Changed to SguilSendEvent*/
-	snprintf(ipInfo, 40, "|%u.%u.%u.%u|%u.%u.%u.%u|%u",
+	snprintf(ipInfo, 38, "|%u.%u.%u.%u|%u.%u.%u.%u|%u",
 #if defined(WORDS_BIGENDIAN)
 	    (p.iph->ip_src.s_addr & 0xff000000) >> 24,
 	    (p.iph->ip_src.s_addr & 0x00ff0000) >> 16,
