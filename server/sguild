@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.109 2004/07/23 19:52:23 bamm Exp $ #
+# $Id: sguild,v 1.110 2004/07/27 15:21:40 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -753,7 +753,7 @@ proc FormatStdToQuery { status priority class sensor time sid cid msg sip dip pr
 proc GetCorrelatedEvents { socketID eid winName } {
   global correlatedEventArray eventIDArray
   if { [info exists eventIDArray] } {
-    SendSocket $socketID "InsertQueryResults $winName [eval FormatStdToQuery $eventIDArray($eid)]"
+    SendSocket $socketID "InsertQueryResults $winName [eval FormatStdToQuery [lrange $eventIDArray($eid) 0 12]]"
   }
   if { [info exists correlatedEventArray($eid)] } {
     foreach row $correlatedEventArray($eid) {
