@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.135 2004/08/04 21:07:12 shalligan Exp $ #
+# $Id: sguil.tk,v 1.136 2004/08/05 17:47:15 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2713,6 +2713,12 @@ bind $soundStatus <Button-1> {
 set CONNECTED 0
 # Get login and sguild host info
 GetUserName
+
+while { $USERNAME == "" } {
+  ErrorMessage "ERROR: You must supply a username."
+  GetUserName
+}
+
 while {$CONNECTED == 0} {
   if [catch { ConnectToSguild } socketID] {
     ErrorMessage $socketID
