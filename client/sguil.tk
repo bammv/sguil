@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.121 2004/07/08 18:19:30 taosecurity Exp $ #
+# $Id: sguil.tk,v 1.122 2004/07/08 18:37:33 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2409,14 +2409,13 @@ $ipQueryMenu.dshieldIPMenu add command -label "DstIP" -command "GetDshieldIP dst
 set portQueryMenu [ menu .portQueryMenu -background blue -foreground white -activeforeground blue\
 -activebackground white -tearoff 0 ]
 .portQueryMenu add cascade -label "Dshield Port Lookup" -menu $portQueryMenu.dshieldPortMenu
-.portQueryMenu add cascade -label "Event Port Lookup" -menu $portQueryMenu.eventPortMenu
- menu $portQueryMenu.dshieldPortMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
+.portQueryMenu add cascade -label "Query Event Table" -menu $portQueryMenu.eventPortMenu
+
+menu $portQueryMenu.dshieldPortMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
   -activebackground white
 menu $portQueryMenu.eventPortMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
 
-menu $portQueryMenu.dshieldPortMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
- -activebackground white
 $portQueryMenu.dshieldPortMenu add command -label "SrcPort" -command "GetDshieldPort srcport"
 $portQueryMenu.dshieldPortMenu add command -label "DstPort" -command "GetDshieldPort dstport"
 $portQueryMenu.eventPortMenu add command -label "SrcPort" -command "QueryRequest event srcport"
