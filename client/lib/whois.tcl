@@ -21,10 +21,11 @@ proc SimpleWhois { ipAddr } {
   global DEBUG
 
   set nicSrvr "whois.arin.net"
+  set rPort 43
   if {$DEBUG} {puts "Whois request: $ipAddr"}
   
   # Connect to arin first.
-  if [catch {ClientSocketTimeOut $nicSrvr 43 10000} socketID] {
+  if [catch {ClientSocketTimeOut $nicSrvr $rPort 10000} socketID] {
     return "{ERROR: $socketID}"
   } 
   fconfigure $socketID -buffering line
@@ -57,7 +58,7 @@ proc SimpleWhois { ipAddr } {
     	{.*NETBLK-BRAZIL.*}		{set newNicSrvr "whois.nic.br"}
     	{.*whois\.nic\.ad\.jp.*}	{set newNicSrvr "whois.nic.ad.jp"}
     	{.*whois\.telstra.*}		{set newNicSrvr "whois.telstra.net"}
-    	{.*rwhois\.exodus.*}		{set newNicSrvr "rwhois.exodus.net"}
+    	{.*rwhois\.exodus.*}		{set newNicSrvr "rwhois.exodus.net"; set rPort 4321}
     	{.*rwhois\.verio.*}		{set newNicSrvr "rwhois.verio.net"}
     	{.*rwhois\.dnai.*}		{set newNicSrvr "rwhois.dnai.com"}
     	{.*rwhois\.digex.*}		{set newNicSrvr "rwhois.digex.net"}
@@ -76,11 +77,14 @@ proc SimpleWhois { ipAddr } {
   }
 
   if { $nicSrvr != $newNicSrvr } {
-    if [catch {ClientSocketTimeOut $newNicSrvr 43 10000} socketID] {
+    if [catch {ClientSocketTimeOut $newNicSrvr $rPort 10000} socketID] {
       return "{ERROR: $socketID}"
     } 
     fconfigure $socketID -buffering line
-    puts $socketID $ipAddr
+    if [ catch { puts $socketID $ipAddr } sError] {
+      close $socketID
+      return [list $sError]
+    }
 
     set results ""
     while { ![eof $socketID] && ![catch {gets $socketID data}] } {
@@ -99,7 +103,7 @@ proc SimpleWhois { ipAddr } {
          [regexp {(.*)\((.*)\) $} [lindex $results 2] match blkName netBlk] } {
       # Looks like we got one
       lappend results "\n----- Querying Reassigned Block: $blkName ----\n"
-      if [catch {ClientSocketTimeOut $nicSrvr 43 10000} socketID] {
+      if [catch {ClientSocketTimeOut $nicSrvr $rPort 10000} socketID] {
         return "{ERROR: $socketID}"
       }
       fconfigure $socketID -buffering line

@@ -19,7 +19,7 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } } {
   } elseif { $queryType == "dstip" } {
     set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
     set dstIP [$currentSelectedPane.dstIPFrame.list get $selectedIndex]
-    set whereTmp "$whereTmp $tableName.src_ip  = INET_ATON('$dstIP') OR $tableName.dst_ip = INET_ATON('$srcIP')"
+    set whereTmp "$whereTmp $tableName.src_ip  = INET_ATON('$dstIP') OR $tableName.dst_ip = INET_ATON('$dstIP')"
   } elseif { $queryType == "empty" } {
     set whereTmp "$whereTmp <Insert Query Here>"
   } elseif { $queryType == "src2dst" } {
