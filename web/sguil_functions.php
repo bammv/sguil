@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.1 2004/03/30 23:24:08 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.2 2004/03/31 07:59:42 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -199,17 +199,17 @@ function alert_details_ip($sid,$cid) {
 		print("		<td bgcolor=\"#ADD7E6\">Checksum</td>\n");
 		print("	</tr>\n");
 		print("	<tr>\n");
-		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"src_ip\" value=\"" . $row['src_ip'] . "\" size=\"16\" maxlength=\"16\"></td>\n");
-		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"dst_ip\" value=\"" . $row['dst_ip'] . "\" size=\"16\" maxlength=\"16\"></td>\n");
-		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"ver\" value=\"" . $row['ip_ver'] . "\" size=\"2\" maxlength=\"2\"></td>\n");
-		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"hl\" value=\"" . $row['ip_hlen'] . "\" size=\"2\" maxlength=\"2\"></td>\n");
-		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"tos\" value=\"" . $row['ip_tos'] . "\" size=\"3\" maxlength=\"3\"></td>\n");
-		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"len\" value=\"" . $row['ip_len'] . "\" size=\"5\" maxlength=\"5\"></td>\n");
-		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"id\" value=\"" . $row['ip_id'] . "\" size=\"5\" maxlength=\"5\"></td>\n");
-		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"flags\" value=\"" . $row['ip_flags'] . "\" size=\"4\" maxlength=\"4\"></td>\n");
-		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"offset\" value=\"" . $row['ip_off'] . "\" size=\"6\" maxlength=\"6\"></td>\n");
-		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"ttl\" value=\"" . $row['ip_ttl'] . "\" size=\"4\" maxlength=\"4\"></td>\n");
-		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"checksum\" value=\"" . $row['ip_csum'] . "\" size=\"6\" maxlength=\"6\"></td>\n");
+		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"src_ip\" value=\"" . $row['src_ip'] . "\" size=\"16\"></td>\n");
+		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"dst_ip\" value=\"" . $row['dst_ip'] . "\" size=\"16\"></td>\n");
+		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"ver\" value=\"" . $row['ip_ver'] . "\" size=\"2\"></td>\n");
+		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"hl\" value=\"" . $row['ip_hlen'] . "\" size=\"2\"></td>\n");
+		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"tos\" value=\"" . $row['ip_tos'] . "\" size=\"3\"></td>\n");
+		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"len\" value=\"" . $row['ip_len'] . "\" size=\"5\"></td>\n");
+		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"id\" value=\"" . $row['ip_id'] . "\" size=\"5\"></td>\n");
+		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"flags\" value=\"" . $row['ip_flags'] . "\" size=\"4\"></td>\n");
+		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"offset\" value=\"" . $row['ip_off'] . "\" size=\"6\"></td>\n");
+		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"ttl\" value=\"" . $row['ip_ttl'] . "\" size=\"4\"></td>\n");
+		print("		<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"checksum\" value=\"" . $row['ip_csum'] . "\" size=\"6\"></td>\n");
 		print("	</tr>\n");
 		print("</table>\n");
 		print("</form>\n");
@@ -260,8 +260,8 @@ function alert_details_tcp($sid,$cid) {
 		print("	<td bgcolor=\"#ADD7E6\">ChkSum</td>\n");
 		print("</tr>\n");
 		print("<tr>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"sport\" value=\"" . $row['src_port'] . "\" size=\"6\" maxlength=\"6\"></td>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"dport\" value=\"" . $row['dst_port'] . "\" size=\"6\" maxlength=\"6\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"sport\" value=\"" . $row['src_port'] . "\" size=\"6\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"dport\" value=\"" . $row['dst_port'] . "\" size=\"6\"></td>\n");
 
 		$ipFlags = $row['tcp_flags'];
 		
@@ -316,13 +316,13 @@ function alert_details_tcp($sid,$cid) {
 		print("	<td bgcolor=\"#ADD7E6\"><input type=\"checkbox\" name=\"syn\" " . $synFlag . "></td>\n");
 		print("	<td bgcolor=\"#ADD7E6\"><input type=\"checkbox\" name=\"fin\" " . $finFlag . "></td>\n");
 
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"seq\" size=\"6\" maxlength=\"6\" value=\"" . $row['tcp_seq'] . "\"></td>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"ack\" size=\"6\" maxlength=\"6\" value=\"" . $row['tcp_ack'] . "\"></td>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"offset\" size=\"6\" maxlength=\"6\" value=\"" . $row['tcp_off'] . "\"></td>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"res\" size=\"6\" maxlength=\"6\" value=\"" . $row['tcp_res'] . "\"></td>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"window\" size=\"6\" maxlength=\"6\" value=\"" . $row['tcp_win'] . "\"></td>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"urp\" size=\"6\" maxlength=\"6\" value=\"" . $row['tcp_urp'] . "\"></td>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"csum\" size=\"6\" maxlength=\"6\" value=\"" . $row['tcp_csum'] . "\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"seq\" size=\"6\" value=\"" . $row['tcp_seq'] . "\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"ack\" size=\"6\" value=\"" . $row['tcp_ack'] . "\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"offset\" size=\"6\" value=\"" . $row['tcp_off'] . "\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"res\" size=\"6\" value=\"" . $row['tcp_res'] . "\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"window\" size=\"6\" value=\"" . $row['tcp_win'] . "\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"urp\" size=\"6\" value=\"" . $row['tcp_urp'] . "\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"csum\" size=\"6\" value=\"" . $row['tcp_csum'] . "\"></td>\n");
 		print("</tr>\n");
 		print("</table>\n");
 		print("</form>\n");
@@ -358,22 +358,97 @@ function alert_details_icmp($sid,$cid) {
 		print("	<td bgcolor=\"#ADD7E6\">Code</td>\n");
 		print("	<td bgcolor=\"#ADD7E6\">ChkSum</td>\n");
 		print("	<td bgcolor=\"#ADD7E6\">ID</td>\n");
-		print("	<td bgcolor=\"#ADD7E6\">Seq#</td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" colspan=\"2\">Seq#</td>\n");
 		print("</tr>\n");
 		print("<tr>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"type\" value=\"" . $row['icmp_type'] . "\" size=\"6\" maxlength=\"6\"></td>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"code\" value=\"" . $row['icmp_code'] . "\" size=\"6\" maxlength=\"6\"></td>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"chksum\" size=\"6\" maxlength=\"6\" value=\"" . $row['icmp_csum'] . "\"></td>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"id\" size=\"6\" maxlength=\"6\" value=\"" . $row['icmp_id'] . "\"></td>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"seq\" size=\"6\" maxlength=\"6\" value=\"" . $row['icmp_seq'] . "\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"type\" value=\"" . $row['icmp_type'] . "\" size=\"3\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"code\" value=\"" . $row['icmp_code'] . "\" size=\"3\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"chksum\" size=\"6\" value=\"" . $row['icmp_csum'] . "\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"id\" size=\"6\" value=\"" . $row['icmp_id'] . "\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\" colspan=\"2\"><input type=\"text\" name=\"seq\" size=\"6\" value=\"" . $row['icmp_seq'] . "\"></td>\n");
 		print("</tr>\n");
+
+      /* IF ( ICMP destination unreachable OR ICMP time exceeded ) */
+      if ( $row['icmp_type'] == "3" || $row['icmp_type'] == "11" )
+      {
+			/* IF ( network, host, port unreachable OR frag needed OR network admin prohibited OR filtered) */
+			if ( $row['icmp_code'] == "0" || $row['icmp_code'] == "1" || $row['icmp_code'] == "3" ||
+					$row['icmp_code'] == "4" ||
+					$row['icmp_code'] == "9" ||
+					$row['icmp_code'] == "13" )
+			{
+
+				$sql2 = "SELECT data_payload " .
+					"FROM data " .
+					"WHERE sid=" . $sid . " and cid=" . $cid;
+
+				$result2 = mysql_query($sql2);
+
+				if (!$result2) {
+					echo "Could not successfully run query ($sql) from DB: " . mysql_error();
+					exit;
+				}
+
+				$row2 = mysql_fetch_assoc($result2);
+
+				$work = str_replace("\n","",$row2['data_payload']);
+                                                                                                                                                             
+				/*
+				 *  - depending on how the packet logged, 32-bits of NULL padding after
+				 *    the checksum may still be present.
+				 */
+              
+				if ( substr($work, 0, 8) == "00000000" ) {
+					$offset = 8;
+   	      } else if ( ($row['icmp_type'] == "3") && ($row['icmp_code'] == "4") ) {
+					/* for dest. unreachable, frag needed and DF bit set indent the padding
+					 * of MTU of next hop
+					 */
+					$offset += 8;
+				}
+			                                                                              
+				$icmp_src = hexdec($work[24+$offset].$work[25+$offset]).".".
+								hexdec($work[26+$offset].$work[27+$offset]).".".
+								hexdec($work[28+$offset].$work[29+$offset]).".".
+								hexdec($work[30+$offset].$work[31+$offset]);
+				$icmp_dst = hexdec($work[32+$offset].$work[33+$offset]).".".
+								hexdec($work[34+$offset].$work[35+$offset]).".".
+								hexdec($work[36+$offset].$work[37+$offset]).".".
+								hexdec($work[38+$offset].$work[39+$offset]);
+				$icmp_proto = hexdec($work[18+$offset].$work[19+$offset]);
+   	                                                                                                                                                          
+				$hdr_offset = ($work[$offset+1]) * 8 + $offset;
+				$icmp_src_port = hexdec($work[$hdr_offset].$work[$hdr_offset+1].$work[$hdr_offset+2].$work[$hdr_offset+3]);
+				$icmp_dst_port = hexdec($work[$hdr_offset+4].$work[$hdr_offset+5].$work[$hdr_offset+6].$work[$hdr_offset+7]);
+	
+				print("<tr>\n");
+				print("	<td bgcolor=\"#ADD7E6\">Proto</td>\n");
+				print("	<td bgcolor=\"#ADD7E6\">Org. Src. IP</td>\n");
+				print("	<td bgcolor=\"#ADD7E6\">Org. Src. Port</td>\n");
+				print("	<td bgcolor=\"#ADD7E6\">Org. Dst. IP</td>\n");
+				print("	<td bgcolor=\"#ADD7E6\">Org. Dst. Port</td>\n");
+				print("	<td bgcolor=\"#ADD7E6\">Gateway IP</td>\n");
+				print("</tr>\n");
+				print("<tr>\n");
+				print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"org_proto\" value=\"" . $icmp_proto . "\" size=\"2\"></td>\n");
+				print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"org_src_ip\" value=\"" . $icmp_src . "\" size=\"16\"></td>\n");
+				print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"org_src_port\" size=\"6\" value=\"" . $icmp_src_port . "\"></td>\n");
+				print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"org_dst_ip\" size=\"16\" value=\"" . $icmp_dst . "\"></td>\n");
+				print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"org_dst_port\" size=\"6\" value=\"" . $icmp_dst_port . "\"></td>\n");
+				print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"org_gateway\" size=\"16\" value=\"" . "" . "\"></td>\n");
+				print("</tr>\n");
+				
+				DBClose($result2);
+			}
+
+		}
+
 		print("</table>\n");
 		print("</form>\n");
+
+		DBClose($result);
 	}
-	
-	DBClose($result);
-}
-	
+}	
 
 function alert_details_udp($sid,$cid) {
 
@@ -401,10 +476,10 @@ function alert_details_udp($sid,$cid) {
 		print("	<td bgcolor=\"#ADD7E6\">ChkSum</td>\n");
 		print("</tr>\n");
 		print("<tr>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"type\" value=\"" . $row['src_port'] . "\" size=\"6\" maxlength=\"6\"></td>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"code\" value=\"" . $row['dst_port'] . "\" size=\"6\" maxlength=\"6\"></td>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"chksum\" size=\"6\" maxlength=\"6\" value=\"" . $row['udp_len'] . "\"></td>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"id\" size=\"6\" maxlength=\"6\" value=\"" . $row['udp_csum'] . "\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"type\" value=\"" . $row['src_port'] . "\" size=\"6\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"code\" value=\"" . $row['dst_port'] . "\" size=\"6\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"chksum\" size=\"6\" value=\"" . $row['udp_len'] . "\"></td>\n");
+		print("	<td bgcolor=\"#ADD7E6\"><input type=\"text\" name=\"id\" size=\"6\" value=\"" . $row['udp_csum'] . "\"></td>\n");
 		print("</tr>\n");
 		print("</table>\n");
 		print("</form>\n");
