@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.150 2004/10/28 16:56:00 bamm Exp $ #
+# $Id: sguil.tk,v 1.151 2004/10/28 19:49:32 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1978,11 +1978,13 @@ $messageTabs add -label "User Messages"\
 set systemInfoFrame [frame [$messageTabs childsite 0].systemInfoFrame]
 set systemInfoText [scrolledtext $systemInfoFrame.systemInfoText -vscrollmode static -hscrollmode dynamic\
  -wrap word -visibleitems 20x4 -sbwidth 10]
+  $systemInfoText component text configure -font ourFixedFont
 pack $systemInfoText -side top -fill both -expand true
 pack $systemInfoFrame -fill both -expand true
 set userMsgsFrame [frame [$messageTabs childsite 1].userMsgsFrame]
   set userMsgText [scrolledtext $userMsgsFrame.userMsgText -vscrollmode static -hscrollmode dynamic\
    -wrap word -visibleitems 20x3 -sbwidth 10]
+  $userMsgText component text configure -font ourFixedFont
   set userMsgEntry [entryfield $userMsgsFrame.userMsgEntry -textvariable USERMSG\
    -labeltext "MSG: " -labelpos w -width 20]
   pack $userMsgText -side top -fill both -expand true

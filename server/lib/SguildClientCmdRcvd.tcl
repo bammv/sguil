@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.5 2004/10/27 20:45:55 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.6 2004/10/28 19:49:33 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -106,6 +106,8 @@ proc UserMsgRcvd { socketID userMsg } {
     if { [info exists connectedAgents] } {
       SendSocket $socketID [list UserMessage sguild "Connected sensors: $connectedAgents"]
     }
+  } elseif { $userMsg == "healthcheck" } { 
+    SensorAgentsHealthCheck 1
   } else {
     foreach client $clientList {
       SendSocket $client [list UserMessage [lindex $socketInfo($socketID) 2] $userMsg]

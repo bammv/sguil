@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.3 2004/10/18 15:28:20 shalligan Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.4 2004/10/28 19:49:33 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global connectedAgents agentSensorName
@@ -26,6 +26,7 @@ proc SensorCmdRcvd { socketID } {
       DiskReport { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
       SsnFile   { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
       PING      { puts $socketID "PONG"; flush $socketID }
+      PONG      { SensorAgentPongRcvd $socketID }
       XscriptDebugMsg { $sensorCmd [lindex $data 1] [lindex $data 2] }
       RawDataFile { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
       default   { LogMessage "Sensor Cmd Unkown ($socketID): $sensorCmd" }

@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.23 2004/08/13 22:04:32 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.24 2004/10/28 19:49:33 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -271,6 +271,7 @@ proc SguildCmdRcvd { socketID } {
     set sguildCmd [lindex $data 0]
     switch -exact -- $sguildCmd {
       PONG	{ if {$DEBUG} {puts "PONG recieved"} }
+      PING      { SendToSguild "PONG" }
       RawDataRequest { eval $sguildCmd $socketID [lrange $data 1 end] }
       default   { if {$DEBUG} {puts "Sguil Cmd Unkown: $sguildCmd"} }
     }

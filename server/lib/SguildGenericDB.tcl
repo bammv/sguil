@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.4 2004/10/18 16:15:40 shalligan Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.5 2004/10/28 19:49:33 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -74,6 +74,28 @@ proc FlatDBQuery { query } {
   set queryResults [mysqlsel $dbSocketID $query -flatlist]
   mysqlclose $dbSocketID
   return $queryResults
+}
+# type can be list or flatlist.
+# list returns { 1 foo } { 2 bar } { 3 fu }
+# flatlist returns { 1 foo 2 bar 3 fu } 
+proc MysqlSelect { query { type {list} } } {
+
+    global DBNAME DBUSER DBPORT DBHOST DBPASS
+
+    if { $DBPASS == "" } {
+        set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+    } else {
+        set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+    }
+
+    if { $type == "flatlist" } {
+        set queryResults [mysqlsel $dbSocketID $query -flatlist]
+    } else {
+         set queryResults [mysqlsel $dbSocketID $query -list]
+    }
+    mysqlclose $dbSocketID
+    return $queryResults
+
 }
 
 proc DBCommand { query } {

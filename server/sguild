@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.127 2004/10/18 17:05:55 shalligan Exp $ #
+# $Id: sguild,v 1.128 2004/10/28 19:49:33 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -244,6 +244,7 @@ set sourceLibs {
     SguildEmailEvent.tcl      \
     SguildEvent.tcl           \
     SguildGenericDB.tcl       \
+    SguildHealthChecks.tcl       \
     SguildLoaderd.tcl         \
     SguildQueryd.tcl          \
     SguildReportBuilder.tcl   \
@@ -497,6 +498,9 @@ LogMessage "Sguild Initialized."
 
 signal trap {HUP} HupTrapped
 signal trap {QUIT TERM} CleanExit
+
+# Start the health check for sensoragents
+after 10000 SensorAgentsHealthCheck
 
 # Infinite wait
 vwait FOREVER
