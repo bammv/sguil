@@ -1,4 +1,4 @@
-# $Id: INSTALL,v 1.16 2004/06/24 15:56:53 bamm Exp $ #
+# $Id: INSTALL,v 1.17 2004/08/10 19:47:59 bamm Exp $ #
  
 Sguil should be installed in the following order:
 
@@ -137,21 +137,21 @@ in order for the tcl/tk interpreter to find the package.)
 tclsh8.3 (or similar) to tclsh in the appropriate directory.
 (i.e. `ln -s /usr/local/bin/tclsh8.3 /usr/local/bin/tclsh)
 
-4) Configure options within sguild.conf. Pay particular attention
+5) Configure options within sguild.conf. Pay particular attention
 to the PATH you define for sguild to look for snort rules.  In the
 future, rules will be localized in the DB, for now each rule file
 must be kept on the sguild server based on the hostname. Don't
 forget to copy these rule files over after installing the sensor.
 As of version 0.4.1, the xscript functions were moved into sguild.
 
-5) Add users to sguild.users file by running `sguild -adduser <username>`
+6) Add users to sguild.users file by running `sguild -adduser <username>`
 If you want your users/passwd file to be somewhere other than
 /etc/sguild/sguild.users or ./sguild.users, then use the
  -u <path> switch. You can delete users using `sguild -deluser <username>`
 Again, specify the path of sguild.users if it is in a non
 default location.
 
-6) By default the sguild.access file allows any sensor and client
+7) By default the sguild.access file allows any sensor and client
 to connect to sguild. Update this file if you want to add access
 lists.
 
@@ -210,6 +210,12 @@ sensor(s) have been configured and are reporting events to sguild.
 #############################
 A. Begin by installing snort -
 
+  NOTE: In order to provide better support for sensors monitoring 
+  multiple interfaces, we now use default logging directory of
+  $LOG_DIR/$SENSOR_NAME (ie /snort_data/sensor1, /snort_data/sensor2,
+  etc). This allows us to run multiple snort, barnyard, and
+  sensor_agent.tcl instances without munging data together.
+
   Two patches for snort are included in the the sguil tarball. These 
   patches are NOT required for sguil to function. Instead, they are 
   used to provide more data to analyst that he/she can view from the
@@ -248,12 +254,12 @@ A. Begin by installing snort -
       preprocessor portscan: $HOME_NET <ports> <secs> <logdir> <sensorname>
         <logdir> must exists and will be read by portscan_loader.tcl
     EXAMPLE:
-      preprocessor portscan: $HOME_NET 4 3 /snort_data/portscans syn
+      preprocessor portscan: $HOME_NET 4 3 /snort_data/<sensorname>/portscans syn
 
     Format for the stream4 (keepstats) mod is:
       keepstats db <log path>
     EXAMPLE:
-      preprocessor stream4: detect_scans, disable_evasion_alerts, keepstats db /snort_data/ssn_logs
+      preprocessor stream4: detect_scans, disable_evasion_alerts, keepstats db /snort_data/<sensorname>/ssn_logs
     
     Enable unified logging with this line:
       output log_unified: filename snort.log, limit 128
@@ -263,12 +269,12 @@ A. Begin by installing snort -
   using the sguil patches.
     Bamm@syn# ls /etc/snort/
     gen-msg.map snort.conf classification.config reference.config sid-msg.map
-    Bamm@syn# ls /snort_data/
+    Bamm@syn# ls /snort_data/<sensorname>/
     portscans  ssn_logs
    
   Finally, start snort (best to run snort as a non-root user too. we use -m 122
   so barnyard can read the unfied_log files without root privs.):
-    Bamm@syn# snort -u sguil -g sguil -l /snort_data -c /etc/snort/snort.conf -U -A none -m 122 -i <interface>
+    Bamm@syn# snort -u sguil -g sguil -l /snort_data/<sensorname> -c /etc/snort/snort.conf -U -A none -m 122 -i <interface>
 
   *NOTE: I use a seperate partition /snort_data to do all my logging.
          The -U is to keep all times in GMT (if you don't do this then
@@ -339,7 +345,7 @@ c. Now install Barnyard -
     output sguil: mysql, sensor_id 0, database sguildb, server syn, user root,\
     password dbpasswd, sguild_host syn, sguild_port 7736
   Start Barnyard:
-    sguil@syn: /usr/local/bin/barnyard -c /etc/snort/barnyard.conf -d /snort_data\
+    sguil@syn: /usr/local/bin/barnyard -c /etc/snort/barnyard.conf -d /snort_data/<sensorname>\
     -g /etc/snort/gen-msg.map -s /etc/snort/sid-msg.map -f snort.log -w /etc/snort/waldo.file
 
 B. Next install and start the sensor_agent.tcl from the ./sensor directory.
