@@ -436,9 +436,9 @@ proc UserMessage { user userMsg } {
   if { [$messageTabs view] != 1 } {
     # BOING!
     #bell
-    $messageTabs pageconfigure 1 -background red 
+    $messageTabs pageconfigure 1 -foreground red 
   } else {
-    $messageTabs pageconfigure 1 -background
+    $messageTabs pageconfigure 1 -foreground
   }
   [$userMsgText component text] insert end "\n\[[lindex [GetCurrentTimeStamp] 1]\] <$user> $userMsg"
   if { $USER_MSG_SCROLL } { [$userMsgText component text] see end }
@@ -1329,9 +1329,9 @@ proc GetCurrentTimeStamp { {clockOption {today} } } {
 proc InsertSystemInfoMsg { sensorName msg } {
   global systemInfoText messageTabs
   if { [$messageTabs view] != 0 } {
-    $messageTabs pageconfigure 0 -background red 
+    $messageTabs pageconfigure 0 -foreground red 
   } else {
-    $messageTabs pageconfigure 0 -background
+    $messageTabs pageconfigure 0 -foreground
   }
   set timestamp [GetCurrentTimeStamp]
   $systemInfoText insert end "\n\[$timestamp\] $sensorName: $msg"
@@ -3525,9 +3525,9 @@ set messageTabs [tabnotebook [$ipDataPane childsite 1].messageTabs\
  -angle 0 -bevelamount 4 -tabpos n -tabbackground darkgrey]
 pack $messageTabs -side left -expand true -fill both -padx 0 -pady 0
 $messageTabs add -label "System Messages"\
- -command "$messageTabs pageconfigure 0 -background darkgrey"
+ -command "$messageTabs pageconfigure 0 -foreground black"
 $messageTabs add -label "User Messages"\
- -command "$messageTabs pageconfigure 1 -background darkgrey"
+ -command "$messageTabs pageconfigure 1 -foreground black"
 set systemInfoFrame [frame [$messageTabs childsite 0].systemInfoFrame]
 set systemInfoText [scrolledtext $systemInfoFrame.systemInfoText -vscrollmode static -hscrollmode dynamic\
  -wrap word -visibleitems 20x4 -sbwidth 10]
