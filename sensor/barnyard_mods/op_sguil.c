@@ -436,29 +436,35 @@ int SguilOpLog(void *context, void *data)
                     if(!p.icmph) 
 			break;
        	            strcat(insertColumns,
-		    ", icmp_type, icmp_code");
+		    ", icmp_type, icmp_code)");
 		    snprintf(valuesTemp, MAX_QUERY_SIZE,
-		    ", '%u', '%u'", p.icmph->icmp_type,
+		    ", '%u', '%u')", p.icmph->icmp_type,
                     p.icmph->icmp_code);
 		    strcat(insertValues, valuesTemp);
+	            strcat(insertColumns, insertValues);
+                    sgInsert(op_data, insertColumns, NULL);
                     sgInsertICMPData(op_data, &p);
                     break;
                 case IPPROTO_TCP:
 	            strcat(insertColumns,
-		    ", src_port, dst_port");
+		    ", src_port, dst_port)");
 		    snprintf(valuesTemp, MAX_QUERY_SIZE,
-		    ", '%u', '%u'", p.sp, p.dp);
+		    ", '%u', '%u')", p.sp, p.dp);
 		    strcat(insertValues, valuesTemp);
+	            strcat(insertColumns, insertValues);
+                    sgInsert(op_data, insertColumns, NULL);
                     sgInsertTCPData(op_data, &p);
 		    snprintf(portInfo, 16, "|%u|%u|",
 			p.sp, p.dp);
                     break;
                 case IPPROTO_UDP:
 	            strcat(insertColumns,
-		    ", src_port, dst_port");
+		    ", src_port, dst_port)");
 		    snprintf(valuesTemp, MAX_QUERY_SIZE,
-		    ", '%u', '%u'", p.sp, p.dp);
+		    ", '%u', '%u')", p.sp, p.dp);
 		    strcat(insertValues, valuesTemp);
+	            strcat(insertColumns, insertValues);
+                    sgInsert(op_data, insertColumns, NULL);
                     sgInsertUDPData(op_data, &p);
 		    snprintf(portInfo, 16, "|%u|%u|",
 			p.sp, p.dp);
@@ -480,10 +486,6 @@ int SguilOpLog(void *context, void *data)
 		strcat(syslogMessage, "||||||");
              }
 
-	    strcat(insertColumns, ") ");
-	    strcat(insertValues, ")");
-	    strcat(insertColumns, insertValues);
-            sgInsert(op_data, insertColumns, NULL);
 	    //sgEndTransaction(op_data);  /* XXX: Error Checking */
 	    ++op_data->event_id;
             /* Append the sig id and rev to the RT event */
