@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $ID$ #
+# $Id: sguil.tk,v 1.96 2003/11/19 17:48:12 bamm Exp $ #
 
 ####################################################################
 # Snort GUI for Lamerz [sguil] - A tcl/tk interface to snort       #
