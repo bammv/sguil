@@ -1,4 +1,4 @@
--- $Id: create_sguildb.sql,v 1.12 2004/11/03 19:42:15 shalligan Exp $
+-- $Id: create_sguildb.sql,v 1.13 2005/01/28 19:54:33 bamm Exp $
 -- Users may want to use a different DB name.
 -- CREATE DATABASE IF NOT EXISTS sguildb;
 -- USE sguildb;
@@ -183,31 +183,34 @@ CREATE TABLE nessus
   PRIMARY KEY (rid),
   INDEX ip (ip));
 
-CREATE TABLE sancp
-(
-  sid		INT UNSIGNED	NOT NULL,
-  sancpid	BIGINT UNSIGNED	NOT NULL,
-  start_time	DATETIME	NOT NULL,
-  end_time	DATETIME	NOT NULL,
-  duration	INT UNSIGNED	NOT NULL,
-  ip_proto	TINYINT UNSIGNED	NOT NULL,
-  src_ip	INT UNSIGNED,
-  src_port	SMALLINT UNSIGNED,
-  dst_ip	INT UNSIGNED,
-  dst_port	SMALLINT UNSIGNED,
-  src_pkts	INT UNSIGNED	NOT NULL,
-  src_bytes	INT UNSIGNED	NOT NULL,
-  dst_pkts	INT UNSIGNED	NOT NULL,
-  dst_bytes	INT UNSIGNED	NOT NULL,
-  src_flags	TINYINT UNSIGNED	NOT NULL,
-  dst_flags	TINYINT UNSIGNED	NOT NULL,
-  PRIMARY KEY (sid,sancpid),
-  INDEX src_ip (src_ip),
-  INDEX dst_ip (dst_ip),
-  INDEX dst_port (dst_port),
-  INDEX src_port (src_port),
-  INDEX start_time (start_time)
-);
+--
+-- Depreciated for MERGE tables
+--CREATE TABLE sancp
+--(
+--  sid		INT UNSIGNED	NOT NULL,
+--  sancpid	BIGINT UNSIGNED	NOT NULL,
+--  start_time	DATETIME	NOT NULL,
+--  end_time	DATETIME	NOT NULL,
+--  duration	INT UNSIGNED	NOT NULL,
+--  ip_proto	TINYINT UNSIGNED	NOT NULL,
+--  src_ip	INT UNSIGNED,
+--  src_port	SMALLINT UNSIGNED,
+--  dst_ip	INT UNSIGNED,
+--  dst_port	SMALLINT UNSIGNED,
+--  src_pkts	INT UNSIGNED	NOT NULL,
+--  src_bytes	INT UNSIGNED	NOT NULL,
+--  dst_pkts	INT UNSIGNED	NOT NULL,
+--  dst_bytes	INT UNSIGNED	NOT NULL,
+--  src_flags	TINYINT UNSIGNED	NOT NULL,
+--  dst_flags	TINYINT UNSIGNED	NOT NULL,
+--  PRIMARY KEY (sid,sancpid),
+--  INDEX src_ip (src_ip),
+--  INDEX dst_ip (dst_ip),
+--  INDEX dst_port (dst_port),
+--  INDEX src_port (src_port),
+--  INDEX start_time (start_time)
+--);
+--
 
 INSERT INTO status (status_id, description, long_desc) VALUES (0, "New", "Real Time Event");
 INSERT INTO status (status_id, description, long_desc) VALUES (1, "No Further Action Required", "No Further Action Required");
