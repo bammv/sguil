@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.21 2004/03/24 17:40:49 shalligan Exp $ #
+# $Id: qrybuild.tcl,v 1.22 2004/03/24 20:42:06 shalligan Exp $ #
 proc QryBuild {tableSelected whereTmp } {
     global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList
@@ -30,7 +30,8 @@ proc QryBuild {tableSelected whereTmp } {
     # funclist are lists of {LABEL FUNCTION} pairs.  In most cases they will be the same.
     set mlst [list Tables Functions]
     set funcList(main) [list Common Strings Comparison Logical DateTime DateMacros]
-    set funcList(maintables) [list Categories]
+    set funcList(mainevent) [list Categories]
+    set funcList(mainsancp) [list FlagMacros]
     set funcList(Common) [list {INET_ATON() INET_ATON()} {LIMIT LIMIT} {LIKE LIKE} {AND AND} {OR OR} {NOT NOT}]
     set funcList(Strings) [list {LIKE LIKE} {REGEXP REGEXP} {RLIKE RLIKE}]
     set funcList(Logical) [list {AND AND} {OR OR} {NOT NOT} {BETWEEN() BETWEEN()} {LIKE LIKE}]
@@ -100,7 +101,23 @@ proc QryBuild {tableSelected whereTmp } {
 	     -scrollmargin 5 -labeltext "Items" \
 	     -labelpos n -vscrollmode static -hscrollmode static\
 	     -visibleitems 20x10 -foreground darkblue -textbackground lightblue]
-  
+      set flagFrame [frame $selectFrame.fFrame]
+        set srcdstBox [radiobox $flagFrame.sdBox]
+          $srcdstBox add src -text "Source"
+          $srcdstBox add dst -text "Dest"
+          $srcdstBox select src
+        set flagBox [checkbox $flagFrame.fBox]
+        set flags [list FIN SYN RST PSH ACK URG R1 R2]
+        foreach f $flags {
+	    $flagBox add $f -text [string totitle $f]
+	}
+	set logicBox [radiobox $flagFrame.lBox]
+	  $logicBox add only -text "ONLY selected flags" 
+	  $logicBox add and -text "AT LEAST selected flags"
+	  $logicBox add not -text "NOT selected flags"
+	  $logicBox select only
+	set insertButton [button $flagFrame.iButton -command "addToEditBoxFlags $editBox $flagFrame" -text "Insert"]
+	pack $srcdstBox $flagBox $logicBox $insertButton -side top -fill both -expand true
       pack $metaList $catList $itemList -side left -fill both -expand true
       iwidgets::Labeledwidget::alignlabels $metaList $catList $itemList
     pack $qryTypeBox -side top -fill none -expand false
@@ -151,7 +168,10 @@ proc updateCatList { selectFrame } {
     } else {
 	eval $selectFrame.cList insert 0 $funcList(main)
 	if { $SELECTEDTABLE == "event" } {
-	    eval $selectFrame.cList insert end $funcList(maintables)
+	    eval $selectFrame.cList insert end $funcList(mainevent)
+	}
+	if { $SELECTEDTABLE == "sancp" } {
+	    eval $selectFrame.cList insert end $funcList(mainsancp)
 	}
     }
 }
@@ -165,11 +185,18 @@ proc updateItemList { selectFrame} {
     eval set sel [$selectFrame.cList getcurselection]
     set catSelection $sel
     if {$metaSelection == "Tables"} {
+	pack forget $selectFrame.fFrame
+        pack $selectFrame.iList
 	eval $selectFrame.iList insert 0 $funcList($sel)
-    } else {
+    } elseif { $sel != "FlagMacros" } {
+	pack forget $selectFrame.fFrame
+	pack $selectFrame.iList
 	foreach i $funcList($sel) {
 	    eval $selectFrame.iList insert end [lindex $i 0]
 	}
+    } else {
+	pack forget $selectFrame.iList
+	pack $selectFrame.fFrame
     }
 }
 
@@ -187,6 +214,39 @@ proc addToEditBox { editBox selectFrame } {
     
     $editBox insert insert "$addText "
 }
+
+proc addToEditBoxFlags {editBox flagFrame} {
+    
+    # add up the flags selected to get the decimal representation
+    set flaglist [$flagFrame.fBox get]
+    # puts $flaglist
+    set decimalFlag 0
+# puts [lsearch -exact $flaglist "FIN"]
+    if {[lsearch -exact $flaglist "FIN"] > -1} { set decimalFlag [expr $decimalFlag + 1] }
+    if {[lsearch -exact $flaglist "SYN"] > -1} { set decimalFlag [expr $decimalFlag + 2] }
+    if {[lsearch -exact $flaglist "RST"] > -1} { set decimalFlag [expr $decimalFlag + 4] }
+    if {[lsearch -exact $flaglist "PSH"] > -1} { set decimalFlag [expr $decimalFlag + 8] }
+    if {[lsearch -exact $flaglist "ACK"] > -1} { set decimalFlag [expr $decimalFlag + 16] }
+    if {[lsearch -exact $flaglist "URG"] > -1} { set decimalFlag [expr $decimalFlag + 32] }
+    if {[lsearch -exact $flaglist "R1"] > -1} { set decimalFlag [expr $decimalFlag + 64] }
+    if {[lsearch -exact $flaglist "R2"] > -1} { set decimalFlag [expr $decimalFlag + 128] }
+    # puts $decimalFlag
+    
+    set target [$flagFrame.sdBox get]
+    set target "${target}_flags"
+   
+    # logic time (dusts off the old bitmath)
+    set logic [$flagFrame.lBox get]
+    if { $logic == "and" } {
+	set insert "sancp.${target} & ${decimalFlag} = ${decimalFlag}"
+    } elseif { $logic == "not" } {
+	set insert "sancp.${target} & ${decimalFlag} = 0"
+    } else { 
+	set insert "sancp.${target} = ${decimalFlag}"
+    }
+    
+    $editBox insert insert $insert
+}	
 
 proc typeChange {} {
     global SELECTEDTABLE
@@ -227,3 +287,4 @@ proc InvokeQryBuild { tableSelected whereTmp } {
 	SancpQueryRequest $whereStatement
     }
 }
+
