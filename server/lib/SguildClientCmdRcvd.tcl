@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.8 2004/11/04 19:47:12 shalligan Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.9 2005/01/05 23:45:52 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -60,6 +60,7 @@ proc ClientCmdRcvd { socketID } {
       GetSancpFlagData { $clientCmd $socketID $index1 $index2 }
       XscriptRequest { eval $clientCmd $socketID $data1 }
       EtherealRequest { eval $clientCmd $socketID $data1 }
+      AbortXscript { $clientCmd $socketID $index1 }
       LoadNessusReports { $clientCmd $socketID $index1 $index2 $data3 }
       default { InfoMessage "Unrecognized command from $socketID: $origData" }
     }

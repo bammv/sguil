@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.6 2004/11/12 21:41:33 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.7 2005/01/05 23:45:53 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -96,8 +96,13 @@ proc SendEtherealData { fileName TRANS_ID } {
   #close $inFileID
 }
 
+proc AbortXscript { socketID winName } {
+  global CANCEL_TRANS_FLAG
+  set CANCEL_TRANS_FLAG($winName) 1
+  update
+}
 proc XscriptRequest { socketID sensor winID timestamp srcIP srcPort dstIP dstPort force } {
-  global NEXT_TRANS_ID transInfoArray LOCAL_LOG_DIR TCPFLOW
+  global NEXT_TRANS_ID transInfoArray LOCAL_LOG_DIR TCPFLOW CANCEL_TRANS_FLAG
   # If we don't have TCPFLOW then error to the user and return
   if { ![info exists TCPFLOW] || ![file exists $TCPFLOW] || ![file executable $TCPFLOW] } {
       SendSocket $socketID "ErrorMessage ERROR: tcpflow is not installed on the server."
@@ -107,6 +112,7 @@ proc XscriptRequest { socketID sensor winID timestamp srcIP srcPort dstIP dstPor
   # Increment the xscript counter. Gives us a unique way to track the xscript
   incr NEXT_TRANS_ID
   set TRANS_ID $NEXT_TRANS_ID
+  set CANCEL_TRANS_FLAG($winID) 0
   set date [lindex $timestamp 0]
   if [catch { InitRawFileArchive $date $sensor $srcIP $dstIP $srcPort $dstPort 6 }\
       rawDataFileNameInfo] {
@@ -198,7 +204,7 @@ proc XscriptDebugMsg { TRANS_ID msg } {
 }
 
 proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
-  global transInfoArray TCPFLOW LOCAL_LOG_DIR P0F P0F_PATH
+  global transInfoArray TCPFLOW LOCAL_LOG_DIR P0F P0F_PATH CANCEL_TRANS_FLAG
   set NODATAFLAG 1
   # We don't have a really good way for make xscripts yet and are unable
   # to figure out the true src. So we assume the low port was the server
@@ -247,6 +253,8 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
     }
     SendSocket $clientSocketID "XscriptMainMsg $winName $state"
     SendSocket $clientSocketID "XscriptMainMsg $winName $data"
+    update
+    if { $CANCEL_TRANS_FLAG($winName) } { break }
   }
   if [catch {close $tcpflowID} closeError] {
     SendSocket $clientSocketID "XscriptDebugMsg $winName ERROR: tcpflow: $closeError"
@@ -255,7 +263,10 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
     SendSocket $clientSocketID "XscriptMainMsg $winName No Data Sent."
   }
   SendSocket $clientSocketID "XscriptMainMsg $winName DONE"
+
   unset transInfoArray($TRANS_ID)
+  unset CANCEL_TRANS_FLAG($winName)
+
 }
 
 proc TcpFlowFormat { srcIP srcPort dstIP dstPort } {

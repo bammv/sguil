@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.15 2004/12/08 23:03:02 bamm Exp $
+# $Id: extdata.tcl,v 1.16 2005/01/05 23:45:51 bamm Exp $
 
 proc GetRuleInfo {} {
   global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT SSN_QUERY
@@ -214,8 +214,17 @@ proc CreateXscriptWin { winName } {
     
   scrolledtext $winName.debug -vscrollmode dynamic -hscrollmode none -wrap word\
    -visibleitems 85x5 -sbwidth 10 -labeltext "Debug Messages" -textbackground lightblue
+  set termButtonFrame [frame $winName.termButtonsFrame]
+    button $termButtonFrame.abortButton -text "Abort " -command "AbortXscript $winName" 
+    button $termButtonFrame.closeButton -text "Close" -command "destroy $winName"
+    pack $termButtonFrame.abortButton $termButtonFrame.closeButton -side left -padx 0 -expand true
   pack $winName.menubutton -side top -anchor w
-  pack $winName.sText $winName.debug $winName.dataSearchFrame -side top -fill both -expand true
+  pack $winName.sText $termButtonFrame $winName.debug $winName.dataSearchFrame\
+   -side top -fill both -expand true
+}
+proc AbortXscript { winName } {
+  $winName.termButtonsFrame.abortButton configure -state disabled
+  SendToSguild "AbortXscript $winName"
 }
 
 proc SearchXscript { winName } {
