@@ -435,7 +435,7 @@ proc UserMessage { user userMsg } {
 
   if { [$messageTabs view] != 1 } {
     # BOING!
-    bell
+    #bell
     $messageTabs pageconfigure 1 -background red 
   } else {
     $messageTabs pageconfigure 1 -background
