@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.158 2005/01/20 20:02:07 shalligan Exp $ #
+# $Id: sguil.tk,v 1.159 2005/01/21 19:11:04 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2364,39 +2364,52 @@ $eventIDMenut add command -label "Ethereal (force new)" -command "GetXscript eth
 # IPQuery Menu
 set ipQueryMenu [ menu .ipQueryMenu -background blue -foreground white -activeforeground blue\
  -activebackground white -tearoff 0 ]
-.ipQueryMenu add cascade -label "Query Event Table" -menu $ipQueryMenu.eventMenu
-.ipQueryMenu add cascade -label "Query Sessions Table" -menu $ipQueryMenu.sessionsMenu
-.ipQueryMenu add cascade -label "Query Sancp Table" -menu $ipQueryMenu.sancpMenu
+.ipQueryMenu add cascade -label "Quick Query" -menu $ipQueryMenu.quickMenu
+.ipQueryMenu add cascade -label "Advanced Query" -menu $ipQueryMenu.advancedMenu
 .ipQueryMenu add cascade -label "Dshield IP Lookup" -menu $ipQueryMenu.dshieldIPMenu
 .ipQueryMenu add cascade -label "Nessus Report Lookup" -menu $ipQueryMenu.nessusMenu
-menu $ipQueryMenu.eventMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
+
+menu $ipQueryMenu.quickMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
-menu $ipQueryMenu.sessionsMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
- -activebackground white
-menu $ipQueryMenu.sancpMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
+menu $ipQueryMenu.advancedMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
 menu $ipQueryMenu.dshieldIPMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
 menu $ipQueryMenu.nessusMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
-$ipQueryMenu.eventMenu add command -label "Query SrcIP" -command "QueryRequest event srcip 1"
-$ipQueryMenu.eventMenu add command -label "Query DstIP" -command "QueryRequest event dstip 1"
-$ipQueryMenu.eventMenu add command -label "Query Src To Dst" -command "QueryRequest event src2dst 1"
-$ipQueryMenu.eventMenu add command -label "Query RT SrcIP" -command "QueryRequest event srcip 0"
-$ipQueryMenu.eventMenu add command -label "Query RT DstIP" -command "QueryRequest event dstip 0"
-$ipQueryMenu.eventMenu add command -label "Query RT Src To Dst" -command "QueryRequest event src2dst 0"
-$ipQueryMenu.sessionsMenu add command -label "Query SrcIP" -command "QueryRequest sessions srcip 0"
-$ipQueryMenu.sessionsMenu add command -label "Query SrcIP/1 hour" -command "QueryRequest sessions srcip 1"
-$ipQueryMenu.sessionsMenu add command -label "Query DstIP" -command "QueryRequest sessions dstip 0"
-$ipQueryMenu.sessionsMenu add command -label "Query DstIP/1 hour" -command "QueryRequest sessions dstip 1"
-$ipQueryMenu.sessionsMenu add command -label "Query Src To Dst" -command "QueryRequest sessions src2dst 0"
-$ipQueryMenu.sessionsMenu add command -label "Query Src To Dst/1 hour" -command "QueryRequest sessions src2dst 1"
-$ipQueryMenu.sancpMenu add command -label "Query SrcIP" -command "QueryRequest sancp srcip 0"
-$ipQueryMenu.sancpMenu add command -label "Query SrcIP/1 Hour" -command "QueryRequest sancp srcip 1"
-$ipQueryMenu.sancpMenu add command -label "Query DstIP" -command "QueryRequest sancp dstip 0"
-$ipQueryMenu.sancpMenu add command -label "Query DstIP/1 Hour" -command "QueryRequest sancp dstip 1"
-$ipQueryMenu.sancpMenu add command -label "Query Src To Dst" -command "QueryRequest sancp src2dst 0"
-$ipQueryMenu.sancpMenu add command -label "Query Src To Dst/1 Hour" -command "QueryRequest sancp src2dst 1"
+
+foreach { currentMenu subcommand } { .ipQueryMenu.quickMenu "quick" .ipQueryMenu.advancedMenu "build" } {
+    $currentMenu add cascade -label "Query Event Table" -menu $currentMenu.eventMenu
+    $currentMenu add cascade -label "Query Sessions Table" -menu $currentMenu.sessionsMenu
+    $currentMenu add cascade -label "Query Sancp Table" -menu $currentMenu.sancpMenu
+    
+    menu $currentMenu.eventMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
+	-activebackground white
+    menu $currentMenu.sessionsMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
+	-activebackground white
+    menu $currentMenu.sancpMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
+	-activebackground white
+    
+    $currentMenu.eventMenu add command -label "Query SrcIP" -command "QueryRequest event srcip normal $subcommand"
+    $currentMenu.eventMenu add command -label "Query DstIP" -command "QueryRequest event dstip normal $subcommand"
+    $currentMenu.eventMenu add command -label "Query Src To Dst" -command "QueryRequest event src2dst normal $subcommand"
+    $currentMenu.eventMenu add command -label "Query RT SrcIP" -command "QueryRequest event srcip RT $subcommand"
+    $currentMenu.eventMenu add command -label "Query RT DstIP" -command "QueryRequest event dstip RT $subcommand"
+    $currentMenu.eventMenu add command -label "Query RT Src To Dst" -command "QueryRequest event src2dst RT $subcommand"
+    $currentMenu.sessionsMenu add command -label "Query SrcIP" -command "QueryRequest sessions srcip normal $subcommand"
+    $currentMenu.sessionsMenu add command -label "Query SrcIP/1 hour" -command "QueryRequest sessions srcip hour $subcommand"
+    $currentMenu.sessionsMenu add command -label "Query DstIP" -command "QueryRequest sessions dstip normal $subcommand"
+    $currentMenu.sessionsMenu add command -label "Query DstIP/1 hour" -command "QueryRequest sessions dstip hour $subcommand"
+    $currentMenu.sessionsMenu add command -label "Query Src To Dst" -command "QueryRequest sessions src2dst normal $subcommand"
+    $currentMenu.sessionsMenu add command -label "Query Src To Dst/1 hour" -command "QueryRequest sessions src2dst hour $subcommand"
+    $currentMenu.sancpMenu add command -label "Query SrcIP" -command "QueryRequest sancp srcip normal $subcommand"
+    $currentMenu.sancpMenu add command -label "Query SrcIP/1 Hour" -command "QueryRequest sancp srcip hour $subcommand"
+    $currentMenu.sancpMenu add command -label "Query DstIP" -command "QueryRequest sancp dstip normal $subcommand"
+    $currentMenu.sancpMenu add command -label "Query DstIP/1 Hour" -command "QueryRequest sancp dstip hour $subcommand"
+    $currentMenu.sancpMenu add command -label "Query Src To Dst" -command "QueryRequest sancp src2dst normal $subcommand"
+    $currentMenu.sancpMenu add command -label "Query Src To Dst/1 Hour" -command "QueryRequest sancp src2dst hour $subcommand"
+}
+
 $ipQueryMenu.dshieldIPMenu add command -label "SrcIP" -command "GetDshieldIP srcip"
 $ipQueryMenu.dshieldIPMenu add command -label "DstIP" -command "GetDshieldIP dstip"
 $ipQueryMenu.nessusMenu add command -label "SrcIP" -command "NessusReport srcip"
@@ -2404,27 +2417,39 @@ $ipQueryMenu.nessusMenu add command -label "DstIP" -command "NessusReport dstip"
 
 # Port Query Menu
 set portQueryMenu [ menu .portQueryMenu -background blue -foreground white -activeforeground blue\
--activebackground white -tearoff 0 ]
+    -activebackground white -tearoff 0 ]
 .portQueryMenu add cascade -label "Dshield Port Lookup" -menu $portQueryMenu.dshieldPortMenu
-.portQueryMenu add cascade -label "Query Event Table" -menu $portQueryMenu.eventPortMenu
+.portQueryMenu add cascade -label "Quick Query" -menu $portQueryMenu.quickPortMenu
+.portQueryMenu add cascade -label "Advanced Query" -menu $portQueryMenu.advancedPortMenu
 
 menu $portQueryMenu.dshieldPortMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
-  -activebackground white
-menu $portQueryMenu.eventPortMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
- -activebackground white
+    -activebackground white
 
 $portQueryMenu.dshieldPortMenu add command -label "SrcPort" -command "GetDshieldPort srcport"
 $portQueryMenu.dshieldPortMenu add command -label "DstPort" -command "GetDshieldPort dstport"
-$portQueryMenu.eventPortMenu add command -label "SrcPort" -command "QueryRequest event srcport 1"
-$portQueryMenu.eventPortMenu add command -label "RT SrcPort" -command "QueryRequest event srcport 0"
-$portQueryMenu.eventPortMenu add command -label "DstPort" -command "QueryRequest event dstport 1"
-$portQueryMenu.eventPortMenu add command -label "RT DstPort" -command "QueryRequest event dstport 0"
+
+foreach { currentMenu subcommand } { .portQueryMenu.quickPortMenu quick .portQueryMenu.advancedPortMenu build } {
+    menu $currentMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
+    -activebackground white
+
+    $currentMenu add cascade -label "Event Query" -menu $currentMenu.eventPortMenu
+    menu $currentMenu.eventPortMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
+	-activebackground white
+
+    $currentMenu.eventPortMenu add command -label "SrcPort" -command "QueryRequest event srcport normal $subcommand"
+    $currentMenu.eventPortMenu add command -label "RT SrcPort" -command "QueryRequest event srcport RT $subcommand"
+    $currentMenu.eventPortMenu add command -label "DstPort" -command "QueryRequest event dstport normal $subcommand"
+    $currentMenu.eventPortMenu add command -label "RT DstPort" -command "QueryRequest event dstport RT $subcommand"
+}
 
 # Sig Query Menu
 set sigQueryMenu [ menu .sigQueryMenu -background blue -foreground white -activeforeground blue\
  -activebackground white -tearoff 0 ]
-$sigQueryMenu add command -label "Query Event" -command "QueryRequest event signature 1"
-$sigQueryMenu add command -label "Query RT Events" -command "QueryRequest event signature 0"
+$sigQueryMenu add command -label "Quick Query Event" -command "QueryRequest event signature normal quick"
+$sigQueryMenu add command -label "Advanced Query Event" -command "QueryRequest event signature normal build"
+$sigQueryMenu add command -label "Quick Query RT Events" -command "QueryRequest event signature RT quick"
+$sigQueryMenu add command -label "Advanced Query RT Events" -command "QueryRequest event signature RT advanced"
+
 # Correlate Events Menu
 set correlateMenu [ menu .correlateMenu -background blue -foreground white\
  -activeforeground blue -activebackground white -tearoff 0 ]
@@ -2435,23 +2460,28 @@ $correlateMenu add command -label "View Correlated Events"\
 set statusMenu [ menu .statusMenu -background blue -foreground white\
  -activeforeground blue -activebackground white -tearoff 0 ]
 $statusMenu add command -label "Expire Event (F8)" -command "ValidateEvent 1"
-$statusMenu add cascade -label "Query" -menu $statusMenu.incidentMenu
-set incidentMenu [menu $statusMenu.incidentMenu -background blue -foreground white\
- -activeforeground blue -activebackground white -tearoff 0 ]
-$incidentMenu add command -label "Cat I: Unauthorized Root Access"\
-  -command "QueryRequest event category 11"
-$incidentMenu add command -label "Cat II: Unauthorized User Access"\
-  -command "QueryRequest event category 12"
-$incidentMenu add command -label "Cat III: Attempted Unauthorized Access"\
-  -command "QueryRequest event category 13"
-$incidentMenu add command -label "Cat IV: Successful Denial of Service Attack"\
-  -command "QueryRequest event category 14"
-$incidentMenu add command -label "Cat V: Poor Security Practice or Policy Violation"\
-  -command "QueryRequest event category 15"
-$incidentMenu add command -label "Cat VI: Reconnaissance/Probes/Scans"\
-  -command "QueryRequest event category 16"
-$incidentMenu add command -label "Cat VII: Virus Infection"\
-  -command "QueryRequest event category 17"
+$statusMenu add cascade -label "Quick Query" -menu $statusMenu.quickQueryMenu
+$statusMenu add cascade -label "Advanced Query" -menu $statusMenu.advancedQueryMenu
+
+foreach { currentMenu subcommand } { .statusMenu.quickQueryMenu quick .statusMenu.advancedQueryMenu build } {
+    menu $currentMenu -background blue -foreground white\
+	-activeforeground blue -activebackground white -tearoff 0 
+    $currentMenu add command -label "Cat I: Unauthorized Root Access"\
+	-command "QueryRequest event category 11 $subcommand"
+    $currentMenu add command -label "Cat II: Unauthorized User Access"\
+	-command "QueryRequest event category 12 $subcommand"
+    $currentMenu add command -label "Cat III: Attempted Unauthorized Access"\
+	-command "QueryRequest event category 13 $subcommand"
+    $currentMenu add command -label "Cat IV: Successful Denial of Service Attack"\
+	-command "QueryRequest event category 14 $subcommand"
+    $currentMenu add command -label "Cat V: Poor Security Practice or Policy Violation"\
+	-command "QueryRequest event category 15 $subcommand"
+    $currentMenu add command -label "Cat VI: Reconnaissance/Probes/Scans"\
+	-command "QueryRequest event category 16 $subcommand"
+    $currentMenu add command -label "Cat VII: Virus Infection"\
+	-command "QueryRequest event category 17 $subcommand"
+}
+
 $statusMenu add cascade -label "Update Event Status" -menu $statusMenu.validateMenu
 set validateMenu [menu $statusMenu.validateMenu -background blue -foreground white\
  -activeforeground blue -activebackground white -tearoff 0 ]

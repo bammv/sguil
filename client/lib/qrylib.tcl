@@ -1,21 +1,22 @@
-# $Id: qrylib.tcl,v 1.22 2005/01/20 20:02:28 shalligan Exp $ #
+# $Id: qrylib.tcl,v 1.23 2005/01/21 19:11:13 shalligan Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
 # a WHERE statement, pass the info on to the QryBuilder
 # and finally call DBQueryRequest or SsnQueryRequest.
 #
-proc QueryRequest { tableName queryType { incidentCat {NULL} } } {
+proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}}} {
     global CUR_SEL_PANE
-    set timestamp [lindex [GetCurrentTimeStamp "1 week ago"] 0]
+    set eventtimestamp [lindex [GetCurrentTimeStamp "1 week ago"] 0]
+    set ssntimestamp [lindex [GetCurrentTimeStamp "1 day ago"] 0]
     if { $tableName == "event" } {
-	if { $incidentCat == 0 } {
-	    set whereTmp "WHERE $tableName.timestamp > '$timestamp' AND event.status = 0 AND "
+	if { $incidentCat == "RT" } {
+	    set whereTmp "WHERE event.status = 0 AND "
 	} else {
-	    set whereTmp "WHERE $tableName.timestamp > '$timestamp' AND "
+	    set whereTmp "WHERE $tableName.timestamp > '$eventtimestamp' AND "
 	}   
     } else {
-	if { ( $queryType == "srcip" || $queryType == "dstip" || $queryType == "src2dst" ) && $incidentCat == 1 } {
+	if { ( $queryType == "srcip" || $queryType == "dstip" || $queryType == "src2dst" ) && $incidentCat == "hour" } {
 	    if { $CUR_SEL_PANE(format) == "SSN" } {
 		set selectedIndex [$CUR_SEL_PANE(name).startTimeFrame.list curselection]
 		set starttime [clock scan "30 min ago" -base [clock scan [$CUR_SEL_PANE(name).startTimeFrame.list get $selectedIndex]]]
@@ -28,7 +29,7 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } } {
 	    set tplus [clock format $endtime -f "%Y-%m-%d %T"]
 	    set whereTmp "WHERE $tableName.start_time > '$tminus' AND $tableName.start_time < '$tplus' AND "
 	} else {
-	    set whereTmp "WHERE $tableName.start_time > '$timestamp' AND "
+	    set whereTmp "WHERE $tableName.start_time > '$ssntimestamp' AND "
 	}  
     }
     if { $queryType == "srcip" } {
@@ -61,9 +62,14 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } } {
 	set eventMsg [$CUR_SEL_PANE(name).msgFrame.list get $selectedIndex]
 	set whereTmp "$whereTmp event.signature = '$eventMsg'"
     }
-    set tmpWhereStatement [QryBuild $tableName $whereTmp]
-    set whereStatement [lindex $tmpWhereStatement 1]
-    set tableName [lindex $tmpWhereStatement 0]
+
+    if { $build == "build" } {
+	set tmpWhereStatement [QryBuild $tableName $whereTmp]
+	set whereStatement [lindex $tmpWhereStatement 1]
+	set tableName [lindex $tmpWhereStatement 0]
+    } else {
+        set whereStatement $whereTmp
+    }
     if { $whereStatement == "cancel" } { return }
     if { $tableName == "event" } {
 	if { $queryType == "category" } {
