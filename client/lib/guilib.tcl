@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.14 2005/02/23 17:32:40 shalligan Exp $
+# $Id: guilib.tcl,v 1.15 2005/03/09 22:16:35 shalligan Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -201,6 +201,7 @@ proc ClearPacketData {} {
   global idIcmpHdrFrame seqIcmpHdrFrame sipIcmpDecodeFrame
   global dipIcmpDecodeFrame sportIcmpDecodeFrame dportIcmpDecodeFrame protoIcmpDecodeFrame gipIcmpDecodeFrame
   global dataText dataHex dataSearchButton
+  global prioritySfpDataFrame connectionsSfpDataFrame ipCountSfpDataFrame ipRangeSfpDataFrame protoCountSfpDataFrame protoRangeSfpDataFrame
 
   $srcIPHdrFrame.text delete 0.0 end
   $dstIPHdrFrame.text delete 0.0 end
@@ -251,6 +252,12 @@ proc ClearPacketData {} {
   $dataText delete 0.0 end
   $dataHex delete 0.0 end
   $dataSearchButton configure -state disabled
+  $prioritySfpDataFrame.text delete 0.0 end
+  $connectionsSfpDataFrame.text delete 0.0 end
+  $ipCountSfpDataFrame.text delete 0.0 end
+  $ipRangeSfpDataFrame.text delete 0.0 end
+  $protoCountSfpDataFrame.text delete 0.0 end
+  $protoRangeSfpDataFrame.text delete 0.0 end
 }
 proc InsertIPHdr { data } {
   global srcIPHdrFrame dstIPHdrFrame verIPHdrFrame hdrLenIPHdrFrame
@@ -376,13 +383,21 @@ proc InsertIcmpHdr { data pldata } {
     }	    
 }
 proc InsertPayloadData { data } {
-  global dataText dataHex dataSearchButton
+  global dataText dataHex dataSearchButton sfpDataFrame
+  set payload [lindex $data 0]
   if {[lindex $data 0] == ""} { 
     $dataText insert 0.0 "None."
     $dataHex insert 0.0 "None."  
+  } elseif { [string range $payload 0 15] == "5072696F72697479" } {
+      set SFPList [DecodeSFPPayload $payload]
+      $sfpDataFrame.prioritySpfDataFrame.text insert end [lindex $SFPList 0]
+      $sfpDataFrame.connectionsSpfDataFrame.text insert end [lindex $SFPList 1]
+      $sfpDataFrame.ipCountSpfDataFrame.text insert end [lindex $SFPList 2]
+      $sfpDataFrame.ipRangeSpfDataFrame.text insert end [lindex $SFPList 3] 
+      $sfpDataFrame.protoCountSpfDataFrame.text insert end [lindex $SFPList 4]
+      $sfpDataFrame.protoRangeSpfDataFrame.text insert end [lindex $SFPList 5]
   } else {
     $dataSearchButton configure -state active
-    set payload [lindex $data 0]
     set dataLength [string length $payload]
     set asciiStr ""
     set counter 2

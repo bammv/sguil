@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.143 2005/03/08 20:34:50 bamm Exp $ #
+# $Id: sguild,v 1.144 2005/03/09 22:16:35 shalligan Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -494,12 +494,12 @@ foreach row [mysqlsel $MAIN_DB_SOCKETID "SELECT event.status, \
     event.priority, event.class, sensor.hostname, event.timestamp, \
     event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), \
     INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, \
-    event.dst_port FROM event, sensor WHERE event.sid=sensor.sid \
+    event.dst_port, event.unified_event_id, unified_event_ref FROM event, sensor WHERE event.sid=sensor.sid \
     AND event.status=0 ORDER BY event.timestamp ASC" -list] {
   
     InfoMessage "Archived Alert: $row"
     if { ![array exists acRules] || ![AutoCat $row] } {
-	set matchAID [CorrelateEvent [lindex $row 5] [lindex $row 8] [lindex $row 7]]
+	set matchAID [CorrelateEvent [lindex $row 5] [lindex $row 8] [lindex $row 7] [lindex $row 13] [lindex $row 14]]
 	if { $matchAID == 0 } {
 	    AddEventToEventArray $row
 	} else {

@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.171 2005/03/04 21:23:54 shalligan Exp $ #
+# $Id: sguil.tk,v 1.172 2005/03/09 22:16:33 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -136,6 +136,7 @@ proc ServerCommandRcvd { socketID } {
       # subject to user input, so lrange is fine
       InsertIcmpHdr { $serverCmd [lrange $origData 1 5] [lrange $origData 6 end]}
       InsertPayloadData { $serverCmd $data1 }
+      InsertOpenPortsData { $serverCmd $data1 }
       InsertQueryResults { $serverCmd $index1 $data2 }
       InfoMessage { $serverCmd $data1 }
       ErrorMessage { $serverCmd $data1 }
@@ -177,16 +178,13 @@ proc ConnectToSguild {} {
     }     
     if [catch {gets $socketID} serverVersion] {
       puts "ERROR: $serverVersion"
-      close $socketID
       return -code error "$serverVersion"
     }
     if { $serverVersion == "Connection Refused." } {
       puts $serverVersion
-      close $socketID
-      return -code error $serverVersion
+       return -code error $serverVersion
     } elseif { $serverVersion != $tmpVERSION } {
-      close $socketID
-      return -code error "Mismatched versions.\nSERVER: ($serverVersion)\nCLIENT: ($tmpVERSION)"
+          return -code error "Mismatched versions.\nSERVER: ($serverVersion)\nCLIENT: ($tmpVERSION)"
     }
     puts $socketID "$tmpVERSION"
     if {$OPENSSL} {
@@ -656,24 +654,33 @@ proc UnSelectHostLookups {} {
 # DisplayPacketHdr: Determines the correct hdr to display (tcp/udp/icmp).
 #
 proc DisplayPacketHdr { paneName index } {
-  global DISPLAYEDHDR tcpHdrFrame udpHdrFrame icmpHdrFrame ipHdrFrame icmpDecodeFrame
-  set proto [$paneName.protoFrame.list get $index]
-  if {$proto == 1} {
-    set newHdr $icmpHdrFrame
-  } elseif {$proto == 17} {
-    set newHdr $udpHdrFrame
-  } else {
-    set newHdr $tcpHdrFrame
-  }
-  # Hide the ICMP DECODE frame if it was displayed and we don't need it anymore.
-  if { $DISPLAYEDHDR == $icmpHdrFrame && $newHdr != $icmpHdrFrame } {
-    pack forget $icmpDecodeFrame
-  }
-  if { $DISPLAYEDHDR != $newHdr } {
-    pack forget $DISPLAYEDHDR
-    pack $newHdr -after $ipHdrFrame -fill x
-    set DISPLAYEDHDR $newHdr
-  }
+    global DISPLAYEDHDR tcpHdrFrame udpHdrFrame icmpHdrFrame ipHdrFrame icmpDecodeFrame sfpDataFrame dataFrame sfpOPDataFrame
+    set proto [$paneName.protoFrame.list get $index]
+    if {$proto == 1} {
+        set newHdr $icmpHdrFrame
+    } elseif {$proto == 17} {
+        set newHdr $udpHdrFrame
+    } elseif {$proto == 255} {
+	set newHdr $sfpDataFrame
+	pack forget $dataFrame
+	pack $sfpOPDataFrame -fill both -expand true -side top
+    } else {
+        set newHdr $tcpHdrFrame
+    }
+    # Hide the ICMP DECODE frame if it was displayed and we don't need it anymore.
+    if { $DISPLAYEDHDR == $icmpHdrFrame && $newHdr != $icmpHdrFrame } {
+    	pack forget $icmpDecodeFrame
+    }
+    if { $DISPLAYEDHDR != $newHdr } {
+        pack forget $DISPLAYEDHDR
+	if { $DISPLAYEDHDR == $sfpDataFrame && $newHdr != $sfpDataFrame } {
+	    pack forget $sfpOPDataFrame
+	    pack $dataFrame -fill both -expand true -side top
+	}
+	pack $newHdr -after $ipHdrFrame -fill x
+	
+	set DISPLAYEDHDR $newHdr
+    }
 }
 
 
@@ -724,9 +731,38 @@ proc InsertPSData { data } {
     }
   }
 }
+proc InsertOpenPortsData { data } {
+    global sfpOPDataFrame
+    if { $data == "DONE" } { 
+	    $sfpOPDataFrame configure -cursor left_ptr
+	    return
+    }
+    set dataLength [string length [lindex $data 1]]
+    set asciiPayload ""
+    if { [string range [lindex $data 1] 0 19] == "4F70656E20506F72743A" } {
+	    set dstIP [lindex $data 0]
+	    for {set i 1} {$i < $dataLength} {incr i 2} {
+		set currentByte [string range [lindex $data 1] [expr $i - 1] $i]
+		set intValue [format "%i" 0x$currentByte]
+		if { $intValue < 32 || $intValue > 126 } {
+	                # Non printable char
+			set currentChar "."
+		} else {
+		    set currentChar [format "%c" $intValue]
+		}
+		set asciiPayload "${asciiPayload}${currentChar}"
+	    
+	    }
+	    puts $asciiPayload
+	    if [regexp "Open Port: (\\d*)"  $asciiPayload fullmatch PortNumber] {
+		    $sfpOPDataFrame.sfpOPDataText insert end "${dstIP}:${PortNumber}\n"
+	    }
+    }
+}
+
 proc GetPacketInfo {} {
   global ACTIVE_EVENT PACKETINFO CUR_SEL_PANE socketID DEBUG MULTI_SELECT
-  global CONNECTED
+  global CONNECTED sfpOPDataFrame
   ClearPacketData
   if {$ACTIVE_EVENT && $PACKETINFO && !$MULTI_SELECT && $CUR_SEL_PANE(type) == "EVENT"} {
     if {!$CONNECTED} {
@@ -745,6 +781,9 @@ proc GetPacketInfo {} {
       SendToSguild "GetUdpData $sid $cid"
     } elseif { $protocol == 1 } {
       SendToSguild "GetIcmpData $sid $cid"
+    } elseif { $protocol == 255 } {
+      SendToSguild "GetOpenPorts $sid $cid"
+      $sfpOPDataFrame configure -cursor watch
     } else {
       SendToSguild "GetTcpData $sid $cid"
     }
@@ -2168,13 +2207,13 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
     set udpHdrFrame [frame $packetFrame.udpHdrFrame -background black -borderwidth 1]
       set udpHdrLabel [label $udpHdrFrame.udpHdrLabel -text UDP -width 8 -foreground white -background blue]
       set sPortUdpHdrFrame [frame $udpHdrFrame.sPortUdpHdrFrame]
-        LabelText $sPortUdpHdrFrame 5 "Source\nPort"
+        LabelText $sPortUdpHdrFrame 5 "Source\nPort" 2
       set dPortUdpHdrFrame [frame $udpHdrFrame.dPortUdpHdrFrame]
-       LabelText $dPortUdpHdrFrame 5 "Dest\nPort"
+       LabelText $dPortUdpHdrFrame 5 "Dest\nPort" 2
       set udplenUdpHdrFrame [frame $udpHdrFrame.udplenUdpHdrFrame]
-        LabelText $udplenUdpHdrFrame 6 "Length"
+        LabelText $udplenUdpHdrFrame 6 "Length" 2
       set udpchksumUdpHdrFrame [frame $udpHdrFrame.udpchksumUdpHdrFrame]
-       LabelText $udpchksumUdpHdrFrame 6 "ChkSum"
+       LabelText $udpchksumUdpHdrFrame 6 "ChkSum" 2
       pack $udpHdrLabel -side left -anchor w -fill y
       pack $sPortUdpHdrFrame $dPortUdpHdrFrame $udplenUdpHdrFrame $udpchksumUdpHdrFrame\
        -side left -anchor w -fill x -expand true
@@ -2213,6 +2252,29 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
       pack $icmpDecodeLabel -side left -anchor w -fill y
       pack $protoIcmpDecodeFrame $sipIcmpDecodeFrame $sportIcmpDecodeFrame $dipIcmpDecodeFrame\
         $dportIcmpDecodeFrame $gipIcmpDecodeFrame -side left -anchor w -fill both -expand true
+    #################### SFPortscan Data Decode ########################
+      set sfpDataFrame [frame $packetFrame.sfpHdrFrame -background black -borderwidth 1]
+        set sfpDataLabel [label $sfpDataFrame.sfpDataLabel -text Portscan -width 8 -foreground white -background blue]
+      set prioritySfpDataFrame [frame $sfpDataFrame.prioritySpfDataFrame]
+        LabelText $prioritySfpDataFrame 8 "Priority" 2
+      set connectionsSfpDataFrame [frame $sfpDataFrame.connectionsSpfDataFrame]
+        LabelText $connectionsSfpDataFrame 11 "Connections" 2
+      set ipCountSfpDataFrame [frame $sfpDataFrame.ipCountSpfDataFrame]
+        LabelText $ipCountSfpDataFrame 5 "IP\nCount" 2
+      set ipRangeSfpDataFrame [frame $sfpDataFrame.ipRangeSpfDataFrame]
+        LabelText $ipRangeSfpDataFrame 31 "IP Range" 2
+      set protoCountSfpDataFrame [frame $sfpDataFrame.protoCountSpfDataFrame]
+        LabelText $protoCountSfpDataFrame 5 "Ports/\nProtos" 2
+      set protoRangeSfpDataFrame [frame $sfpDataFrame.protoRangeSpfDataFrame]
+        LabelText $protoRangeSfpDataFrame 31 "Port/Proto Range" 2
+      pack $sfpDataLabel -side left -anchor w -fill y
+      pack $prioritySfpDataFrame $connectionsSfpDataFrame $ipCountSfpDataFrame $ipRangeSfpDataFrame $protoCountSfpDataFrame $protoRangeSfpDataFrame -side left -anchor w -fill x -expand true
+    #################### SFPortscan Open Port Data ######################
+      set sfpOPDataFrame [frame $packetFrame.sfpOPDataFrame -background black -borderwidth 1]
+        set sfpOPDataFrameLabel [label $sfpOPDataFrame.sfpOPDataFrameLabel -text "Open\nPorts" -width 8 -foreground white -background navy]
+	set sfpOPDataText [scrolledtext $sfpOPDataFrame.sfpOPDataText -height 10 -width 16 -background white -textfont ourFixedFont -vscrollmode dynamic -hscrollmode dynamic]
+	pack $sfpOPDataFrameLabel -side left -anchor w -fill y
+	pack $sfpOPDataText -side left -fill both -expand true
    ##################### DATA ###########################
     set dataFrame [frame $packetFrame.dataFrame -background black -borderwidth 1]
       set dataFrameLabel [label $dataFrame.dataFrameLabel -text DATA -width 8 -foreground white -background navy]

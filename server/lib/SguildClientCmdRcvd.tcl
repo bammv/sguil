@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.9 2005/01/05 23:45:52 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.10 2005/03/09 22:16:36 shalligan Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -62,6 +62,7 @@ proc ClientCmdRcvd { socketID } {
       EtherealRequest { eval $clientCmd $socketID $data1 }
       AbortXscript { $clientCmd $socketID $index1 }
       LoadNessusReports { $clientCmd $socketID $index1 $index2 $data3 }
+      GetOpenPorts { $clientCmd $socketID $index1 $index2 }	
       default { InfoMessage "Unrecognized command from $socketID: $origData" }
     }
   }
@@ -274,6 +275,27 @@ proc GetUdpData { socketID sid cid } {
   catch {SendSocket $socketID "InsertUdpHdr $queryResults $portQuery"} tmpError
 }
 
+proc GetOpenPorts { socketID sid cid } {
+    global DBNAME DBUSER DBPASS DBPORT DBHOST
+
+    if {$DBPASS == ""} {
+	set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+    } else {
+	set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+    }
+
+    set query\
+	"SELECT unified_event_id FROM event WHERE sid=$sid and cid=$cid"
+    set event_id [FlatDBQuery $query]
+    puts "event_id is $event_id"
+    set query\
+	"SELECT INET_NTOA(event.dst_ip), data.data_payload from event, data WHERE event.sid=data.sid AND event.cid=data.cid AND event.unified_event_ref=$event_id"
+    foreach row [mysqlsel $dbSocketID "$query" -list] {
+    catch {SendSocket $socketID "InsertOpenPortsData $row"} tmpError
+    }
+    mysqlclose $dbSocketID
+    catch {SendSocket $socketID "InsertOpenPortsData DONE"} tmpError
+}
 #
 # MonitorSensors: Sends current events to client. Adds client to clientList
 #                 In the future sensorList will contain a list of sensors, for

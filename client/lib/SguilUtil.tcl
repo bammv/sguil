@@ -1,4 +1,4 @@
-# $Id: SguilUtil.tcl,v 1.15 2005/02/23 17:32:36 shalligan Exp $
+# $Id: SguilUtil.tcl,v 1.16 2005/03/09 22:16:35 shalligan Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
@@ -342,4 +342,31 @@ proc DecodeICMP { type code payload } {
     }
     
     return $ICMPList
+}
+proc DecodeSFPPayload { payload } {
+    set asciiPayload ""
+    set dataLength [string length $payload]
+    #convert the hex payload string into ascii
+    for {set i 1} {$i < $dataLength} {incr i 2} {
+	set currentByte [string range $payload [expr $i - 1] $i]
+	set intValue [format "%i" 0x$currentByte]
+	if { $intValue < 32 || $intValue > 126 } {
+	    # Non printable char
+	    set currentChar "."
+	} else {
+	    set currentChar [format "%c" $intValue]
+	}
+	set asciiPayload "${asciiPayload}${currentChar}"
+    }
+    
+    # Regexp the pertainant fields out of the ascii payload
+     set regStr "Priority Count: (\\d*)\.Connection Count: (\\d*)\.IP Count: (\\d*)\.Scanne. IP Range: (\\d*\.\\d*\.\\d*\.\\d*:\\d*\.\\d*\.\\d*\.\\d*).Port/Proto Count: (\\d*).Port/Proto Range: (\\d*:\\d*)."
+    if [regexp $regStr $asciiPayload fullmatch PriorityCount ConnectCount IPCount IPRange PortCount PortRange] {
+	regsub ":" $IPRange "-" IPRange
+	regsub ":" $PortRange "-" PortRange
+	set SFPList [list $PriorityCount $ConnectCount $IPCount $IPRange $PortCount $PortRange]
+    } else { 
+	set SFPList "NOMATCH"
+    }
+    return $SFPList
 }

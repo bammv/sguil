@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.6 2005/03/03 21:07:45 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.7 2005/03/09 22:16:36 shalligan Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -27,7 +27,7 @@ proc EventRcvd { eventDataList } {
     if { ![array exists acRules] || ![AutoCat $eventDataList] } {
       # Correlation/aggregation checks here: CorrelateEvent SrcIP Message
       set sensorID [lindex $eventDataList 5]
-      set matchAID [ CorrelateEvent $sensorID [lindex $eventDataList 8] [lindex $eventDataList 7] ]
+      set matchAID [ CorrelateEvent $sensorID [lindex $eventDataList 8] [lindex $eventDataList 7] [lindex $eventDataList 16] [lindex $eventDataList 17]]
       if { $matchAID == 0 } {
         AddEventToEventArray $eventDataList
         # Clients don't need the sid and rev
@@ -202,7 +202,7 @@ proc DeleteEventID { socketID eventID status } {
   UpdateDBStatus $eventID [GetCurrentTimeStamp] $userIDArray($socketID) $status
 }
 
-proc CorrelateEvent { sid srcip msg } {
+proc CorrelateEvent { sid srcip msg {event_id {NULL}} {event_ref {NULL}} } {
     global eventIDArray eventIDList eventIDCountArray SENSOR_AGGREGATION_ON
     set MATCH 0
 
@@ -216,9 +216,9 @@ proc CorrelateEvent { sid srcip msg } {
     }
 
     foreach rteid $tmpList {
-
       # This checks to see if we have a matching srcip and alert message
-      if { [lindex $eventIDArray($rteid) 8] == $srcip && [lindex $eventIDArray($rteid) 7] == $msg } {
+      if { ([lindex $eventIDArray($rteid) 8] == $srcip && [lindex $eventIDArray($rteid) 7] == $msg) || \
+	       ($msg == "portscan: Open Port" && [lindex $eventIDArray($rteid) 14] == $event_ref )} {
           # Have a match
           set MATCH $rteid
       }
