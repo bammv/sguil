@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.22 2004/04/04 20:23:37 dlowless Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.23 2004/04/04 20:37:15 dlowless Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -76,7 +76,7 @@ function show_alerts( $where_query, $aggregate_result ) {
 	
 	$sql = $alert_query . " " . $where_query;
 
-	$result = mysql_query($sql);
+	$result = mysql_query(str_replace("\\","",$sql));
 
 	if (!$result) {
    	echo "Could not successfully run query (" .$sql . ") from DB: " . mysql_error();
