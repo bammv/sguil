@@ -104,13 +104,13 @@ proc QryBuild {tableSelected whereTmp } {
 
 
     tkwait variable RETURN_FLAG
-    set returnWhere "cancel"
+    set returnWhere [list cancel cancel]
     if {$RETURN_FLAG} {
         # No \n for you!
         regsub -all {\n} [$editBox get 0.0 end] {} returnWhere
 	set returnWhere "[list $SELECTEDTABLE $returnWhere]"
     } else {
-	set returnWhere "cancel"
+	set returnWhere [list cancel cancel]
     }
     destroy $qryBldWin
     return $returnWhere  
