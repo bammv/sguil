@@ -1,4 +1,4 @@
-# $Id: SguildSendComms.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $ #
+# $Id: SguildSendComms.tcl,v 1.3 2004/10/18 21:53:22 bamm Exp $ #
 
 #
 # SendSocket: Send command to client
@@ -57,7 +57,7 @@ proc SendSystemInfoMsg { sensor msg } {
 #
 proc SendSensorList { socketID } {
   global sensorList clientMonitorSockets socketInfo sensorUsers
-  set query "SELECT hostname FROM sensor WHERE active='Y'"
+  set query "SELECT hostname FROM sensor WHERE active='Y' ORDER BY hostname ASC"
   set sensorList [FlatDBQuery $query]
   if { $sensorList == "" } {
     # No sensors in the DB yet
