@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.19 2004/10/01 20:07:10 shalligan Exp $ #
+# $Id: report.tcl,v 1.20 2004/10/11 21:45:26 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -210,6 +210,8 @@ proc ReportResponse { type data } {
 	    set REPORT_RESULTS $data
 	}
 	BUILDER -
+	NESSUS -
+	NESSUS_DATA -
 	PORTSCAN {
 	    # We gotta get tricky here since this data is going to 
 	    # come back in more than one response
@@ -446,7 +448,7 @@ proc BuildPHBReport { sensors datetimestart datetimeend sName sDesc sType sSql s
 	    # clear REPORT_RESULTS 
 	    set REPORT_RESULTS {}
 	} else {
-	    puts $Sql($i)
+	    $reportText insert end $Sql($i)
 	}
     }
     $reportButtonBox buttonconfigure reportCloseButton -state active

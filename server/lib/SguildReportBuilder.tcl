@@ -1,4 +1,4 @@
-# $Id: SguildReportBuilder.tcl,v 1.1 2004/10/05 15:23:20 bamm Exp $ #
+# $Id: SguildReportBuilder.tcl,v 1.2 2004/10/11 21:45:25 shalligan Exp $ #
 
 #
 # ReportBuilder:  Receive multiple data requests from the client for report building
@@ -93,6 +93,18 @@ proc ReportBuilder { socketID type sid cid } {
                                                                                                      
             QueryDB $socketID {REPORT BUILDER} $sql
         }
+	NESSUS {
+            set ip $sid
+	    set query "SELECT * FROM nessus WHERE ip = '$ip'"
+            
+            QueryDB $socketID {REPORT NESSUS} $query
+	}
+	NESSUS_DATA {
+	    set rid $sid
+	    set query "SELECT * FROM nessus_data WHERE rid = '$rid'"
+
+	    QueryDB $socketID {REPORT NESSUS_DATA} $query
+	}
     }
 }
 

@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.142 2004/09/29 21:15:08 shalligan Exp $ #
+# $Id: sguil.tk,v 1.143 2004/10/11 21:45:26 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -64,6 +64,7 @@ namespace import -force iwidgets::dialogshell
 namespace import -force iwidgets::disjointlistbox
 namespace import -force iwidgets::timeentry
 namespace import -force iwidgets::dateentry
+namespace import -force iwidgets::scrolledhtml
 
 set ACTIVE_EVENT 0
 set MULTI_SELECT 0
@@ -1189,7 +1190,7 @@ proc CreateEventLists { baseFrame } {
     }
     bind $dstIPList <ButtonPress-3> {
       SingleSelect %W [%W nearest %y]
-      LaunchIPQueryMenu %W %Y
+      LaunchIPQueryMenu %W %Y      
     }
   set dstPortFrame [frame $baseFrame.dstPortFrame]
     set dstPortLabel [label $dstPortFrame.dstPortLabel -text "DPort" -background black -foreground white -anchor w]
@@ -1723,6 +1724,7 @@ source $SGUILLIB/guilib.tcl
 source $SGUILLIB/extdata.tcl
 source $SGUILLIB/sancp.tcl
 source $SGUILLIB/sound.tcl
+source $SGUILLIB/domtree.tcl
 if { $WHOIS_PATH == "SimpleWhois" } {
   source $SGUILLIB/whois.tcl
 }
@@ -1813,6 +1815,7 @@ set topFrame [frame .topFrame]
       $summaryMenu add command -label "Normal" -command {EmailEvents 0 0}
       $summaryMenu add command -label "Sanitized" -command {EmailEvents 0 1}
     $reportList add command -label "Sensor Reports" -command "PHBReport"
+    $reportList add command -label "Import Nessus Report" -command "NessusLoad"
   set databaseList [menu $databaseMenu.menu -tearoff 0]
     $databaseList add command -label "Purge Session Data" -command "DeleteRequest sessions"
     $databaseList add command -label "Optimize Tables" -command "OptimizeTables"
@@ -2430,6 +2433,7 @@ set ipQueryMenu [ menu .ipQueryMenu -background blue -foreground white -activefo
 .ipQueryMenu add cascade -label "Query Sessions Table" -menu $ipQueryMenu.sessionsMenu
 .ipQueryMenu add cascade -label "Query Sancp Table" -menu $ipQueryMenu.sancpMenu
 .ipQueryMenu add cascade -label "Dshield IP Lookup" -menu $ipQueryMenu.dshieldIPMenu
+.ipQueryMenu add cascade -label "Nessus Report Lookup" -menu $ipQueryMenu.nessusMenu
 menu $ipQueryMenu.eventMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
 menu $ipQueryMenu.sessionsMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
@@ -2437,6 +2441,8 @@ menu $ipQueryMenu.sessionsMenu -tearoff 0 -background blue -foreground white -ac
 menu $ipQueryMenu.sancpMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
 menu $ipQueryMenu.dshieldIPMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
+ -activebackground white
+menu $ipQueryMenu.nessusMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
 $ipQueryMenu.eventMenu add command -label "Query SrcIP" -command "QueryRequest event srcip"
 $ipQueryMenu.eventMenu add command -label "Query DstIP" -command "QueryRequest event dstip"
@@ -2449,6 +2455,8 @@ $ipQueryMenu.sancpMenu add command -label "Query DstIP" -command "QueryRequest s
 $ipQueryMenu.sancpMenu add command -label "Query Src To Dst" -command "QueryRequest sancp src2dst"
 $ipQueryMenu.dshieldIPMenu add command -label "SrcIP" -command "GetDshieldIP srcip"
 $ipQueryMenu.dshieldIPMenu add command -label "DstIP" -command "GetDshieldIP dstip"
+$ipQueryMenu.nessusMenu add command -label "SrcIP" -command "NessusReport srcip"
+$ipQueryMenu.nessusMenu add command -label "DstIP" -command "NessusReport dstip"
 
 # Port Query Menu
 set portQueryMenu [ menu .portQueryMenu -background blue -foreground white -activeforeground blue\

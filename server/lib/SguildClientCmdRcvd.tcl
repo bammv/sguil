@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.1 2004/10/05 15:23:20 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.2 2004/10/11 21:45:25 shalligan Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -60,6 +60,7 @@ proc ClientCmdRcvd { socketID } {
       GetSancpFlagData { $clientCmd $socketID $index1 $index2 }
       XscriptRequest { eval $clientCmd $socketID $data1 }
       EtherealRequest { eval $clientCmd $socketID $data1 }
+      LoadNessusReports { $clientCmd $socketID $index1 $index2 $data3 }
       default { if {$DEBUG} {puts "Unrecognized command from $socketID: $origData"} }
     }
   }
@@ -319,3 +320,54 @@ proc SendCurrentEvents { socketID } {
   }
 }
 
+proc LoadNessusReports { socketID filename table bytes} {
+    global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe userIDArray
+    if {$DEBUG} {puts "Recieving nessus file $filename."}
+    set NESSUS_OUTFILE $TMPDATADIR/$filename
+    set outFileID [open $NESSUS_OUTFILE w]
+    fconfigure $outFileID -translation binary
+    fconfigure $socketID -translation binary
+    fcopy $socketID $outFileID -size $bytes
+    close $outFileID
+    fconfigure $socketID -encoding utf-8 -translation {auto crlf}
+    if {$DEBUG} {puts "Loading $filename into DB."}
+    if { $table == "main" } {
+	set NESSUS_OUTFILE2 "$TMPDATADIR/tmp${filename}"
+	set outFileID [open $NESSUS_OUTFILE2 w]
+	set uid $userIDArray($socketID)
+	puts $uid
+	for_file line $NESSUS_OUTFILE {
+	    if {$line != ""} {
+		regsub {^\|\|} $line "||${uid}|" line
+		puts $outFileID $line
+	    }
+	}
+	close $outFileID
+	file delete $NESSUS_OUTFILE
+	file copy -force $NESSUS_OUTFILE2 $NESSUS_OUTFILE
+	
+	if {$DBPASS != "" } {
+	    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
+		    -e \"LOAD DATA LOCAL INFILE '$NESSUS_OUTFILE' INTO TABLE nessus FIELDS TERMINATED\
+		    BY '|' LINES TERMINATED BY '||' STARTING BY '||'\""
+	} else {
+	    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
+		    -e \"LOAD DATA LOCAL INFILE '$NESSUS_OUTFILE' INTO TABLE nessus FIELDS TERMINATED\
+		    BY '|' LINES TERMINATED BY '||' STARTING BY '||'\""
+	}
+    } else {
+	file copy -force $NESSUS_OUTFILE "/home/steve/debug"
+	if {$DBPASS != "" } {
+	    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
+		    -e \"LOAD DATA LOCAL INFILE '$NESSUS_OUTFILE' INTO TABLE nessus_data FIELDS TERMINATED\
+		    BY '|' LINES TERMINATED BY '||'STARTING BY '||' \""
+	} else {
+	    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
+		    -e \"LOAD DATA LOCAL INFILE '$NESSUS_OUTFILE' INTO TABLE nessus_data FIELDS TERMINATED\
+		    BY '|' LINES TERMINATED BY '||' STARTING BY '||'\""
+	}
+    }
+    # The loader child proc does the LOAD for us.
+    puts $loaderWritePipe [list $NESSUS_OUTFILE $cmd]
+    flush $loaderWritePipe
+}
