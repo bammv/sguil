@@ -281,7 +281,11 @@ proc RcvSsnFile { socketID fileName sensorName } {
 
   set inFileID [open $DB_OUTFILE r]
   set outFileID [open $DB_OUTFILE.tmp w]
+  # Use i to keep track of how many lines we loaded into the database for DEBUG.
   set i 0
+  # Load the entire file into memory (read $inFileID), then create a list
+  # delimited by \n. Finally loop through each 'line', prepend the sensorID (sid)
+  # to it, and append the new line to the tmp file.
   foreach line [split [read $inFileID] \n] {
     if {$line != ""} {puts $outFileID "$sensorID|$line"; incr i}
   }
@@ -479,9 +483,6 @@ proc UpdateDBStatusList { whereTmp timestamp status } {
   #mysqlexec $dbSocketID "COMMIT"
   mysqlclose $dbSocketID
   set endTime [GetCurrentTimeStamp]
-  puts "RESULTS:::: $execResults"
-  puts "########## start: $startTime end: $endTime"
-
 }
 proc UpdateDBStatus { eventID timestamp status } {
   global DBNAME DBUSER DBPORT DBHOST DBPASS
