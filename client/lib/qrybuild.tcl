@@ -28,49 +28,50 @@ proc QryBuild {} {
 
     
     
-    set editFrame [frame $mainFrame.eFrame]
+    set editFrame [frame $mainFrame.eFrame -background black -borderwidth 1]
       set editBox [scrolledtext $editFrame.eBox -textbackground white -vscrollmode dynamic \
 		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 80x10 -textfont ourFixedFont \
 		-labeltext "Edit Where Clause"]
       $editBox insert end "WHERE event.sid = sensor.sid AND  LIMIT 500"
       $editBox mark set insert "end -11 c"
-      set bb [buttonbox $editFrame.bb]
-      $bb add Submit -text "Submit" -command "set RETURN_FLAG 1"
-      $bb add Cancel -text "Cancel" -command "set RETURN_FLAG 0"
-      pack $editBox $bb -side top -fill y -expand true
+      #set bb [buttonbox $editFrame.bb]
+      #$bb add Submit -text "Submit" -command "set RETURN_FLAG 1"
+      #$bb add Cancel -text "Cancel" -command "set RETURN_FLAG 0"
+      pack $editBox -side top -fill both -expand true
+      #pack $bb -side top -fill x -expand true
 
-    set mainBB1 [buttonbox $mainFrame.mbb1 -padx 1 -pady 1]
+    set mainBB1 [buttonbox $mainFrame.mbb1]
       foreach logical $funcList(Logical) {
 	  set command "$editBox insert insert \"$logical \""
-	  $mainBB1 add $logical -text $logical -command "$command"
+	  $mainBB1 add $logical -text $logical -padx 1 -pady 1 -command "$command"
       }
     set mainBB2 [buttonbox $mainFrame.mbb2]
       foreach comparison $funcList(Comparison) {
 	  set command "$editBox insert insert \"$comparison \""
-	  $mainBB2 add $comparison -text $comparison -command "$command"
+	  $mainBB2 add $comparison -text $comparison -padx 1 -pady 1 -command "$command"
       }
 
-    set selectFrame [frame $mainFrame.sFrame]
+    set selectFrame [frame $mainFrame.sFrame -background black -borderwidth 1]
       set catList [scrolledlistbox $selectFrame.cList -labeltext Categories \
-	      -selectioncommand "updateItemList $selectFrame" \
-	      -labelpos n -vscrollmode dynamic \
-	      -visibleitems 20x10]
-      set metaList [scrolledlistbox $selectFrame.mList -labeltext Meta \
+	      -selectioncommand "updateItemList $selectFrame" -sbwidth 10\
+	      -labelpos n -vscrollmode static -hscrollmode dynamic \
+	      -visibleitems 20x10 -foreground darkblue -textbackground lightblue]
+      set metaList [scrolledlistbox $selectFrame.mList -labeltext Meta -sbwidth 10\
 	      -selectioncommand "updateCatList $selectFrame" \
 	      -hscrollmode dynamic \
-	      -labelpos n -vscrollmode dynamic \
-	      -visibleitems 20x10]
-      set itemList [scrolledlistbox $selectFrame.iList -hscrollmode dynamic \
+	      -labelpos n -vscrollmode static \
+	      -visibleitems 20x10 -foreground darkblue -textbackground lightblue]
+      set itemList [scrolledlistbox $selectFrame.iList -hscrollmode dynamic -sbwidth 10\
 	     -dblclickcommand "addToEditBox $editBox $selectFrame" \
 	     -scrollmargin 5 -labeltext "Items" \
-	     -labelpos n -vscrollmode dynamic \
-	     -visibleitems 20x10]
+	     -labelpos n -vscrollmode static -hscrollmode static\
+	     -visibleitems 20x10 -foreground darkblue -textbackground lightblue]
   
       pack $metaList $catList $itemList -side left -fill both -expand true
       iwidgets::Labeledwidget::alignlabels $metaList $catList $itemList
     
     pack $editFrame -side top -fill both -expand yes
-    pack  $mainBB1 $mainBB2 -side top -fill none -expand false 
+    pack  $mainBB1 $mainBB2 -side top -fill x -expand false
     pack  $selectFrame -side top -fill both -expand true
     eval $metaList insert 0 $mlst
     pack $mainFrame -side top
