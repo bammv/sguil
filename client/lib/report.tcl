@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.17 2004/08/06 16:19:55 shalligan Exp $ #
+# $Id: report.tcl,v 1.18 2004/08/12 18:37:56 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -264,11 +264,27 @@ proc PHBReport {} {
     toplevel $phbReport
     wm geometry $phbReport +300+300
     wm title $phbReport "Sensor Summary Report"
-    
-    set sensorBox [checkbox $phbReport.sensorBox -labeltext "Select a Sensor" -orient horizontal]
-    foreach sensor $monitorList {
-	$sensorBox add $sensor -text [string totitle $sensor]
+    set sensorFrame [frame $phbReport.sensorFrame]
+    set winLabel [label $sensorFrame.label -text "Select Sensor(s) to Monitor"]
+    pack $winLabel -side top -fill both -expand true
+     # We create a new frame for every 5 sensors to keep the look clean.
+    set i 0
+    set boxNumber 0
+    set currentBox [checkbox $sensorFrame.subBox$boxNumber -orient horizontal]
+    foreach sensorName $monitorList {
+      if { $i < 5 } {
+        $currentBox add $sensorName -text [string totitle $sensorName]
+        incr i
+      } else {
+        pack $currentBox -side top
+        incr boxNumber
+        set currentBox [checkbox $sensorFrame.subBox$boxNumber -orient horizontal]
+        $currentBox add $sensorName -text [string totitle $sensorName]
+        set i 1
+      }
+  
     }
+    pack $currentBox -side top -fill x   
     set timestampLabelFrame [frame $phbReport.timestampLabelFrame]
         set timeStartLabel [label $timestampLabelFrame.timeStartLabel -text "Start Date/Time"]
         set timeEndLabel [label $timestampLabelFrame.timeEndLabel -text "End Date/Time"]
@@ -302,7 +318,7 @@ proc PHBReport {} {
     set buttonBox [buttonbox $phbReport.buttonBox]
       $buttonBox add build  -text "Build Report" -command "set RETURN_FLAG 1"
       $buttonBox add cancel -text "Cancel" -command "set RETURN_FLAG 0"
-    pack $sensorBox $timestampLabelFrame $timestampFrame $reportFrame $buttonBox -expand 1 -fill x
+    pack $sensorFrame $timestampLabelFrame $timestampFrame $reportFrame $buttonBox -expand 1 -fill x
     tkwait variable RETURN_FLAG
     if {$RETURN_FLAG == 1} {
 	set reports [$reportBox getrhs]
@@ -323,7 +339,12 @@ proc PHBReport {} {
 		}
 	    }
 	}
-	set sensors [$sensorBox get]
+	foreach sensorBox [winfo children $sensorFrame] {
+	    puts $sensorBox
+	    if { [winfo name $sensorBox] != "label" } {
+		lappend sensors [$sensorBox get]
+	    }
+	}
 	set datetimestart "[clock format [$dateStart get -clicks] -f "%Y-%m-%d"] [$timeStart get]"
 	set datetimeend "[clock format [$dateEnd get -clicks] -f "%Y-%m-%d"] [$timeEnd get]"
 #	puts $datetimestart 
