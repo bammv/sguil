@@ -1,0 +1,79 @@
+#!/bin/bash
+#
+# Init file for sguild
+#
+# chkconfig: 2345 80 10
+# description: Sguil Server daemon
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+prog="sguild"
+RETVAL=0
+
+SGUILD=/usr/sbin/${prog}
+SGUILDCONF=/etc/sysconfig/sguild
+
+if [ -f $SGUILDCONF ]; then
+  . $SGUILDCONF
+fi
+
+start()
+{
+	if [ -f $PIDFILE ]; then
+	  echo "sguild already running"
+	  exit
+        fi
+	if [ -x $SGUILD ] ; then
+	 echo -n $"Starting $prog:"
+	 su - sguil -c "$SGUILD  $OPTIONS" > /dev/null 2>&1 &
+         if [ $? = 0 ]; then
+	   echo " [ OK ]"
+	 else
+	   echo " [ Failed ]"
+	 fi
+	else
+	 echo "can't find sguild "
+	fi
+}
+
+stop()
+{
+	if [ -f $PIDFILE ]; then
+	  echo -n $"Stopping $prog:"
+	  kill `cat $PIDFILE` > /dev/null 2>&1 &
+	  rm -f $PIDFILE
+          if [ $? = 0 ]; then
+	    echo " [ OK ]"
+	  else
+	    echo " [ Failed ]"
+	  fi
+	else
+	  echo "sguild doesn't appear to be running"	
+	fi
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		sleep 1
+		start
+		;;
+	status)
+		if [ -f $PIDFILE ]; then
+		  echo "sguild is running"
+		else
+		  echo "sguild stopped"
+		fi
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|status}"
+		RETVAL=1
+esac
+exit $RETVAL

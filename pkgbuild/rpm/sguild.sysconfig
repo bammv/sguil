@@ -1,0 +1,4 @@
+# for encryption
+# OPTIONS="-O /usr/lib/libtsl.so.1 -C /etc/sguild"
+PIDFILE=/var/sguild/sguild.pid
+OPTIONS="-D -P $PIDFILE"
