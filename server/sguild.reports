@@ -27,9 +27,9 @@ TOPTENSIP||Top Ten Source IP's||query||SELECT count(event.src_ip) as count, INET
 
 TOPTENDIP||Top Ten Dest IP's||query||SELECT count(event.dst_ip) as count, INET_NTOA(event.dst_ip) FROM event, sensor WHERE event.sid = sensor.sid AND %%SENSORS%% AND event.timestamp > %%STARTTIME%% AND event.timestamp < %%ENDTIME%% GROUP BY event.dst_ip order by count desc limit 10||2||
 
-TOPTENSPORT||Top Ten Source Ports||query||SELECT count(event.src_port) as count, INET_NTOA(event.src_port) FROM event, sensor WHERE event.sid = sensor.sid AND %%SENSORS%% AND event.timestamp > %%STARTTIME%% AND event.timestamp < %%ENDTIME%% GROUP BY event.src_port order by count desc limit 10||2||
+TOPTENSPORT||Top Ten Source Ports||query||SELECT count(event.src_port) as count, event.src_port FROM event, sensor WHERE event.sid = sensor.sid AND %%SENSORS%% AND event.timestamp > %%STARTTIME%% AND event.timestamp < %%ENDTIME%% GROUP BY event.src_port order by count desc limit 10||2||
 
-TOPTENDPORT||Top Ten Dest Ports||query||SELECT count(event.dst_port) as count, INET_NTOA(event.dst_port) FROM event, sensor WHERE event.sid = sensor.sid AND %%SENSORS%% AND event.timestamp > %%STARTTIME%% AND event.timestamp < %%ENDTIME%% GROUP BY event.dst_port order by count desc limit 10||2||
+TOPTENDPORT||Top Ten Dest Ports||query||SELECT count(event.dst_port) as count, event.dst_port FROM event, sensor WHERE event.sid = sensor.sid AND %%SENSORS%% AND event.timestamp > %%STARTTIME%% AND event.timestamp < %%ENDTIME%% GROUP BY event.dst_port order by count desc limit 10||2||
 
 
 
