@@ -201,12 +201,13 @@ proc DeleteEventIDList { socketID status deleteEventIDList } {
     if { [info exists eventIDArray($eventID)] } { unset eventIDArray($eventID) }
     set eventIDList [ldelete $eventIDList $eventID]
     set splitID [split $eventID .]
-    if { $count < 500 } {
+    if { $count < 1000 } {
       set updateTmp "$updateTmp (sid=[lindex $splitID 0] AND cid=[lindex $splitID 1])"
     } else {
       regsub -all {\) \(} $updateTmp {) OR (} whereTmp
       UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $status
       set count 0
+      set updateTmp ""
     }
     incr count
   }
@@ -290,19 +291,46 @@ proc RcvPortscanFile { socketID fileName } {
     file delete $PS_OUTFILE
   }
 }
+
+proc DiskReport { socketID fileSystem percentage } {
+  global agentSensorName
+  SendSystemInfoMsg $agentSensorName($socketID) "$fileSystem $percentage"
+}
+proc SensorAgentConnect { socketID sensorName } {
+  global connectedAgents agentSocket agentSensorName
+  lappend connectedAgents $sensorName
+  set agentSocket($sensorName) $socketID
+  set agentSensorName($socketID) $sensorName
+  SendSystemInfoMsg $sensorName "Agent connected."
+}
+proc CleanUpDisconnectedAgent { socketID } {
+  global connectedAgents agentSocket agentSensorName
+
+  set connectedAgents [ldelete $connectedAgents $agentSensorName($socketID)]
+  set sensorName $agentSensorName($socketID)
+  unset agentSocket($sensorName)
+  unset agentSensorName($socketID)
+}
 proc SensorCmdRcvd { socketID } {
-  global DEBUG
+  global DEBUG connectedAgents
   if { [eof $socketID] || [catch {gets $socketID data}] } {
     # Socket closed
     close $socketID
     if {$DEBUG} { puts "Socket $socketID closed" }
+    if { [info exists connectedAgents] } {
+      if { [lsearch -exact $connectedAgents $socketID] >= 0 } {
+        CleanUpDisconnectedAgent $socketID
+      }
+    }
   } else {
     if {$DEBUG} { puts "Sensor Data Rcvd: $data" }
     set sensorCmd [lindex $data 0]
     switch -exact -- $sensorCmd {
       RTEvent	{ EventRcvd [lrange $data 1 end] }
       PSFile	{ RcvPortscanFile $socketID [lindex $data 1] }
-      default	{ "Sensor Cmd Unkown: $sensorCmd" }
+      CONNECT   { SensorAgentConnect $socketID [lindex $data 1] }
+      DiskReport { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
+      default	{ puts "Sensor Cmd Unkown: $sensorCmd" }
     }
   }
 }
@@ -387,14 +415,24 @@ proc FlatDBQuery { query } {
 }
 proc UpdateDBStatusList { whereTmp timestamp status } {
   global DBNAME DBUSER DBPORT DBHOST DBPASS
+  set startTime [GetCurrentTimeStamp]
   set updateString "UPDATE event SET status=$status, last_modified='$timestamp' WHERE $whereTmp"
+  #set updateString "UPDATE event SET status=$status WHERE $whereTmp"
   if { $DBPASS == "" } {
     set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
   } else {
     set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
   }
+  
+  #mysqlexec $dbSocketID "SET AUTOCOMMIT=0"
+  #mysqlexec $dbSocketID "BEGIN"
   set execResults [mysqlexec $dbSocketID $updateString]
+  #mysqlexec $dbSocketID "COMMIT"
   mysqlclose $dbSocketID
+  set endTime [GetCurrentTimeStamp]
+  puts "RESULTS:::: $execResults"
+  puts "########## start: $startTime end: $endTime"
+
 }
 proc UpdateDBStatus { eventID timestamp status } {
   global DBNAME DBUSER DBPORT DBHOST DBPASS
@@ -479,13 +517,16 @@ proc SendSensorList { socketID } {
 #                 now the client gets everything.
 #
 proc MonitorSensors { socketID sensorList } {
-  global DEBUG clientList clientMonitorSockets
+  global DEBUG clientList clientMonitorSockets connectedAgents
   if {$DEBUG} {puts "$socketID added to clientList"}
   lappend clientList $socketID
   foreach sensorName $sensorList {
     lappend clientMonitorSockets($sensorName) $socketID
   }
   SendCurrentEvents $socketID
+  if { [info exists connectedAgents] } {
+    SendSystemInfoMsg sguild "Connected sensors - $connectedAgents"
+  }
 }
 
 proc SendEscalatedEvents { socketID } {
