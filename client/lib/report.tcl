@@ -1,16 +1,15 @@
-# $Id: report.tcl,v 1.30 2005/01/20 20:02:28 shalligan Exp $ #
+# $Id: report.tcl,v 1.31 2005/01/28 22:03:20 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
 # email17.tcl
 
 proc EmailEvents { detail sanitize } {
-    global ACTIVE_EVENT CUR_SEL_PANE RETURN_FLAG REPORTNUM
+    global ACTIVE_EVENT CUR_SEL_PANE RETURN_FLAG
     global EMAIL_FROM EMAIL_CC EMAIL_HEAD EMAIL_TAIL EMAIL_SUBJECT DEBUG
     set RETURN_FLAG 0
-    incr REPORTNUM
     if {$ACTIVE_EVENT} {
-	set editEmail .editEmail_$REPORTNUM
+	set editEmail .editEmail
 	if { [winfo exists $editEmail] } {
 	    wm withdraw $editEmail
 	    wm deiconify $editEmail
@@ -32,12 +31,15 @@ proc EmailEvents { detail sanitize } {
 	set bccBox [entryfield $editEmail.bccbox -labeltext "BCC:" ]
 	set subjectBox [entryfield $editEmail.subjectBox -labeltext "Subject:"]
 	$subjectBox insert end $EMAIL_SUBJECT
+	set gpgBox [checkbox $editEmail.gpgBox -labeltext "GPG options" -labelpos n -orient horizontal]
+	$gpgBox add sign -text sign
+	$gpgBox add encrypt -text encrypt
 	set buttonBox [buttonbox $editEmail.buttonBox]
 	$buttonBox add send -state disabled -text "Send" -command "set RETURN_FLAG 1"
 	$buttonBox add cancel -text "Cancel" -command "set RETURN_FLAG 0"
 	pack $fromBox $toBox $ccBox $bccBox $subjectBox -side top -fill x -padx 10 -expand 0
 	pack $textBox -side top -fill both -expand true
-	pack $buttonBox -side top -fill none -expand 0
+	pack $gpgBox $buttonBox -side top -fill none -expand 0 -pady 0
         iwidgets::Labeledwidget::alignlabels $fromBox $toBox $ccBox $bccBox $subjectBox
 	# save the currentSelectPane in case someone clicks a new pane while the report is being built
 	set winname $CUR_SEL_PANE(name)
@@ -63,6 +65,23 @@ proc EmailEvents { detail sanitize } {
 	    set EmailFrom [$fromBox get]
 	    set EmailSubj [$subjectBox get]
 	    set EmailBody [$textBox get 0.0 end]
+	    set EmailRecips $EmailTo
+	    if { [llength $EmailCC] > 0 } {
+		lappend EmailRecips [lrange $EmailCC 0 end] 
+	    }
+	    if { [llength $EmailBCC] > 0 } {
+		lappend EmailRecips [lrange $EmailBCC 0 end]
+	    }
+	    set gpgSign [$gpgBox get 0]
+	    set gpgEncrypt [$gpgBox get 1]
+	    if { $gpgSign || $gpgEncrypt } {
+		set EmailBody [GpgText $editEmail $gpgSign $gpgEncrypt $EmailBody $EmailRecips $EmailFrom]
+		if { $EmailBody == "cancel" } {
+		    destroy $editEmail
+		    EmailEvents $detail $sanitize
+		    return
+		}
+	    }
             if { ![info exists HOSTNAME] } {
               set HOSTNAME [info hostname]
             }
