@@ -1,0 +1,36 @@
+*** op_plugbase.c.old	Sun Mar 28 18:14:19 2004
+--- op_plugbase.c	Mon Apr  4 10:39:54 2005
+***************
+*** 27,33 ****
+  #if defined(ENABLE_MYSQL) || defined(ENABLE_POSTGRES)
+  #include "op_acid_db.h"
+  #endif
+! #ifdef ENABLE_MYSQL
+  #include "op_sguil.h"
+  #endif
+  #include "op_alert_csv.h"
+--- 27,33 ----
+  #if defined(ENABLE_MYSQL) || defined(ENABLE_POSTGRES)
+  #include "op_acid_db.h"
+  #endif
+! #ifdef ENABLE_TCL
+  #include "op_sguil.h"
+  #endif
+  #include "op_alert_csv.h"
+***************
+*** 47,53 ****
+  #if defined(ENABLE_MYSQL) || defined(ENABLE_POSTGRES)
+      OpAcidDb_Init();
+  #endif
+! #ifdef ENABLE_MYSQL
+      OpSguil_Init();
+  #endif
+      OpAlertCSV_Init();
+--- 47,53 ----
+  #if defined(ENABLE_MYSQL) || defined(ENABLE_POSTGRES)
+      OpAcidDb_Init();
+  #endif
+! #ifdef ENABLE_TCL
+      OpSguil_Init();
+  #endif
+      OpAlertCSV_Init();
