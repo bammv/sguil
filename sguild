@@ -65,6 +65,7 @@ proc ClientCmdRcvd { socketID } {
       GetPayloadData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
       QueryDB { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
       GetPSData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+      SendDBInfo { $clientCmd $socketID }
       default { puts "Unrecognized command from $socketID: $data" }
     }
   }
@@ -252,7 +253,7 @@ proc ClientConnect { socketID IPAddr port } {
   fconfigure $socketID -buffering line
   fileevent $socketID readable [list ClientCmdRcvd $socketID]
   # Send the client a list of tables and column names/info
-  SendDBInfo $socketID
+  #SendDBInfo $socketID
 } 
 
 proc SensorConnect { socketID IPAddr port } {

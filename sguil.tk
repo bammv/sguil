@@ -267,8 +267,48 @@ proc ValidateEvent { status } {
      } 
   }
 }
+#
+# SimpleQueryCmd: Makes a seperate cnx to sguild for the purpose of running
+#                 a single query to the db. These queries are preformated
+#                 see below. I am sure this is going to come back and bite
+#                 me in the ass.    Bammkkkk
+#
+# <cmd> must be in the format of "<request> sid cid" where <request> is one 
+# of the below.
+#
+# <request>
+#  Data returned from DB.
+# 
+# GetIPData
+#  INET_NTOA(src_ip), INET_NTOA(dst_ip), ip_ver, ip_hlen, ip_tos, ip_len, ip_id, 
+#  ip_flags, ip_off, ip_ttl, ip_csum
+#
+# GetTcpData
+#  tcp_seq, tcp_ack, tcp_off, tcp_res, tcp_flags, tcp_win, tcp_csum, tcp_urp, src_port, dst_port
+#  
+# GetIcmpData
+#  icmp_type, icmp_code, icmp_csum, icmp_id, icmp_seq, data_payload
+#
+# GetPayloadData
+#  data_payload 
+# 
+# GetUdpData
+#  udp_len, udp_csum, src_port, dst_port
+#
+proc SimpleQueryCmd { host port cmd} {
+  if [catch {set tmpSocketID [socket $host $port]} connectError] {
+    return "error"
+  } 
+  fconfigure $tmpSocketID -buffering line
+  puts $tmpSocketID $cmd
+  # Index 0 is the returned cmd, index 1 is the data.
+  set data [lindex [gets $tmpSocketID] 1]
+  close $tmpSocketID
+  return $data
+}
 proc EmailEvents {} {
     global ACTIVE_EVENT currentSelectedPane RETURN_FLAG
+    global SERVERHOST SERVERPORT
     set RETURN_FLAG 0
     if {$ACTIVE_EVENT} {
 	set editEmail .editEmail
@@ -282,7 +322,7 @@ proc EmailEvents {} {
 	wm title $editEmail "E-Mail Event"
 	
 	set textBox [scrolledtext $editEmail.textBox -textbackground white -vscrollmode dynamic\
-		-hscrollmode none -wrap word -visibleitems 80x5 -labeltext "Edit Email"]
+         -sbwidth 10 -hscrollmode none -wrap word -visibleitems 80x10 -labeltext "Edit Email"]
 	set fromBox [entryfield $editEmail.fromBox -labeltext "From:" ]
 	set toBox [entryfield $editEmail.toBox  -labeltext "To:"]
 	set subjectBox [entryfield $editEmail.subjectBox -labeltext "Subject:"]
@@ -306,9 +346,17 @@ proc EmailEvents {} {
 	    $textBox insert end "[$currentSelectedPane.dstIPFrame.list get $selectedIndex]\n"
 	    $textBox insert end "Protocol: [$currentSelectedPane.protoFrame.list get $selectedIndex] "
 	    if {[$currentSelectedPane.protoFrame.list get $selectedIndex] == "6" || \
-		    [$currentSelectedPane.protoFrame.list get $selectedIndex] == "7"} {
+		    [$currentSelectedPane.protoFrame.list get $selectedIndex] == "17"} {
 		$textBox insert end "sport=[$currentSelectedPane.srcPortFrame.list get $selectedIndex] -> "
 		$textBox insert end "dport=[$currentSelectedPane.dstPortFrame.list get $selectedIndex]\n\n"
+                # Test code to get packet payload.
+                set eventID [split [$currentSelectedPane.eventIDFrame.list get $selectedIndex] .]
+                set eventPayload [SimpleQueryCmd\
+                 $SERVERHOST $SERVERPORT "GetPayloadData [lindex $eventID 0] [lindex $eventID 1]"]
+                if { $eventPayload == "error" } {
+                  ErrorMessage "Error getting payload data."
+                }
+                $textBox insert end "PAYLOAD: $eventPayload"
 	    }
 	}
 
@@ -2128,6 +2176,7 @@ if [catch {set socketID [socket $SERVERHOST $SERVERPORT]}] {
 } else {
   fconfigure $socketID -buffering line
   fileevent $socketID readable [list ServerCommandRcvd $socketID]
+  puts $socketID "SendDBInfo"
   puts $socketID "SendSensorList"
   wm withdraw .
   tkwait variable MONITORFLAG
