@@ -2,7 +2,7 @@
 # note:  This is just the sguil-specific code, the actual emailing is done by
 # email17.tcl
 
-proc EmailEvents { detail sanatize } {
+proc EmailEvents { detail sanitize } {
     global ACTIVE_EVENT currentSelectedPane RETURN_FLAG
     global SERVERHOST SERVERPORT EMAIL_FROM EMAIL_CC EMAIL_HEAD EMAIL_TAIL EMAIL_SUBJECT
     set RETURN_FLAG 0
@@ -46,7 +46,7 @@ proc EmailEvents { detail sanatize } {
 		$textBox insert end "Event#[$currentSelectedPane.eventIDFrame.list get $selectedIndex] "
 		$textBox insert end "[$currentSelectedPane.dateTimeFrame.list get $selectedIndex]\n"
 		$textBox insert end "[$currentSelectedPane.msgFrame.list get $selectedIndex]\n"
-		if { $sanatize == 0 } {
+		if { $sanitize == 0 } {
 		    $textBox insert end "[$currentSelectedPane.srcIPFrame.list get $selectedIndex] -> "
 		    $textBox insert end "[$currentSelectedPane.dstIPFrame.list get $selectedIndex]\n"
 		} else {
@@ -209,7 +209,7 @@ proc EmailEvents { detail sanatize } {
 			    set protohex [string range $pldata [expr $offset+18] [expr $offset+19]]
 			    $textBox insert end "Orig Protocol=[format "%i" 0x$protohex] "
 			    
-			    if { $sanatize == 0 } {
+			    if { $sanitize == 0 } {
 			     # Build the src address 
 				set srchex1 [string range $pldata [expr $offset+24] [expr $offset+25]]
 				set srchex2 [string range $pldata [expr $offset+26] [expr $offset+27]]
@@ -229,7 +229,7 @@ proc EmailEvents { detail sanatize } {
 			    set sporthex [string range $pldata $hdroffset [expr $hdroffset+3]]
 			    $textBox insert end "[format "%i" 0x$sporthex]->"
 			    
-			    if { $sanatize == 0 } {
+			    if { $sanitize == 0 } {
 				# Build the dst address
 				set dsthex1 [string range $pldata [expr $offset+32] [expr $offset+33]]
 				set dsthex2 [string range $pldata [expr $offset+34] [expr $offset+35]]
@@ -291,7 +291,7 @@ proc EmailEvents { detail sanatize } {
 		set psdata [SimpleQueryCmd\
 			$SERVERHOST $SERVERPORT "GetPSData [lindex [$currentSelectedPane.dateTimeFrame.list get $selectedIndex] 0] [$currentSelectedPane.srcIPFrame.list get $selectedIndex] 200"]
 		for { set i 0 } { $i < [expr [llength $psdata]-1] } {incr i} {
-		    if { $sanatize == 1 } {
+		    if { $sanitize == 1 } {
 			set psrow1 [lreplace [lindex $psdata $i] 2 2 "a.b.c.d"]
 			set psrow [lreplace $psrow1 4 4 "e.f.g.h"]
 		    } else {

@@ -2878,7 +2878,7 @@ set topFrame [frame .topFrame]
   set queryList [menu $queryMenu.menu -tearoff 0]
     $queryList add command -label "Query Event Table" -command "QueryRequest event empty"
     $queryList add command -label "Query Sessions Table" -command "QueryRequest sessions empty"
-    $queryList add command -label "Standard Queries" -command "GetStdQuery"
+    $queryList add command -label "Standard Queries" -command "StdQuery"
     $queryList add command -label "Query Builder" -command "QryBuild empty empty"
     $queryList add cascade -label "Query by Category" -menu $queryList.category
     set categoryMenu [menu $queryList.category -tearoff 0]
@@ -2901,11 +2901,11 @@ set topFrame [frame .topFrame]
     $reportList add cascade -label "Send Event Detail via email" -menu $reportList.detail
       set detailMenu [menu $reportList.detail -tearoff 0]
       $detailMenu add command -label "Normal" -command {EmailEvents 1 0}
-      $detailMenu add command -label "Sanatized" -command {EmailEvents 1 1}
+      $detailMenu add command -label "Sanitized" -command {EmailEvents 1 1}
     $reportList add cascade -label "Send Event Summary via email" -menu $reportList.summary
       set summaryMenu [menu $reportList.summary -tearoff 0]
       $summaryMenu add command -label "Normal" -command {EmailEvents 0 0}
-      $summaryMenu add command -label "Sanatized" -command {EmailEvents 0 1}
+      $summaryMenu add command -label "Sanitized" -command {EmailEvents 0 1}
   set databaseList [menu $databaseMenu.menu -tearoff 0]
     $databaseList add command -label "Purge Session Data" -command "DeleteRequest sessions"
     $databaseList add command -label "Optimize Tables" -command "OptimizeTables"

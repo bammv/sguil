@@ -8,7 +8,11 @@ proc QryBuild {tableSelected whereTmp } {
 	set SELECTEDTABLE "event"
     }
     if {$whereTmp == "empty"} {
-	set whereTmp "WHERE event.sid = sensor.sid AND "
+	if {$SELECTEDTABLE == "event"} {
+	    set whereTmp "WHERE event.sid = sensor.sid AND "
+	} else {
+	    set whereTmp "WHERE sessions.sid = sensor.sid AND "
+	}
     }
 
     # Grab the current pointer locations
@@ -45,12 +49,12 @@ proc QryBuild {tableSelected whereTmp } {
     
     set qryTypeBox [radiobox $mainFrame.qTypeBox -orient horizontal -labeltext "Select Query Type" -labelpos n -foreground darkblue]
       $qryTypeBox add event -text "Events" -selectcolor red -foreground black
-      $qryTypeBox add session -text "Sessions" -selectcolor red -foreground black
+      $qryTypeBox add sessions -text "Sessions" -selectcolor red -foreground black
    
     if {$SELECTEDTABLE == "event"} {
 	$qryTypeBox select event
     } else {
-	$qryTypeBox select session
+	$qryTypeBox select sessions
     }
     $qryTypeBox configure -command {typeChange}
 
@@ -58,8 +62,8 @@ proc QryBuild {tableSelected whereTmp } {
       set editBox [scrolledtext $editFrame.eBox -textbackground white -vscrollmode dynamic \
 		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 60x10 -textfont ourFixedFont \
 		-labeltext "Edit Where Clause"]
-      #$editBox insert end "WHERE event.sid = sensor.sid AND  LIMIT 500"
-      set whereTmp "$whereTmp  LIMIT 500"
+      
+      if { ![string match -nocase limit $whereTmp] } { set whereTmp "$whereTmp  LIMIT 500" }
       $editBox insert end $whereTmp
       $editBox mark set insert "end -11 c"
       set bb [buttonbox $mainFrame.bb]
@@ -193,7 +197,7 @@ proc typeChange {} {
 	$mainFrame.eFrame.eBox insert end "WHERE event.sid = sensor.sid AND  LIMIT 500"
 	set SELECTEDTABLE "event"
     } else {
-	set SELECTEDTABLE "session"
+	set SELECTEDTABLE "sessions"
 	$mainFrame.eFrame.eBox insert end "WHERE sessions.sid = sensor.sid  LIMIT 500"
     }
     $mainFrame.eFrame.eBox mark set insert "end -11 c"

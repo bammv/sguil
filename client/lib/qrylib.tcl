@@ -1,7 +1,7 @@
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
-# a WHERE statement, pass the info on the QryBuilder
+# a WHERE statement, pass the info on to the QryBuilder
 # and finally call DBQueryRequest or SsnQueryRequest.
 #
 proc QueryRequest { tableName queryType { incidentCat {NULL} } } {
@@ -136,7 +136,7 @@ proc DBQueryRequest { whereStatement {winTitle {none} } } {
 # Depreciated
 proc GetStdQuery {} {
   set data [StdQuery]
-  set query [lindex $data 0]
+  set  [lindex $data 0]
   if { $query == "abort" } { return }
   set whereStatement [EditWhere $query]
   if { $whereStatement == "cancel" } { return }
