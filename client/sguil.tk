@@ -533,46 +533,29 @@ proc ValidateEvent { status {c_flag {0}} } {
 #  udp_len, udp_csum, src_port, dst_port
 #
 proc SimpleQueryCmd { host port cmd} {
-  global socketID EMAIL_RESULTS
-  global OPENSSL TLS_PATH VERSION DEBUG
-  if [catch {set tmpSocketID [socket $host $port]} connectError] {
-    return "error"
-  }
-  fconfigure $tmpSocketID -buffering line
-    # Version checking
-  if [catch {gets $tmpSocketID} serverVersion] {
-    puts "ERROR: $serverVersion"
-    CleanExit
-  }
-  if { $serverVersion != $VERSION } {
-    puts "ERROR: Mismatched versions.\nSERVER: ($serverVersion)\nCLIENT: ($VERSION)"
-    CleanExit
-  }
-  puts $tmpSocketID "$VERSION"
-  if {$OPENSSL} {
-    if { [info exists TLS_PATH] } { load $TLS_PATH }
-    package require tls
-    tls::import $tmpSocketID
-  }
-  puts $tmpSocketID "PING"
-  set INIT [gets $tmpSocketID]
-  if {$DEBUG} {puts "Init successful"}
-  puts $tmpSocketID $cmd
-  if {[lindex $cmd 0] != "GetPSData"} {
-      # Index 0 is the returned cmd, index 1 is the data.
-      set data [lrange [gets $tmpSocketID] 1 end]
-     
-  } else {
-      set psrow ""
-      set i 0
-      set data ""
-      while { [lindex $psrow 0] != "DONE" } {
-	  set psrow [lrange [gets $tmpSocketID] 1 end]
-	  lappend data $psrow
-      }
-  }
-  close $tmpSocketID
-  return $data
+    global EMAIL_RESULTS
+    global DEBUG
+    if [catch { ConnectToSguild } tmpSocketID] {
+       ErrorMessage $tmpSocketID
+    } else {
+       set CONNECTED 1
+       puts $tmpSocketID $cmd
+       if {[lindex $cmd 0] != "GetPSData"} {
+          # Index 0 is the returned cmd, index 1 is the data.
+          set data [lrange [gets $tmpSocketID] 1 end]
+	    
+       } else {
+         set psrow ""
+         set i 0
+         set data ""
+         while { [lindex $psrow 0] != "DONE" } {
+	    set psrow [lrange [gets $tmpSocketID] 1 end]
+	    lappend data $psrow
+	 }
+       }
+       close $tmpSocketID
+       return $data
+    }
 }
 proc OptimizeTables {} {
     global socketID DEBUG RETURN_FLAG
