@@ -6,6 +6,10 @@ CVS-HEAD
 
     * Added better Ethereal config options in (sguil.conf)
 
+    * Added/Modified Dshield lookup (http://www.dshield.org)
+      to sro and dst ip drop down menus. (requested by mboman
+      added by geek2)
+
   sguild
     * Alpha support for emailing events. Need to add better
       error checking.

@@ -2130,13 +2130,17 @@ proc InsertRuleData { ruleData } {
   $ruleText component text insert end $ruleData
   $referenceButton configure -state normal
 }
-proc GetDshield {} {
+proc GetDshield { arg } {
   global DEBUG BROWSER_PATH currentSelectedPane ACTIVE_EVENT MULTI_SELECT
   if { $ACTIVE_EVENT && !$MULTI_SELECT} {
     set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
-    set srcIP [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
+    if { $arg == "srcip" } {
+      set ipAddr [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
+    } else {
+      set ipAddr [$currentSelectedPane.dstIPFrame.list get $selectedIndex]
+    }
     if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
-	exec $BROWSER_PATH http://www.dshield.org/ipinfo.php?ip=$srcIP &
+	exec $BROWSER_PATH http://www.dshield.org/ipinfo.php?ip=$ipAddr &
     } else {
       tk_messageBox -type ok -icon warning -message\
        "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
@@ -3637,9 +3641,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
        -text "Show Rule" -variable SHOWRULE -command GetRuleInfo]
       set referenceButton [button $ruleButtonFrame.referenceButton\
        -text "www.snort.org" -command "GetReference" -state disabled]
-       set dshieldButton [button $ruleButtonFrame.dshieldButton\
-       -text "DShield Lookup" -command "GetDshield"]
-      pack $displayPacketButton $displayRuleButton $referenceButton $dshieldButton -side left
+      pack $displayPacketButton $displayRuleButton $referenceButton -side left
     set ruleText [scrolledtext $packetDataFrame.ruleText -hscrollmode static -visibleitems 10x1\
      -sbwidth 10 -vscrollmode none -wrap none]
   set packetFrame [frame $packetDataFrame.packetFrame -background black -borderwidth 1]
@@ -3801,9 +3803,12 @@ set ipQueryMenu [ menu .ipQueryMenu -background blue -foreground white -activefo
  -activebackground white -tearoff 0 ]
 .ipQueryMenu add cascade -label "Query Event Table" -menu $ipQueryMenu.eventMenu
 .ipQueryMenu add cascade -label "Query Sessions Table" -menu $ipQueryMenu.sessionsMenu
+.ipQueryMenu add cascade -label "Dshield Lookup" -menu $ipQueryMenu.dshieldMenu
 menu $ipQueryMenu.eventMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
 menu $ipQueryMenu.sessionsMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
+ -activebackground white
+menu $ipQueryMenu.dshieldMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
 $ipQueryMenu.eventMenu add command -label "Query SrcIP" -command "QueryRequest event srcip"
 $ipQueryMenu.eventMenu add command -label "Query DstIP" -command "QueryRequest event dstip"
@@ -3811,6 +3816,8 @@ $ipQueryMenu.eventMenu add command -label "Query Src To Dst" -command "QueryRequ
 $ipQueryMenu.sessionsMenu add command -label "Query SrcIP" -command "QueryRequest sessions srcip"
 $ipQueryMenu.sessionsMenu add command -label "Query DstIP" -command "QueryRequest sessions dstip"
 $ipQueryMenu.sessionsMenu add command -label "Query Src To Dst" -command "QueryRequest sessions src2dst"
+$ipQueryMenu.dshieldMenu add command -label "Dshield SrcIP" -command "GetDshield srcip"
+$ipQueryMenu.dshieldMenu add command -label "Dshield DstIP" -command "GetDshield dstip"
 
 # Sig Query Menu
 set sigQueryMenu [ menu .sigQueryMenu -background blue -foreground white -activeforeground blue\
