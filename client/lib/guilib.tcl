@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.3 2003/12/04 16:34:33 creining Exp $
+# $Id: guilib.tcl,v 1.4 2003/12/29 16:55:49 shalligan Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -27,13 +27,13 @@ proc AboutBox {} {
 	return
     }
     toplevel $aboutWin
-    wm title $aboutWin "Snort GUI for Lamerz \[sguil\]"
+    wm title $aboutWin "About Sguil"
     set welcomeFrame [frame $aboutWin.welcomeFrame -borderwidth 1 -background black]
     set welcomeLabel [label $welcomeFrame.welcomeLabel -background lightblue\
 	    -foreground navy -text "\
-	    Snort GUI for Lamerz \[sguil\] Version: $VERSION\n\
+	    Sguil Version: $VERSION\n\
 	    \n\
-	    Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
+	    Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
 	    \n\
 	    This program is distributed under the terms of version 1.0 of the\n\
 	    Q Public License.  See LICENSE.QPL for further details.\n\
