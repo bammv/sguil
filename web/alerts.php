@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/alerts.php,v 1.7 2004/04/04 17:01:42 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/alerts.php,v 1.8 2004/04/04 17:12:47 dlowless Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -25,7 +25,7 @@
 			"?query=" . $_REQUEST['query'] .
 			"&auto_refresh=" . $_REQUEST['auto_refresh'] .
 			"&autorefresh_interval=" . $_REQUEST['autorefresh_interval'] .
-			"&aggrigate=" . $_REQUEST['aggrigate'];
+			"&aggregate=" . $_REQUEST['aggregate'];
 			
 			printf("	<meta http-equiv=\"refresh\" content=\"" . $_REQUEST['autorefresh_interval'] . "; URL=" . $url ."\">\n");
 	}
@@ -35,12 +35,12 @@
 <body>
 
 <?php
-	if( $_REQUEST['aggrigate'] == "" || $_REQUEST['aggrigate'] == "0" )
-		$aggrigate = 0;
+	if( $_REQUEST['aggregate'] == "" || $_REQUEST['aggregate'] == "0" )
+		$aggregate = 0;
 	else
-		$aggrigate = 1;
+		$aggregate = 1;
 		
-	show_alerts($_REQUEST["query"], $aggrigate);
+	show_alerts($_REQUEST["query"], $aggregate);
 ?>
 
 </body>

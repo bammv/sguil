@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.14 2004/04/04 17:01:42 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.15 2004/04/04 17:12:49 dlowless Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -36,12 +36,12 @@ function DBClose($result) {
 }
 
 
-function show_alerts( $where_query, $aggrigate_result ) {
+function show_alerts( $where_query, $aggregate_result ) {
 	global $colours, $status_desc, $status_colour;
 	
 	DBOpen();
 
-	if( $aggrigate_result == 1 ) {
+	if( $aggregate_result == 1 ) {
 		$alert_query = "SELECT count(event.timestamp) as CNT, event.status, event.priority, event.class,
 			sensor.hostname, event.timestamp,
 			event.sid, event.cid, event.signature,
@@ -85,7 +85,7 @@ function show_alerts( $where_query, $aggrigate_result ) {
 	print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\">\n");
 	print("<tr><td colspan=\"11\">Query: " .
 		"<input type=\"text\" name=\"query\" size=\"100\" value=\"" . $where_query . "\"> " .
-		"<input type=\"hidden\" name=\"aggrigate\" value=\"" . $_REQUEST['aggrigate'] . "\"> " .
+		"<input type=\"hidden\" name=\"aggregate\" value=\"" . $_REQUEST['aggregate'] . "\"> " .
 		"<input name=\"submit\" value=\"Submit\" type=\"submit\">" .
 		"<input type=\"checkbox\" name=\"auto_refresh\" value=\"1\"");
 	if( $_REQUEST['auto_refresh'] == 1 ) {

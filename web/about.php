@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/about.php,v 1.1 2004/04/04 17:01:42 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/about.php,v 1.2 2004/04/04 17:12:49 dlowless Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -26,7 +26,7 @@ include('css.php');
 <ul>
 <li>Initial concept design and code by Michael Boman
 &lt;<a href="mailto:mboman@users.sourceforge.net">mboman@users.sourceforge.net</a>&gt;.</li>
-<li>CSS Stylesheet and aggrigated alerts by David Lowless
+<li>CSS Stylesheet and aggregated alerts by David Lowless
 &lt;<a href="mailto:dlowless@users.sourceforge.net">dlowless@users.sourceforge.net</a>&gt;.</li>
 <li>This product includes GeoIP data created by MaxMind, available
 from <a href="http://maxmind.com/" target="_blank">http://maxmind.com/</a></li>

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/Attic/tabs.php,v 1.8 2004/04/04 17:01:42 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/Attic/tabs.php,v 1.9 2004/04/04 17:12:49 dlowless Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -25,14 +25,14 @@
 			<td width="20%" colspan="0" rowspan="0" align="center" valign="middle">
 				<form action="alerts.php" method="POST" target="alerts">
 					<input type="hidden" name="query" value="WHERE event.sid=sensor.sid AND event.status=0 GROUP BY src_ip,signature ORDER BY event.timestamp DESC LIMIT 50">
-					<input type="hidden" name="aggrigate" value="1">
+					<input type="hidden" name="aggregate" value="1">
 					<input value="RealTime Events" type="submit">		
 				</form>
 			</td>
 			<td width="20%" colspan="0" rowspan="0" align="center" valign="middle">
 				<form action="alerts.php" method="POST" target="alerts">
 					<input type="hidden" name="query" value="WHERE event.sid=sensor.sid AND event.status=2 GROUP BY src_ip,signature ORDER BY event.timestamp DESC LIMIT 50">
-					<input type="hidden" name="aggrigate" value="1">
+					<input type="hidden" name="aggregate" value="1">
 					<input value="Escalated Events" type="submit">
 				</form>
 			</td>
