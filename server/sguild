@@ -471,6 +471,9 @@ proc GetPSData { socketID timestamp srcIP } {
 }
 proc ExecDB { socketID query } {
   global DBNAME DBUSER DBPASS DBPORT DBHOST DEBUG
+    if { [lindex $query 0] == "OPTIMIZE" } {
+	SendSystemInfoMsg sguild "Table Optimization begging, please stand by"
+    }
   if {$DEBUG} {puts "Sending DB Query: $query"}
   if { $DBPASS == "" } {
       set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
@@ -482,8 +485,11 @@ proc ExecDB { socketID query } {
   } else {
       if { [lindex $query 0] == "DELETE" } {
 	  SendSocket $socketID "InfoMessage \{Query deleted $execResults rows.\}"
-      } else {
+      } elseif { [lindex $query 0] == "OPTIMIZE" } {
 	  SendSocket $socketID "InfoMessage \{Database Command Completed.\}"
+	  SendSystemInfoMsg sguild "Table Optimization Completed."
+      } else { 
+	  SendSocket $socketID "InfoMessge \{Database Command Completed.\}"
       }
   }
   mysqlclose $dbSocketID
