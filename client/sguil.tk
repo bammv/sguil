@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.140 2004/08/12 17:00:35 bamm Exp $ #
+# $Id: sguil.tk,v 1.141 2004/08/12 17:55:30 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1441,7 +1441,7 @@ proc CreateSensorCheckButton { winName sensorName userList } {
   regsub -all {\.} $sensorName {_} sensor
   set cframe [frame $winName.win$sensor -background black -borderwidth 1]
   checkbutton $cframe.cb$sensor -text "$sensorName" -variable sensorSelectArray($sensorName)\
-    -background lightblue
+    -background lightblue -width 12
   lappend cbList $cframe.cb$sensor
   pack $cframe.cb$sensor -side top -fill x
   # make each win name unique in case a user is logged in more than once
@@ -1493,7 +1493,7 @@ proc SensorList { sensorList } {
         CreateSensorCheckButton $currentFrame $sensorName [lrange $sensorNameUsers 1 end]
         incr i
       } else {
-        pack $currentFrame -side top
+        pack $currentFrame -side top -fill x
         incr frameNumber
         set currentFrame [frame $checkButtonFrame.subFrame$frameNumber]
         CreateSensorCheckButton $currentFrame $sensorName [lrange $sensorNameUsers 1 end]
