@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.85 2004/04/15 17:19:14 bamm Exp $ #
+# $Id: sguild,v 1.86 2004/04/27 18:40:31 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -16,7 +16,8 @@ exec tclsh "$0" "$@"
 ########################## GLOBALS ##################################
 
 set VERSION "SGUIL-0.4.0"
-set DB_VERSION "0.7"
+# Silly but we can use either version for now
+set DB_VERSION "0.7 0.8"
 
 # Config options moved to sguild.conf
 
@@ -1649,7 +1650,7 @@ if { [catch {mysqluse $dbSocketID $DBNAME} noDBError] } {
 }
 # Make sure we have a compatible DB version
 set currentDBVer [FlatDBQuery "SELECT version FROM version"]
-if { $DB_VERSION != $currentDBVer } {
+if { [lsearch $DB_VERSION $currentDBVer] < 0 } {
   puts "ERROR: Incompatable DB schema.\nRequired Version: $DB_VERSION\nInstalled Version: $currentDBVer"
   puts "Check the server/sql_scripts directory of the src that came with sguild for scripts to help you upgrade"
   CleanExit
