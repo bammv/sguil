@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.145 2004/10/18 16:20:39 shalligan Exp $ #
+# $Id: sguil.tk,v 1.146 2004/10/18 17:22:45 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1358,7 +1358,7 @@ proc CreateSensorCheckButton { winName sensorName userList } {
 #             want to monitor.
 #
 proc SensorList { sensorList } {
-  global MONITORFLAG sensorSelectArray VERSION
+  global MONITORFLAG sensorSelectArray VERSION selectAllButton
   set sensorSelectWindow [toplevel .sensorSelectWindow -background white]
   wm title $sensorSelectWindow "$VERSION"
   set welcomeFrame [frame $sensorSelectWindow.welcomeFrame -borderwidth 1 -background black]
@@ -1435,10 +1435,20 @@ proc MonitorSensors { winName } {
   destroy $winName
 }
 proc SelectAllSensors {} {
-  global cbList
-  foreach cb $cbList {
-    $cb select
-  }
+    global cbList selectAllButton 
+    # Change the SelectAllButton to a Unselect all Button
+    $selectAllButton configure -text "UnSelect All" -command "UnSelectAllSensors"
+    foreach cb $cbList {
+	$cb select
+    }
+}
+proc UnSelectAllSensors {} {
+    global cbList selectAllButton
+    # Change the SelectAllButton to a Unselect all Button
+    $selectAllButton configure -text "Select All" -command "SelectAllSensors"
+    foreach cb $cbList {
+	$cb deselect
+    }
 }
 #
 # CheckLineFormat - Parses CONF_FILE lines to make sure they are formatted
