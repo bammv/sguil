@@ -1,8 +1,8 @@
-#!/usr/local/bin/tcl
+#!/bin/sh
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.14 2004/04/21 18:44:23 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.15 2004/04/28 19:38:50 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -14,7 +14,7 @@ exec tclsh "$0" "$@"
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 # Name of sguild server
-set SERVER_HOST syn
+set SERVER_HOST localhost
 # Port sguild listens on for sensor connects
 set SERVER_PORT 7736
 # Local hostname
