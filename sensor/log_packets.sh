@@ -1,6 +1,5 @@
 #!/bin/sh
-#set -x
-# $Id: log_packets.sh,v 1.17 2004/05/24 17:06:02 shalligan Exp $ #
+# $Id: log_packets.sh,v 1.18 2004/06/29 18:43:23 bamm Exp $ #
 
 ################################################
 #                                              #
@@ -33,7 +32,7 @@ LOG_DIR="/snort_data/dailylogs"
 # Percentage of disk to try and maintain
 MAX_DISK_USE=90
 # Interface to 'listen' to.
-INTERFACE="eth0"
+INTERFACE="ed0"
 # Other options to use when starting snort
 #OPTIONS="-u sguil -g sguil -m 122"
 # Where to store the pid
@@ -147,19 +146,19 @@ cleandisk() {
     # Can't use -t on the ls since the mod time changes each time we
     # delete a file. Good thing we use YYYY-MM-DD so we can sort.
     OLDEST_DIR=`ls | sort | head -1`
-    if [ $OLDEST_DIR = ".." ] || [ $OLDEST_DIR = "." ]; then
+    if [ -z $OLDEST_DIR ] || [ $OLDEST_DIR = ".." ] || [ $OLDEST_DIR = "." ]; then
       # Ack, we rm'd all of our raw data files/dirs.
       echo "ERROR: No pcap directories found in $LOG_DIR."
       echo "Something else must be hogging the diskspace."
     else
-      cd $OLDEST_DIR
+      cd $LOG_DIR/$OLDEST_DIR
       OLDEST_FILE=`ls -t | tail -1`
       if [ $OLDEST_FILE ]; then
         echo "  Removing file: $OLDEST_DIR/$OLDEST_FILE"
         rm -f $OLDEST_FILE
       else
         echo "  Removing empty dir: $OLDEST_DIR"
-        cd ..; rm -rf $OLDEST_DIR
+        cd ..; rm -rf $LOG_DIR/$OLDEST_DIR
       fi
       # Run cleandisk again as rm'ing one file might been enough
       # but we wait 5 secs in hopes any open writes are done.
