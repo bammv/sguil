@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.139 2004/08/10 20:14:05 bamm Exp $ #
+# $Id: sguil.tk,v 1.140 2004/08/12 17:00:35 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -19,7 +19,7 @@ exec wish "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.5.1"
+set VERSION "SGUIL-0.5.2"
 
 # Load extended tcl
 if [catch {package require Tclx} tclxVersion] {

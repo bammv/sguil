@@ -1,4 +1,9 @@
-# $Id: CHANGES,v 1.40 2004/08/10 20:14:06 bamm Exp $ #
+# $Id: CHANGES,v 1.41 2004/08/12 17:00:36 bamm Exp $ #
+
+sguil-0.5.2 (12 Aug 2004)
+
+  sguild
+   * Fixed a major bug in the autocat function. -srh
 
 sguil-0.5.1 (10 Aug 2004)
 
