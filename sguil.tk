@@ -332,8 +332,9 @@ proc EmailEvents { detail } {
 	wm geometry $editEmail +200+200
 	wm title $editEmail "E-Mail Event"
 	
-	set textBox [scrolledtext $editEmail.textBox -textbackground white -vscrollmode dynamic\
-         -sbwidth 10 -hscrollmode none -wrap word -visibleitems 80x10 -labeltext "Edit Email"]
+	set textBox [scrolledtext $editEmail.textBox -textbackground white -vscrollmode dynamic \
+		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 80x10 -textfont ourFixedFont \
+		-labeltext "Edit Email"]
 	set fromBox [entryfield $editEmail.fromBox -labeltext "From:" ]
 	$fromBox insert end $EMAIL_FROM
 	set toBox [entryfield $editEmail.toBox  -labeltext "To:"]
