@@ -39,6 +39,7 @@ set MOVEMENT_DIR ""
 set LASTINDEXSELECTED 1
 set MONITORFLAG 0
 set BUSY 0
+set REPORTNUM 0
 set currentSelectedPane 0 
 ######################## END GLOBALS ################################
 
@@ -2879,7 +2880,7 @@ set topFrame [frame .topFrame]
     $queryList add command -label "Query Event Table" -command "QueryRequest event empty"
     $queryList add command -label "Query Sessions Table" -command "QueryRequest sessions empty"
     $queryList add command -label "Standard Queries" -command "StdQuery"
-    $queryList add command -label "Query Builder" -command "QryBuild empty empty"
+    $queryList add command -label "Query Builder" -command "InvokeQryBuild empty empty"
     $queryList add cascade -label "Query by Category" -menu $queryList.category
     set categoryMenu [menu $queryList.category -tearoff 0]
       $categoryMenu add command -label "Cat I: Unauthorized Root Access"\

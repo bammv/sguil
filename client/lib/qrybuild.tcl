@@ -204,4 +204,18 @@ proc typeChange {} {
     # return $tableSelected
 }
 
-
+#
+#  InvokeQryBuild:  Call this proc if you need QueryBuilder to run stand-alone.
+#     Calls DBQryRequest or SSNQryRequest after QryBuild is done
+proc InvokeQryBuild { tableSelected whereTmp } {
+    
+    set tmpWhereStatement [QryBuild $tableSelected $whereTmp]
+    set whereStatement [lindex $tmpWhereStatement 1]
+    set tableName [lindex $tmpWhereStatement 0]
+    if { $whereStatement == "cancel" } { return }
+    if { $tableName == "event" } {
+	DBQueryRequest $whereStatement
+    } else {
+	SsnQueryRequest $whereStatement
+    }
+}
