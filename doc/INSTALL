@@ -1,4 +1,4 @@
-# $Id: INSTALL,v 1.12 2003/11/19 18:18:14 bamm Exp $ #
+# $Id: INSTALL,v 1.13 2003/12/22 17:14:52 shalligan Exp $ #
 
 Sguil should be installed in the following order:
 
@@ -20,7 +20,7 @@ on the resources needed. Large networks will benefit
 by splitting the different processes up on different
 sytems, while a home user should easily be able to
 run everything on a single system.
-
+ 
 ######################################################
 #Step 1: Install mysql and create the sguil database.#
 ######################################################
