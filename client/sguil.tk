@@ -2825,15 +2825,16 @@ foreach arg $argv {
   }
 }
 
+set USER_QRY_FILE "$env(HOME)/.sgqry"
 if { ![info exists CONF_FILE] } {
   # No conf file specified check the defaults
-  if { [file exists ./sguil.conf] } {
+  if { [file exists $env(HOME)/sguil.conf] } {
+    set CONF_FILE $env(HOME)/sguil.conf
+  } elseif { [file exists ./sguil.conf] } {
     set CONF_FILE ./sguil.conf
-  } elseif { [file exists /etc/sguil/sguil.conf] } {
-    set CONF_FILE /etc/sguil/sguil.conf
   } else {
     puts "Couldn't determine where the sguil config file is"
-    puts "Looked for ./sguil.conf and /etc/sguil/sguil.conf."
+    puts "Looked for $env(HOME)/sguil.conf and ./sguil.conf."
     DisplayUsage $argv0
   }
 }
