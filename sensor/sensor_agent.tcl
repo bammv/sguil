@@ -1,7 +1,10 @@
 #!/usr/local/bin/tcl
 
+# Name of sguild server
 set SERVER_HOST syn
+# Port sguild listens on for sensor connects
 set SERVER_PORT 7736
+# Local hostname
 set HOSTNAME gateway
 # Where to look for files created by modded spp_portscan
 set PORTSCAN_DIR /snort_data/portscans
@@ -11,11 +14,15 @@ set SSN_DIR /snort_data/ssn_logs
 set WATCH_DIR /snort_data
 
 # Delay in milliseconds for doing different functions.
+#
+# Portscan files
 set PS_CHECK_DELAY_IN_MSECS 10000
+# Session files
 set SSN_CHECK_DELAY_IN_MSECS 10000
+# Disk space
 set DISK_CHECK_DELAY_IN_MSECS 1800000
 # Keep a heartbeat going w/PING PONG.
-# 0 to disable
+# 0 to disable else time in milliseconds.
 set PING_DELAY 300000
 
 # 1=on 0=off
