@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.30 2005/01/27 14:38:06 shalligan Exp $ #
+# $Id: qrybuild.tcl,v 1.31 2005/01/27 15:13:00 shalligan Exp $ #
 proc QryBuild {tableSelected whereTmp } {
     global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList
@@ -386,7 +386,7 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
     if { $iplist==0 } { 
 	ErrorMessage "Error.  Invalid IP Address"
 	    destroy $ipAddressWin
-	    IPAddress2SQL $caller $editBox
+	    IPAddress2SQL $caller $parameter
     }
     
     set networknumber [lindex $iplist 2]

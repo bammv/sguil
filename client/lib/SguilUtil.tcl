@@ -1,4 +1,4 @@
-# $Id: SguilUtil.tcl,v 1.6 2005/01/26 21:43:15 shalligan Exp $
+# $Id: SguilUtil.tcl,v 1.7 2005/01/27 15:13:00 shalligan Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
@@ -87,7 +87,7 @@ proc InetAtoN { ipaddress } {
     set decIP [expr ($oct1 * 16777216.0) + ($oct2 * 65536) + ($oct3 *256) + $oct4]
     # we don't want the .0 in the query and we can't use round() since it may overflow the int type
     # so let treat it like a string and lop off the .0
-    set decIP [string trimright $decIP ".0"]
+    set decIP [string range $decIP 0 end-2 ]
     return $decIP
 }
 
