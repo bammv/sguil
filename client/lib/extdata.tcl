@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.6 2004/06/11 15:19:58 bamm Exp $
+# $Id: extdata.tcl,v 1.7 2004/06/14 17:44:36 bamm Exp $
 
 proc GetRuleInfo {} {
   global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT SSN_QUERY
@@ -202,6 +202,7 @@ proc CreateXscriptWin { winName } {
   $winName.menubutton.menu add command -label "Close Window" -command "destroy $winName"
   scrolledtext $winName.sText -vscrollmode dynamic -hscrollmode dynamic -wrap word\
    -visibleitems 85x30 -sbwidth 10
+  $winName.sText tag configure hdrTag -foreground black -background "#00FFFF"
   $winName.sText tag configure srcTag -foreground blue
   $winName.sText tag configure dstTag -foreground red
   scrolledtext $winName.debug -vscrollmode dynamic -hscrollmode none -wrap word\
@@ -231,7 +232,7 @@ proc XscriptMainMsg { winName data } {
   
 proc InsertXscriptData { winName state data } {
   if { $state == "HDR" } {
-    $winName.sText component text insert end "$data\n"
+    $winName.sText component text insert end "$data\n" hdrTag
   } elseif { $state == "SRC" } {
     $winName.sText component text insert end "$state: $data\n" srcTag
   } elseif { $state == "DST" } { 

@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.96 2004/06/11 15:19:59 bamm Exp $ #
+# $Id: sguild,v 1.97 2004/06/14 17:44:37 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -630,7 +630,7 @@ proc GenerateXscript { fileName clientSocketID winName } {
   set dstMask [TcpFlowFormat $dstIP $dstPort $srcIP $srcPort]
   SendSocket $clientSocketID "XscriptMainMsg $winName HDR"
   SendSocket $clientSocketID "XscriptMainMsg $winName Sensor Name:\t[lindex $transInfoArray($TRANS_ID) 4]"
-  SendSocket $clientSocketID "XscriptMainMsg $winName Timestamp:\t[lindex $transInfoArray($TRANS_ID) 4]"
+  SendSocket $clientSocketID "XscriptMainMsg $winName Timestamp:\t[lindex $transInfoArray($TRANS_ID) 5]"
   SendSocket $clientSocketID "XscriptMainMsg $winName Connection ID:\t$winName"
   SendSocket $clientSocketID "XscriptMainMsg $winName Src IP:\t\t$srcIP\t([GetHostbyAddr $srcIP])"
   SendSocket $clientSocketID "XscriptMainMsg $winName Dst IP:\t\t$dstIP\t([GetHostbyAddr $dstIP])"
@@ -648,7 +648,9 @@ proc GenerateXscript { fileName clientSocketID winName } {
       catch {close $p0fID} closeError
     }
   }
-  SendSocket $clientSocketID "XscriptMainMsg $winName ================================================================================="
+  # Depreciated with hdrTag in sguil.tk
+  #SendSocket $clientSocketID "XscriptMainMsg $winName ================================================================================="
+  SendSocket $clientSocketID "XscriptMainMsg $winName \n"
   set tcpflowID [open "| $TCPFLOW -c -r $fileName"]
   set state SRC
   while { [gets $tcpflowID data] >= 0 } {
