@@ -11,7 +11,7 @@
 
 ########################## GLOBALS ##################################
 
-set VERSION "0.1 BETA 5"
+set VERSION "sguil 0.1"
 
 # DEBUG 1=on 0=off This is VERY chatty.
 set DEBUG 1
@@ -46,12 +46,13 @@ proc ClientCmdRcvd { socketID } {
   if { [eof $socketID] || [catch {gets $socketID data}] } {
     # Socket closed
     close $socketID
-    set clientList [ldelete $clientList $socketID]
+    ClientExitClose $socketID
     if {$DEBUG} { puts "Socket $socketID closed" }
   } else {
     if {$DEBUG} {puts "Clent Command Recieved: $data"}
     set clientCmd [lindex $data 0]
     switch -exact $clientCmd {
+      SendSensorList { $clientCmd $socketID }
       MonitorSensors { $clientCmd $socketID [lrange $data 1 end] } 
       SendEscalatedEvents { $clientCmd $socketID }
       RuleRequest { $clientCmd $socketID [lindex $data 1] [lrange $data 2 end] }
@@ -65,6 +66,18 @@ proc ClientCmdRcvd { socketID } {
       QueryDB { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
       GetPSData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
       default { puts "Unrecognized command from $socketID: $data" }
+    }
+  }
+}
+
+proc ClientExitClose { socketID } {
+  global clientList  clientMonitorSockets
+  if { [info exists clientList] } {
+    set clientList [ldelete $clientList $socketID]
+  }
+  if { [info exists clientMonitorSockets] } {
+    foreach sensorName [array names clientMonitorSockets] {
+      set clientMonitorSockets($sensorName) [ldelete $clientMonitorSockets($sensorName) $socketID]
     }
   }
 }
@@ -121,7 +134,7 @@ proc SendSocket { socketID command } {
     if {$DEBUG} { puts "Error sending \"$command\" to $socketID" }
     catch { close $socketID } closeError
     # Remove socket from the client list
-    set clientList [ldelete $clientList $socketID]
+    CleanCloseError $socketID
     return
   }
   catch {flush $socketID} flushError
@@ -154,8 +167,9 @@ proc SendSystemInfoMsg { sensor msg } {
 # AddEventToEventArray: Global eventIDArray contains current events.
 #
 proc AddEventToEventArray { eventDataList } {
-  global eventIDArray eventIDList
+  global eventIDArray eventIDList sensorIDList
   set eventID [join [lrange $eventDataList 5 6] .]
+  set sensorName [lindex $eventDataList 3]
   set eventIDArray($eventID) $eventDataList
   # Arrays are not kept in any particular order so we have to keep
   # a list in order to control the order the clients recieve events
@@ -201,8 +215,10 @@ proc DeleteEventIDList { socketID status deleteEventIDList } {
 proc DeleteEventID { socketID eventID status } {
   global eventIDArray eventIDList clientList escalateArray escalateIDList
   
-  if { [info exists escalateArray($eventID)] } { unset escalateArray($eventID) }
-  if { [info exists escalateIDList] } {set escalateIDList [ldelete $escalateIDList $eventID]}
+  foreach socket $clientList {
+    # See comments in DeleteEventIDList
+    SendSocket $socket "DeleteEventID $eventID"
+  }
   # If status == 2 then escalate
   if { $status == 2 } {
     lappend escalateIDList $eventID
@@ -211,13 +227,11 @@ proc DeleteEventID { socketID eventID status } {
       SendSocket $socket "InsertEscalatedEvent $escalateArray($eventID)"
     }
   }
+  if { [info exists escalateArray($eventID)] } { unset escalateArray($eventID) }
+  if { [info exists escalateIDList] } {set escalateIDList [ldelete $escalateIDList $eventID]}
   if { [info exists eventIDArray($eventID)] } { unset eventIDArray($eventID) }
   set eventIDList [ldelete $eventIDList $eventID]
   UpdateDBStatus $eventID [GetCurrentTimeStamp] $status
-  foreach socket $clientList {
-    # See comments in DeleteEventIDList
-    SendSocket $socket "DeleteEventID $eventID"
-  }
 }
 
 #
@@ -431,14 +445,30 @@ proc GetUdpData { socketID sid cid } {
 }
 
 #
+# SendSensorList: Sends a list of sensors for the end user to select from.
+#
+proc SendSensorList { socketID } {
+  global sensorList
+  set query "SELECT hostname FROM sensor"
+  set sensorList [FlatDBQuery $query]
+  if { $sensorList != "" } {
+    puts $socketID "SensorList $sensorList"
+  } else {
+    puts $socketID "SensorList 0none0"
+  }
+}
+#
 # MonitorSensors: Sends current events to client. Adds client to clientList
 #                 In the future sensorList will contain a list of sensors, for
 #                 now the client gets everything.
 #
-proc MonitorSensors { socketID $sensorList } {
-  global DEBUG clientList
+proc MonitorSensors { socketID sensorList } {
+  global DEBUG clientList clientMonitorSockets
   if {$DEBUG} {puts "$socketID added to clientList"}
   lappend clientList $socketID
+  foreach sensorName $sensorList {
+    lappend clientMonitorSockets($sensorName) $socketID
+  }
   SendCurrentEvents $socketID
 }
 
@@ -455,12 +485,17 @@ proc SendEscalatedEvents { socketID } {
 # SendCurrentEvents: Sends newly connected clients the current event list
 #
 proc SendCurrentEvents { socketID } {
-  global eventIDArray eventIDList DEBUG
+  global eventIDArray eventIDList DEBUG clientMonitorSockets
   
   if { [info exists eventIDList] && [llength $eventIDList] > 0 } {
     foreach eventID $eventIDList {
-      if {$DEBUG} { puts "Sending client $socketID: InsertEvent $eventIDArray($eventID)" }
-      SendSocket $socketID "InsertEvent $eventIDArray($eventID)"
+      set sensorName [lindex $eventIDArray($eventID) 3]
+      if { [info exists clientMonitorSockets($sensorName)] } {
+        if { [lsearch -exact $clientMonitorSockets($sensorName) $socketID] >= 0} {
+          if {$DEBUG} { puts "Sending client $socketID: InsertEvent $eventIDArray($eventID)" }
+          SendSocket $socketID "InsertEvent $eventIDArray($eventID)"
+        }
+      }
     }
   }
 }
@@ -499,6 +534,10 @@ foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, event.cl
 }
 mysqlclose $dbSocketID
 puts "Waiting for events from sensors..."
+
+set sensorQuery "SELECT hostname FROM sensor"
+set sensorList [FlatDBQuery $sensorQuery]
+puts "Unique sensors in the DB: $sensorList"
 
 # Open a socket for clients to connect to
 set serverSocket [socket -server ClientConnect $SERVERPORT]

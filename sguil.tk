@@ -15,7 +15,7 @@
 
 ########################## GLOBALS ##################################
 
-set VERSION "0.1 BETA 5"
+set VERSION "sguil 0.1"
 
 set ACTIVE_EVENT 0
 set MULTI_SELECT 0
@@ -28,6 +28,8 @@ set MotionStart -1
 set MotionLowIndex -1
 set MOVEMENT_DIR ""
 set LASTINDEXSELECTED 1
+set MONITORFLAG 0
+
 ######################## END GLOBALS ################################
 
 ########################## PROCS ####################################
@@ -69,6 +71,7 @@ proc ServerCommandRcvd { socketID } {
       InfoMessage { $serverCmd [lindex $data 1] }
       PSDataResults { InsertPSData [lrange $data 1 end] }
       InsertEscalatedEvent { $serverCmd [lrange $data 1 end] }
+      SensorList { $serverCmd [lrange $data 1 end] }
       default { puts "Unrecognized command from $socketID: $data" }
     }
   } 
@@ -186,7 +189,8 @@ proc ValidateEvent { status } {
   global ACTIVE_EVENT currentSelectedPane
   if {$ACTIVE_EVENT} {
      # set selectedIndex [$currentSelectedPane.eventIDFrame.list curselection]
-     foreach selectedIndex [lsort -decreasing [$currentSelectedPane.eventIDFrame.list curselection]] {
+     foreach selectedIndex\
+      [lsort -integer -decreasing [$currentSelectedPane.eventIDFrame.list curselection]] {
        puts "Validating Index: $selectedIndex"
        RemoveEvent $currentSelectedPane $selectedIndex $status
      }
@@ -511,7 +515,7 @@ proc RemoveEvent { paneName index status} {
 #                This is ugly right now. 
 #
 proc DeleteEventID { eventID } {
-  global eventArray correlateArray rtPaneArray
+  global eventArray correlateArray rtPaneArray escalateFrame
   if { [info exists eventArray($eventID)] } { unset eventArray($eventID) }
   if { [info exists correlateArray($eventID)] } {
     foreach event $correlateArray($eventID) {
@@ -523,6 +527,10 @@ proc DeleteEventID { eventID } {
     set eventIDIndex [lsearch -exact $eventIDList $eventID]
     if { $eventIDIndex >= 0 } { DeleteLine $rtPaneArray($arrayName) $eventIDIndex }
   }
+  set escalatedIDList [$escalateFrame.eventIDFrame.list get 0 end]
+  puts $escalatedIDList
+  set escalatedIDIndex [lsearch -exact $escalatedIDList $eventID]
+  if { $escalatedIDIndex >= 0 } { DeleteLine $escalateFrame $escalatedIDIndex }
 }
 proc DeleteLine { paneName index } {
   
@@ -1361,9 +1369,9 @@ proc GetXscript { type force } {
       
     } elseif { $type == "ethereal" } {
       if { $srcPort > $dstPort } {
-        set tmpFile "/tmp/$dstIP:$dstPort-$srcIP:$srcPort.raw"
+        set tmpFile "/tmp/${dstIP}_${dstPort}-${srcIP}_${srcPort}.raw"
       } else {
-        set tmpFile "/tmp/$srcIP:$srcPort-$dstIP:$dstPort.raw"
+        set tmpFile "/tmp/${srcIP}_${srcPort}-${dstIP}_${dstPort}.raw"
       }
       set tmpFileID [open $tmpFile w]
       fconfigure $tmpFileID -translation binary
@@ -1741,6 +1749,101 @@ proc SaveNewFonts {} {
   write_file $FONTFILE "ourStandardFont [font configure ourStandardFont]" "ourFixedFont [font configure ourFixedFont]"
 }
 
+proc CreateSensorCheckButton { winName sensorName } {
+  checkbutton $winName.$sensorName -text "$sensorName" -variable sensorSelectArray($sensorName)
+  pack $winName.$sensorName -side left -padx 10 -pady 10
+}
+#
+# SensorList: Rcvd a list of sensors from the server. Select which ones we 
+#             want to monitor.
+#
+proc SensorList { sensorList } {
+  global MONITORFLAG sensorSelectArray subFrameList
+  set sensorSelectWindow [toplevel .sensorSelectWindow -background white]
+  wm title $sensorSelectWindow "Snort GUI for Lamerz \[sguil\]"
+  set welcomeFrame [frame $sensorSelectWindow.welcomeFrame -borderwidth 1 -background black]
+  set welcomeLabel [label $welcomeFrame.welcomeLabel -background lightblue\
+   -foreground navy -text "\
+   Snort GUI for Lamerz \[sguil\]\n\
+   \n\
+   Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
+   \n\
+   This program is distributed under the terms of version 1.0 of the\n\
+   Q Public License.  See LICENSE.QPL for further details.\n\
+   \n\
+   This program is distributed in the hope that it will be useful,\n\
+   but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\
+  "]
+  pack $welcomeLabel -ipadx 5 -ipady 5
+  pack $welcomeFrame -side top -padx 5 -pady 10
+  if { $sensorList != "0none0" } {
+    # Now a frame to contain the checkbutton frames
+    set checkButtonFrame [frame $sensorSelectWindow.checkButtonFrame -borderwidth 1 -background black]
+    pack $checkButtonFrame -side top -padx 5 -pady 10
+    set winLabel [label $checkButtonFrame.label -text "Select Senor(s) to Monitor"\
+     -foreground navy]
+    pack $winLabel -side top -fill both -expand true
+    # We create a new frame for every 5 sensors to keep the look clean.
+    set i 0
+    set frameNumber 0
+    set currentFrame [frame $checkButtonFrame.subFrame$frameNumber]
+    lappend subFrameList $currentFrame
+    foreach sensorName $sensorList {
+      if { $i < 5 } {
+        CreateSensorCheckButton $currentFrame $sensorName
+        incr i
+      } else {
+        pack $currentFrame -side top
+        incr frameNumber
+        set currentFrame [frame $checkButtonFrame.subFrame$frameNumber]
+        lappend subFrameList $currentFrame
+        CreateSensorCheckButton $currentFrame $sensorName
+        set i 1
+      }
+  
+    }
+    pack $currentFrame -side top
+  } else {
+    label $sensorSelectWindow.noSensorLabel -background white -text\
+    "There are No sensors currently in the DB to monitor.\n\
+     Press <Start GUI> to launch the GUI anyway."
+    pack $sensorSelectWindow.noSensorLabel -side top
+  }
+  set actionButtonFrame [frame $sensorSelectWindow.actionButtonFrame -background white]
+    set selectAllButton [button $actionButtonFrame.selectAllButton -text "Select All"\
+     -command "SelectAllSensors"]
+    set monitorButton [button $actionButtonFrame.monitorButton -text "Start GUI"\
+     -command "MonitorSensors $sensorSelectWindow"]
+    set exitButton [button $actionButtonFrame.exitButton -text "Exit" -command "CleanExit"]
+    pack $selectAllButton $monitorButton $exitButton -side left -padx 10 -pady 10
+  pack $actionButtonFrame -side top
+  # Don't move on until we select the sensors
+  tkwait window $sensorSelectWindow
+  set MONITORFLAG 1
+}
+proc MonitorSensors { winName } {
+  global sensorSelectArray socketID DEBUG
+  foreach sensorName [array names sensorSelectArray] {
+    if {$sensorSelectArray($sensorName)} { lappend monitorList $sensorName }
+  }
+  if { [info exists monitorList] } {
+    if {$DEBUG} { puts "Sending Server: MonitorSensors $monitorList"}
+    puts $socketID "MonitorSensors $monitorList"
+  } else {
+    InfoMessage "You did not select any sensors to monitor and will NOT recieve any events."
+  }
+  destroy $winName
+}
+proc SelectAllSensors {} {
+  global subFrameList
+  foreach subFrame $subFrameList {
+    foreach checkButton [winfo children $subFrame] {
+      $checkButton invoke
+    }
+  }
+}
+
 ################################ END PROCS ##################################
 
 ################################ MAIN #######################################
@@ -1798,7 +1901,9 @@ if [catch {set socketID [socket $SERVERHOST $SERVERPORT]}] {
 } else {
   fconfigure $socketID -buffering line
   fileevent $socketID readable [list ServerCommandRcvd $socketID]
-  puts $socketID "MonitorSensors all"
+  puts $socketID "SendSensorList"
+  wm withdraw .
+  tkwait variable MONITORFLAG
   puts $socketID "SendEscalatedEvents"
 }
 
@@ -2321,6 +2426,8 @@ $validateMenu add command -label "Cat VI (F6)" -command "ValidateEvent 16"
 $validateMenu add command -label "Cat VII (F7)" -command "ValidateEvent 17"
 
 
+update
+wm deiconify .
 
 ################### GENERAL KEY BINDINGS ########################
 

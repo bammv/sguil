@@ -1,6 +1,25 @@
-Version 0.1rc1
+Version 0.2
   sguil.tk
-    * MulitiSelect functionality added by geek2.
+    * Dialog for selecting sensor(s) on to monitor added
+      to initialization.
+
+    * Fixed escalate bug where events weren't removed from all
+      connected clients.
+
+  sguild
+    * Added procs and changes required for monitoring specific
+      sensors.
+
+    * Fixed escalate bug where events weren't removed from all
+      connected clients.
+
+Version 0.1
+  sguil.tk
+    * MulitiSelect functionality added by Steve Halligan (geek2)
+      shalligan@333tech.com.
+
+    * Removed : from temporary raw data file name for use with
+      Windows.
 
 Version 0.1 BETA 4
   *NOTE: This version requires a slight modification to
