@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.130 2004/07/27 14:32:21 shalligan Exp $ #
+# $Id: sguil.tk,v 1.131 2004/07/27 14:41:27 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2383,15 +2383,15 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
 	      -command "ShowHideSearch"
      foreach childWin [winfo children $dataTextFrame] {
 	bind $childWin <ButtonPress-3> {
-	    tk_popup $dataFrameMenu  [winfo rootx %W] [expr %Y +6]
+	    tk_popup $dataFrameMenu %X [expr %Y +6]
 	}
      }
      bind $dataSearchFrame <ButtonPress-3> {
-	    tk_popup $dataFrameMenu  [winfo rootx %W] [expr %Y +6]
+	    tk_popup $dataFrameMenu %X [expr %Y +6]
 	}
      foreach childWin [winfo children $dataSearchFrame] {
 	bind $childWin <ButtonPress-3> {
-	    tk_popup $dataFrameMenu  [winfo rootx %W] [expr %Y +6]
+	    tk_popup $dataFrameMenu %X [expr %Y +6]
 	}
      }
      if { $SEARCHFRAME == 1 } {
