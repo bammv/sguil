@@ -2113,7 +2113,7 @@ proc CreateSessionLists { baseFrame } {
       SortListsBy %W sessions
     }
     bind $xidList <ButtonPress-3> {
-      SelectAllLists %W [%W nearest %y]
+      SingleSelect %W [%W nearest %y]
       LaunchXscriptMenu %W %Y
     }
     bind $xidList <Button-2> { GetXscript xscript 0 }
@@ -2148,7 +2148,7 @@ proc CreateSessionLists { baseFrame } {
       SortListsBy %W sessions
     }
     bind $srcIPList <ButtonPress-3> {
-      SelectAllLists %W [%W nearest %y]
+      SingleSelect %W [%W nearest %y]
       LaunchIPQueryMenu %W %Y
     }
   set srcPortFrame [frame $baseFrame.srcPortFrame]
@@ -2172,7 +2172,7 @@ proc CreateSessionLists { baseFrame } {
       SortListsBy %W sessions
     }
     bind $dstIPList <ButtonPress-3> {
-      SelectAllLists %W [%W nearest %y]
+      SingleSelect %W [%W nearest %y]
       LaunchIPQueryMenu %W %Y
     }
   set dstPortFrame [frame $baseFrame.dstPortFrame]
@@ -2246,7 +2246,7 @@ proc CreateEventLists { baseFrame } {
       SortListsBy %W
     }
     bind $statusList <ButtonPress-3> {
-      SelectAllLists %W [%W nearest %y]
+      SingleSelect %W [%W nearest %y]
       LaunchStatusMenu %W %Y
     }
   set priorityFrame [frame $baseFrame.priorityFrame]
@@ -2286,7 +2286,7 @@ proc CreateEventLists { baseFrame } {
       SortListsBy %W
     }
     bind $eventIDList <ButtonPress-3> {
-      SelectAllLists %W [%W nearest %y]
+      SingleSelect %W [%W nearest %y]
       LaunchXscriptMenu %W %Y
     }
     bind $eventIDList <Button-2> { GetXscript xscript 0 }
@@ -2311,7 +2311,7 @@ proc CreateEventLists { baseFrame } {
       SortListsBy %W
     }
     bind $srcIPList <ButtonPress-3> {
-      SelectAllLists %W [%W nearest %y]
+      SingleSelect %W [%W nearest %y]
       LaunchIPQueryMenu %W %Y
     }
   set srcPortFrame [frame $baseFrame.srcPortFrame]
@@ -2335,7 +2335,7 @@ proc CreateEventLists { baseFrame } {
       SortListsBy %W
     }
     bind $dstIPList <ButtonPress-3> {
-      SelectAllLists %W [%W nearest %y]
+      SingleSelect %W [%W nearest %y]
       LaunchIPQueryMenu %W %Y
     }
   set dstPortFrame [frame $baseFrame.dstPortFrame]
@@ -2369,7 +2369,7 @@ proc CreateEventLists { baseFrame } {
       SortListsBy %W
     }
     bind $msgList <ButtonPress-3> {
-      SelectAllLists %W [%W nearest %y]
+      SingleSelect %W [%W nearest %y]
       LaunchSigQueryMenu %W %Y
     }
   set scroll [scrollbar $baseFrame.scroll -command "MultiScrollBar \"$statusList $countList $sensorList $eventIDList\
@@ -2798,7 +2798,7 @@ while { $i < $RTPANES } {
     pack $statusList -side bottom -fill y -expand true
     BindSelectionToAllLists $statusList
     bind $statusList <ButtonPress-3> {
-      SelectAllLists %W [%W nearest %y]
+      SingleSelect %W [%W nearest %y]
       LaunchStatusMenu %W %Y
     }
   set priorityFrame [frame $currentPane.priorityFrame]
@@ -2813,7 +2813,7 @@ while { $i < $RTPANES } {
     pack $countList -side bottom -fill y -expand true
     BindSelectionToAllLists $countList
     bind $countList <ButtonPress-3> {
-      SelectAllLists %W [%W nearest %y]
+      SingleSelect %W [%W nearest %y]
       LaunchCorrelateMenu %W %Y
     }
     # Middle click on count gives all correlated events
@@ -2833,7 +2833,7 @@ while { $i < $RTPANES } {
     pack $eventIDList -side bottom -fill y -expand true
     BindSelectionToAllLists $eventIDList
     bind $eventIDList <ButtonPress-3> {
-      SelectAllLists %W [%W nearest %y]
+      SingleSelect %W [%W nearest %y]
       LaunchXscriptMenu %W %Y
     }
     bind $eventIDList <Button-2> { GetXscript xscript 0 }
@@ -2852,7 +2852,7 @@ while { $i < $RTPANES } {
     pack $srcIPList -side bottom -fill y -expand true
     BindSelectionToAllLists $srcIPList
     bind $srcIPList <ButtonPress-3> {
-      SelectAllLists %W [%W nearest %y]
+      SingleSelect %W [%W nearest %y]
       LaunchIPQueryMenu %W %Y
     }
   set srcPortFrame [frame $currentPane.srcPortFrame]
@@ -2870,7 +2870,7 @@ while { $i < $RTPANES } {
     pack $dstIPList -side bottom -fill y -expand true
     BindSelectionToAllLists $dstIPList
     bind $dstIPList <ButtonPress-3> {
-      SelectAllLists %W [%W nearest %y]
+      SingleSelect %W [%W nearest %y]
       LaunchIPQueryMenu %W %Y
     }
   set dstPortFrame [frame $currentPane.dstPortFrame]
@@ -2895,7 +2895,7 @@ while { $i < $RTPANES } {
     pack $msgList -side bottom -fill both -expand true
     BindSelectionToAllLists $msgList
     bind $msgList <ButtonPress-3> {
-      SelectAllLists %W [%W nearest %y]
+      SingleSelect %W [%W nearest %y]
       LaunchSigQueryMenu %W %Y
     }
   set scroll [scrollbar $currentPane.scroll -command "MultiScrollBar \"$statusList $countList $sensorList $eventIDList\
