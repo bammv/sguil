@@ -20,6 +20,8 @@ set VERSION "sguil 0.2"
 set ACTIVE_EVENT 0
 set MULTI_SELECT 0
 set QUERY_NUMBER 0
+set SSN_QUERY_NUMBER 0
+set SSN_QUERY 0
 set SLEEP 0
 set SOUND 0
 set FONTFILE "$env(HOME)/.sguilrc"
@@ -143,28 +145,32 @@ proc CreateTableListBox { winName columnList } {
     $lengthList itemconfigure end -background $BCOLOR
   }
 }
-proc QueryRequest { queryType { incidentCat {NULL} } } {
+proc QueryRequest { tableName queryType { incidentCat {NULL} } } {
   global currentSelectedPane
   set timestamp [lindex [GetCurrentTimeStamp "1 week ago"] 0]
-  set whereTmp "WHERE event.sid=sensor.sid AND event.timestamp > '$timestamp' AND "
+  if { $tableName == "event" } {
+    set whereTmp "WHERE $tableName.sid=sensor.sid AND $tableName.timestamp > '$timestamp' AND "
+  } else {
+    set whereTmp "WHERE $tableName.sid=sensor.sid AND $tableName.start_time > '$timestamp' AND "
+  }
   if { $queryType == "srcip" } {
     set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
     set srcIP [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
-    set whereTmp "$whereTmp event.src_ip = INET_ATON('$srcIP')"
+    set whereTmp "$whereTmp $tableName.src_ip = INET_ATON('$srcIP')"
   } elseif { $queryType == "dstip" } {
     set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
     set dstIP [$currentSelectedPane.dstIPFrame.list get $selectedIndex]
-    set whereTmp "$whereTmp event.dst_ip  = INET_ATON('$dstIP')"
+    set whereTmp "$whereTmp $tableName.dst_ip  = INET_ATON('$dstIP')"
   } elseif { $queryType == "empty" } {
     set whereTmp "$whereTmp <Insert Query Here>"
   } elseif { $queryType == "src2dst" } {
     set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
     set srcIP [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
     set dstIP [$currentSelectedPane.dstIPFrame.list get $selectedIndex]
-    set whereTmp "$whereTmp event.src_ip  = INET_ATON('$srcIP') AND event.dst_ip = INET_ATON('$dstIP')"
+    set whereTmp "$whereTmp $tableName.src_ip  = INET_ATON('$srcIP') AND $tableName.dst_ip = INET_ATON('$dstIP')"
   } elseif { $queryType == "category" } {
     set whereTmp "$whereTmp event.status = $incidentCat"
-  } elseif { $queryType == "event" } {
+  } elseif { $queryType == "signature" } {
     set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
     set eventMsg [$currentSelectedPane.msgFrame.list get $selectedIndex]
     set whereTmp "$whereTmp event.signature = '$eventMsg'"
@@ -184,8 +190,43 @@ proc QueryRequest { queryType { incidentCat {NULL} } } {
     }
     DBQueryRequest $whereStatement $winTitle
   } else {
-    DBQueryRequest $whereStatement
+    if { $tableName == "event" } {
+      DBQueryRequest $whereStatement
+    } else {
+      SsnQueryRequest $whereStatement
+    }
   }
+}
+proc SsnQueryRequest { whereStatement } {
+  global eventTabs SSN_QUERY_NUMBER socketID DEBUG
+  set selectQuery "SELECT sensor.hostname, sessions.xid, sessions.start_time, sessions.end_time,\
+   INET_NTOA(sessions.src_ip), sessions.src_port, INET_NTOA(sessions.dst_ip), sessions.dst_port,\
+   sessions.src_pckts, sessions.src_bytes, sessions.dst_pckts, sessions.dst_bytes\
+   FROM sessions, sensor $whereStatement"
+  regsub -all {\n} $selectQuery {} selectQuery
+  incr SSN_QUERY_NUMBER
+  $eventTabs add -label "Ssn Query $SSN_QUERY_NUMBER"
+  set currentTab [$eventTabs childsite end]
+  set tabIndex [$eventTabs index end]
+  set queryFrame [frame $currentTab.ssnquery_${SSN_QUERY_NUMBER}]
+  $eventTabs select end
+  # Here is where we build the session display lists.
+  CreateSessionLists $queryFrame
+  set whereText [text $currentTab.text -height 1 -background white]
+  $whereText insert 0.0 $whereStatement
+  bind $whereText <Return> {
+    set whereStatement [%W get 0.0 end]
+    SsnQueryRequest $whereStatement
+    break
+  }
+  set closeButton [button $currentTab.close -text "Close Tab" -relief flat -borderwidth 0 -width 1\
+   -foreground white -background black -activebackground black -activeforeground red -pady 0\
+   -command "DeleteTab $eventTabs $currentTab"]
+  pack $closeButton $whereText -side bottom -fill x
+  pack $queryFrame -side top
+  $queryFrame configure -cursor watch
+  if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame \{$selectQuery\}" }
+  puts $socketID "QueryDB $queryFrame \{$selectQuery\}"
 }
 proc DBQueryRequest { whereStatement {winTitle {none} } } {
   global eventTabs QUERY_NUMBER socketID DEBUG
@@ -218,8 +259,6 @@ proc DBQueryRequest { whereStatement {winTitle {none} } } {
   pack $closeButton $whereText -side bottom -fill x
   pack $queryFrame -side top
   $queryFrame configure -cursor watch
-
-
   if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame \{$selectQuery\}" }
   puts $socketID "QueryDB $queryFrame \{$selectQuery\}"
 }
@@ -681,12 +720,12 @@ proc LaunchIPQueryMenu { winName yRoot } {
   if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
   tk_popup $ipQueryMenu [winfo rootx $winName] [expr $yRoot + 6]
 }
-proc LaunchEventQueryMenu { winName yRoot } {
-  global ACTIVE_EVENT eventQueryMenu MULTI_SELECT
+proc LaunchSigQueryMenu { winName yRoot } {
+  global ACTIVE_EVENT sigQueryMenu MULTI_SELECT
     if {!$ACTIVE_EVENT || $MULTI_SELECT == 1} { return }
   set selectedIndex { $winName curselection }
   if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
-  tk_popup $eventQueryMenu [winfo rootx $winName] [expr $yRoot + 6]
+  tk_popup $sigQueryMenu [winfo rootx $winName] [expr $yRoot + 6]
 }
 proc LaunchCorrelateMenu { winName yRoot } {
   global ACTIVE_EVENT correlateMenu MULTI_SELECT
@@ -1120,6 +1159,14 @@ proc GetStatusNameByNumber { status } {
   }
 }
 proc InsertQueryResults { paneName results } {
+  set queryType [lindex [split [winfo name $paneName] _] 0]
+  if { $queryType == "query" } {
+    InsertEventQueryResults $paneName $results
+  } else {
+    InsertSessionQueryResults $paneName $results
+  }
+}
+proc InsertEventQueryResults { paneName results } {
   global CATEGORY_COLOR
   set status [lindex $results 0]
   if { $status == "done" } { $paneName configure -cursor left_ptr; return }
@@ -1157,6 +1204,38 @@ proc InsertEscalatedEvent { data } {
   set dstPort [lindex $data 12]
   DisplayEvent $escalateFrame $status [lindex $data 1] 1 $sensor $dateTime $eventID $message\
    $srcIP $dstIP $protocol $srcPort $dstPort $statusColor
+}
+proc InsertSessionQueryResults { paneName results } {
+  global ALTCOLORS COLOR1 COLOR2 COLOR3
+ 
+  if { $results == "done" } { $paneName configure -cursor left_ptr; return }
+
+  if {$ALTCOLORS} {
+    if { [$paneName.sensorFrame.list size] == 0 } {
+      set backgroundColor $COLOR1
+    } else {
+      set lastBackgroundColor [lindex [$paneName.sensorFrame.list itemconfigure end -background] 4]
+      if {$lastBackgroundColor == "$COLOR1"} {
+        set backgroundColor "$COLOR2"
+      } elseif { $lastBackgroundColor == "$COLOR2" } {
+        set backgroundColor "$COLOR3"
+      } else {
+        set backgroundColor "$COLOR1"
+      }
+    }
+  }
+
+  set i 0
+  foreach childWin [winfo children $paneName] {
+    if { [winfo name $childWin] != "scroll" } {
+      $childWin.list insert end [lindex $results $i]
+      if {$ALTCOLORS} {
+        # Waste resources for alternating colors this can be a hog when insert 500+ events
+        $childWin.list itemconfigure end -background "$backgroundColor"
+      }
+      incr i
+    }
+  }
 }
 
 #
@@ -1210,14 +1289,17 @@ proc DisplayEvent { paneName status priority count sensor dateTime eventID messa
   
 }
 
-#
-# UnSelectAllOptions:  Used when ESC is hit or on a multiple selection to turn off packet details, etc
-#
-proc UnSelectAllOptions { } {
-  global whoisNoneButton dnsButton displayPacketButton displayRuleButton referenceButton displayPSButton
+proc UnSelectHostLookups {} {
+  global whoisNoneButton dnsButton
   $whoisNoneButton invoke
   $dnsButton deselect
   ClearDNSText
+}
+#
+# UnSelectAllOptions:  Used when ESC is hit or on a multiple selection to turn off packet details, etc
+#
+proc UnSelectPacketOptions { } {
+  global displayPacketButton displayRuleButton referenceButton displayPSButton
   $displayPacketButton deselect
   ClearPacketData
   $displayRuleButton deselect
@@ -1289,7 +1371,8 @@ proc ShiftSelect { winName index } {
 	return
     }
     set MULTI_SELECT 1
-    UnSelectAllOptions
+    UnSelectPacketOptions
+    UnSelectHostLookups
     # Check to see if the current index is higher or lower that the LASTSELECTEDINDEX
     if { $index > $LASTINDEXSELECTED } {
 	set MOVEMENT_DIR "shift"
@@ -1388,7 +1471,8 @@ proc MotionSelect { winName index } {
   # If MotionIndexHigh/Low are set then this is not the first event.  Check the index to see
   # which direction the motion is going
   set MULTI_SELECT 1
-  UnSelectAllOptions
+  UnSelectPacketOptions
+  UnSelectHostLookups
   if { $index > $MotionHighIndex } {
       set MotionHighIndex $index
       set MOVEMENT_DIR down
@@ -1485,6 +1569,7 @@ proc SelectNextEvent { paneName index } {
 #
 proc SelectAllLists { winName index } {
   global MULTI_SELECT currentSelectedPane ACTIVE_EVENT DISPLAYEDDETAIL portscanDataFrame packetDataFrame
+  global SSN_QUERY
 
   set ACTIVE_EVENT 1
 #
@@ -1499,32 +1584,45 @@ proc SelectAllLists { winName index } {
     return
   }
   HighLightListLine $currentSelectedPane $index $index
+
+  # Check to see if we are working with a session query tab
+  if {[lindex [ split [winfo name $currentSelectedPane] _] 0] == "ssnquery" } { 
+    set SSN_QUERY 1 
+  } else {
+    set SSN_QUERY 0
+  }
+
 #
 # We don't want any detail displayed if this is a multi-select
 # So lets stick this below bit in a conditional
 #
   if { !$MULTI_SELECT } {
-    if {[lindex [$currentSelectedPane.msgFrame.list get $index] 0] == "spp_portscan:"} {
-      if { $DISPLAYEDDETAIL != $portscanDataFrame } {
-        pack forget $packetDataFrame
-        pack $portscanDataFrame -fill both -expand true
-      }
-      set DISPLAYEDDETAIL $portscanDataFrame
-      DisplayPortscanData
+    if {$SSN_QUERY} {
+      UnSelectPacketOptions
     } else {
-      if { $DISPLAYEDDETAIL != $packetDataFrame } {
-        pack forget $portscanDataFrame
-        pack $packetDataFrame -fill both -expand true
-        set DISPLAYEDDETAIL $packetDataFrame
+      if { [lindex [$currentSelectedPane.msgFrame.list get $index] 0] == "spp_portscan:"} {
+        if { $DISPLAYEDDETAIL != $portscanDataFrame } {
+          pack forget $packetDataFrame
+          pack $portscanDataFrame -fill both -expand true
+        }
+        set DISPLAYEDDETAIL $portscanDataFrame
+        DisplayPortscanData
+      } else {
+        if { $DISPLAYEDDETAIL != $packetDataFrame } {
+          pack forget $portscanDataFrame
+          pack $packetDataFrame -fill both -expand true
+          set DISPLAYEDDETAIL $packetDataFrame
+        }
+        DisplayPacketHdr $currentSelectedPane $index
+        GetRuleInfo
+        GetPacketInfo
       }
-      DisplayPacketHdr $currentSelectedPane $index
-      GetRuleInfo
-      GetPacketInfo
     }
     ResolveHosts
     GetWhoisData
   } else {
-      UnSelectAllOptions
+      UnSelectPacketOptions
+      UnSelectHostLookups
   }
       
   
@@ -1574,7 +1672,7 @@ proc UnHighLightListLine { paneName } {
 # put the same value as index
 proc HighLightListLine { paneName index lastindex } {
   global MOVEMENT_DIR
-  set activeIndex [$paneName.eventIDFrame.list index active]
+  set activeIndex [$paneName.sensorFrame.list index active]
   foreach childWin [winfo children $paneName] {
     if { [winfo name $childWin] != "scroll" } {
       #$childWin.list select clear 0 end
@@ -1646,9 +1744,9 @@ proc InsertPSData { data } {
   }
 }
 proc GetPacketInfo {} {
-  global ACTIVE_EVENT PACKETINFO currentSelectedPane socketID DEBUG MULTI_SELECT
+  global ACTIVE_EVENT PACKETINFO currentSelectedPane socketID DEBUG MULTI_SELECT SSN_QUERY
   ClearPacketData
-  if {$ACTIVE_EVENT && $PACKETINFO && !$MULTI_SELECT} {
+  if {$ACTIVE_EVENT && $PACKETINFO && !$MULTI_SELECT && !$SSN_QUERY} {
     Working
     update
     set selectedIndex [$currentSelectedPane.eventIDFrame.list curselection]
@@ -1668,9 +1766,9 @@ proc GetPacketInfo {} {
   }
 }
 proc GetRuleInfo {} {
-  global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton MULTI_SELECT
+  global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton MULTI_SELECT SSN_QUERY
   ClearRuleText
-  if {$ACTIVE_EVENT && $SHOWRULE && !$MULTI_SELECT} {
+  if {$ACTIVE_EVENT && $SHOWRULE && !$MULTI_SELECT && !$SSN_QUERY} {
     set selectedIndex [$currentSelectedPane.msgFrame.list curselection]
     set message [$currentSelectedPane.msgFrame.list get $selectedIndex]
     set sensorName [$currentSelectedPane.sensorFrame.list get $selectedIndex]
@@ -1855,24 +1953,30 @@ proc XscriptServerCmdRcvd { socketID } {
 }
 proc GetXscript { type force } {
   global ACTIVE_EVENT SERVERHOST XSCRIPT_SERVER_PORT DEBUG currentSelectedPane XSCRIPTDATARCVD
-  global socketWinName SESSION_STATE
+  global socketWinName SESSION_STATE SSN_QUERY
   if {!$ACTIVE_EVENT} {return}
-  set winName $currentSelectedPane.eventIDFrame.list
+  set winName $currentSelectedPane.sensorFrame.list
   set eventIndex [$winName curselection]
   set winParents [winfo parent [winfo parent $winName]]
-  set proto [$winParents.protoFrame.list get $eventIndex]
-  if { $type == "xscript" && $proto != "6" } {
-    tk_messageBox -type ok -icon warning -message\
-     "Transcripts can only be generated for TCP traffic at this time."
-    return
+  if {$SSN_QUERY} {
+    set cnxID [$winParents.xidFrame.list get $eventIndex]
+    set timestamp [$winParents.startTimeFrame.list get $eventIndex]
+  } else {
+    set proto [$winParents.protoFrame.list get $eventIndex]
+    if { $type == "xscript" && $proto != "6" } {
+      tk_messageBox -type ok -icon warning -message\
+       "Transcripts can only be generated for TCP traffic at this time."
+      return
+    }
+    set cnxID [lindex [split [$winParents.eventIDFrame.list get $eventIndex] .] 1]
+    set timestamp [$winParents.dateTimeFrame.list get $eventIndex]
   }
   set sensor [$winParents.sensorFrame.list get $eventIndex]
-  set eventID [$winParents.eventIDFrame.list get $eventIndex]
-  set timestamp [$winParents.dateTimeFrame.list get $eventIndex]
   set srcIP [$winParents.srcIPFrame.list get $eventIndex]
   set srcPort [$winParents.srcPortFrame.list get $eventIndex]
   set dstIP [$winParents.dstIPFrame.list get $eventIndex]
   set dstPort [$winParents.dstPortFrame.list get $eventIndex]
+  set xscriptWinName ".${sensor}_${cnxID}"
   if [catch {set socketID [socket $SERVERHOST $XSCRIPT_SERVER_PORT]}] {
     if {$DEBUG} {puts "Unable to connect to xscript server $SERVERHOST on port $XSCRIPT_SERVER_PORT."}
   } else {
@@ -1880,9 +1984,9 @@ proc GetXscript { type force } {
       fconfigure $socketID -buffering line
       fileevent $socketID readable [list XscriptServerCmdRcvd $socketID]
       if {$DEBUG} {
-        puts "Xscript Request sent: $sensor $eventID \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
+        puts "Xscript Request sent: $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
       }
-      set xscriptWinName ".[join [split $eventID .] _]"
+      #set xscriptWinName ".[join [split $eventID .] _]"
       set socketWinName($socketID) $xscriptWinName
       set SESSION_STATE($socketID) HDR
       CreateXscriptWin $xscriptWinName
@@ -1890,7 +1994,7 @@ proc GetXscript { type force } {
        "Your request has been sent to the server.\nPlease be patient as this can take some time.\n"
       $xscriptWinName configure -cursor watch
       set XSCRIPTDATARCVD($xscriptWinName) 0
-      puts $socketID "XscriptRequest $sensor $eventID \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
+      puts $socketID "XscriptRequest $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
       
     } elseif { $type == "ethereal" } {
       if { $srcPort > $dstPort } {
@@ -1903,9 +2007,9 @@ proc GetXscript { type force } {
       fconfigure $socketID -translation binary
       fileevent $socketID readable [list CopyRawData $socketID $tmpFileID $tmpFile]
       if {$DEBUG} {
-        puts "Ethereal Request sent: $sensor $eventID \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
+        puts "Ethereal Request sent: $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
       }
-      puts $socketID "EtherealRequest $sensor $eventID \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
+      puts $socketID "EtherealRequest $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
       flush $socketID
     }
   }
@@ -1974,10 +2078,157 @@ proc DisplayCorrelatedEvents { winName } {
 proc DeleteTab { eventTabs tabName } {
   set tabIndex [lsearch -exact [$eventTabs childsite] $tabName]
   $eventTabs delete $tabIndex
-  $eventTabs prev
+  if {$tabIndex > 2} {
+    $eventTabs prev
+  } else {
+    $eventTabs select 0
+  }
 }
 
 
+proc CreateSessionLists { baseFrame } {
+  global SCROLL_HOME
+  set SCROLL_HOME($baseFrame) 0
+  set sensorFrame [frame $baseFrame.sensorFrame]
+    set sensorLabel [label $sensorFrame.sensorLabel -text "Sensor" -background black -foreground white -anchor w]
+    set sensorList [listbox $sensorFrame.list -width 10 -height 5 -exportselection false\
+     -borderwidth 0 -yscrollcommand "$baseFrame.scroll set"]
+    pack $sensorLabel -side top -fill x
+    pack $sensorList -side bottom -fill both -expand true
+    BindSelectionToAllLists $sensorList
+    bind $sensorLabel <Double-Button-1> {
+      SortListsBy %W sessions 
+    }
+  set xidFrame [frame $baseFrame.xidFrame]
+    set xidLabel [label $xidFrame.label -text "Ssn ID" -background black -foreground white -anchor w]
+    set xidList [listbox $xidFrame.list -width 10 -height 5 -exportselection false\
+     -borderwidth 0 -yscrollcommand "$baseFrame.scroll set"]
+    pack $xidLabel -side top -fill x
+    pack $xidList -side bottom -fill both -expand true
+    BindSelectionToAllLists $xidList
+    bind $xidLabel <Double-Button-1> {
+      SortListsBy %W sessions
+    }
+    bind $xidList <ButtonPress-3> {
+      SelectAllLists %W [%W nearest %y]
+      LaunchXscriptMenu %W %Y
+    }
+    bind $xidList <Button-2> { GetXscript xscript 0 }
+  set startTimeFrame [frame $baseFrame.startTimeFrame]
+    set startTimeLabel [label $startTimeFrame.label -text "Start Time" -background black -foreground white -anchor w]
+    set startTimeList [listbox $startTimeFrame.list -width 18 -height 5 -exportselection false\
+     -borderwidth 0 -yscrollcommand "$baseFrame.scroll set"]
+    pack $startTimeLabel -side top -fill x
+    pack $startTimeList -side bottom -fill both -expand true
+    BindSelectionToAllLists $startTimeList
+    bind $startTimeLabel <Double-Button-1> {
+      SortListsBy %W sessions
+    }
+  set endTimeFrame [frame $baseFrame.endTimeFrame]
+    set endTimeLabel [label $endTimeFrame.label -text "End Time" -background black -foreground white -anchor w]
+    set endTimeList [listbox $endTimeFrame.list -width 18 -height 5 -exportselection false\
+     -borderwidth 0 -yscrollcommand "$baseFrame.scroll set"]
+    pack $endTimeLabel -side top -fill x
+    pack $endTimeList -side bottom -fill both -expand true
+    BindSelectionToAllLists $endTimeList
+    bind $endTimeLabel <Double-Button-1> {
+      SortListsBy %W sessions
+    }
+  set srcIPFrame [frame $baseFrame.srcIPFrame]
+    set srcIPLabel [label $srcIPFrame.srcIPLabel -text "Src IP" -background black -foreground white -anchor w]
+    set srcIPList [listbox $srcIPFrame.list -width 15 -height 5 -exportselection false\
+     -borderwidth 0 -yscrollcommand "$baseFrame.scroll set"]
+    pack $srcIPLabel -side top -fill x
+    pack $srcIPList -side bottom -fill both -expand true
+    BindSelectionToAllLists $srcIPList
+    bind $srcIPLabel <Double-Button-1> {
+      SortListsBy %W sessions
+    }
+    bind $srcIPList <ButtonPress-3> {
+      SelectAllLists %W [%W nearest %y]
+      LaunchIPQueryMenu %W %Y
+    }
+  set srcPortFrame [frame $baseFrame.srcPortFrame]
+    set srcPortLabel [label $srcPortFrame.srcPortLabel -text "SPort" -background black -foreground white -anchor w]
+    set srcPortList [listbox $srcPortFrame.list -width 6 -height 5 -exportselection false\
+     -borderwidth 0 -yscrollcommand "$baseFrame.scroll set"]
+    pack $srcPortLabel -side top -fill x
+    pack $srcPortList -side bottom -fill both -expand true
+    BindSelectionToAllLists $srcPortList
+    bind $srcPortLabel <Double-Button-1> {
+      SortListsBy %W sessions
+    }
+  set dstIPFrame [frame $baseFrame.dstIPFrame]
+    set dstIPLabel [label $dstIPFrame.dstIPLabel -text "Dst IP" -background black -foreground white -anchor w]
+    set dstIPList [listbox $dstIPFrame.list -width 15 -height 5 -exportselection false\
+     -borderwidth 0 -yscrollcommand "$baseFrame.scroll set"]
+    pack $dstIPLabel -side top -fill x
+    pack $dstIPList -side bottom -fill both -expand true
+    BindSelectionToAllLists $dstIPList
+    bind $dstIPLabel <Double-Button-1> {
+      SortListsBy %W sessions
+    }
+    bind $dstIPList <ButtonPress-3> {
+      SelectAllLists %W [%W nearest %y]
+      LaunchIPQueryMenu %W %Y
+    }
+  set dstPortFrame [frame $baseFrame.dstPortFrame]
+    set dstPortLabel [label $dstPortFrame.dstPortLabel -text "DPort" -background black -foreground white -anchor w]
+    set dstPortList [listbox $dstPortFrame.list -width 6 -height 5 -exportselection false\
+     -borderwidth 0 -yscrollcommand "$baseFrame.scroll set"]
+    pack $dstPortLabel -side top -fill x
+    pack $dstPortList -side bottom -fill both -expand true
+    BindSelectionToAllLists $dstPortList
+    bind $dstPortLabel <Double-Button-1> {
+      SortListsBy %W sessions
+    }
+  set srcPcktsFrame [frame $baseFrame.srcPcktsFrame]
+    set srcPcktsLabel [label $srcPcktsFrame.label -text "S Pckts" -background black -foreground white -anchor w]
+    set srcPcktsList [listbox $srcPcktsFrame.list -width 6 -height 5 -exportselection false\
+     -borderwidth 0 -yscrollcommand "$baseFrame.scroll set"]
+    pack $srcPcktsLabel -side top -fill x
+    pack $srcPcktsList -side bottom -fill both -expand true
+    BindSelectionToAllLists $srcPcktsList
+    bind $srcPcktsLabel <Double-Button-1> {
+      SortListsBy %W sessions
+    }
+  set srcBytesFrame [frame $baseFrame.srcBytesFrame]
+    set srcBytesLabel [label $srcBytesFrame.label -text "S Bytes" -background black -foreground white -anchor w]
+    set srcBytesList [listbox $srcBytesFrame.list -width 6 -height 5 -exportselection false\
+     -borderwidth 0 -yscrollcommand "$baseFrame.scroll set"]
+    pack $srcBytesLabel -side top -fill x
+    pack $srcBytesList -side bottom -fill both -expand true
+    BindSelectionToAllLists $srcBytesList
+    bind $srcBytesLabel <Double-Button-1> {
+      SortListsBy %W sessions
+    }
+  set dstPcktsFrame [frame $baseFrame.dstPcktsFrame]
+    set dstPcktsLabel [label $dstPcktsFrame.label -text "D Pckts" -background black -foreground white -anchor w]
+    set dstPcktsList [listbox $dstPcktsFrame.list -width 6 -height 5 -exportselection false\
+     -borderwidth 0 -yscrollcommand "$baseFrame.scroll set"]
+    pack $dstPcktsLabel -side top -fill x
+    pack $dstPcktsList -side bottom -fill both -expand true
+    BindSelectionToAllLists $dstPcktsList
+    bind $dstPcktsLabel <Double-Button-1> {
+      SortListsBy %W sessions
+    }
+  set dstBytesFrame [frame $baseFrame.dstBytesFrame]
+    set dstBytesLabel [label $dstBytesFrame.label -text "D Bytes" -background black -foreground white -anchor w]
+    set dstBytesList [listbox $dstBytesFrame.list -width 6 -height 5 -exportselection false\
+     -borderwidth 0 -yscrollcommand "$baseFrame.scroll set"]
+    pack $dstBytesLabel -side top -fill x
+    pack $dstBytesList -side bottom -fill both -expand true
+    BindSelectionToAllLists $dstBytesList
+    bind $dstBytesLabel <Double-Button-1> {
+      SortListsBy %W sessions
+    }
+  set scroll [scrollbar $baseFrame.scroll -command "MultiScrollBar \"$sensorList $xidList $startTimeList $endTimeList\
+   $srcIPList $srcPortList $dstIPList $dstPortList $srcPcktsList $srcBytesList $dstPcktsList $dstBytesList\""  -width 10]
+  pack $scroll -side right -fill y
+  pack $sensorFrame $xidFrame $startTimeFrame $endTimeFrame $srcIPFrame $srcPortFrame $dstIPFrame $dstPortFrame\
+   $srcPcktsFrame $srcBytesFrame $dstPcktsFrame $dstBytesFrame -side left -fill both -expand true
+  pack $baseFrame -fill both -expand true
+}
 proc CreateEventLists { baseFrame } {
   global SCROLL_HOME
   set SCROLL_HOME($baseFrame) 0
@@ -2116,7 +2367,7 @@ proc CreateEventLists { baseFrame } {
     }
     bind $msgList <ButtonPress-3> {
       SelectAllLists %W [%W nearest %y]
-      LaunchEventQueryMenu %W %Y
+      LaunchSigQueryMenu %W %Y
     }
   set scroll [scrollbar $baseFrame.scroll -command "MultiScrollBar \"$statusList $countList $sensorList $eventIDList\
    $dateTimeList $srcIPList $srcPortList $dstIPList $dstPortList $protoList $msgList\""  -width 10]
@@ -2128,7 +2379,7 @@ proc CreateEventLists { baseFrame } {
   pack $baseFrame -fill both -expand true
 
 }
-proc SortListsBy { clickedListWinName } {
+proc SortListsBy { clickedListWinName { listType {event} } } {
   # Two words. Ug. Ly. But it works.
   # We take all the data from each list and put it into its own list. Then
   # create an array whose name is listvalue.counter where listvalue is the 
@@ -2162,7 +2413,7 @@ proc SortListsBy { clickedListWinName } {
     set listIndex 0
     foreach winListName $winNameList {
       $tabName.$winListName.list insert end [lindex $tmpArray($tmpData) $listIndex]
-      if { $listIndex == "0" } {
+      if { $listType == "event" && $listIndex == "0" } {
         if { [lindex $tmpArray($tmpData) $listIndex] != "RT" } {
           $tabName.$winListName.list itemconfigure end\
            -background $CATEGORY_COLOR([lindex $tmpArray($tmpData) $listIndex])
@@ -2332,13 +2583,13 @@ proc SensorList { sensorList } {
   } else {
     label $sensorSelectWindow.noSensorLabel -background white -text\
     "There are No sensors currently in the DB to monitor.\n\
-     Press <Start GUI> to launch the GUI anyway."
+     Press <Start SGUIL> to launch the GUI anyway."
     pack $sensorSelectWindow.noSensorLabel -side top
   }
   set actionButtonFrame [frame $sensorSelectWindow.actionButtonFrame -background white]
     set selectAllButton [button $actionButtonFrame.selectAllButton -text "Select All"\
      -command "SelectAllSensors"]
-    set monitorButton [button $actionButtonFrame.monitorButton -text "Start GUI"\
+    set monitorButton [button $actionButtonFrame.monitorButton -text "Start SGUIL"\
      -command "MonitorSensors $sensorSelectWindow"]
     set exitButton [button $actionButtonFrame.exitButton -text "Exit" -command "CleanExit"]
     pack $selectAllButton $monitorButton $exitButton -side left -padx 10 -pady 10
@@ -2496,7 +2747,8 @@ set topFrame [frame .topFrame]
     pack $soundLabel $soundStatus -side left
   pack $fileMenu $soundFrame -side left
   set menuList [menu $fileMenu.menu -tearoff 0]
-  $menuList add command -label "Query..." -command "QueryRequest empty"
+  $menuList add command -label "Query Event Table" -command "QueryRequest event empty"
+  $menuList add command -label "Query Sessions Table" -command "QueryRequest sessions empty"
   $menuList add command -label "Show DataBase Tables" -command "ShowDBTables"
   $menuList add command -label "Display Incident Categories" -command DisplayIncidentCats
   $menuList add command -label "Send Event Detail via email" -command {EmailEvents 1}
@@ -2641,7 +2893,7 @@ while { $i < $RTPANES } {
     BindSelectionToAllLists $msgList
     bind $msgList <ButtonPress-3> {
       SelectAllLists %W [%W nearest %y]
-      LaunchEventQueryMenu %W %Y
+      LaunchSigQueryMenu %W %Y
     }
   set scroll [scrollbar $currentPane.scroll -command "MultiScrollBar \"$statusList $countList $sensorList $eventIDList\
    $dateTimeList $srcIPList $srcPortList $dstIPList $dstPortList $protoList $msgList\""  -width 10]
@@ -2956,14 +3208,23 @@ $xscriptMenu add command -label "Ethereal (force new)" -command "GetXscript ethe
 # IPQuery Menu
 set ipQueryMenu [ menu .ipQueryMenu -background blue -foreground white -activeforeground blue\
  -activebackground white -tearoff 0 ]
-$ipQueryMenu add command -label "Query SrcIP" -command "QueryRequest srcip"
-$ipQueryMenu add command -label "Query DstIP" -command "QueryRequest dstip"
-$ipQueryMenu add command -label "Query Src To Dst" -command "QueryRequest src2dst"
+.ipQueryMenu add cascade -label "Query Event Table" -menu $ipQueryMenu.eventMenu
+.ipQueryMenu add cascade -label "Query Sessions Table" -menu $ipQueryMenu.sessionsMenu
+menu $ipQueryMenu.eventMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
+ -activebackground white
+menu $ipQueryMenu.sessionsMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
+ -activebackground white
+$ipQueryMenu.eventMenu add command -label "Query SrcIP" -command "QueryRequest event srcip"
+$ipQueryMenu.eventMenu add command -label "Query DstIP" -command "QueryRequest event dstip"
+$ipQueryMenu.eventMenu add command -label "Query Src To Dst" -command "QueryRequest event src2dst"
+$ipQueryMenu.sessionsMenu add command -label "Query SrcIP" -command "QueryRequest sessions srcip"
+$ipQueryMenu.sessionsMenu add command -label "Query DstIP" -command "QueryRequest sessions dstip"
+$ipQueryMenu.sessionsMenu add command -label "Query Src To Dst" -command "QueryRequest sessions src2dst"
 
-# Event Query Menu
-set eventQueryMenu [ menu .eventQueryMenu -background blue -foreground white -activeforeground blue\
+# Sig Query Menu
+set sigQueryMenu [ menu .sigQueryMenu -background blue -foreground white -activeforeground blue\
  -activebackground white -tearoff 0 ]
-$eventQueryMenu add command -label "Query Event" -command "QueryRequest event"
+$sigQueryMenu add command -label "Query Event" -command "QueryRequest event signature"
 
 # Correlate Events Menu
 set correlateMenu [ menu .correlateMenu -background blue -foreground white\
@@ -2979,19 +3240,19 @@ $statusMenu add cascade -label "Query" -menu $statusMenu.incidentMenu
 set incidentMenu [menu $statusMenu.incidentMenu -background blue -foreground white\
  -activeforeground blue -activebackground white -tearoff 0 ]
 $incidentMenu add command -label "Cat I: Unauthorized Root Access"\
-  -command "QueryRequest category 11"
+  -command "QueryRequest event category 11"
 $incidentMenu add command -label "Cat II: Unauthorized User Access"\
-  -command "QueryRequest category 12"
+  -command "QueryRequest event category 12"
 $incidentMenu add command -label "Cat III: Attempted Unauthorized Access"\
-  -command "QueryRequest category 13"
+  -command "QueryRequest event category 13"
 $incidentMenu add command -label "Cat IV: Successful Denial of Service Attack"\
-  -command "QueryRequest category 14"
+  -command "QueryRequest event category 14"
 $incidentMenu add command -label "Cat V: Poor Security Practice or Policy Violation"\
-  -command "QueryRequest category 15"
+  -command "QueryRequest event category 15"
 $incidentMenu add command -label "Cat VI: Reconnaissance/Probes/Scans"\
-  -command "QueryRequest category 16"
+  -command "QueryRequest event category 16"
 $incidentMenu add command -label "Cat VII: Virus Infection"\
-  -command "QueryRequest category 17"
+  -command "QueryRequest event category 17"
 $statusMenu add cascade -label "Update Event Status" -menu $statusMenu.validateMenu
 set validateMenu [menu $statusMenu.validateMenu -background blue -foreground white\
  -activeforeground blue -activebackground white -tearoff 0 ]
@@ -3063,8 +3324,10 @@ bind . <Control-Key-Left> {
 }
 # Space selects the active event.  Used when navigating using ctrl-arrow
 bind . <Key-space> {
-    set activeIndex [$currentSelectedPane.eventIDFrame.list index active]
-    CtrlSelect $currentSelectedPane.eventIDFrame.list $activeIndex
+    if {!$SSN_QUERY} { 
+      set activeIndex [$currentSelectedPane.eventIDFrame.list index active]
+      CtrlSelect $currentSelectedPane.eventIDFrame.list $activeIndex
+    }
 }
 # ctrl-up moves active event without changing selection
 bind . <Control-Key-Up> {
@@ -3129,6 +3392,7 @@ bind . <Key-Down> {
 # Esc unselects all options
 bind . <Key-Escape> {
   UnSelectAllOptions
+  UnSelectHostLookups
 }
 # Toggle SOUND when off/on is clicked
 bind $soundStatus <Button-1> {
