@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.23 2005/01/21 19:11:13 shalligan Exp $ #
+# $Id: qrylib.tcl,v 1.24 2005/01/28 14:49:30 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -68,7 +68,7 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 	set whereStatement [lindex $tmpWhereStatement 1]
 	set tableName [lindex $tmpWhereStatement 0]
     } else {
-        set whereStatement $whereTmp
+        set whereStatement "$whereTmp LIMIT 500"
     }
     if { $whereStatement == "cancel" } { return }
     if { $tableName == "event" } {
