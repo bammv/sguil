@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.155 2004/11/12 22:01:34 bamm Exp $ #
+# $Id: sguil.tk,v 1.156 2004/12/02 15:09:53 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2408,9 +2408,10 @@ menu $portQueryMenu.eventPortMenu -tearoff 0 -background blue -foreground white 
 
 $portQueryMenu.dshieldPortMenu add command -label "SrcPort" -command "GetDshieldPort srcport"
 $portQueryMenu.dshieldPortMenu add command -label "DstPort" -command "GetDshieldPort dstport"
-$portQueryMenu.eventPortMenu add command -label "SrcPort" -command "QueryRequest event srcport"
-$portQueryMenu.eventPortMenu add command -label "DstPort" -command "QueryRequest event dstport"
-
+$portQueryMenu.eventPortMenu add command -label "SrcPort" -command "QueryRequest event srcport 1"
+$portQueryMenu.eventPortMenu add command -label "RT SrcPort" -command "QueryRequest event srcport 0"
+$portQueryMenu.eventPortMenu add command -label "DstPort" -command "QueryRequest event dstport 1"
+$portQueryMenu.eventPortMenu add command -label "RT DstPort" -command "QueryRequest event dstport 0"
 
 # Sig Query Menu
 set sigQueryMenu [ menu .sigQueryMenu -background blue -foreground white -activeforeground blue\
