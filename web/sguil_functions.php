@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.10 2004/04/03 16:30:31 dlowless Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.11 2004/04/03 17:21:07 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -128,9 +128,10 @@ function show_alerts( $where_query ) {
 			}
 		}
 	}	
-	print("</table>\n");
-	print("<p>Query returned " . mysql_num_rows($result) . " rows</p>\n");
 
+	print("<tr><td colspan=\"11\" align=\"center\">Query returned " . mysql_num_rows($result) . " rows</td></tr>\n");
+	print("</table>\n");
+	
 	DBClose($result);
 }
 
@@ -190,8 +191,8 @@ function show_sessions( $where_query ) {
 
 	
 	if ( $where_query == "" ) {
-		printf("</table>\n");
-		printf("<p>No where statement provided.</p>");
+		print("<tr><td colspan=\"12\" align=\"center\">No where statement provided.</td></tr>\n");
+		print("</table>\n");
 		return(0);
 	}
 
@@ -231,8 +232,9 @@ function show_sessions( $where_query ) {
 			}
 		}
 	}	
+
+	print("<tr><td colspan=\"12\" align=\"center\">Query returned " . mysql_num_rows($result) . " rows</td></tr>\n");
 	print("</table>\n");
-	print("<p>Query returned " . mysql_num_rows($result) . " rows</p>\n");
 
 	DBClose($result);
 }
