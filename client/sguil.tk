@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.124 2004/07/22 15:03:53 bamm Exp $ #
+# $Id: sguil.tk,v 1.125 2004/07/23 14:11:47 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1409,6 +1409,7 @@ proc GetUserName {} {
   pack $welcomeLabel -ipadx 5 -ipady 5
   pack $welcomeFrame -side top -padx 5 -pady 10
   set promptFrame [frame $getUserNameWin.promptFrame -background black -borderwidth 1]
+    set osslSelect [checkbutton $promptFrame.osslSelect -text "Enable OpenSSL" -variable OPENSSL]
     set userLabel [label $promptFrame.userLabel -text "Please Login" -foreground navy]
     set sguildHost [entryfield $promptFrame.sguildHost -labeltext "Sguild Host: "\
      -textvariable SERVERHOST]
@@ -1424,7 +1425,7 @@ proc GetUserName {} {
     set userBB [buttonbox $promptFrame.userBB]
       $userBB add ok -text "Ok" -command "destroy $getUserNameWin"
       $userBB add exit -text "Exit" -command "CleanExit"
-    pack $userLabel $sguildHost $sguildPort $userName $userPasswd $userBB\
+    pack $userLabel $sguildHost $sguildPort $userName $userPasswd $osslSelect $userBB\
      -side top -fill both -expand true
   pack $promptFrame -side bottom -pady 5
   focus -force $userName
