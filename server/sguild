@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.120 2004/08/11 23:29:38 bamm Exp $ #
+# $Id: sguild,v 1.121 2004/08/12 14:16:19 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -195,9 +195,13 @@ proc AddAutoCatRule { line rid } {
     if { $dIndex == 7 } {
 	if [catch {regexp $tmpVar "XXTESTINGXX"} tmpError] {
 	    puts "Bad regexp in autocat rule $rid Error: $tmpError dropping rule"
+            # Rm any parts from the rule
+            if { [info exists acRules($rid)] } { unset acRules($rid) }
 	    return
         }
     }
+    # All the fields have the option of being 'any'. 
+    # If one is, then we basically ignore that field.
     if { $tmpVar != "any" && $tmpVar != "ANY" } {
       lappend acRules($rid) [list $dIndex $tmpVar]
     }
