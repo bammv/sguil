@@ -1,4 +1,4 @@
-# $Id: SguilUtil.tcl,v 1.10 2005/02/01 18:04:47 shalligan Exp $
+# $Id: SguilUtil.tcl,v 1.11 2005/02/01 18:13:15 shalligan Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
@@ -210,6 +210,7 @@ proc GpgText { winName sign encrypt text recips sender } {
     }
     set DONE 0
     while { !$DONE } {
+	puts "DEBUG###### I AM BATMAN!!!"
 	set passPrompt [promptdialog $winName.pd -modality global -title Passphrase -labeltext "GPG Passphrase:" -show *]
 	$passPrompt hide Apply
 	$passPrompt hide Help
@@ -254,6 +255,7 @@ proc GpgText { winName sign encrypt text recips sender } {
 		return cancel
 	    } else {
 		set DONE 1
+		puts " DEBUG##### DONE!!"
 	    }
 	    
 	} 
