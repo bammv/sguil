@@ -432,18 +432,22 @@ proc QueryDB { socketID clientWinName query } {
   global DBNAME DBUSER DBPASS DBPORT DBHOST DEBUG 
 
   if {$DEBUG} {puts "Sending DB Query: $query"}
-  set count 0
   if { $DBPASS == "" } {
     set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
   } else {
     set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
   }
-  foreach row [mysqlsel $dbSocketID "$query" -list] {
-    SendSocket $socketID "InsertQueryResults $clientWinName $row"
-    incr count
+  if [catch {mysqlsel $dbSocketID "$query" -list} selResults] {
+    SendSocket $socketID "InfoMessage \{$selResults\}"   
+  } else {
+    set count 0
+    foreach row $selResults {
+      SendSocket $socketID "InsertQueryResults $clientWinName $row"
+      incr count
+    }
+    SendSocket $socketID "InfoMessage \{Query returned $count row(s).\}"
   }
   SendSocket $socketID "InsertQueryResults $clientWinName done"
-  SendSocket $socketID "InfoMessage \{Query returned $count row(s).\}"
   mysqlclose $dbSocketID
 }
 proc FlatDBQuery { query } {
