@@ -445,14 +445,29 @@ proc ValidateEvent { status {c_flag {0}} } {
 #
 proc SimpleQueryCmd { host port cmd} {
   global socketID EMAIL_RESULTS
-  global OPENSSL
+  global OPENSSL TLS_PATH VERSION DEBUG
   if [catch {set tmpSocketID [socket $host $port]} connectError] {
     return "error"
-  } 
+  }
   fconfigure $tmpSocketID -buffering line
+    # Version checking
+  if [catch {gets $tmpSocketID} serverVersion] {
+    puts "ERROR: $serverVersion"
+    CleanExit
+  }
+  if { $serverVersion != $VERSION } {
+    puts "ERROR: Mismatched versions.\nSERVER: ($serverVersion)\nCLIENT: ($VERSION)"
+    CleanExit
+  }
+  puts $tmpSocketID "$VERSION"
   if {$OPENSSL} {
+    if { [info exists TLS_PATH] } { load $TLS_PATH }
+    package require tls
     tls::import $tmpSocketID
   }
+  puts $tmpSocketID "PING"
+  set INIT [gets $tmpSocketID]
+  if {$DEBUG} {puts "Init successful"}
   puts $tmpSocketID $cmd
   if {[lindex $cmd 0] != "GetPSData"} {
       # Index 0 is the returned cmd, index 1 is the data.
@@ -943,7 +958,7 @@ proc ClearPacketData {} {
   global sPortUdpHdrFrame dPortUdpHdrFrame udplenUdpHdrFrame udpchksumUdpHdrFrame
   global typeIcmpHdrFrame codeIcmpHdrFrame chksumIcmpHdrFrame
   global idIcmpHdrFrame seqIcmpHdrFrame sipIcmpDecodeFrame
-  global dipIcmpDecodeFrame sportIcmpDecodeFrame dportIcmpDecodeFrame protoIcmpDecodeFrame
+  global dipIcmpDecodeFrame sportIcmpDecodeFrame dportIcmpDecodeFrame protoIcmpDecodeFrame gipIcmpDecodeFrame
   global dataText
 
   $srcIPHdrFrame.text delete 0.0 end
@@ -988,6 +1003,7 @@ proc ClearPacketData {} {
   $seqIcmpHdrFrame.text delete 0.0 end
   $sipIcmpDecodeFrame.text delete 0.0 end
   $dipIcmpDecodeFrame.text delete 0.0 end
+  $gipIcmpDecodeFrame.text delete 0.0 end
   $sportIcmpDecodeFrame.text delete 0.0 end
   $dportIcmpDecodeFrame.text delete 0.0 end
   $protoIcmpDecodeFrame.text delete 0.0 end
@@ -1097,19 +1113,27 @@ proc InsertIcmpHdr { data pldata } {
   $idIcmpHdrFrame.text insert 0.0 [lindex $data 3]
   $seqIcmpHdrFrame.text insert 0.0 [lindex $data 4]
   
-  # If the ICMP packet is a dest unreachable or a time exceeded,
+  # If the ICMP packet is a dest unreachable, redirect or a time exceeded,
   # check to see if it is network, host, port unreachable or admin prohibited or filtered
   # then show some other stuff
 
-  if {[lindex $data 0] == "3" || [lindex $data 0] == "11"} {
-	if {[lindex $data 1] == "0" || [lindex $data 1] == "4" || [lindex $data 1] == "9" || [lindex $data 1] == "13" || [lindex $data 1] == "1" || [lindex $data 1] == "3"} {
-	    global protoIcmpDecodeFrame sipIcmpDecodeFrame sportIcmpDecodeFrame dipIcmpDecodeFrame dportIcmpDecodeFrame
+  if {[lindex $data 0] == "3" || [lindex $data 0] == "11" || [lindex $data 0] == "5"} {
+	if {[lindex $data 1] == "0" || [lindex $data 1] == "4" || [lindex $data 1] == "9" || [lindex $data 1] == "13" || [lindex $data 1] == "1" || [lindex $data 1] == "3" || [lindex $data 1] == "2" } {
+	    global protoIcmpDecodeFrame sipIcmpDecodeFrame sportIcmpDecodeFrame dipIcmpDecodeFrame dportIcmpDecodeFrame gipIcmpDecodeFrame
 	    
 	    #  There may be 32-bits of NULL padding at the start of the payload
+	    # or a 32-bit gateway address on a redirect
 	    set offset 0
 	    # puts [string range $pldata 0 7]
-	    if {[string range $pldata 0 7] == "00000000"} {
+	    if {[string range $pldata 0 7] == "00000000" || [lindex $data 0] == "5"} {
 		set offset 8
+		if {[lindex $data 0] == "5"} {
+		    set giphex1 [string range $pldata 0 1]
+		    set giphex2 [string range $pldata 2 3]
+		    set giphex3 [string range $pldata 4 5]
+		    set giphex4 [string range $pldata 6 7]
+		    $gipIcmpDecodeFrame.text insert 0.0 [format "%i" 0x$giphex1].[format "%i" 0x$giphex2].[format "%i" 0x$giphex3].[format "%i" 0x$giphex4]
+		}
 	    }
 	    # puts [string range $pldata [expr $offset+24] [expr $offset+25]]
 	    
@@ -1133,7 +1157,11 @@ proc InsertIcmpHdr { data pldata } {
 	    
 	    # Find and build the src port
 	    set hdroffset [expr [string index $pldata [expr ($offset+1)]] * 8 + $offset]
-	    puts $hdroffset
+	    puts "header offset = $hdroffset"
+	    puts "header lenght = [string index $pldata [expr ($offset+1)]]"
+	    puts "offset = $offset"
+	    puts "looking for length at [expr ($offset+1)]"
+	    puts "pldata is $pldata"
 	    set sporthex [string range $pldata $hdroffset [expr $hdroffset+3]]
 	    $sportIcmpDecodeFrame.text insert 0.0 [format "%i" 0x$sporthex]
 	    
@@ -3526,9 +3554,11 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
         LabelText $dipIcmpDecodeFrame 15 "Orig Dst IP"
       set dportIcmpDecodeFrame [frame $icmpDecodeFrame.dportIcmpDecodeFrame]
         LabelText $dportIcmpDecodeFrame 8 "Dst Port"
+      set gipIcmpDecodeFrame [frame $icmpDecodeFrame.gipIcmpDecodeFrame]
+	LabelText $gipIcmpDecodeFrame 15 "Gateway IP"
       pack $icmpDecodeLabel -side left -anchor w -fill y
       pack $protoIcmpDecodeFrame $sipIcmpDecodeFrame $sportIcmpDecodeFrame $dipIcmpDecodeFrame\
-        $dportIcmpDecodeFrame -side left -anchor w -fill both -expand true
+        $dportIcmpDecodeFrame $gipIcmpDecodeFrame -side left -anchor w -fill both -expand true
    ##################### DATA ###########################
     set dataFrame [frame $packetFrame.dataFrame -background black -borderwidth 1]
       set dataFrameLabel [label $dataFrame.dataFrameLabel -text DATA -width 8 -foreground white -background navy]
