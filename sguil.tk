@@ -477,7 +477,7 @@ proc EmailEvents { detail } {
 		    if {[$currentSelectedPane.protoFrame.list get $selectedIndex] == "17"} {
 			set eventUdpHdr [ SimpleQueryCmd\
 				$SERVERHOST $SERVERPORT "GetUdpData [lindex $eventID 0] [lindex $eventID 1]"]
-			if { $eventPayload == "error" } {
+			if { $eventUdpHdr == "error" } {
 			    ErrorMessage "Error getting UDP Header Data."
 			}
 			$textBox insert end "len=[lindex $eventUdpHdr 0] "
