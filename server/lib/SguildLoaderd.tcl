@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.7 2005/01/28 01:51:39 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.8 2005/01/28 02:45:43 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -184,7 +184,7 @@ proc LoadFile { fileName table } {
         ErrorMessage "ERROR: loaderd: $tmpError"
     }
 
-    InfoMessage "loaderd: Loaded $fileName into the portscan table."
+    InfoMessage "loaderd: Loaded $fileName into the table $table."
 
 }
 
