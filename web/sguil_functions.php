@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.2 2004/03/31 07:59:42 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.3 2004/03/31 08:18:02 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -421,12 +421,13 @@ function alert_details_icmp($sid,$cid) {
 				$icmp_src_port = hexdec($work[$hdr_offset].$work[$hdr_offset+1].$work[$hdr_offset+2].$work[$hdr_offset+3]);
 				$icmp_dst_port = hexdec($work[$hdr_offset+4].$work[$hdr_offset+5].$work[$hdr_offset+6].$work[$hdr_offset+7]);
 	
+				print("<tr><td colspan=\"6\"><hr></td></tr>\n");
 				print("<tr>\n");
-				print("	<td bgcolor=\"#ADD7E6\">Proto</td>\n");
-				print("	<td bgcolor=\"#ADD7E6\">Org. Src. IP</td>\n");
-				print("	<td bgcolor=\"#ADD7E6\">Org. Src. Port</td>\n");
-				print("	<td bgcolor=\"#ADD7E6\">Org. Dst. IP</td>\n");
-				print("	<td bgcolor=\"#ADD7E6\">Org. Dst. Port</td>\n");
+				print("	<td bgcolor=\"#ADD7E6\">Org.<br>Proto</td>\n");
+				print("	<td bgcolor=\"#ADD7E6\">Org.<br>Src. IP</td>\n");
+				print("	<td bgcolor=\"#ADD7E6\">Org.<br>Src. Port</td>\n");
+				print("	<td bgcolor=\"#ADD7E6\">Org.<br>Dst. IP</td>\n");
+				print("	<td bgcolor=\"#ADD7E6\">Org.<br>Dst. Port</td>\n");
 				print("	<td bgcolor=\"#ADD7E6\">Gateway IP</td>\n");
 				print("</tr>\n");
 				print("<tr>\n");
@@ -508,7 +509,7 @@ function alert_details_payload($sid, $cid) {
 		print("<form action=\"" . $_SERVER['PHP_SELF'] . "\" method=\"POST\">\n");
 		print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\">\n");
 		print("<tr>\n");
-		print("	<td bgcolor=\"#ADD7E6\"><textarea name=\"payload\" rows=\"10\" cols=\"80\">\n");
+		print("	<td bgcolor=\"#ADD7E6\"><textarea name=\"payload\" rows=\"10\" cols=\"70\">\n");
 		
 		if ( $row['data_payload'] == "" ) {
 			print("None.");
