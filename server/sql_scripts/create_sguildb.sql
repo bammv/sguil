@@ -30,6 +30,7 @@ CREATE TABLE event
   ip_ttl	TINYINT UNSIGNED,
   ip_csum	SMALLINT UNSIGNED,
   last_modified	DATETIME,
+  last_uid	INT UNSIGNED,
   abuse_queue		enum('Y','N'),
   abuse_sent		enum('Y','N'),
   PRIMARY KEY (sid,cid),
@@ -177,4 +178,4 @@ CREATE TABLE version
   installed	DATETIME
 );
 
-INSERT INTO version (version, installed) VALUES ("0.6", now());
+INSERT INTO version (version, installed) VALUES ("0.7", now());
