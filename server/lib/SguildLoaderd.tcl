@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.4 2005/01/27 19:25:26 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.5 2005/01/27 20:10:40 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -38,6 +38,7 @@ proc ForkLoader {} {
   
                     LoadPSFile { LoadFile [lindex $data 1] portscan }
                     LoadSsnFile { LoadSsnFile [lindex $data 1] [lindex $data 2] }
+                    LoadSancpFile { LoadSancpFile [lindex $data 1] [lindex $data 2] }
                     default    { LogMessage "Unknown command recieved from sguild: $cmd" }
 
                 }
@@ -79,3 +80,9 @@ proc LoadSsnFile { filename date } {
 
 }
 
+proc LoadSancpFile { filename date } {
+
+    # Not doing anything with the date yet
+    LoadFile $filename sancp
+
+}

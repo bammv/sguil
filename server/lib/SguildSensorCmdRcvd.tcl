@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.6 2005/01/27 19:25:26 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.7 2005/01/27 20:10:40 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global connectedAgents agentSensorName
@@ -61,11 +61,15 @@ proc RcvSsnFile { socketID fileName date bytes } {
 
 proc RcvSancpFile { socketID fileName date bytes } {
 
-    global TMPDATADIR
+    global TMPDATADIR loaderWritePipe
 
     set sancpFile $TMPDATADIR/$fileName
     RcvBinCopy $socketID $sancpFile $bytes
     
+    # The loader child proc does the LOAD for us.
+    puts $loaderWritePipe [list LoadSancpFile $sancpFile $date]
+    flush $loaderWritePipe
+
 }
 
 proc RcvPortscanFile { socketID fileName bytes } {
