@@ -489,6 +489,7 @@ proc GetComment {} {
 proc ValidateEvent { status {c_flag {0}} } {
   global ACTIVE_EVENT currentSelectedPane eventArray correlateArray socketID DEBUG
   global MULTI_SELECT CONNECTED
+
   if {!$CONNECTED} {
     ErrorMessage "Not Connected to sguild. Cannot validate events at this time."
     return
@@ -516,19 +517,11 @@ proc ValidateEvent { status {c_flag {0}} } {
          unset correlateArray($eventID)
        } 
      }
-     update
-     if {$DEBUG} { 
-       if [catch {puts "Sending Server: DeleteEventIDList ${eventComment}::${status}::${deleteEventIDList}"} errorCheck ] {
-
-
-                puts "Stop hitting the keys so fast, Mario. ERROR: $errorCheck" 
-        }       
-     } 
-     if [catch {SendToSguild "DeleteEventIDList ${status}::${eventComment}::${deleteEventIDList}"} errorCheck] { 
-                bell
-		puts "fooo"
-		return
-        } 
+     update idletasks
+     if {$DEBUG} {
+       puts "Sending Server: DeleteEventIDList ${eventComment}::${status}::${deleteEventIDList}"
+     }
+     SendToSguild "DeleteEventIDList ${status}::${eventComment}::${deleteEventIDList}"
      if { [llength [$currentSelectedPane.eventIDFrame.list curselection]] > 1} {
 	 # puts "unslecting multiple events"
 	 UnHighLightListLine $currentSelectedPane
