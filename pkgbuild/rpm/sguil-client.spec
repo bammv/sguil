@@ -39,8 +39,8 @@ and event driven analysis of IDS alerts.
 
 %{__install} client/sguil.tk %{buildroot}%{_bindir}/sguil.tk
 %{__install} client/sguil.conf %{buildroot}/etc/sguil/
-%{__install} client/lib/* %{buildroot}%{_libdir}/sguil/
-sed -i -e s:'set SGUILLIB ./lib':'set SGUILLIB /usr/lib/sguil': \
+%{__install} client/lib/* %{buildroot}%{_libdir}/sguil-client/
+sed -i -e s:'set SGUILLIB ./lib':'set SGUILLIB /usr/lib/sguil-client': \
 	%{buildroot}/etc/sguil/sguil.conf
 
 
@@ -52,6 +52,6 @@ sed -i -e s:'set SGUILLIB ./lib':'set SGUILLIB /usr/lib/sguil': \
 %doc doc/*
 /etc/sguil/sguil.conf
 %{_bindir}/sguil.tk
-%{_libdir}/sguil/*
+%{_libdir}/sguil-client/*
 
 %changelog
