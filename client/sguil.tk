@@ -86,7 +86,7 @@ proc ServerCommandRcvd { socketID } {
 proc ConnectToSguild {} {
   global SERVERHOST SERVERPORT OPENSSL VERSION TLS_PATH DEBUG CONNECTED
 
-  if [catch {set socketID [socket $SERVERHOST $SERVERPORT]}] {
+  if [catch {socket $SERVERHOST $SERVERPORT} socketID ] {
     return -code error "Unable to connect to $SERVERHOST on port $SERVERPORT"
   } else {
     set CONNECTED 1
@@ -110,6 +110,8 @@ proc ConnectToSguild {} {
       package require tls
       tls::import $socketID
     }
+    after 1000
+    if {$DEBUG} {puts "Sending PING"}
     puts $socketID "PING"
     set INIT [gets $socketID]
     if {$DEBUG} {puts "Init successful"}
