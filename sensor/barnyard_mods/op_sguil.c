@@ -300,6 +300,7 @@ int SguilOpLog(void *context, void *data)
     char valuesTemp[MAX_QUERY_SIZE];
     char ipInfo[38];
     char portInfo[16];
+    char *esc_message;
     Sid *sid = NULL;
     ClassType *class_type;
     UnifiedLogRecord *record = (UnifiedLogRecord *)data; 
@@ -334,11 +335,15 @@ int SguilOpLog(void *context, void *data)
     /* Build the event insert. */
     snprintf(insertColumns, MAX_QUERY_SIZE,
       "INSERT INTO event (status, sid, cid, signature_id, signature_rev, signature, timestamp, priority, class");
+
+    esc_message = malloc(strlen(sid->msg)*2+1);
+    mysql_real_escape_string(op_data->mysql, esc_message, sid->msg, strlen(sid->msg));
+
     if(class_type == NULL)
     {
       snprintf(valuesTemp, MAX_QUERY_SIZE,
         "VALUES ('0', '%u', '%u', '%d', '%d', '%s', '%s', '%u', 'unknown'",
-          op_data->sensor_id, op_data->event_id, sid->sid, sid->rev, sid->msg, timestamp, 
+          op_data->sensor_id, op_data->event_id, sid->sid, sid->rev, esc_message, timestamp, 
 	  record->log.event.priority);
     snprintf(eventInfo, SYSLOG_BUF, "RTEvent |0|%u|unknown|%s|%s|%u|%u|%s",
 	    record->log.event.priority, 
@@ -349,13 +354,15 @@ int SguilOpLog(void *context, void *data)
     {
       snprintf(valuesTemp, MAX_QUERY_SIZE,
         "VALUES ('0', '%u', '%u', '%d', '%d', '%s', '%s', '%u', '%s'",
-          op_data->sensor_id, op_data->event_id, sid->sid, sid->rev, sid->msg, timestamp, 
+          op_data->sensor_id, op_data->event_id, sid->sid, sid->rev, esc_message, timestamp, 
 	  record->log.event.priority, class_type->type);
       snprintf(eventInfo, SYSLOG_BUF, "RTEvent |0|%u|%s|%s|%s|%u|%u|%s",
 	    record->log.event.priority, class_type->type,
 	    pv.hostname, timestamp, op_data->sensor_id, op_data->event_id,
 	    sid->msg);
     }
+
+   free(esc_message);
 
 	insertValues[0] = '\0';
 	strcat(insertValues, valuesTemp);
