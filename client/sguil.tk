@@ -2,13 +2,13 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.99 2003/12/22 16:40:57 bamm Exp $ #
+# $Id: sguil.tk,v 1.100 2003/12/29 17:36:21 shalligan Exp $ #
 
 ####################################################################
-# sguil - A tcl/tk interface for network security monitoring       #
+# Sguil - A tcl/tk interface for network security monitoring       #
 ####################################################################
 
-# Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>
+# Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
 # This program is distributed under the terms of version 1.0 of the 
 # Q Public License.  See LICENSE.QPL for further details.
@@ -1364,9 +1364,9 @@ proc GetUserName {} {
   set welcomeFrame [frame $getUserNameWin.welcomeFrame -borderwidth 1 -background black]
   set welcomeLabel [label $welcomeFrame.welcomeLabel -background lightblue\
    -foreground navy -text \
-   "sguil - A tcl/tk interface for network security monitoring\n\
+   "Sguil - A tcl/tk interface for network security monitoring\n\
    \n\
-   Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
+   Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
    \n\
    This program is distributed under the terms of version 1.0 of the\n\
    Q Public License.  See LICENSE.QPL for further details.\n\
@@ -1404,9 +1404,9 @@ proc SensorList { sensorList } {
   set welcomeFrame [frame $sensorSelectWindow.welcomeFrame -borderwidth 1 -background black]
   set welcomeLabel [label $welcomeFrame.welcomeLabel -background lightblue\
    -foreground navy -text\
-  "sguil - A tcl/tk interface for network security monitoring\n\
+  "Sguil - A tcl/tk interface for network security monitoring\n\
    \n\
-   Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
+   Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
    \n\
    This program is distributed under the terms of version 1.0 of the\n\
    Q Public License.  See LICENSE.QPL for further details.\n\
