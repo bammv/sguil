@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.148 2004/10/20 14:21:35 bamm Exp $ #
+# $Id: sguil.tk,v 1.149 2004/10/20 20:45:38 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2363,9 +2363,12 @@ menu $ipQueryMenu.dshieldIPMenu -tearoff 0 -background blue -foreground white -a
  -activebackground white
 menu $ipQueryMenu.nessusMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
-$ipQueryMenu.eventMenu add command -label "Query SrcIP" -command "QueryRequest event srcip"
-$ipQueryMenu.eventMenu add command -label "Query DstIP" -command "QueryRequest event dstip"
-$ipQueryMenu.eventMenu add command -label "Query Src To Dst" -command "QueryRequest event src2dst"
+$ipQueryMenu.eventMenu add command -label "Query SrcIP" -command "QueryRequest event srcip 1"
+$ipQueryMenu.eventMenu add command -label "Query DstIP" -command "QueryRequest event dstip 1"
+$ipQueryMenu.eventMenu add command -label "Query Src To Dst" -command "QueryRequest event src2dst 1"
+$ipQueryMenu.eventMenu add command -label "Query RT SrcIP" -command "QueryRequest event srcip 0"
+$ipQueryMenu.eventMenu add command -label "Query RT DstIP" -command "QueryRequest event dstip 0"
+$ipQueryMenu.eventMenu add command -label "Query RT Src To Dst" -command "QueryRequest event src2dst 0"
 $ipQueryMenu.sessionsMenu add command -label "Query SrcIP" -command "QueryRequest sessions srcip 0"
 $ipQueryMenu.sessionsMenu add command -label "Query SrcIP/1 hour" -command "QueryRequest sessions srcip 1"
 $ipQueryMenu.sessionsMenu add command -label "Query DstIP" -command "QueryRequest sessions dstip 0"
