@@ -1,0 +1,13 @@
+*  ctl-1 ctl-2 ctl-n for user configurable categories
+*  move keepstats to spp_conversation
+*  decodes for icmp redirect
+*  sguild checks schema version
+*  sguild checks sguil.tk version (vice versa)
+*  protocol field for requesting ethereal xscripts
+*  size limit for tcpflow data
+*  auth (including xscript and sensors)
+*  no exit on death
+*  move query functions out to queryd
+*  OpenSSL sockets
+*  optional threading?
+*  -D (deamonize) switch for sguild/xscriptd.
