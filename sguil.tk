@@ -3391,7 +3391,7 @@ bind . <Key-Down> {
 
 # Esc unselects all options
 bind . <Key-Escape> {
-  UnSelectAllOptions
+  UnSelectPacketOptions
   UnSelectHostLookups
 }
 # Toggle SOUND when off/on is clicked
