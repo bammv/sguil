@@ -392,7 +392,7 @@ proc SimpleQueryCmd { host port cmd} {
 }
 proc EmailEvents { detail } {
     global ACTIVE_EVENT currentSelectedPane RETURN_FLAG
-    global SERVERHOST SERVERPORT EMAIL_FROM
+    global SERVERHOST SERVERPORT EMAIL_FROM EMAIL_CC EMAIL_HEAD EMAIL_TAIL EMAIL_SUBJECT
     set RETURN_FLAG 0
     if {$ACTIVE_EVENT} {
 	set editEmail .editEmail
@@ -408,13 +408,15 @@ proc EmailEvents { detail } {
 	set textBox [scrolledtext $editEmail.textBox -textbackground white -vscrollmode dynamic \
 		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 80x10 -textfont ourFixedFont \
 		-labeltext "Edit Email"]
+	$textBox insert end $EMAIL_HEAD
 	set fromBox [entryfield $editEmail.fromBox -labeltext "From:" ]
 	$fromBox insert end $EMAIL_FROM
 	set toBox [entryfield $editEmail.toBox  -labeltext "To:"]
 	set ccBox [entryfield $editEmail.ccbox -labeltext "CC:" ]
+	$ccBox insert end $EMAIL_CC
 	set bccBox [entryfield $editEmail.bccbox -labeltext "BCC:" ]
 	set subjectBox [entryfield $editEmail.subjectBox -labeltext "Subject:"]
-	
+	$subjectBox insert end $EMAIL_SUBJECT
 	set buttonBox [buttonbox $editEmail.buttonBox]
 	$buttonBox add send -state disabled -text "Send" -command "set RETURN_FLAG 1"
 	$buttonBox add cancel -text "Cancel" -command "set RETURN_FLAG 0"
@@ -670,6 +672,7 @@ proc EmailEvents { detail } {
 	    }
 	}
 	#  Once this whole mess is displayed, enable the send button and wait for a click	
+	$textBox insert end $EMAIL_TAIL
 	$buttonBox buttonconfigure send -state normal
 	$editEmail configure -cursor left_ptr
 	tkwait variable RETURN_FLAG
