@@ -1,8 +1,9 @@
-sguil-0.2.5 
-    * Multiple undocumented bugfixes. I recommend updating
-      all sguil components (no need to repatch snort and
-      barnyard) to include sguild, xscriptd, sensor_agent.tcl,
-      log_packets.sh, and sguil.tk.
+sguil-0.2.5 (15 Jul 2003)
+
+  * Multiple undocumented bugfixes. I recommend updating
+    all sguil components (no need to repatch snort and
+    barnyard) to include sguild, xscriptd, sensor_agent.tcl,
+    log_packets.sh, and sguil.tk.
 
 sguil-0.2.4 (11 Jul 2003)
   sguil.tk
