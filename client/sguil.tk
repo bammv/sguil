@@ -3007,7 +3007,7 @@ set topFrame [frame .topFrame]
 
 
 pack $topFrame -side top -fill x -padx 0 -pady 0
-wm title . "Snort GUI for Lamerz \[sguil\] - $VERSION"
+wm title . "Snort GUI for Lamerz \[sguil\] - $VERSION - Happy Halloween"
 
 set eventPane [panedwindow .eventPane -width 1000 -height 700]
   $eventPane add eventLists -margin 0
