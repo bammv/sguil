@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.111 2004/06/03 16:34:55 bamm Exp $ #
+# $Id: sguil.tk,v 1.112 2004/06/03 20:32:20 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -585,6 +585,7 @@ proc IncrEvent { data } {
       $paneName.countFrame.list selection set $eidMatch
     }
   }
+  ScrollHome $paneName
 }
 proc GetStatusNameByNumber { status } {
   switch -exact $status {
