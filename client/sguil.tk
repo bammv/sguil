@@ -1,4 +1,8 @@
-#!/usr/bin/wishx
+#!/bin/sh
+# Run wish from users PATH \
+exec wish -f "$0" ${1+"$@"}
+package require Tclx
+
 
 ####################################################################
 # Snort GUI for Lamerz [sguil] - A tcl/tk interface to snort       #
