@@ -763,10 +763,10 @@ if { [info exists CONF_FILE] } {
 # Check for a valid USERS file
 if { ![info exists USERS_FILE] } {
   # No users file was specified. Go with the defaults
-  if { [file exists ./sguild.users] } {
-    set USERS_FILE "./sguild.users"
-  } elseif { [file exists /etc/sguil/sguild.users] } {
+  if { [file exists /etc/sguil/sguild.users] } {
     set USERS_FILE "/etc/sguil/sguild.users"
+  } elseif { [file exists ./sguild.users] } {
+    set USERS_FILE "./sguild.users"
   } else {
     puts "ERROR: Could not find a sguild.users file."
     puts "       Checked in ./ and /etc/sguil/"
