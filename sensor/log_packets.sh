@@ -55,9 +55,9 @@ start() {
       mkdir $LOG_DIR/$today
     fi
     if [ -n FILTER ]; then
-      eval $SNORT_PATH -l $LOG_DIR/$today -b -i $INTERFACE $FILTER > /tmp/snort.log 2>&1 &
+      eval exec $SNORT_PATH -l $LOG_DIR/$today -b -i $INTERFACE $FILTER > /tmp/snort.log 2>&1 &
     else
-      eval $SNORT_PATH -l $LOG_DIR/$today -b -i $INTERFACE > /tmp/snort.log 2>&1 &
+      eval exec $SNORT_PATH -l $LOG_DIR/$today -b -i $INTERFACE > /tmp/snort.log 2>&1 &
     fi
     PID=$!
     if [ $? = 0 ]; then
