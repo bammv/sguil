@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.122 2004/08/12 15:16:40 shalligan Exp $ #
+# $Id: sguild,v 1.123 2004/08/12 15:54:04 shalligan Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -193,8 +193,8 @@ proc AddAutoCatRule { line rid } {
     set tmpVar [ctoken line "||"]
     # Need to test the regexp if we are looking at the sig index
     if { $dIndex == 7 } {
-	if [regexp "^%%REGEXP%%" $tmpVar] {
-	    if [catch {regexp $tmpVar "XXTESTINGXX"} tmpError] {
+	if [regsub "^%%REGEXP%%" $tmpVar "" regVar] {
+	    if [catch {regexp $regVar "XXTESTINGXX"} tmpError] {
 		puts "Bad regexp in autocat rule $rid Error: $tmpError dropping rule"
 		# Rm any parts from the rule
 		if { [info exists acRules($rid)] } { unset acRules($rid) }
