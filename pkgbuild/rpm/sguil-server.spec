@@ -5,7 +5,7 @@
 
 Summary: SGUIL - Analyst console for Snort, Server part
 Name: sguil-server
-Version: 0.5.2
+Version: 0.5.3
 Release: 1
 License: QPL
 Group: Applications/Internet
@@ -39,7 +39,7 @@ and event driven analysis of IDS alerts.
 %install
 %{__rm} -rf %{buildroot}
 %{__install} -d -m0755 %{buildroot}%{server_prefix} \
-			%{buildroot}%{server_prefix}/{bin,etc,rules,archive} \
+			%{buildroot}%{server_prefix}/{bin,etc,rules,archive,lib} \
 			%{buildroot}/etc/init.d \
 			%{buildroot}/etc/sysconfig
 
@@ -51,6 +51,7 @@ and event driven analysis of IDS alerts.
 %{__install} server/sguild.users %{buildroot}%{server_prefix}/etc
 %{__install} server/sguild.access %{buildroot}%{server_prefix}/etc
 %{__install} server/sguild.reports %{buildroot}%{server_prefix}/etc
+%{__install} server/lib/* %{buildroot}%{server_prefix}/lib
 
 %{__install} %{SOURCE1} %{buildroot}/etc/init.d/sguild
 %{__install} %{SOURCE2} %{buildroot}/etc/sysconfig/sguild
@@ -69,6 +70,7 @@ grep -q %{server_user} /etc/passwd && userdel %{server_user}
 %doc doc/* server/sql_scripts/*
 %config %{server_prefix}/etc/*
 %{server_prefix}/bin/* 
+%{server_prefix}/lib/* 
 /etc/init.d/sguild
 /etc/sysconfig/sguild
 

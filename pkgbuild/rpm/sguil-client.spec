@@ -1,7 +1,7 @@
 %define rname sguil
 Summary: SGUIL - Analyst console for Snort, Console part
 Name: sguil-client
-Version: 0.5.2
+Version: 0.5.3
 Release: 1
 License: QPL
 Group: Applications/Internet

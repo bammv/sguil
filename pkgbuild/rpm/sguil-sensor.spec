@@ -5,7 +5,7 @@
 
 Summary: SGUIL - Analyst console for Snort, Sensor part
 Name: sguil-sensor
-Version: 0.5.2
+Version: 0.5.3
 Release: 1
 License: QPL
 Group: Applications/Internet
