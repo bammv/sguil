@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.11 2005/01/28 17:48:41 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.12 2005/01/28 19:45:46 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -98,6 +98,11 @@ proc CreateSancpMergeTable {} {
 
     global LOADERD_DB_ID SANCP_TBL_LIST
     
+    # Clean up our list for the query
+    foreach table $SANCP_TBL_LIST {
+        lappend tmpTables "`$table`"
+    }
+
     LogMessage "loaderd: Creating sancp MERGE table."
     set createQuery "                                      \
         CREATE TABLE sancp                                 \
@@ -124,7 +129,7 @@ proc CreateSancpMergeTable {} {
         INDEX dst_port (dst_port),                         \
         INDEX src_port (src_port),                         \
         INDEX start_time (start_time)                      \
-        ) TYPE=MERGE UNION=([join $SANCP_TBL_LIST ,])      \
+        ) TYPE=MERGE UNION=([join $tmpTables ,])      \
         "
     # Create our MERGE sancp table
     mysqlexec $LOADERD_DB_ID $createQuery
@@ -144,6 +149,7 @@ proc InitLoaderd {} {
 
     # Get a list of current sancp tables
     set SANCP_TBL_LIST [mysqlsel $LOADERD_DB_ID {SHOW TABLES LIKE 'sancp_%'} -list]
+    
     LogMessage "loaderd: sancp tables: $SANCP_TBL_LIST"
     #set todaysDate [clock format [clock scan today] -gmt true -format "%Y%m%d"]
     # Check to see if we have a sancp table for today
