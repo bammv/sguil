@@ -106,8 +106,9 @@ proc QryBuild {tableSelected whereTmp } {
     tkwait variable RETURN_FLAG
     set returnWhere "cancel"
     if {$RETURN_FLAG} {
-	set returnWhere "[$editBox get 0.0 end]"
-	puts $returnWhere
+        # No \n for you!
+        regsub -all {\n} [$editBox get 0.0 end] {} returnWhere
+	set returnWhere "[list $SELECTEDTABLE $returnWhere]"
     } else {
 	set returnWhere "cancel"
     }
@@ -173,7 +174,7 @@ proc typeChange {} {
 	set SELECTEDTABLE "event"
     } else {
 	set SELECTEDTABLE "session"
-	$mainFrame.eFrame.eBox insert end "WHERE session.sid = sensor.sid  LIMIT 500"
+	$mainFrame.eFrame.eBox insert end "WHERE sessions.sid = sensor.sid  LIMIT 500"
     }
     $mainFrame.eFrame.eBox mark set insert "end -11 c"
     # return $tableSelected
