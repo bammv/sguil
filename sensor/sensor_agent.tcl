@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.18 2004/06/14 21:21:27 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.19 2004/06/15 18:22:40 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -247,7 +247,7 @@ proc ConnectToSguilServer {} {
   fileevent $sguildSocketID readable [list SguildCmdRcvd $sguildSocketID]
   set CONNECTED 1
   if {$DEBUG} {puts "Connected to $SERVER_HOST"}
-  if {$DEBUG} {puts $sguildSocketID "CONNECT $HOSTNAME"}
+  puts $sguildSocketID "CONNECT $HOSTNAME"
   flush $sguildSocketID
 }
 proc SguildCmdRcvd { socketID } {
