@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.69 2003/11/21 23:05:17 bamm Exp $ #
+# $Id: sguild,v 1.70 2003/11/26 20:13:42 bamm Exp $ #
 
 # Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -1416,10 +1416,10 @@ if { [info exists OPENSSL] && $OPENSSL } {
 
 if { ![info exists CONF_FILE] } {
   # No conf file specified check the defaults
-  if { [file exists ./sguild.conf] } {
-    set CONF_FILE ./sguild.conf
-  } elseif { [file exists /etc/sguild/sguild.conf] } {
+  if { [file exists /etc/sguild/sguild.conf] } {
     set CONF_FILE /etc/sguild/sguild.conf
+  } elseif { [file exists ./sguild.conf] } {
+    set CONF_FILE ./sguild.conf
   } else {
     puts "Couldn't determine where the sguil config file is"
     puts "Looked for ./sguild.conf and /etc/sguild/sguild.conf."
