@@ -502,10 +502,8 @@ proc ValidateEvent { status {c_flag {0}} } {
      }
      foreach selectedIndex\
       [lsort -integer -decreasing [$currentSelectedPane.eventIDFrame.list curselection]] {
-      puts "**** DEBUG: $selectedIndex"
        # Get the eventID to be deleted
        set eventID [$currentSelectedPane.eventIDFrame.list get $selectedIndex]
-       puts "**** DEBUG: $eventID"
 	lappend deleteEventIDList $eventID
        # Remove the selected line from the console
        DeleteLine $currentSelectedPane $selectedIndex
