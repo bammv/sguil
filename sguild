@@ -31,7 +31,7 @@ set DBNAME sguildb
 set DBHOST localhost
 set DBPORT 1211
 set DBUSER root
-set DBPASS "password"
+set DBPASS "dbpasswd"
 
 ######################## END GLOBALS ################################
 
