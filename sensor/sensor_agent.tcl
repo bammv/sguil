@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.25 2004/11/08 18:26:21 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.26 2005/01/27 19:25:24 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -20,58 +20,31 @@ exec tclsh "$0" "$@"
 # Don't touch these
 set CONNECTED 0
 set BUSY 0
-set COPY_WAIT 0
 
 proc SendToSguild { data } {
   global sguildSocketID CONNECTED DEBUG
   if {!$CONNECTED} {
      if {$DEBUG} { puts "Not connected to sguild. Unable to process this request." }
-     after 10000 SentToSguild Data
+     return 0
   } else {
     if {$DEBUG} {puts "Sending sguild ($sguildSocketID) $data"}
     catch { puts $sguildSocketID $data } 
     catch { flush $sguildSocketID }
+    return 1
   }
 }
 
-proc FinishedCopy { fileID socketID bytes {error {}} } {
-  global DEBUG BUSY
-  close $fileID
-  close $socketID
-  if {$DEBUG} {puts "Bytes copied: $bytes"}
-  set BUSY 0
-}
-proc SendPSDataToSvr { fileName } {
-  global SERVER_HOST SERVER_PORT DEBUG COPY_WAIT
-  if [catch {socket $SERVER_HOST $SERVER_PORT} socketID] {
-    if {$DEBUG} {puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT"}
-    if {$DEBUG} {puts "ERROR: $socketID"}
-    catch {close $socketID} closeError
-    # Buffers are probably full
-    set COPY_WAIT 1
-    after 10000 set COPY_WAIT 0
-  } else {
-    fconfigure $socketID -translation binary
-    puts $socketID "PSFile [file tail $fileName]"
-    CopyDataToServer $fileName $socketID
-  }
-}
 proc CopyDataToServer { fileName socketID } {
   global DEBUG SERVER_HOST BUSY
-  if {$DEBUG} {puts "Copying $fileName to $SERVER_HOST."}
-  set fileID [open $fileName r]
-  fconfigure $fileID -translation binary -buffering none
-  if [catch {fcopy $fileID $socketID -command [list FinishedCopy $fileID $socketID]} fcopyError] {
-    if {$DEBUG} {puts "Error: $fcopyError"}
-    return
-  }
-  set BUSY 1
-  vwait BUSY
-  file delete $fileName
+
+  # We no do this any more
+  puts "ACK === > CopyDataToServer $fileName $socketID"
+  exit 
+
 }
 
 proc SendSsnDataToSvr { type fileName } {
-  global SERVER_HOST SERVER_PORT DEBUG HOSTNAME COPY_WAIT
+  global SERVER_HOST SERVER_PORT DEBUG HOSTNAME 
   if [catch {socket $SERVER_HOST $SERVER_PORT} socketID ] {
     if {$DEBUG} {puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT"}
     if {$DEBUG} {puts "ERROR: $socketID"}
@@ -81,58 +54,172 @@ proc SendSsnDataToSvr { type fileName } {
     after 10000 set COPY_WAIT 0
   } else {
     fconfigure $socketID -translation binary -buffering none
-    puts $socketID "SsnFile $type [file tail $fileName] $HOSTNAME"
+    puts $socketID "SsnFile $type [file tail $fileName] $HOSTNAME $lines"
     CopyDataToServer $fileName $socketID
   }
 }
+
 proc CheckForPortscanFiles {} {
-  global PORTSCAN_DIR PS_CHECK_DELAY_IN_MSECS DEBUG CONNECTED COPY_WAIT
-  if {$CONNECTED && !$COPY_WAIT} {
-    if {$DEBUG} {puts "Checking for PS files in $PORTSCAN_DIR."}
-    foreach fileName [glob -nocomplain $PORTSCAN_DIR/portscan_log.*] {
-      if { [file size $fileName] > 0 } {
-        if {$CONNECTED && !$COPY_WAIT} {
-          SendPSDataToSvr $fileName
-        } else {
-          break
-        } 
-      } else {
-        file delete $fileName
-      }
+
+    global PORTSCAN_DIR PS_CHECK_DELAY_IN_MSECS DEBUG CONNECTED
+
+    if {$CONNECTED} {
+
+        if {$DEBUG} {puts "Checking for PS files in $PORTSCAN_DIR."}
+
+        foreach fileName [glob -nocomplain $PORTSCAN_DIR/portscan_log.*] {
+
+            if { [file size $fileName] > 0 } {
+                SendToSguild [list PSFile [file tail $fileName] [file size $fileName]]
+                BinCopyToSguild $fileName
+                file delete $fileName
+            } else {
+                file delete $fileName
+            }
+
+        }
+
     }
-  }
-  after $PS_CHECK_DELAY_IN_MSECS CheckForPortscanFiles
+
+    after $PS_CHECK_DELAY_IN_MSECS CheckForPortscanFiles
+
 }
+
 proc CheckForSsnFiles {} {
-  global SSN_DIR S4_KEEP_STATS SANCP SANCP_DIR SSN_CHECK_DELAY_IN_MSECS DEBUG CONNECTED COPY_WAIT
-  if {$CONNECTED && !$COPY_WAIT} {
-    if { $S4_KEEP_STATS } {
-      if {$DEBUG} {puts "Checking for Session files in $SSN_DIR."}
-      foreach fileName [glob -nocomplain $SSN_DIR/ssn_log.*] {
+
+    global SSN_DIR SSN_CHECK_DELAY_IN_MSECS DEBUG CONNECTED
+    global SENSOR_ID
+
+    if { !$CONNECTED || ![info exists SENSOR_ID] } {
+        # Try again later
+        after $SSN_CHECK_DELAY_IN_MSECS CheckForSsnFiles
+        return
+    }
+
+    if {$DEBUG} {puts "Checking for Session files in $SSN_DIR."}
+
+    foreach fileName [glob -nocomplain $SSN_DIR/ssn_log.*] {
+
         if { [file size $fileName] > 0 } {
-          if {$CONNECTED && !$COPY_WAIT} {
-            SendSsnDataToSvr sessions $fileName
-          } else {
-            break
-          } 
+
+            # Parse the file for rows with different dates.
+            # The parse proc returns a list of filenames and dates.
+            foreach fdPair [ParseSsnSancpFiles $fileName] {
+
+                set tmpFile [lindex $fdPair 0]
+                set tmpDate [lindex $fdPair 1]
+                set fileBytes [file size $tmpFile]
+                # Tell sguild it has a file coming
+                SendToSguild [list SsnFile [file tail $tmpFile] $tmpDate $fileBytes] 
+                BinCopyToSguild $tmpFile
+                file delete $fileName
+
+            }
+
         } else { 
-          file delete $fileName
+
+            # Delete files with no data
+            file delete $fileName
+
         }
-      }
+  
     }
-    if { $SANCP } {
-      if {$DEBUG} {puts "Checking for sancp stats files in $SANCP_DIR."}
-      foreach fileName [glob -nocomplain $SANCP_DIR/stats.*.*] {
-        if { [file size $fileName] > 0 } {
-          SendSsnDataToSvr sancp $fileName
-        } else {
-          file delete $fileName
-        }
-      }
-    }
-  }
-  after $SSN_CHECK_DELAY_IN_MSECS CheckForSsnFiles
+    after $SSN_CHECK_DELAY_IN_MSECS CheckForSsnFiles
+
 }
+  
+proc CheckForSancpFiles {} {
+
+    global DEBUG SANCP_DIR SENSOR_ID CONNECTED SSN_CHECK_DELAY_IN_MSECS
+
+    if { !$CONNECTED || ![info exists SENSOR_ID] } {
+        # Try again later
+        after $SSN_CHECK_DELAY_IN_MSECS CheckForSancpFiles
+        return
+    }
+
+    if {$DEBUG} {puts "Checking for sancp stats files in $SANCP_DIR."}
+
+    foreach fileName [glob -nocomplain $SANCP_DIR/stats.*.*] {
+
+        if { [file size $fileName] > 0 } {
+
+            foreach fdPair [ParseSsnSancpFiles $fileName] {
+                set tmpFile [lindex $fdPair 0]
+                set tmpDate [lindex $fdPair 1]
+                set fileBytes [file size $tmpFile]
+                # Tell sguild it has a file coming
+                SendToSguild [list SancpFile [file tail $tmpFile] $tmpDate $fileBytes] 
+                BinCopyToSguild $tmpFile
+                file delete $fileName
+            }
+
+        } else {
+
+            file delete $fileName
+
+        }
+
+    }
+    after $SSN_CHECK_DELAY_IN_MSECS CheckForSancpFiles
+
+}
+
+proc BinCopyToSguild { fileName } {
+
+    global sguildSocketID
+
+    set rFileID [open $fileName r]
+    fconfigure $rFileID -translation binary
+    fconfigure $sguildSocketID -translation binary
+    fcopy $rFileID $sguildSocketID
+    fconfigure $sguildSocketID -encoding utf-8 -translation {auto crlf}
+    catch {close $rFileID} tmpError
+
+}
+
+
+#
+#  Parses std sancp files. Prepends sensorID and puts each
+#  line in its own date file
+#
+#  Returns a list of filenames and dates:
+#  {file1 date1} {file2 date2} {etc etc}
+#
+proc ParseSsnSancpFiles { fileName } {
+
+    global SENSOR_ID 
+    
+    set inFileID [open $fileName r]
+    while { [ gets $inFileID line] >= 0 } {
+
+        # Strips out the date
+        if { ![regexp {^\d+\|(\d{4}-\d{2}-\d{2})\s.*\|.*$} $line foo date] } {
+             # Corrupt File
+             puts "ERROR"   
+        }
+        # Files can contain data from different start days
+        if { ![info exists outFileID($date)] } {
+            set outFile($date) "[file dirname $fileName]/parsed.[file tail $fileName].$date"
+            set outFileID($date) [open $outFile($date) w]
+        } 
+        # Prepend sensorID
+        puts $outFileID($date) "${SENSOR_ID}|$line"  
+        
+    }
+ 
+    close $inFileID
+    file delete $fileName
+
+    foreach date [array names outFileID] {
+        close $outFileID($date) 
+        lappend tmpFileNames [list $outFile($date) $date]
+    }
+    
+    return $tmpFileNames
+
+}
+
 proc CheckDiskSpace {} {
   global DEBUG WATCH_DIR DISK_CHECK_DELAY_IN_MSECS CONNECTED
   if {$CONNECTED} {
@@ -151,28 +238,31 @@ proc PingServer {} {
 }
 # Received a request for rawdata
 proc RawDataRequest { socketID TRANS_ID sensor timestamp srcIP dstIP srcPort dstPort proto rawDataFileName type } {
-  global SERVER_HOST SERVER_PORT DEBUG HOSTNAME
-  # Create the data file.
-  set tmpRawDataFile [CreateRawDataFile $TRANS_ID $timestamp $srcIP $srcPort $dstIP $dstPort $proto $rawDataFileName $type]
-  if { $tmpRawDataFile != "error" } {
-    # Copy the file up to sguild.
-    if [catch {socket $SERVER_HOST $SERVER_PORT} socketID ] {
-      if {$DEBUG} {puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT"}
-      if {$DEBUG} {puts "ERROR: $socketID"}
-      catch {close $socketID} closeError
-      file delete $tmpRawDataFile
+
+    global SERVER_HOST SERVER_PORT DEBUG HOSTNAME
+
+    # Create the data file.
+    set tmpRawDataFile [CreateRawDataFile $TRANS_ID $timestamp\
+      $srcIP $srcPort $dstIP $dstPort $proto $rawDataFileName $type]
+
+    if { $tmpRawDataFile != "error" } {
+
+        # Copy the file up to sguild.
+        SendToSguild [list RawDataFile $rawDataFileName $TRANS_ID [file size $tmpRawDataFile]]
+        BinCopyToSguild $tmpRawDataFile
+        file delete $tmpRawDataFile
+
     } else {
-      fconfigure $socketID -translation binary -buffering none
-      puts $socketID [list RawDataFile $rawDataFileName $TRANS_ID]
-      CopyDataToServer $tmpRawDataFile $socketID
+
+        if {$DEBUG} { puts "Error creating raw data file: $rawDataFileName" }
+
+        if { $type == "xscript" } {
+            SendToSguild [list XscriptDebugMsg $TRANS_ID "Error creating raw file on sensor."]
+        }
+
     }
-  } else {
-    if {$DEBUG} { puts "Error creating raw data file: $rawDataFileName" }
-    if { $type == "xscript" } {
-      SendToSguild [list XscriptDebugMsg $TRANS_ID "Error creating raw file on sensor."]
-    }
-  }
 }
+
 proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto rawDataFileName type } {
   global RAW_LOG_DIR DEBUG TCPDUMP TMP_DIR
   set date [lindex $timestamp 0]
@@ -267,6 +357,7 @@ proc SguildCmdRcvd { socketID } {
       PONG	{ if {$DEBUG} {puts "PONG recieved"} }
       PING      { SendToSguild "PONG" }
       RawDataRequest { eval $sguildCmd $socketID [lrange $data 1 end] }
+      SensorID  { SetSensorID [lindex $data 1] }
       default   { if {$DEBUG} {puts "Sguil Cmd Unkown: $sguildCmd"} }
     }
   }
@@ -315,6 +406,15 @@ proc CheckLineFormat { line } {
   # Right now we just check the length and for "set".
   if { [llength $line] != 3 || [lindex $line 0] != "set" } { set RETURN 0 }
   return $RETURN
+}
+
+# May need to add more to this later
+proc SetSensorID { sensorID } {
+
+    global SENSOR_ID
+
+    set SENSOR_ID $sensorID
+
 }
 
 ################### MAIN ###########################
@@ -379,7 +479,8 @@ if {[info exists DAEMON] && $DAEMON} {Daemonize}
 
 ConnectToSguilServer
 CheckForPortscanFiles
-CheckForSsnFiles
+if { [info exists S4_KEEP_STATS] && $S4_KEEP_STATS } { CheckForSsnFiles }
+if { [info exists SANCP] && $SANCP } { CheckForSancpFiles }
 CheckDiskSpace
 if {$PING_DELAY != 0} { PingServer }
 vwait FOREVER

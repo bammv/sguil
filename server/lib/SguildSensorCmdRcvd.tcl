@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.5 2004/11/30 21:03:45 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.6 2005/01/27 19:25:26 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global connectedAgents agentSensorName
@@ -20,86 +20,67 @@ proc SensorCmdRcvd { socketID } {
     set sensorCmd [ctoken tmpData " "]
     # set sensorCmd [lindex $data 0]
     switch -exact -- $sensorCmd {
-      RTEvent   { EventRcvd $socketID $data }
-      PSFile    { RcvPortscanFile $socketID [lindex $data 1] }
-      CONNECT   { SensorAgentConnect $socketID [lindex $data 1] }
-      DiskReport { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
-      SsnFile   { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
-      PING      { puts $socketID "PONG"; flush $socketID }
-      PONG      { SensorAgentPongRcvd $socketID }
+      RTEvent         { EventRcvd $socketID $data }
+      SsnFile         { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+      SancpFile       { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+      PSFile          { RcvPortscanFile $socketID [lindex $data 1] [lindex $data 2] }
+      CONNECT         { SensorAgentConnect $socketID [lindex $data 1] }
+      DiskReport      { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
+      PING            { puts $socketID "PONG"; flush $socketID }
+      PONG            { SensorAgentPongRcvd $socketID }
       XscriptDebugMsg { $sensorCmd [lindex $data 1] [lindex $data 2] }
-      RawDataFile { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
-      default   { LogMessage "Sensor Cmd Unkown ($socketID): $sensorCmd" }
+      RawDataFile     { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+      default         { LogMessage "Sensor Cmd Unkown ($socketID): $sensorCmd" }
     }
   }
 }
 
-proc RcvSsnFile { socketID tableName fileName sensorName } {
-  global TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe
-  set sensorID [GetSensorID $sensorName]
-  InfoMessage "Receiving session file $fileName."
-  fconfigure $socketID -translation binary
-  set DB_OUTFILE $TMPDATADIR/$fileName
-  set fileID [open $DB_OUTFILE w]
-  fcopy $socketID $fileID
-  close $fileID
-  close $socketID
-  if {$sensorID == 0} {
-      LogMessage "ERROR: $sensorName is not in DB!!"
-      SendSystemInfoMsg sguild "ERROR: Received session file from unkown sensor - $sensorName"
-      return
-  }
-  set inFileID [open $DB_OUTFILE r]
-  set outFileID [open $DB_OUTFILE.tmp w]
-  # Use i to keep track of how many lines we loaded into the database for DEBUG.
-  set i 0
-  # Load the entire file into memory (read $inFileID), then create a list
-  # delimited by \n. Finally loop through each 'line', prepend the sensorID (sid)
-  # to it, and append the new line to the tmp file.
-  foreach line [split [read $inFileID] \n] {
-    if {$line != ""} {puts $outFileID "$sensorID|$line"; incr i}
-  }
-  close $inFileID
-  close $outFileID
-  file delete $DB_OUTFILE
-                                                                                                                                   
-  InfoMessage "Loading $i cnxs from $fileName into $tableName."
-  if {$DBPASS != "" } {
-    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
-     -e \"LOAD DATA CONCURRENT LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE $tableName FIELDS TERMINATED\
-     BY '|'\""
-  } else {
-    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
-     -e \"LOAD DATA CONCURRENT LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE $tableName FIELDS TERMINATED\
-     BY '|'\""
-  }
-  # The loader child proc does the LOAD for us.
-  puts $loaderWritePipe [list $DB_OUTFILE.tmp $cmd]
-  flush $loaderWritePipe
+proc RcvBinCopy { socketID outFile bytes } {
+
+    set outFileID [open $outFile w]
+    fconfigure $outFileID -translation binary
+    fconfigure $socketID -translation binary
+    fcopy $socketID $outFileID -size $bytes
+    close $outFileID
+    fconfigure $socketID -encoding utf-8 -translation {auto crlf}
+
 }
 
-proc RcvPortscanFile { socketID fileName } {
-  global TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe
-  InfoMessage "Recieving portscan file $fileName."
-  fconfigure $socketID -translation binary
-  set PS_OUTFILE $TMPDATADIR/$fileName
-  set fileID [open $PS_OUTFILE w]
-  fcopy $socketID $fileID
-  close $fileID
-  close $socketID
-  InfoMessage "Loading $fileName into DB."
-  if {$DBPASS != "" } {
-    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
-     -e \"LOAD DATA CONCURRENT LOCAL INFILE '$PS_OUTFILE' INTO TABLE portscan FIELDS TERMINATED\
-     BY '|'\""
-  } else {
-    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
-     -e \"LOAD DATA CONCURRENT LOCAL INFILE '$PS_OUTFILE' INTO TABLE portscan FIELDS TERMINATED\
-     BY '|'\""
-  }
-  # The loader child proc does the LOAD for us.
-  puts $loaderWritePipe [list $PS_OUTFILE $cmd]
-  flush $loaderWritePipe
+proc RcvSsnFile { socketID fileName date bytes } {
+
+    global TMPDATADIR loaderWritePipe
+
+    set ssnFile $TMPDATADIR/$fileName
+    RcvBinCopy $socketID $ssnFile $bytes
+    
+    # The loader child proc does the LOAD for us.
+    puts $loaderWritePipe [list LoadSsnFile $ssnFile $date]
+    flush $loaderWritePipe
+
+}
+
+proc RcvSancpFile { socketID fileName date bytes } {
+
+    global TMPDATADIR
+
+    set sancpFile $TMPDATADIR/$fileName
+    RcvBinCopy $socketID $sancpFile $bytes
+    
+}
+
+proc RcvPortscanFile { socketID fileName bytes } {
+
+    global TMPDATADIR loaderWritePipe
+
+    InfoMessage "Recieving portscan file $fileName."
+    set PS_OUTFILE $TMPDATADIR/$fileName
+    # Copy file from sensor_agent
+    RcvBinCopy $socketID $PS_OUTFILE $bytes
+
+    # The loader child proc does the LOAD for us.
+    puts $loaderWritePipe [list LoadPSFile $PS_OUTFILE]
+    flush $loaderWritePipe
+
 }
 
 proc DiskReport { socketID fileSystem percentage } {

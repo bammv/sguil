@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $
+# $Id: SguildConnect.tcl,v 1.3 2005/01/27 19:25:25 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -63,7 +63,9 @@ proc SensorAgentConnect { socketID sensorName } {
   lappend connectedAgents $sensorName
   set agentSocket($sensorName) $socketID
   set agentSensorName($socketID) $sensorName
+  set sensorID [GetSensorID $sensorName]
   SendSystemInfoMsg $sensorName "Agent connected."
+  SendSensorAgent $socketID [list SensorID $sensorID]
 }
 
 

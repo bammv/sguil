@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.9 2005/01/06 16:16:31 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.10 2005/01/27 19:25:26 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -171,27 +171,27 @@ proc GetRawDataFromSensor { TRANS_ID sensor timestamp srcIP srcPort dstIP dstPor
   return $RFLAG
 }
 
-proc RawDataFile { socketID fileName TRANS_ID } {
-  global agentSensorName transInfoArray
-  set type [lindex $transInfoArray($TRANS_ID) 3]
-  InfoMessage "Recieving rawdata file $fileName."
-  if { $type == "xscript" } {
-    SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
-     "XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] Recieving raw file from sensor."
-  }
-  fconfigure $socketID -translation binary
-  set outfile [lindex $transInfoArray($TRANS_ID) 2]/$fileName
-  set fileID [open $outfile w]
-  fconfigure $fileID -translation binary
-  # Copy the file from the binary socket
-  fcopy $socketID $fileID
-  catch {close $fileID}
-  catch {close $socketID}
-  if { $type == "xscript" } {
-    GenerateXscript $outfile [lindex $transInfoArray($TRANS_ID) 0] [lindex $transInfoArray($TRANS_ID) 1] $TRANS_ID
-  } elseif { $type == "ethereal" } {
-    SendEtherealData $outfile $TRANS_ID
-  }
+proc RawDataFile { socketID fileName TRANS_ID bytes } {
+
+    global agentSensorName transInfoArray
+
+    # xscript or ethereal request
+    set type [lindex $transInfoArray($TRANS_ID) 3]
+
+    InfoMessage "Recieving rawdata file $fileName."
+    if { $type == "xscript" } {
+        SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
+         "XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] Recieving raw file from sensor."
+    }
+
+    set outfile [lindex $transInfoArray($TRANS_ID) 2]/$fileName
+    RcvBinCopy $socketID $outfile $bytes
+
+    if { $type == "xscript" } {
+        GenerateXscript $outfile [lindex $transInfoArray($TRANS_ID) 0] [lindex $transInfoArray($TRANS_ID) 1] $TRANS_ID
+    } elseif { $type == "ethereal" } {
+        SendEtherealData $outfile $TRANS_ID
+    }
 }
 
 proc XscriptDebugMsg { TRANS_ID msg } {
