@@ -1,6 +1,6 @@
 #!/bin/sh
 #set -x
-# $Id: log_packets.sh,v 1.14 2004/05/21 14:28:27 shalligan Exp $ #
+# $Id: log_packets.sh,v 1.15 2004/05/24 15:26:08 shalligan Exp $ #
 
 ################################################
 #                                              #
@@ -29,16 +29,19 @@
 # Path to snort binary
 SNORT_PATH="/usr/local/bin/snort"
 # Directory to log pcap data to (date dirs will be created in here)
-LOG_DIR="/snort_data/dailylogs"
+LOG_DIR="/var/log/snort/dailylogs"
 # Percentage of disk to try and maintain
 MAX_DISK_USE=90
 # Interface to 'listen' to.
-INTERFACE="eth0"
+INTERFACE="vr0"
 # Other options to use when starting snort
 #OPTIONS="-u sguil -g sguil -m 122"
 # Where to store the pid
 PIDFILE="/var/run/snort_log.pid"
-
+# How do we run ps
+PS="ps awx"
+# Where is grep
+GREP="/usr/bin/grep"
 #Add BPFs here.
 #The below is an example of a filter for ignoring outbound HTTP from my network
 # to the world.
@@ -98,7 +101,7 @@ restart() {
   if [ -f $PIDFILE ]; then
     OLDPID=`cat $PIDFILE`
     # we need to nuke PIDFILE so that when we call start, it doesn't exit cause it thinks we are already running.
-    PIDFILE="/var/run/nonexistent"
+    rm $PIDFILE
     echo -n "Starting new process..."
     start
     echo -n "Killing old process..."
@@ -110,8 +113,23 @@ restart() {
     fi
   else
     echo "Error: $PIDFILE does not exist."
-    echo "Starting new process anyway."
-    start
+    echo "Checking for old process with ps."
+    res=`$PS | $GREP "$SNORT_PATH" | $GREP "$LOG_DIR" | $GREP -v grep | cut -c1-5`
+    if [ $res ]; then
+	echo "Old log packets proccess found at pid $res, killing."
+	kill $res
+	if [ $? = 0 ]; then
+	    echo "Success."
+	    echo "Starting new process."
+	    start
+	else
+	    echo "Failed."
+	fi
+    else
+	echo "No old processes found."
+	echo "Starting new process anyway."
+	start
+    fi
   fi
 }
 
