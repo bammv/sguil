@@ -1,4 +1,4 @@
-# $Id: SguilUtil.tcl,v 1.3 2005/01/24 21:45:00 shalligan Exp $
+# $Id: SguilUtil.tcl,v 1.4 2005/01/25 18:12:12 shalligan Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
@@ -25,9 +25,9 @@ proc ValidateIPAddress { fullip } {
     if { $maskbits!="" && ($maskbits < 0 || $maskbits > 32) } { set valid 0 }
     if { !$valid } { return 0 }
 
-    # if the bitmask is 32, return the ip address as the network number
-    if { $maskbits == 32 } {
-	list iplist $ipaddress $maskbits $ipaddress $ipaddress
+    # if the bitmask is 32 or absent, return the ip address as the network number
+    if { $maskbits=="" || $maskbits == 32 } {
+	set iplist [list $ipaddress 32 $ipaddress $ipaddress]
     } else { 
 	if { $maskbits > 23 } {
 	    set hostbits [expr 32 - $maskbits]
@@ -66,10 +66,24 @@ proc ValidateIPAddress { fullip } {
 	    set bcastoct [expr $netoct + round($hostmask) - 1 ]
 	    set bcastaddress "${bcastoct}.255.255.255"
 	}
-	set iplist $ipaddress $maskbits $netnumber $bcastaddress
+	set iplist [list $ipaddress $maskbits $netnumber $bcastaddress]
     }
 
     return $iplist
+}
+
+#
+# InetAtoN:  Convert a string dotted quad ip address to decimal ala
+#            INET_ATON in mysql
+#
+proc InetAtoN { ipaddress } {
+    set octetlist [split $ipaddress "."]
+    set oct1 [lindex $octetlist 0]
+    set oct2 [lindex $octetlist 1]
+    set oct3 [lindex $octetlist 2]
+    set oct4 [lindex $octetlist 3]
+    set decIP [expr ($oct1 * 16777216) + ($oct2 * 65536) + ($oct3 *256) + $oct4]
+    return $decIP
 }
 
 #

@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.27 2004/11/17 15:49:16 shalligan Exp $ #
+# $Id: qrybuild.tcl,v 1.28 2005/01/25 18:12:11 shalligan Exp $ #
 proc QryBuild {tableSelected whereTmp } {
     global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList
@@ -40,7 +40,7 @@ proc QryBuild {tableSelected whereTmp } {
     set funcList(mainsancp) [list FlagMacros]
     set funcList(Common) [list {INET_ATON() INET_ATON()} {LIMIT LIMIT} {LIKE LIKE} {AND AND} {OR OR} {NOT NOT}]
     set funcList(Strings) [list {LIKE LIKE} {REGEXP REGEXP} {RLIKE RLIKE}]
-    set funcList(Logical) [list {AND AND} {OR OR} {NOT NOT} {BETWEEN() BETWEEN()} {LIKE LIKE}]
+    set funcList(Logical) [list {AND AND} {OR OR} {NOT NOT} {LIKE LIKE}]
     set funcList(Comparison) [list {= =} {!= !=} {< <} {> >} {<=> <=>}]
     set funcList(DateTime) [list {TO_DAYS() TO_DAYS()} {UNIX_TIMESTAMP() UNIX_TIMESTAMP} {UTC_TIMESTAMP() UTC_TIMESTAMP}]
     set funcList(DateMacros) [list [list TODAYUTC '[lindex [GetCurrentTimeStamp] 0]'] \
@@ -86,6 +86,8 @@ proc QryBuild {tableSelected whereTmp } {
 	  set command "$editBox insert insert \"[lindex $logical 1] \""
 	  $mainBB1 add [lindex $logical 0] -text [lindex $logical 0] -padx 0 -pady 0 -command "$command"
       }
+      # One last button for the left side that acts differently
+      $mainBB1 add ipAddress -text "IP Address" -padx 0 -pady 0 -command "IPAddress2SQL builder $editBox"
       
       # button box to right of main edit box
       set mainBB2 [buttonbox $editFrame.mbb2 -padx 0 -pady 0 -orient vertical]
@@ -312,5 +314,129 @@ proc InvokeQryBuild { tableSelected whereTmp } {
     } else {
 	SancpQueryRequest $whereStatement
     }
+}
+
+#
+#  IPAddress2SQL:  Pops up a box to type in an IP address/subnet (in CIDR) and spits
+#                 out SQL to find that range.
+#                 args:
+#                 caller: Where this proc was called from.  Options: builder, menu
+#                 parameter: If called from the builder, this is the path to the builders editBox
+#                            If called from elsewhere, it is unused.
+#
+proc IPAddress2SQL { caller {parameter {NULL}} } {
+
+    global SELECTEDTABLE RETURN_FLAG_IP
+
+    # Create the window
+    set ipAddressWin .ipAddressWin
+    if { [winfo exists $ipAddressWin] } {
+	wm withdraw $ipAddressWin
+	wm deiconify $ipAddressWin
+	return
+    }
+    
+    set xy [winfo pointerxy .]
+    toplevel $ipAddressWin
+    wm title $ipAddressWin "IP Address Builder"
+    wm geometry $ipAddressWin +[lindex $xy 0]+[lindex $xy 1]
+    # Main Frame
+    set mainFrame [frame $ipAddressWin.mFrame -background #dcdcdc -borderwidth 1]
+    set ipBox [entryfield $mainFrame.ipBox -textbackground white -textfont ourFixedFont \
+		-labeltext "Enter IP Address/Net"]
+    set srcdstBox [radiobox $mainFrame.srcdstToggle -orient horizontal]
+    $srcdstBox add src -text "Src" 
+    $srcdstBox add dst -text "Dst"
+    $srcdstBox add src2dst -text "Src To Dst"
+    $srcdstBox select 0
+    if { $caller != "builder" } {
+	set tableBox [radiobox $mainFrame.tableBox -orient horizontal]
+	$tableBox add event -text "Event"
+	$tableBox add sessions -text "Sessions"
+	$tableBox add sancp -text "Sancp"
+	$tableBox select 0
+    }
+    set buttonFrame [frame $mainFrame.bFrame]
+    set submitButton [button $buttonFrame.submitButton -text "Submit" -command "set RETURN_FLAG_IP 1"]
+    if { $caller != "builder" } {
+	set buildButton [button $buttonFrame.buildButton -text "Build" -command "set RETURN_FLAG_IP 2"]
+    }
+    set cancelButton [button $buttonFrame.cancelButton -text "Cancel" -command "set RETURN_FLAG_IP 0"]
+    if { $caller != "builder" } {
+	pack $buildButton -side left
+    }
+    pack $submitButton $cancelButton -side left
+
+    pack $ipBox $srcdstBox -side top -expand false
+    if { $caller != "builder" } {
+	pack $tableBox -side top -expand false
+    }
+    pack $buttonFrame -side top -expand false
+    pack $mainFrame
+    tkwait variable RETURN_FLAG_IP
+    if { $RETURN_FLAG_IP == 0 } {
+	destroy $ipAddressWin
+	return
+    }
+    
+    # Check that the content is in valid format and store it in varibles
+    set fullip [$ipBox get]
+    set iplist [ValidateIPAddress $fullip]
+
+    if { $iplist==0 } { 
+	ErrorMessage "Error.  Invalid IP Address"
+	    destroy $ipAddressWin
+	    IPAddress2SQL $caller $editBox
+    }
+    
+    set networknumber [lindex $iplist 2]
+    set bcastaddress [lindex $iplist 3]
+    # find the decimal values for the ip network and broadcast addresses
+    set editBox $parameter
+    set decNetwork [InetAtoN $networknumber]
+    set decBcast [InetAtoN $bcastaddress]
+    if { $caller != "builder" } {
+	set SELECTEDTABLE [$tableBox get]
+    }
+    
+    # build the ip part of the query.  It will look the same no matter what table we are working with. 
+    if { [$srcdstBox get] == "src" } {
+	set inserttext "(${SELECTEDTABLE}.src_ip > ${decNetwork} AND ${SELECTEDTABLE}.src_ip < ${decBcast}) "
+    } elseif { [$srcdstBox get] == "dst" } {
+	set inserttext "(${SELECTEDTABLE}.dst_ip > ${decNetwork} AND ${SELECTEDTABLE}.dst_ip < ${decBcast}) "
+    } else {
+	set inserttext "((${SELECTEDTABLE}.dst_ip > ${decNetwork} AND ${SELECTEDTABLE}.dst_ip < ${decBcast}) \
+		OR (${SELECTEDTABLE}.src_ip > ${decNetwork} AND ${SELECTEDTABLE}.src_ip < ${decBcast})) "
+    }
+
+    # do something depending on who called us
+    if { $caller == "builder" } {
+	$editBox insert insert $inserttext
+	destroy $ipAddressWin 
+	return
+    } elseif { $caller == "menu" } {
+
+	if { $SELECTEDTABLE == "event" } {
+	    set timestamp [lindex [GetCurrentTimeStamp "1 week ago"] 0]
+	    set tmpWhere "WHERE ${SELECTEDTABLE}.timestamp > '$timestamp' AND $inserttext LIMIT 500"
+	} else {
+	    set timestamp [lindex [GetCurrentTimeStamp "1 day ago"] 0]
+	    set tmpWhere "WHERE ${SELECTEDTABLE}.start_time > '${timestamp}' AND $inserttext LIMIT 500"
+	}
+	# Are we going to the builder or submitting the query
+	if { $RETURN_FLAG_IP == 2 } {
+	    destroy $ipAddressWin
+	    InvokeQryBuild $SELECTEDTABLE $tmpWhere
+	} else {
+	    if { $SELECTEDTABLE == "event" } {
+		DBQueryRequest $tmpWhere
+	    } elseif { $SELECTEDTABLE == "sessions" } {
+		SsnQueryRequest $whereStatement
+	    } elseif { $SELECTEDTABLE == "sancp" } {
+		SancpQueryRequest $whereStatement
+	    }
+	} 
+    }
+    return
 }
 

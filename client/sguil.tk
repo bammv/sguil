@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.161 2005/01/24 21:44:43 shalligan Exp $ #
+# $Id: sguil.tk,v 1.162 2005/01/25 18:12:05 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1627,6 +1627,7 @@ set topFrame [frame .topFrame]
     $queryList add command -label "Query Sancp Table" -command "QueryRequest sancp empty"
     $queryList add command -label "Standard Queries" -command "StdQuery"
     $queryList add command -label "Query Builder" -command "InvokeQryBuild empty empty"
+    $queryList add command -label "Query by IP" -command "IPAddress2SQL menu"
     $queryList add cascade -label "Query by Category" -menu $queryList.category
     set categoryMenu [menu $queryList.category -tearoff 0]
       $categoryMenu add command -label "Cat I: Unauthorized Root Access"\
