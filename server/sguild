@@ -512,12 +512,13 @@ proc SendSocket { socketID command } {
 }
 
 #
-# SendEvent: Send events to connected clients
+# SendEvent: Send events to clients monitoring that sensor
 #
 proc SendEvent { eventDataList } {
-  global DEBUG clientList
-  if { [info exists clientList] && [llength $clientList] > 0 } {
-    foreach clientSocket $clientList {
+  global DEBUG clientMonitorSockets
+  set sensorName [lindex $eventDataList 3]
+  if { [info exists clientMonitorSockets($sensorName)] } {
+    foreach clientSocket $clientMonitorSockets($sensorName) {
       catch {SendSocket $clientSocket "InsertEvent $eventDataList"} tmpError
     }
   } else {
