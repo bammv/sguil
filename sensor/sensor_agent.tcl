@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.30 2005/01/31 17:52:34 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.31 2005/02/09 22:02:53 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -76,6 +76,7 @@ proc CheckForPortscanFiles {} {
             } else {
                 file delete $fileName
             }
+            update
 
         }
 
@@ -113,6 +114,7 @@ proc CheckForSsnFiles {} {
                 SendToSguild [list SsnFile [file tail $tmpFile] $tmpDate $fileBytes] 
                 BinCopyToSguild $tmpFile
                 file delete $tmpFile
+                update
 
             }
 
@@ -160,6 +162,7 @@ proc CheckForSancpFiles {} {
             file delete $fileName
 
         }
+        update
 
     }
     after $SSN_CHECK_DELAY_IN_MSECS CheckForSancpFiles
