@@ -2,7 +2,7 @@
 # Sguil procs that deal with selection and         #
 # Multi-selection of events                        #
 ####################################################
-
+# $Id: sellib.tcl,v 1.2 2003/11/26 17:56:08 shalligan Exp $
 #
 # ReSetMotion: Reset Motion Vars on a button release
 #

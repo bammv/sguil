@@ -3,6 +3,8 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
+# $Id: extdata.tcl,v 1.2 2003/11/26 17:56:08 shalligan Exp $
+
 proc GetRuleInfo {} {
   global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton MULTI_SELECT SSN_QUERY
   global CONNECTED eventArray
