@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.25 2004/10/21 14:29:23 shalligan Exp $ #
+# $Id: report.tcl,v 1.26 2004/11/30 18:22:20 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -757,6 +757,7 @@ proc HumanText { detail sanitize winname curselection } {
 		} else {
 		    set dataLength [string length $eventPayload]
 		    set asciiStr ""
+		    set hexStr ""
 		    set counter 2
 		    for {set i 1} {$i < $dataLength} {incr i 2} {
 			set currentByte [string range $eventPayload [expr $i - 1] $i]
