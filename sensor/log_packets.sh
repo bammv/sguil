@@ -1,17 +1,46 @@
 #!/bin/sh
 
+################################################
+#                                              #
+# log_packets.sh is just a quick shell script  #
+# to make managing a snort process to log all  #
+# pcap data traversing a network easy. By      #
+# default it logs everything so be sure to     #
+# have a lot of disk space available.          #
+#                                              #
+################################################
+
+
+####################################################
+#                                                  #
+#  USAGE: ./log_packets.sh <start|stop|restart>    #
+#                                                  #
+# Recommendation for crontab:                      #
+#                                                  #
+# 00 0-23/1 * * * /path/to/log_packets.sh restart  #
+#                                                  #
+####################################################
+
+
+# Edit these for your setup
+
+# Path to snort binary
 SNORT_PATH="/usr/local/bin/snort"
+# Directory to log pcap data to (date dirs will be created in here)
 LOG_DIR="/snort_data/dailylogs"
+# Interface to 'listen' to.
 INTERFACE="ed0"
+# Where to store the pid
 PIDFILE="/var/run/snort_log.pid"
+
+#Add BPFs here.
+#The below is an example of a filter for ignoring outbound HTTP from my network
+# to the world.
+#FILTER='not \( src net 67.11.255.148/32 and dst port 80 and "tcp[0:2] > 1024" \) and not \( src port 80 and dst net 67.11.255.148/32 and "tcp[2:2] > 1024"\)'
 
 #Some installs may need these
 #LD_LIBRARY_PATH=/usr/local/lib/mysql
 #export LD_LIBRARY_PATH
-
-# Below is an example filter ignore outbound HTTP traffic
-#<cmd> not \( src net 66.69.118.83/32 and dst port 80 and "tcp[0:2] > 1024" \) and not
-#\( src port 80 and dst net 66.69.118.83/32 and "tcp[2:2] > 1024"\)
 
 TZ=GMT
 export TZ
@@ -25,7 +54,11 @@ start() {
     if [ ! -d $LOG_DIR/$today ]; then
       mkdir $LOG_DIR/$today
     fi
-    $SNORT_PATH -l $LOG_DIR/$today -b -i $INTERFACE > /tmp/snort.log 2>&1 &
+    if [ -n FILTER ]; then
+      eval $SNORT_PATH -l $LOG_DIR/$today -b -i $INTERFACE $FILTER > /tmp/snort.log 2>&1 &
+    else
+      eval $SNORT_PATH -l $LOG_DIR/$today -b -i $INTERFACE > /tmp/snort.log 2>&1 &
+    fi
     PID=$!
     if [ $? = 0 ]; then
       echo "Success."
