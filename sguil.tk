@@ -1307,22 +1307,18 @@ proc ShiftSelect { winName index } {
 		  $childWin.list select clear 0 end
 	      }
 	  }
-	for { set i $LASTINDEXSELECTED } { $i < $index+1 } { incr i } { 
-	    HighLightListLine $currentSelectedPane $i 
-	}
-	return
-    } else {
-	set MOVEMENT_DIR "shift"
-	foreach childWin [winfo children $currentSelectedPane] {
+	  HighLightListLine $currentSelectedPane $index $LASTINDEXSELECTED 
+	  return
+      } else {
+	  set MOVEMENT_DIR "shift"
+	  foreach childWin [winfo children $currentSelectedPane] {
 	      if { [winfo name $childWin] != "scroll" } {
 		  $childWin.list select clear 0 end
 	      }
 	  }
-	for { set i $LASTINDEXSELECTED } { $i > $index-1 } { incr i -1} { 
-	    HighLightListLine $currentSelectedPane $i 
-	}
-	return
-    }
+	  HighLightListLine $currentSelectedPane $index $LASTINDEXSELECTED 
+	  return
+      }
 }
     
     
@@ -1407,13 +1403,9 @@ proc MotionSelect { winName index } {
   }
   # Select everything between high and low
   if { $MOVEMENT_DIR == "down" } {
-    for { set i $MotionLowIndex } { $i < $MotionHighIndex+1 } { incr i } { 
-        HighLightListLine $currentSelectedPane $i
-    }
+        HighLightListLine $currentSelectedPane $MotionHighIndex $MotionLowIndex
   } else {
-    for { set i $MotionHighIndex } { $i > $MotionLowIndex-1 } { incr i -1} { 
-        HighLightListLine $currentSelectedPane $i
-    }
+        HighLightListLine $currentSelectedPane $MotionLowIndex $MotionHighIndex
   }
     
   return
@@ -1502,7 +1494,7 @@ proc SelectAllLists { winName index } {
     set ACTIVE_EVENT 0
     return
   }
-  HighLightListLine $currentSelectedPane $index
+  HighLightListLine $currentSelectedPane $index $index
 #
 # We don't want any detail displayed if this is a multi-select
 # So lets stick this below bit in a conditional
@@ -1572,17 +1564,25 @@ proc UnHighLightListLine { paneName } {
 
 #
 # HighLightListLine: Highlight all the lists.
-#
-proc HighLightListLine { paneName index } {
+# paneName = current pane name
+# index = current index
+# lastindex = other index for multi-selects.  If this is a single select
+# put the same value as index
+proc HighLightListLine { paneName index lastindex } {
   global MOVEMENT_DIR
   set activeIndex [$paneName.eventIDFrame.list index active]
   foreach childWin [winfo children $paneName] {
     if { [winfo name $childWin] != "scroll" } {
       #$childWin.list select clear 0 end
-      $childWin.list select anchor $index
-      $childWin.list select set anchor $index
+      #$childWin.list select anchor $index
+      #$childWin.list select set anchor $index
       $childWin.list activate $index
-      $childWin.list select set $index   
+	if { $index > $lastindex } {
+	    $childWin.list select set $lastindex $index 
+	} else {
+	    $childWin.list select set $index $lastindex
+	}
+	
 	if { $MOVEMENT_DIR == "down" } {
 	    $childWin.list see [expr $index+1]
 	} elseif { $MOVEMENT_DIR == "up" } {
