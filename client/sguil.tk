@@ -2503,7 +2503,7 @@ proc SaveNewFonts {} {
 proc CreateSensorCheckButton { winName sensorName } {
   # tcl is picky with window names so prepend a "win" to the sensorname
   # and sub any .'s out.
-  regsub {\.} $sensorName {_} buttonName
+  regsub -all {\.} $sensorName {_} buttonName
   checkbutton $winName.win$buttonName -text "$sensorName" -variable sensorSelectArray($sensorName)
   pack $winName.win$buttonName -side left -padx 10 -pady 10
 }
