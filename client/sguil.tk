@@ -59,31 +59,41 @@ proc ServerCommandRcvd { socketID } {
     ReconnectToSguild
   } else {
     if {$DEBUG} {puts "Server Command Recieved: $data"}
-    set serverCmd [lindex $data 0]
+    # store $data in $origData because ctoken changes the var it is working on.
+    set origData $data
+    set serverCmd [ctoken data " "]
+    set data1 [string trimleft $data]
+    # data1 has indices 1 on etc etc
+    set index1 [ctoken data " "]
+    set data2 [string trimleft $data]
+   
     switch -exact $serverCmd {
-      InsertEvent { $serverCmd [lrange $data 1 end] }
-      InsertSystemInfoMsg { $serverCmd [lindex $data 1] [lrange $data 2 end] }
-      InsertRuleData { $serverCmd [lindex $data 1] }
-      DeleteEventID { $serverCmd [lindex $data 1] }
-      DeleteEventIDList { $serverCmd [lrange $data 1 end] }
-      InsertTcpHdr { $serverCmd [lrange $data 1 end] }
-      InsertIPHdr { $serverCmd [lrange $data 1 end] }
-      InsertUdpHdr { $serverCmd [lrange $data 1 end] }
-      InsertIcmpHdr { $serverCmd [lrange $data 1 5] [lrange $data 6 end]}
-      InsertPayloadData { $serverCmd [lrange $data 1 end] }
-      InsertQueryResults { $serverCmd [lindex $data 1] [lrange $data 2 end] }
-      InfoMessage { $serverCmd [lindex $data 1] }
-      PSDataResults { InsertPSData [lrange $data 1 end] }
-      InsertEscalatedEvent { $serverCmd [lrange $data 1 end] }
-      SensorList { $serverCmd [lrange $data 1 end] }
-      TableNameList { $serverCmd [lrange $data 1 end] }
-      TableColumns { $serverCmd [lindex $data 1] [lrange $data 2 end] }
-      InsertHistoryResults { $serverCmd [lindex $data 1] [lrange $data 2 end] }
-      InsertEmailIPHdr { set EMAIL_RESULTS [lrange $data 1 end] }
-      UserMessage { $serverCmd [lindex $data 1] [lindex $data 2] }
+      InsertEvent { $serverCmd $data1 }
+      InsertSystemInfoMsg { $serverCmd $index1 $data2 }
+      InsertRuleData { $serverCmd $data1 }
+      DeleteEventID { $serverCmd $data1 }
+      DeleteEventIDList { $serverCmd $data1 }
+      InsertTcpHdr { $serverCmd [lrange $data1 }
+      InsertIPHdr { $serverCmd $data1 }
+      InsertUdpHdr { $serverCmd $data1 }
+      # due to the funky ranges in InsertIcmpHeader, ctoken will not work.
+      # since it is Icmp Header data, it should be predictable and not
+      # subject to user input, so lrange is fine
+      InsertIcmpHdr { $serverCmd [lrange $origData 1 5] [lrange $origData 6 end]}
+      InsertPayloadData { $serverCmd $data1 }
+      InsertQueryResults { $serverCmd $index1 $data2 }
+      InfoMessage { $serverCmd $data1 }
+      PSDataResults { InsertPSData $data1 }
+      InsertEscalatedEvent { $serverCmd $data1 }
+      SensorList { $serverCmd $data1 }
+      TableNameList { $serverCmd $data1 }
+      TableColumns { $serverCmd $index1 $data2 }
+      InsertHistoryResults { $serverCmd $index1 }
+      InsertEmailIPHdr { set EMAIL_RESULTS $data1 }
+      UserMessage { $serverCmd $index1 $data2 }
       PONG { if {$DEBUG} {puts "Comm test successful"  } }
-      GlobalQryList { set GLOBAL_QRY_LIST [lrange $data 1 end] }
-      default { puts "Unrecognized command from $socketID: $data" }
+      GlobalQryList { set GLOBAL_QRY_LIST $data1 }
+      default { puts "Unrecognized command from $socketID: $origData" }
     }
   } 
 }
