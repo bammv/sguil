@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.102 2004/02/26 16:08:32 shalligan Exp $ #
+# $Id: sguil.tk,v 1.103 2004/02/26 16:16:55 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2405,14 +2405,14 @@ bind . <Control-Key-Left> {
 # Globally grabbing the space bar is bad :)  Bammkkkk
 bind . <Control-Key-space> {
     if {!$SSN_QUERY} { 
-      set activeIndex [$currentSelectedPane.eventIDFrame.list index active]
-      CtrlSelect $currentSelectedPane.eventIDFrame.list $activeIndex
+      set activeIndex [$currentSelectedPane.sensorFrame.list index active]
+      CtrlSelect $currentSelectedPane.sensorFrame.list $activeIndex
     }
 }
 # ctrl-up moves active event without changing selection
 bind . <Control-Key-Up> {
-    set activeIndex [$currentSelectedPane.eventIDFrame.list index active]
-    $currentSelectedPane.eventIDFrame.list activate [expr $activeIndex-1]
+    set activeIndex [$currentSelectedPane.sensorFrame.list index active]
+    $currentSelectedPane.sensorFrame.list activate [expr $activeIndex-1]
     foreach childWin [winfo children $currentSelectedPane] {
         if { [winfo name $childWin] != "scroll" } {
           $childWin.list itemconfigure $activeIndex -foreground black
@@ -2422,8 +2422,8 @@ bind . <Control-Key-Up> {
     }
 }
 bind . <Control-Key-Down> {
-    set activeIndex [$currentSelectedPane.eventIDFrame.list index active]
-    $currentSelectedPane.eventIDFrame.list activate [expr $activeIndex+1]
+    set activeIndex [$currentSelectedPane.sensorFrame.list index active]
+    $currentSelectedPane.sensorFrame.list activate [expr $activeIndex+1]
     foreach childWin [winfo children $currentSelectedPane] {
         if { [winfo name $childWin] != "scroll" } {
           $childWin.list itemconfigure $activeIndex -foreground black
