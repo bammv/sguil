@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.9 2005/03/03 21:07:45 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.10 2005/03/03 21:12:11 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global connectedAgents agentSensorName
@@ -20,7 +20,6 @@ proc SensorCmdRcvd { socketID } {
     set sensorCmd [ctoken tmpData " "]
     # set sensorCmd [lindex $data 0]
     switch -exact -- $sensorCmd {
-      RTEvent         { EventRcvd $socketID $data }
       SsnFile         { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
       SancpFile       { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
       PSFile          { RcvPortscanFile $socketID [lindex $data 1] [lindex $data 2] }
