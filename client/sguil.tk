@@ -3022,14 +3022,14 @@ option add *selectForeground $SELECTFOREGROUND
 
 # Load iwidgets and namespaces
 package require Iwidgets 3.0
-namespace import iwidgets::panedwindow
-namespace import iwidgets::tabnotebook
-namespace import iwidgets::scrolledtext
-namespace import iwidgets::optionmenu
-namespace import iwidgets::buttonbox
-namespace import iwidgets::entryfield
-namespace import iwidgets::checkbox
-namespace import iwidgets::messagedialog
+namespace import -force iwidgets::panedwindow
+namespace import -force iwidgets::tabnotebook
+namespace import -force iwidgets::scrolledtext
+namespace import -force iwidgets::optionmenu
+namespace import -force iwidgets::buttonbox
+namespace import -force iwidgets::entryfield
+namespace import -force iwidgets::checkbox
+namespace import -force iwidgets::messagedialog
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
   label $winFrame.label -text "$labelText" -foreground black -background $bgColor -anchor s -height $height

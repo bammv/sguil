@@ -12,7 +12,7 @@ set LOCALSENSOR 0
 set DEBUG 1
 # Where you want to archive raw file locally when xscripts are requested.
 set LOCAL_LOG_DIR /snort_data/archive
-# Where xscriptd can fing the remote raw files
+# Where xscriptd can find the remote raw files
 set REMOTE_LOG_DIR /snort_data/dailylogs
 # Path to different execs here. If you need to send flags then put them here also
 # set SSH "/usr/bin/ssh -p 1234"
