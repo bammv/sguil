@@ -73,7 +73,7 @@ proc ServerCommandRcvd { socketID } {
       InsertRuleData { $serverCmd $data1 }
       DeleteEventID { $serverCmd $data1 }
       DeleteEventIDList { $serverCmd $data1 }
-      InsertTcpHdr { $serverCmd [lrange $data1 }
+      InsertTcpHdr { $serverCmd $data1 }
       InsertIPHdr { $serverCmd $data1 }
       InsertUdpHdr { $serverCmd $data1 }
       # due to the funky ranges in InsertIcmpHeader, ctoken will not work.
