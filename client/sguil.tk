@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.137 2004/08/06 14:48:50 bamm Exp $ #
+# $Id: sguil.tk,v 1.138 2004/08/06 21:50:56 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1323,12 +1323,6 @@ proc WakeUp {} {
   wm deiconify .
   bell
 }
-proc Speak { msg } {
-      set soundFileID [open /dev/speech w]
-      puts $soundFileID $msg
-      close $soundFileID
-}
-
 proc DisplayUsage { cmdName } {
   puts "Usage: $cmdName -- -c <filename>"
   puts "  where <filename> is the PATH to the sguil config file"
@@ -1728,6 +1722,7 @@ source $SGUILLIB/sellib.tcl
 source $SGUILLIB/guilib.tcl
 source $SGUILLIB/extdata.tcl
 source $SGUILLIB/sancp.tcl
+source $SGUILLIB/sound.tcl
 if { $WHOIS_PATH == "SimpleWhois" } {
   source $SGUILLIB/whois.tcl
 }
@@ -2687,25 +2682,17 @@ bind . <MouseWheel> {
 	WheelScroll %D $currentSelectedPane "MouseWheel"
     }
 }
-
 # Toggle SOUND when off/on is clicked
 bind $soundStatus <Button-1> {
   if {$SOUND} {
     # Sound is on. turn it off
-    set SOUND 0
-    $soundStatus configure -text Off -foreground red
-    InfoMessage "Sound has been deactivated."
+    TurnSoundOff %W
   } else {
-    # Sound is off. turn it on
-    if { [file exists /dev/speech]} {
-      set SOUND 1
-      $soundStatus configure -text On -foreground darkgreen
-      Speak "Sound has been activated"
-    } else {
-      InfoMessage "/dev/speech was not found. Download and install speechd from www.speechio.org."
-    }
+    # Sound is off. Turn it on if we can.
+    TurnSoundOn %W
   }
 }
+
 #########################################################################
 
 #################### Connect To The Server ##############################
