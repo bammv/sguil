@@ -88,7 +88,7 @@ proc ServerCommandRcvd { socketID } {
       SensorList { $serverCmd $data1 }
       TableNameList { $serverCmd $data1 }
       TableColumns { $serverCmd $index1 $data2 }
-      InsertHistoryResults { $serverCmd $index1 }
+      InsertHistoryResults { $serverCmd $index1 $data2 }
       InsertEmailIPHdr { set EMAIL_RESULTS $data1 }
       UserMessage { $serverCmd $index1 $data2 }
       PONG { if {$DEBUG} {puts "Comm test successful"  } }
