@@ -3969,6 +3969,10 @@ bind . <Shift-Key-F9> {
 bind . <Control-Key-s> {
   GoToSleep
 }
+# Ctl-q launches Std query window
+bind . <Control-Key-q> {
+  GetStdQuery
+}
 # Ctl right/left arrow selects next/prev tab
 bind . <Control-Key-Right> {
   $eventTabs next
