@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.11 2004/02/10 18:36:35 shalligan Exp $ #
+# $Id: report.tcl,v 1.12 2004/02/10 20:34:38 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -1043,7 +1043,6 @@ proc ExportDelimitedSSNText { winname SepChar quote header } {
     }
     # leaving the sanitize toggle in here in case I want it later
     set sanitize 0
-    set ReturnString ""
     set ListSize [$winname.xidFrame.list size]
     for {set i 0} {$i<$ListSize} {incr i} {
 	set ReturnString "${ReturnString}[$winname.sensorFrame.list get $i]${SepChar}"
