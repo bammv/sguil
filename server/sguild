@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.133 2004/11/22 22:42:40 bamm Exp $ #
+# $Id: sguild,v 1.134 2004/12/10 15:46:46 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -149,7 +149,7 @@ foreach arg $argv {
         default { DisplayUsage $argv0 }
       }
     }
-    sguild_lib { set SGUILD_LIB_PATH $arg; set state flag }
+    sguild_lib { set TMP_SGUILD_LIB_PATH $arg; set state flag }
     conf { set CONF_FILE $arg; set state flag }
     autocat { set AUTOCAT_FILE $arg; set state flag }
     gquery { set GLOBAL_QRY_FILE $arg; set state flag }
@@ -265,6 +265,10 @@ set sourceLibs {
     SguildUtils.tcl           \
 }
 
+# Override config file if -l was specified on cmd line
+if { [info exists TMP_SGUILD_LIB_PATH] } {
+  set SGUILD_LIB_PATH $TMP_SGUILD_LIB_PATH
+}
 if { ![info exists SGUILD_LIB_PATH] } {
   # set the lib path to local dir
   set SGUILD_LIB_PATH ./lib
