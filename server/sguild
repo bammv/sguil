@@ -96,7 +96,7 @@ proc RemoveAutoCatRule { rid } {
 proc AddAutoCatRule { line rid } {
   global acRules acCat DEBUG
   if {$DEBUG} {puts "Adding AutoCat Rule: $line"}
-  foreach dIndex [list 8 11 9 12 10 7] {
+  foreach dIndex [list 3 8 11 9 12 10 7] {
     set tmpVar [ctoken line "||"]
     if { $tmpVar != "any" && $tmpVar != "ANY" } {
       lappend acRules($rid) [list $dIndex $tmpVar]
