@@ -6,6 +6,7 @@ package require Tclx
 package require sha1
 
 
+
 ####################################################################
 # Snort GUI for Lamerz [sguil] - A tcl/tk interface to snort       #
 ####################################################################
@@ -1731,9 +1732,7 @@ proc GetReference {} {
   
   set signature [$ruleText get 0.0 end]
   # parse the sig for the sid
-  set ruleOptions [split [lindex [split $signature ()] 1] \;]
-  set sidIndex [lsearch $ruleOptions *sid:*]
-  set sid [string trimleft [lindex [split [lindex $ruleOptions $sidIndex] :] 1]]
+  regexp {sid:\s*([0-9]+)\s*;} $signature match sid
   if {$sid > 1000000} {
     # Local Rule
     tk_messageBox -type ok -icon warning -message\
