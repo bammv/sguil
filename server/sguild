@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.107 2004/07/20 21:54:12 bamm Exp $ #
+# $Id: sguild,v 1.108 2004/07/22 15:38:53 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -811,7 +811,8 @@ proc EventRcvd { socketID data } {
       set matchAID [ CorrelateEvent [lindex $eventDataList 8] [lindex $eventDataList 7] ]
       if { $matchAID == 0 } {
         AddEventToEventArray $eventDataList
-        SendEvent "$eventDataList 1"
+        # Clients don't need the sid and rev
+        SendEvent "[lrange $eventDataList 0 12] 1"
         if { $EMAIL_EVENTS } {
           #Ug-ly. Things will get better when the rules are in the DB.
           set sid [lindex $eventDataList 13]
