@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.24 2004/10/28 19:49:33 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.25 2004/11/08 18:26:21 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -28,6 +28,7 @@ proc SendToSguild { data } {
      if {$DEBUG} { puts "Not connected to sguild. Unable to process this request." }
      after 10000 SentToSguild Data
   } else {
+    if {$DEBUG} {puts "Sending sguild ($sguildSocketID) $data"}
     catch { puts $sguildSocketID $data } 
     catch { flush $sguildSocketID }
   }
@@ -137,7 +138,6 @@ proc CheckDiskSpace {} {
   if {$CONNECTED} {
     set output [exec df -h $WATCH_DIR]
     set diskUse [lindex [lindex [split $output \n] 1] 4]
-    if {$DEBUG} { puts "DiskReport $WATCH_DIR $diskUse" }
     SendToSguild "DiskReport $WATCH_DIR $diskUse"
     after $DISK_CHECK_DELAY_IN_MSECS CheckDiskSpace
   }
@@ -145,7 +145,6 @@ proc CheckDiskSpace {} {
 proc PingServer {} {
   global CONNECTED PING_DELAY DEBUG
   if {$CONNECTED} { 
-    if {$DEBUG} {puts "Sending PING"}
     SendToSguild "PING"
   }
   after $PING_DELAY PingServer
@@ -178,8 +177,6 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
   global RAW_LOG_DIR DEBUG TCPDUMP TMP_DIR
   set date [lindex $timestamp 0]
   if { [file exists $RAW_LOG_DIR/$date] && [file isdirectory $RAW_LOG_DIR/$date] } {
-    if {$DEBUG} {puts "Making a list of local log files"}
-    if {$DEBUG} {puts "Looking in $RAW_LOG_DIR/$date"}
     if { $type == "xscript" } {
       SendToSguild [list XscriptDebugMsg $TRANS_ID "Making a list of local log files."]
       SendToSguild [list XscriptDebugMsg $TRANS_ID "Looking in $RAW_LOG_DIR/$date."]
@@ -192,7 +189,6 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
     return error
   }
   cd $RAW_LOG_DIR/$date
-  if {$DEBUG} {puts $RAW_LOG_DIR/$date}
   if { $type == "xscript" } {
     SendToSguild [list XscriptDebugMsg $TRANS_ID "Making a list of local log files in $RAW_LOG_DIR/$date."]
   }
@@ -200,7 +196,6 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
     lappend logFileTimes [lindex [split $logFile .] 2]
   }
   if { ! [info exists logFileTimes] } {
-    if {$DEBUG} {puts "No matching log files."}
     if { $type == "xscript" } {
       SendToSguild [list XscriptDebugMsg $TRANS_ID "No matching log files."]
     }
@@ -231,7 +226,6 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
     }
     return error
   }
-  if {$DEBUG} { puts "Creating unique data file." }
   if { $type == "xscript" } {
     SendToSguild [list XscriptDebugMsg $TRANS_ID "Creating unique data file."]
   }
