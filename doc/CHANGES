@@ -8,6 +8,10 @@ CVS-HEAD aka sguil-0.3.0beta
   * go Kaplooey.  Bammkkkk        *
   **** WARNING WARNING WARNING ****
 
+  spp_stream4_sguil.patch
+    * Fixed a gmtime/localtime bug. All session times are
+      GMT so use -U when starting snort.
+
   op_sguil
     * Now makes a sustained connection to sguild rather vs.
       a new connect for each event.
@@ -41,6 +45,8 @@ CVS-HEAD aka sguil-0.3.0beta
     * Added/Modified Dshield lookup (http://www.dshield.org)
       to src and dst ip drop down menus. (requested by mboman
       added by geek2)
+
+    * Added Dshield port lookup (creining)
  
     * Modified client authentication. See sguild comments for
       more information. (NOTE: sguil.tk now REQUIRES tcllib)
@@ -77,6 +83,8 @@ CVS-HEAD aka sguil-0.3.0beta
 
   log_packets.sh
     * Removed some legacy hostname stuff.
+
+    * Added var for BPFs.
 
 sguil-0.2.5 (15 Jul 2003)
 

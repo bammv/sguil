@@ -575,6 +575,13 @@ proc LaunchIPQueryMenu { winName yRoot } {
   if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
   tk_popup $ipQueryMenu [winfo rootx $winName] [expr $yRoot + 6]
 }
+proc LaunchPortQueryMenu { winName yRoot } {
+  global ACTIVE_EVENT portQueryMenu MULTI_SELECT
+  if {!$ACTIVE_EVENT || $MULTI_SELECT == 1} { return }
+  set selectedIndex { $winName curselection }
+  if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
+  tk_popup $portQueryMenu [winfo rootx $winName] [expr $yRoot + 6]
+}
 proc LaunchSigQueryMenu { winName yRoot } {
   global ACTIVE_EVENT sigQueryMenu MULTI_SELECT
     if {!$ACTIVE_EVENT || $MULTI_SELECT == 1} { return }
@@ -1735,7 +1742,7 @@ proc InsertRuleData { ruleData } {
   $ruleText component text insert end $ruleData
   $referenceButton configure -state normal
 }
-proc GetDshield { arg } {
+proc GetDshieldIP { arg } {
   global DEBUG BROWSER_PATH currentSelectedPane ACTIVE_EVENT MULTI_SELECT
   if { $ACTIVE_EVENT && !$MULTI_SELECT} {
     set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
@@ -1746,6 +1753,25 @@ proc GetDshield { arg } {
     }
     if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
 	exec $BROWSER_PATH http://www.dshield.org/ipinfo.php?ip=$ipAddr &
+    } else {
+      tk_messageBox -type ok -icon warning -message\
+       "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
+        to point your favorite browser."
+      puts "Error: $BROWSER_PATH does not exist or is not executable."
+    }
+  }
+}
+proc GetDshieldPort { arg } {
+  global DEBUG BROWSER_PATH currentSelectedPane ACTIVE_EVENT MULTI_SELECT
+  if { $ACTIVE_EVENT && !$MULTI_SELECT} {
+    set selectedIndex [$currentSelectedPane.srcPortFrame.list curselection]
+    if { $arg == "srcport" } {
+      set ipPort [$currentSelectedPane.srcPortFrame.list get $selectedIndex]
+    } else {
+      set ipPort [$currentSelectedPane.dstPortFrame.list get $selectedIndex]
+    }
+    if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
+	exec $BROWSER_PATH http://www.dshield.org/port_report.php?port=$ipPort &
     } else {
       tk_messageBox -type ok -icon warning -message\
        "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
@@ -2156,6 +2182,7 @@ proc CreateSessionLists { baseFrame } {
     BindSelectionToAllLists $srcPortList
     bind $srcPortLabel <Double-Button-1> {
       SortListsBy %W sessions
+      LaunchPortQueryMenu %W %Y
     }
   set dstIPFrame [frame $baseFrame.dstIPFrame]
     set dstIPLabel [label $dstIPFrame.dstIPLabel -text "Dst IP" -background black -foreground white -anchor w]
@@ -2180,6 +2207,7 @@ proc CreateSessionLists { baseFrame } {
     BindSelectionToAllLists $dstPortList
     bind $dstPortLabel <Double-Button-1> {
       SortListsBy %W sessions
+      LaunchPortQueryMenu %W %Y
     }
   set srcPcktsFrame [frame $baseFrame.srcPcktsFrame]
     set srcPcktsLabel [label $srcPcktsFrame.label -text "S Pckts" -background black -foreground white -anchor w]
@@ -2320,6 +2348,10 @@ proc CreateEventLists { baseFrame } {
     bind $srcPortLabel <Double-Button-1> {
       SortListsBy %W
     }
+    bind $srcPortList <ButtonPress-3> {
+      #SingleSelect %W [%W nearest %y]
+      LaunchPortQueryMenu %W %Y
+    }
   set dstIPFrame [frame $baseFrame.dstIPFrame]
     set dstIPLabel [label $dstIPFrame.dstIPLabel -text "Dst IP" -background black -foreground white -anchor w]
     set dstIPList [listbox $dstIPFrame.list -width 15 -height 5 -exportselection false\
@@ -2343,6 +2375,10 @@ proc CreateEventLists { baseFrame } {
     BindSelectionToAllLists $dstPortList
     bind $dstPortLabel <Double-Button-1> {
       SortListsBy %W
+    }
+    bind $dstPortList <ButtonPress-3> {
+      #SingleSelect %W [%W nearest %y]
+      LaunchPortQueryMenu %W %Y
     }
   set protoFrame [frame $baseFrame.protoFrame]
     set protoLabel [label $protoFrame.protoLabel -text "Pr" -background black -foreground white -anchor w]
@@ -3052,6 +3088,10 @@ while { $i < $RTPANES } {
     pack $srcPortLabel -side top -fill x
     pack $srcPortList -side bottom -fill y -expand true
     BindSelectionToAllLists $srcPortList
+    bind $srcPortList <ButtonPress-3> {
+      #SingleSelect %W [%W nearest %y]
+      LaunchPortQueryMenu %W %Y
+    }
   set dstIPFrame [frame $currentPane.dstIPFrame]
     set dstIPLabel [label $dstIPFrame.dstIPLabel -text "Dst IP" -background black -foreground white -anchor w -pady 0]
     set dstIPList [listbox $dstIPFrame.list -width 15 -height 5 -exportselection false\
@@ -3070,6 +3110,10 @@ while { $i < $RTPANES } {
     pack $dstPortLabel -side top -fill x
     pack $dstPortList -side bottom -fill y -expand true
     BindSelectionToAllLists $dstPortList
+    bind $dstPortList <ButtonPress-3> {
+      #SingleSelect %W [%W nearest %y]
+      LaunchPortQueryMenu %W %Y
+    }
   set protoFrame [frame $currentPane.protoFrame]
     set protoLabel [label $protoFrame.protoLabel -text "Pr" -background black -foreground white -anchor w -pady 0]
     set protoList [listbox $protoFrame.list -width 3 -height 5 -exportselection false\
@@ -3278,8 +3322,8 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
        -text "Show Packet Data" -variable PACKETINFO -command GetPacketInfo]
       set displayRuleButton [checkbutton $ruleButtonFrame.displayRuleButton\
        -text "Show Rule" -variable SHOWRULE -command GetRuleInfo]
-      set referenceButton [button $ruleButtonFrame.referenceButton\
-       -text "www.snort.org" -command "GetReference" -state disabled]
+        set referenceButton [button $ruleButtonFrame.referenceButton\
+         -text "www.snort.org" -command "GetReference" -state disabled]
       pack $displayPacketButton $displayRuleButton $referenceButton -side left
     set ruleText [scrolledtext $packetDataFrame.ruleText -hscrollmode static -visibleitems 10x1\
      -sbwidth 10 -vscrollmode none -wrap none]
@@ -3442,12 +3486,12 @@ set ipQueryMenu [ menu .ipQueryMenu -background blue -foreground white -activefo
  -activebackground white -tearoff 0 ]
 .ipQueryMenu add cascade -label "Query Event Table" -menu $ipQueryMenu.eventMenu
 .ipQueryMenu add cascade -label "Query Sessions Table" -menu $ipQueryMenu.sessionsMenu
-.ipQueryMenu add cascade -label "Dshield Lookup" -menu $ipQueryMenu.dshieldMenu
+.ipQueryMenu add cascade -label "Dshield IP Lookup" -menu $ipQueryMenu.dshieldIPMenu
 menu $ipQueryMenu.eventMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
 menu $ipQueryMenu.sessionsMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
-menu $ipQueryMenu.dshieldMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
+menu $ipQueryMenu.dshieldIPMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
  -activebackground white
 $ipQueryMenu.eventMenu add command -label "Query SrcIP" -command "QueryRequest event srcip"
 $ipQueryMenu.eventMenu add command -label "Query DstIP" -command "QueryRequest event dstip"
@@ -3455,8 +3499,17 @@ $ipQueryMenu.eventMenu add command -label "Query Src To Dst" -command "QueryRequ
 $ipQueryMenu.sessionsMenu add command -label "Query SrcIP" -command "QueryRequest sessions srcip"
 $ipQueryMenu.sessionsMenu add command -label "Query DstIP" -command "QueryRequest sessions dstip"
 $ipQueryMenu.sessionsMenu add command -label "Query Src To Dst" -command "QueryRequest sessions src2dst"
-$ipQueryMenu.dshieldMenu add command -label "Dshield SrcIP" -command "GetDshield srcip"
-$ipQueryMenu.dshieldMenu add command -label "Dshield DstIP" -command "GetDshield dstip"
+$ipQueryMenu.dshieldIPMenu add command -label "SrcIP" -command "GetDshieldIP srcip"
+$ipQueryMenu.dshieldIPMenu add command -label "DstIP" -command "GetDshieldIP dstip"
+
+# Port Query Menu
+set portQueryMenu [ menu .portQueryMenu -background blue -foreground white -activeforeground blue\
+-activebackground white -tearoff 0 ]
+.portQueryMenu add cascade -label "Dshield Port Lookup" -menu $portQueryMenu.dshieldPortMenu
+menu $portQueryMenu.dshieldPortMenu -tearoff 0 -background blue -foreground white -activeforeground blue\
+ -activebackground white
+$portQueryMenu.dshieldPortMenu add command -label "SrcPort" -command "GetDshieldPort srcport"
+$portQueryMenu.dshieldPortMenu add command -label "DstPort" -command "GetDshieldPort dstport"
 
 # Sig Query Menu
 set sigQueryMenu [ menu .sigQueryMenu -background blue -foreground white -activeforeground blue\
