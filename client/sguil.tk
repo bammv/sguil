@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.168 2005/03/03 21:07:43 bamm Exp $ #
+# $Id: sguil.tk,v 1.169 2005/03/04 20:26:36 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1233,6 +1233,8 @@ proc ParseFontInfo { fontInfo } {
 
 proc GetUserName {} {
   global USERNAME PASSWD VERSION SERVERHOST SERVERPORT
+  set SERVERLIST $SERVERHOST
+  set SERVERHOST [lindex $SERVERHOST 0]
   set getUserNameWin [toplevel .getUserNameWin -background white]
   wm title $getUserNameWin "$VERSION"
   set welcomeFrame [frame $getUserNameWin.welcomeFrame -borderwidth 1 -background black]
@@ -1255,6 +1257,11 @@ proc GetUserName {} {
     set userLabel [label $promptFrame.userLabel -text "Please Login" -foreground navy]
     set sguildHost [entryfield $promptFrame.sguildHost -labeltext "Sguild Host: "\
      -textvariable SERVERHOST]
+    set sguildHostSelect [optionmenu $promptFrame.sguildHostSelect \
+	-command "SelectHost $promptFrame"]
+    foreach host $SERVERLIST {
+	$sguildHostSelect insert end $host
+    }
     set sguildPort [entryfield $promptFrame.sguildPort -labeltext "Sguild Port: "\
      -textvariable SERVERPORT]
     set userName [entryfield $promptFrame.userName -validate alphanumeric\
@@ -1267,12 +1274,17 @@ proc GetUserName {} {
     set userBB [buttonbox $promptFrame.userBB]
       $userBB add ok -text "Ok" -command "destroy $getUserNameWin"
       $userBB add exit -text "Exit" -command "CleanExit"
-    pack $userLabel $sguildHost $sguildPort $userName $userPasswd $osslSelect $userBB\
+    pack $userLabel $sguildHost $sguildHostSelect $sguildPort $userName $userPasswd $osslSelect $userBB\
      -side top -fill both -expand true
   pack $promptFrame -side bottom -pady 5
   focus -force $userName
   bind [$userPasswd component entry] <Return> { destroy .getUserNameWin }
   tkwait window $getUserNameWin
+}
+proc SelectHost { winName } { 
+    set host [$winName.sguildHostSelect get]
+    $winName.sguildHost clear
+    $winName.sguildHost insert end $host
 }
 proc CreateSensorCheckButton { winName sensorName userList } {
   global cbList
@@ -1479,7 +1491,8 @@ proc CheckLineFormat { line } {
   
   set RETURN 1
   # Right now we just check the length and for "set".
-  if { [llength $line] != 3 || [lindex $line 0] != "set" } { set RETURN 0 }
+  if { [llength $line] !=3 ||[lindex $line 0] != "set" } { set RETURN 0 }
+      puts "check line is $RETURN"
   return $RETURN
 }
 
