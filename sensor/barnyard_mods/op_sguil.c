@@ -1,4 +1,4 @@
-/* $Id: op_sguil.c,v 1.9 2004/01/09 19:37:31 bamm Exp $ */
+/* $Id: op_sguil.c,v 1.10 2004/03/15 14:57:02 mboman Exp $ */
 /*
 ** Copyright (C) 2001-2002 Andrew R. Baker <andrewb@snort.org>
 **
@@ -342,7 +342,7 @@ int SguilOpLog(void *context, void *data)
     //sgBeginTransaction(op_data); /* XXX: Error checking */
     /* Build the event insert. */
     snprintf(insertColumns, MAX_QUERY_SIZE,
-      "INSERT INTO event (status, sid, cid, signature_id, signature_rev, signature, timestamp, priority, class");
+      "INSERT INTO event (status, sid, cid, signature_gen, signature_id, signature_rev, signature, timestamp, priority, class");
 
     esc_message = malloc(strlen(sid->msg)*2+1);
     mysql_real_escape_string(op_data->mysql, esc_message, sid->msg, strlen(sid->msg));
@@ -350,8 +350,8 @@ int SguilOpLog(void *context, void *data)
     if(class_type == NULL)
     {
       snprintf(valuesTemp, MAX_QUERY_SIZE,
-        "VALUES ('0', '%u', '%u', '%d', '%d', '%s', '%s', '%u', 'unknown'",
-          op_data->sensor_id, op_data->event_id, sid->sid, sid->rev, esc_message, timestamp, 
+        "VALUES ('0', '%u', '%u', '%d', '%d', '%d', '%s', '%s', '%u', 'unknown'",
+          op_data->sensor_id, op_data->event_id, sid->gen, sid->sid, sid->rev, esc_message, timestamp, 
 	  record->log.event.priority);
     snprintf(eventInfo, SYSLOG_BUF, "RTEvent |0|%u|unknown|%s|%s|%u|%u|%s",
 	    record->log.event.priority, 
@@ -361,8 +361,8 @@ int SguilOpLog(void *context, void *data)
     else
     {
       snprintf(valuesTemp, MAX_QUERY_SIZE,
-        "VALUES ('0', '%u', '%u', '%d', '%d', '%s', '%s', '%u', '%s'",
-          op_data->sensor_id, op_data->event_id, sid->sid, sid->rev, esc_message, timestamp, 
+        "VALUES ('0', '%u', '%u', '%d', '%d', '%d', '%s', '%s', '%u', '%s'",
+          op_data->sensor_id, op_data->event_id, sid->gen, sid->sid, sid->rev, esc_message, timestamp, 
 	  record->log.event.priority, class_type->type);
       snprintf(eventInfo, SYSLOG_BUF, "RTEvent |0|%u|%s|%s|%s|%u|%u|%s",
 	    record->log.event.priority, class_type->type,
