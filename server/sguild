@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.67 2003/11/21 19:54:14 bamm Exp $ #
+# $Id: sguild,v 1.68 2003/11/21 20:55:57 bamm Exp $ #
 
 # Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -32,6 +32,7 @@ proc ForkLoader {} {
   if {[set childPid [fork]] == 0 } {
     # We are the child now.
     proc ParentCmdRcvd { pipeID } {
+      global DEBUG
       fconfigure $pipeID -buffering line
       if { [eof $pipeID] || [catch {gets $pipeID data}] } {
         exit
@@ -43,12 +44,14 @@ proc ForkLoader {} {
           puts $loadError
         } else {
           file delete $fileName
+          if {$DEBUG} {puts "[pid]: $cmd"}
         }
       }
     }
     fileevent $loaderReadPipe readable [list ParentCmdRcvd $loaderReadPipe]
     if {$DEBUG} { puts "Loader Forked" }
   }
+  return $childPid
 }
 proc DisplayUsage { cmdName } {
   puts "Usage: $cmdName \[-D\] \[-h\] \[-o\] \[-c <filename>\] \[-u <filename>\] \[-P <filename>\]"
@@ -582,9 +585,6 @@ proc DeleteEventIDList { socketID data } {
   set status [ctoken data "::"]
   set comment [ctoken data "::"]
   set deleteEventIDList [ctoken data "::"]
-  puts "status: $status"
-  puts "comment: $comment"
-  puts "deleteEventIDList: $deleteEventIDList"
   set count 0
   set updateTmp ""
   foreach socket $clientList {
@@ -720,8 +720,6 @@ proc HandShake { socketID cmd } {
     fileevent $socketID readable [list $cmd $socketID]
   }
 }
-
-
 proc SensorConnect { socketID IPAddr port } {
   global DEBUG
   if {$DEBUG} {puts "Connect from $IPAddr:$port $socketID"}
@@ -769,12 +767,10 @@ proc RcvSsnFile { socketID fileName sensorName } {
     set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
      -e \"LOAD DATA LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE sessions FIELDS TERMINATED\
      BY '|'\""
-    if {$DEBUG} {puts $cmd}
   } else {
     set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
      -e \"LOAD DATA LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE sessions FIELDS TERMINATED\
      BY '|'\""
-    if {$DEBUG} {puts $cmd}
   }
   # The loader child proc does the LOAD for us.
   puts $loaderWritePipe [list $DB_OUTFILE.tmp $cmd]
@@ -794,12 +790,10 @@ proc RcvPortscanFile { socketID fileName } {
     set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
      -e \"LOAD DATA LOCAL INFILE '$PS_OUTFILE' INTO TABLE portscan FIELDS TERMINATED\
      BY '|'\""
-    if {$DEBUG} {puts $cmd}
   } else {
     set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
      -e \"LOAD DATA LOCAL INFILE '$PS_OUTFILE' INTO TABLE portscan FIELDS TERMINATED\
      BY '|'\""
-    if {$DEBUG} {puts $cmd}
   }
   # The loader child proc does the LOAD for us.
   puts $loaderWritePipe [list $PS_OUTFILE $cmd]
@@ -1479,6 +1473,9 @@ if { [file exists $GLOBAL_QRY_FILE] } {
 if {[info exists DAEMON_CONF_OVERRIDE] && $DAEMON_CONF_OVERRIDE} { set DAEMON 1}
 if {$DAEMON} { Daemonize }
 
+# Fork a child to load PS/SSN info
+set childPid [ForkLoader]
+if { $childPid == 0 } { vwait LOADER }
 
 # Get archived alerts from the DB
 if { $DBPASS == "" } {
@@ -1561,8 +1558,6 @@ if [catch {socket -server SensorConnect $SENSORPORT} sensorSocket] {
   puts "ERROR: $sensorSocket"
 }
 puts "Sguild Initialized."
-# Fork a child to load PS/SSN info
-ForkLoader
 
 signal trap {HUP} HupTrapped
 
