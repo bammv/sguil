@@ -301,8 +301,19 @@ proc SimpleQueryCmd { host port cmd} {
   } 
   fconfigure $tmpSocketID -buffering line
   puts $tmpSocketID $cmd
-  # Index 0 is the returned cmd, index 1 is the data.
-  set data [lrange [gets $tmpSocketID] 1 end]
+  if {[lindex $cmd 0] != "GetPSData"} {
+      # Index 0 is the returned cmd, index 1 is the data.
+      set data [lrange [gets $tmpSocketID] 1 end]
+     
+  } else {
+      set psrow ""
+      set i 0
+      set data ""
+      while { [lindex $psrow 0] != "DONE" } {
+	  set psrow [lrange [gets $tmpSocketID] 1 end]
+	  lappend data $psrow
+      }
+  }
   close $tmpSocketID
   return $data
 }
@@ -341,241 +352,249 @@ proc EmailEvents { detail } {
 	foreach selectedIndex [$currentSelectedPane.eventIDFrame.list curselection] {
 	    puts "Emailing index: $selectedIndex"
 	    set eventID [split [$currentSelectedPane.eventIDFrame.list get $selectedIndex] .]
-	    $textBox insert end "------------------------------------------------------------------------\n"
-	    $textBox insert end "Count:[$currentSelectedPane.countFrame.list get $selectedIndex] "
-	    $textBox insert end "Event#[$currentSelectedPane.eventIDFrame.list get $selectedIndex] "
-	    $textBox insert end "[$currentSelectedPane.dateTimeFrame.list get $selectedIndex]\n"
-	    $textBox insert end "[$currentSelectedPane.msgFrame.list get $selectedIndex]\n"
-	    $textBox insert end "[$currentSelectedPane.srcIPFrame.list get $selectedIndex] -> "
-	    $textBox insert end "[$currentSelectedPane.dstIPFrame.list get $selectedIndex]\n"
-	    
-	    #
-	    # Get the IP hdr details
-	    #
-	    set eventIpHdr [SimpleQueryCmd\
-			    $SERVERHOST $SERVERPORT "GetIPData [lindex $eventID 0] [lindex $eventID 1]"]
-	    $textBox insert end "IPVer=[lindex $eventIpHdr 2] "
-	    $textBox insert end "hlen=[lindex $eventIpHdr 3] "
-	    $textBox insert end "tos=[lindex $eventIpHdr 4] "
-	    $textBox insert end "dlen=[lindex $eventIpHdr 5] "
-	    $textBox insert end "ID=[lindex $eventIpHdr 6] "
-	    $textBox insert end "flags=[lindex $eventIpHdr 7] "
-	    $textBox insert end "offset=[lindex $eventIpHdr 8] "
-	    $textBox insert end "ttl=[lindex $eventIpHdr 9] "
-	    $textBox insert end "chksum=[lindex $eventIpHdr 10]\n"
-	    $textBox insert end "Protocol: [$currentSelectedPane.protoFrame.list get $selectedIndex] "
-	    
-	    #
-	    # If it is TCP or UDP put in port numbers
-	    #
-	    if {[$currentSelectedPane.protoFrame.list get $selectedIndex] == "6" || \
-		    [$currentSelectedPane.protoFrame.list get $selectedIndex] == "17"} {
-		$textBox insert end "sport=[$currentSelectedPane.srcPortFrame.list get $selectedIndex] -> "
-		$textBox insert end "dport=[$currentSelectedPane.dstPortFrame.list get $selectedIndex]\n\n"
+	    if {[lindex [$currentSelectedPane.msgFrame.list get $selectedIndex] 0] != "spp_portscan:"} {
+		$textBox insert end "------------------------------------------------------------------------\n"
+		$textBox insert end "Count:[$currentSelectedPane.countFrame.list get $selectedIndex] "
+		$textBox insert end "Event#[$currentSelectedPane.eventIDFrame.list get $selectedIndex] "
+		$textBox insert end "[$currentSelectedPane.dateTimeFrame.list get $selectedIndex]\n"
+		$textBox insert end "[$currentSelectedPane.msgFrame.list get $selectedIndex]\n"
+		$textBox insert end "[$currentSelectedPane.srcIPFrame.list get $selectedIndex] -> "
+		$textBox insert end "[$currentSelectedPane.dstIPFrame.list get $selectedIndex]\n"
 		
 		#
-		# If TCP get the TCP hdr, parse it out and insert
+		# Get the IP hdr details
 		#
-		if {[$currentSelectedPane.protoFrame.list get $selectedIndex] == "6"} {
-		    set eventTcpHdr [SimpleQueryCmd\
-			    $SERVERHOST $SERVERPORT "GetTcpData [lindex $eventID 0] [lindex $eventID 1]"]
-		    if { $eventTcpHdr == "error"} {
-			ErrorMessage "Error getting TCP Header Data."
-		    }
-		    $textBox insert end "Seq=[lindex $eventTcpHdr 0] "
-		    $textBox insert end "Ack=[lindex $eventTcpHdr 1] "
-		    $textBox insert end "Off=[lindex $eventTcpHdr 2] "
-		    $textBox insert end "Res=[lindex $eventTcpHdr 3] "
-		    # TCP Flags
-		    set ipFlags [lindex $eventTcpHdr 4]
-		    set r1Flag "."
-		    set r0Flag "."
-		    set urgFlag "."
-		    set ackFlag "."
-		    set pshFlag "."
-		    set rstFlag "."
-		    set synFlag "."
-		    set finFlag "."
-		    if { $ipFlags != "" } {
-			if { 128 & $ipFlags } {
-			    set r1Flag "1"
-			    set ipFlags [expr $ipFlags - 128]
-			} else {
-			    set r1Flag "*"
-			}
-			if { 64 & $ipFlags } {
-			    set r0Flag "0"
-			    set ipFlags [expr $ipFlags - 64]
-			} else {
-			    set r0Flag "*"
-			}
-			if { 32 & $ipFlags } {
-			    set urgFlag "U"
-			    set ipFlags [expr $ipFlags - 32]
-			} else {
-			    set urgFlag "*"
-			}
-			if { 16 & $ipFlags } {
-			    set ackFlag "A"
-			    set ipFlags [expr $ipFlags - 16]
-			} else {
-			    set ackFlag "*"
-			}
-			if { 8 & $ipFlags } {
-			    set pshFlag "P"
-			    set ipFlags [expr $ipFlags - 8]
-			} else {
-			    set pshFlag "*"
-			}
-			if { 4 & $ipFlags } {
-			    set rstFlag "R"
-			    set ipFlags [expr $ipFlags - 4]
-			} else {
-			    set rstFlag "*"
-			}
-			if { 2 & $ipFlags } {
-			    set synFlag "S"
-			    set ipFlags [expr $ipFlags - 2]
-			} else {
-			    set synFlag "*"
-			}
-			if { 1 & $ipFlags } {
-			    set finFlag "F"
-			} else {
-			    set finFlag "*"
-			}
-		    }
-		    $textBox insert end "Flags=$r1Flag"
-		    $textBox insert end $r0Flag
-		    $textBox insert end $urgFlag
-		    $textBox insert end $ackFlag
-		    $textBox insert end $pshFlag
-		    $textBox insert end $rstFlag
-		    $textBox insert end $synFlag
-		    $textBox insert end "$finFlag "
+		set eventIpHdr [SimpleQueryCmd\
+			$SERVERHOST $SERVERPORT "GetIPData [lindex $eventID 0] [lindex $eventID 1]"]
+		$textBox insert end "IPVer=[lindex $eventIpHdr 2] "
+		$textBox insert end "hlen=[lindex $eventIpHdr 3] "
+		$textBox insert end "tos=[lindex $eventIpHdr 4] "
+		$textBox insert end "dlen=[lindex $eventIpHdr 5] "
+		$textBox insert end "ID=[lindex $eventIpHdr 6] "
+		$textBox insert end "flags=[lindex $eventIpHdr 7] "
+		$textBox insert end "offset=[lindex $eventIpHdr 8] "
+		$textBox insert end "ttl=[lindex $eventIpHdr 9] "
+		$textBox insert end "chksum=[lindex $eventIpHdr 10]\n"
+		$textBox insert end "Protocol: [$currentSelectedPane.protoFrame.list get $selectedIndex] "
+		
+		#
+		# If it is TCP or UDP put in port numbers
+		#
+		if {[$currentSelectedPane.protoFrame.list get $selectedIndex] == "6" || \
+			[$currentSelectedPane.protoFrame.list get $selectedIndex] == "17"} {
+		    $textBox insert end "sport=[$currentSelectedPane.srcPortFrame.list get $selectedIndex] -> "
+		    $textBox insert end "dport=[$currentSelectedPane.dstPortFrame.list get $selectedIndex]\n\n"
 		    
-		    $textBox insert end "Win=[lindex $eventTcpHdr 5] "
-		    $textBox insert end "urp=[lindex $eventTcpHdr 6] "
-		    $textBox insert end "chksum=[lindex $eventTcpHdr 7]\n"
+		    #
+		    # If TCP get the TCP hdr, parse it out and insert
+		    #
+		    if {[$currentSelectedPane.protoFrame.list get $selectedIndex] == "6"} {
+			set eventTcpHdr [SimpleQueryCmd\
+				$SERVERHOST $SERVERPORT "GetTcpData [lindex $eventID 0] [lindex $eventID 1]"]
+			if { $eventTcpHdr == "error"} {
+			    ErrorMessage "Error getting TCP Header Data."
+			}
+			$textBox insert end "Seq=[lindex $eventTcpHdr 0] "
+			$textBox insert end "Ack=[lindex $eventTcpHdr 1] "
+			$textBox insert end "Off=[lindex $eventTcpHdr 2] "
+			$textBox insert end "Res=[lindex $eventTcpHdr 3] "
+			# TCP Flags
+			set ipFlags [lindex $eventTcpHdr 4]
+			set r1Flag "."
+			set r0Flag "."
+			set urgFlag "."
+			set ackFlag "."
+			set pshFlag "."
+			set rstFlag "."
+			set synFlag "."
+			set finFlag "."
+			if { $ipFlags != "" } {
+			    if { 128 & $ipFlags } {
+				set r1Flag "1"
+				set ipFlags [expr $ipFlags - 128]
+			    } else {
+			    set r1Flag "*"
+			    }
+			    if { 64 & $ipFlags } {
+				set r0Flag "0"
+				set ipFlags [expr $ipFlags - 64]
+			    } else {
+				set r0Flag "*"
+			    }
+			    if { 32 & $ipFlags } {
+				set urgFlag "U"
+				set ipFlags [expr $ipFlags - 32]
+			    } else {
+				set urgFlag "*"
+			    }
+			    if { 16 & $ipFlags } {
+				set ackFlag "A"
+				set ipFlags [expr $ipFlags - 16]
+			    } else {
+				set ackFlag "*"
+			    }
+			    if { 8 & $ipFlags } {
+				set pshFlag "P"
+				set ipFlags [expr $ipFlags - 8]
+			    } else {
+				set pshFlag "*"
+			    }
+			    if { 4 & $ipFlags } {
+				set rstFlag "R"
+				set ipFlags [expr $ipFlags - 4]
+			    } else {
+				set rstFlag "*"
+			    }
+			    if { 2 & $ipFlags } {
+				set synFlag "S"
+				set ipFlags [expr $ipFlags - 2]
+			    } else {
+				set synFlag "*"
+			    }
+			    if { 1 & $ipFlags } {
+				set finFlag "F"
+			    } else {
+				set finFlag "*"
+			    }
+			}
+			$textBox insert end "Flags=$r1Flag"
+			$textBox insert end $r0Flag
+			$textBox insert end $urgFlag
+			$textBox insert end $ackFlag
+			$textBox insert end $pshFlag
+			$textBox insert end $rstFlag
+			$textBox insert end $synFlag
+			$textBox insert end "$finFlag "
+			
+			$textBox insert end "Win=[lindex $eventTcpHdr 5] "
+			$textBox insert end "urp=[lindex $eventTcpHdr 6] "
+			$textBox insert end "chksum=[lindex $eventTcpHdr 7]\n"
+		    }
+		    
+		    #
+		    # If UDP get the UDP hdr and Insert it
+		    #
+		    if {[$currentSelectedPane.protoFrame.list get $selectedIndex] == "17"} {
+			set eventUdpHdr [ SimpleQueryCmd\
+				$SERVERHOST $SERVERPORT "GetUdpData [lindex $eventID 0] [lindex $eventID 1]"]
+			if { $eventPayload == "error" } {
+			    ErrorMessage "Error getting UDP Header Data."
+			}
+			$textBox insert end "len=[lindex $eventUdpHdr 0] "
+			$textBox insert end "chksum=[lindex $eventUdpHdr 1]\n"
+		    }
 		}
 		
+		# 
+		# If ICMP get the ICMP hdr and payload, parse and insert
 		#
-		# If UDP get the UDP hdr and Insert it
-		#
-		if {[$currentSelectedPane.protoFrame.list get $selectedIndex] == "17"} {
-		    set eventUdpHdr [ SimpleQueryCmd\
-			    $SERVERHOST $SERVERPORT "GetUdpData [lindex $eventID 0] [lindex $eventID 1]"]
-		    if { $eventPayload == "error" } {
-			ErrorMessage "Error getting UDP Header Data."
-		    }
-		    $textBox insert end "len=[lindex $eventUdpHdr 0] "
-		    $textBox insert end "chksum=[lindex $eventUdpHdr 1]\n"
-		}
-	    }
-	    
-	    # 
-	    # If ICMP get the ICMP hdr and payload, parse and insert
-	    #
-	    if {[$currentSelectedPane.protoFrame.list get $selectedIndex] == "1"} {
-		set eventIcmpHdr [ SimpleQueryCmd\
+		if {[$currentSelectedPane.protoFrame.list get $selectedIndex] == "1"} {
+		    set eventIcmpHdr [ SimpleQueryCmd\
 			    $SERVERHOST $SERVERPORT "GetIcmpData [lindex $eventID 0] [lindex $eventID 1]"]
-		$textBox insert end "Type=[lindex $eventIcmpHdr 0] "
-		$textBox insert end "Code=[lindex $eventIcmpHdr 1] "
-		$textBox insert end "chksum=[lindex $eventIcmpHdr 2] "
-		$textBox insert end "ID=[lindex $eventIcmpHdr 3] "
-		$textBox insert end "seq=[lindex $eventIcmpHdr 4]\n"
-		puts $eventIcmpHdr
-		# If the ICMP packet is a dest unreachable or a time exceeded,
-		# check to see if it is network, host, port unreachable or admin prohibited or filtered
-		# then show some other stuff
-		if {[lindex $eventIcmpHdr 0] == "3" || [lindex $eventIcmpHdr 0] == "11"} {
-		    if {[lindex $eventIcmpHdr 1] == "0" || [lindex $eventIcmpHdr 1] == "4"\
-			    || [lindex $eventIcmpHdr 1] == "9" || [lindex $eventIcmpHdr 1] == "13"\
-			    || [lindex $eventIcmpHdr 1] == "1" || [lindex $eventIcmpHdr 1] == "3"} {
-			
-			#  There may be 32-bits of NULL padding at the start of the payload
-			set offset 0
-			set pldata [lindex $eventIcmpHdr 5]
-			puts [string range $pldata 0 7]
-			if {[string range $pldata 0 7] == "00000000"} {
-			    set offset 8
-			}
-			# puts [string range $pldata [expr $offset+24] [expr $offset+25]]
-			
-			# Build the protocol
-			set protohex [string range $pldata [expr $offset+18] [expr $offset+19]]
-			$textBox insert end "Orig Protocol=[format "%i" 0x$protohex] "
-			
-			# Build the src address
-			set srchex1 [string range $pldata [expr $offset+24] [expr $offset+25]]
-			set srchex2 [string range $pldata [expr $offset+26] [expr $offset+27]]
-			set srchex3 [string range $pldata [expr $offset+28] [expr $offset+29]]
-			set srchex4 [string range $pldata [expr $offset+30] [expr $offset+31]]
-			$textBox insert end \
-				"Orig Src IP:Port->Dst IP:Port [format "%i" 0x$srchex1].[format "%i" 0x$srchex2]\
-				.[format "%i" 0x$srchex3].[format "%i" 0x$srchex4]:"
-			
-			# Find and build the src port
-			set hdroffset [expr [string index $pldata [expr ($offset+1)]] * 8 + $offset]
-			set sporthex [string range $pldata $hdroffset [expr $hdroffset+3]]
-			$textBox insert end "[format "%i" 0x$sporthex]->"
-			
-			# Build the dst address
-			set dsthex1 [string range $pldata [expr $offset+32] [expr $offset+33]]
-			set dsthex2 [string range $pldata [expr $offset+34] [expr $offset+35]]
-			set dsthex3 [string range $pldata [expr $offset+36] [expr $offset+37]]
-			set dsthex4 [string range $pldata [expr $offset+38] [expr $offset+39]]
-			$textBox insert end \
-				"[format "%i" 0x$dsthex1].[format "%i" 0x$dsthex2]\
-				.[format "%i" 0x$dsthex3].[format "%i" 0x$dsthex4]:"
-			
-			
-			# Dest Port
-			set dporthex [string range $pldata [expr $hdroffset+4] [expr $hdroffset+7]]
-			$textBox insert end "[format "%i" 0x$dporthex]\n"
-			
-		    }
-		}
-	    }
-	    # Get and insert the pack payload all pretty like if detail is set to 1
-	    if { $detail == "1" } {
-		set eventPayload [SimpleQueryCmd\
-			$SERVERHOST $SERVERPORT "GetPayloadData [lindex $eventID 0] [lindex $eventID 1]"]
-		if { $eventPayload == "error" } {
-		    ErrorMessage "Error getting payload data."
-		}
-		$textBox insert end "Payload:\n"
-		if {$eventPayload  == "" || [string length $eventPayload] == 0 || $eventPayload == "{}"} { 
-		    $textBox insert end "None.\n"
-		} else {
-		    set dataLength [string length $eventPayload]
-		    set asciiStr ""
-		    set counter 2
-		    for {set i 1} {$i < $dataLength} {incr i 2} {
-			set currentByte [string range $eventPayload [expr $i - 1] $i]
-			lappend hexStr $currentByte
-			set intValue [format "%i" 0x$currentByte]
-			if { $intValue < 21 || $intValue > 176 } {
-			    # Non printable char
-			    set currentChar "."
-			} else {
-			    set currentChar [format "%c" $intValue]
-			}
-			set asciiStr "$asciiStr$currentChar"
-			if { $counter == 32 } {
-			    $textBox insert end "$hexStr $asciiStr\n"
-			    set hexStr ""
-			    set asciiStr ""
-			    set counter 2
-			} else {
-			    incr counter 2
+		    $textBox insert end "Type=[lindex $eventIcmpHdr 0] "
+		    $textBox insert end "Code=[lindex $eventIcmpHdr 1] "
+		    $textBox insert end "chksum=[lindex $eventIcmpHdr 2] "
+		    $textBox insert end "ID=[lindex $eventIcmpHdr 3] "
+		    $textBox insert end "seq=[lindex $eventIcmpHdr 4]\n"
+		    puts $eventIcmpHdr
+		    # If the ICMP packet is a dest unreachable or a time exceeded,
+		    # check to see if it is network, host, port unreachable or admin prohibited or filtered
+		    # then show some other stuff
+		    if {[lindex $eventIcmpHdr 0] == "3" || [lindex $eventIcmpHdr 0] == "11"} {
+			if {[lindex $eventIcmpHdr 1] == "0" || [lindex $eventIcmpHdr 1] == "4"\
+				|| [lindex $eventIcmpHdr 1] == "9" || [lindex $eventIcmpHdr 1] == "13"\
+				|| [lindex $eventIcmpHdr 1] == "1" || [lindex $eventIcmpHdr 1] == "3"} {
+			    
+			    #  There may be 32-bits of NULL padding at the start of the payload
+			    set offset 0
+			    set pldata [lindex $eventIcmpHdr 5]
+			    puts [string range $pldata 0 7]
+			    if {[string range $pldata 0 7] == "00000000"} {
+				set offset 8
+			    }
+			    # puts [string range $pldata [expr $offset+24] [expr $offset+25]]
+			    
+			    # Build the protocol
+			    set protohex [string range $pldata [expr $offset+18] [expr $offset+19]]
+			    $textBox insert end "Orig Protocol=[format "%i" 0x$protohex] "
+			    
+			    # Build the src address
+			    set srchex1 [string range $pldata [expr $offset+24] [expr $offset+25]]
+			    set srchex2 [string range $pldata [expr $offset+26] [expr $offset+27]]
+			    set srchex3 [string range $pldata [expr $offset+28] [expr $offset+29]]
+			    set srchex4 [string range $pldata [expr $offset+30] [expr $offset+31]]
+			    $textBox insert end \
+				    "Orig Src IP:Port->Dst IP:Port [format "%i" 0x$srchex1]\
+				    .[format "%i" 0x$srchex2]\
+				    .[format "%i" 0x$srchex3].[format "%i" 0x$srchex4]:"
+			    
+			    # Find and build the src port
+			    set hdroffset [expr [string index $pldata [expr ($offset+1)]] * 8 + $offset]
+			    set sporthex [string range $pldata $hdroffset [expr $hdroffset+3]]
+			    $textBox insert end "[format "%i" 0x$sporthex]->"
+			    
+			    # Build the dst address
+			    set dsthex1 [string range $pldata [expr $offset+32] [expr $offset+33]]
+			    set dsthex2 [string range $pldata [expr $offset+34] [expr $offset+35]]
+			    set dsthex3 [string range $pldata [expr $offset+36] [expr $offset+37]]
+			    set dsthex4 [string range $pldata [expr $offset+38] [expr $offset+39]]
+			    $textBox insert end \
+				    "[format "%i" 0x$dsthex1].[format "%i" 0x$dsthex2]\
+				    .[format "%i" 0x$dsthex3].[format "%i" 0x$dsthex4]:"
+			    
+			    
+			    # Dest Port
+			    set dporthex [string range $pldata [expr $hdroffset+4] [expr $hdroffset+7]]
+			    $textBox insert end "[format "%i" 0x$dporthex]\n"
+			    
 			}
 		    }
-		    $textBox insert end "[format "%-47s %s\n" $hexStr $asciiStr]"
+		}
+		# Get and insert the pack payload all pretty like if detail is set to 1
+		if { $detail == "1" } {
+		    set eventPayload [SimpleQueryCmd\
+			    $SERVERHOST $SERVERPORT "GetPayloadData [lindex $eventID 0] [lindex $eventID 1]"]
+		    if { $eventPayload == "error" } {
+			ErrorMessage "Error getting payload data."
+		    }
+		    $textBox insert end "Payload:\n"
+		    if {$eventPayload  == "" || [string length $eventPayload] == 0 || $eventPayload == "{}"} { 
+			$textBox insert end "None.\n"
+		    } else {
+			set dataLength [string length $eventPayload]
+			set asciiStr ""
+			set counter 2
+			for {set i 1} {$i < $dataLength} {incr i 2} {
+			    set currentByte [string range $eventPayload [expr $i - 1] $i]
+			    lappend hexStr $currentByte
+			    set intValue [format "%i" 0x$currentByte]
+			    if { $intValue < 21 || $intValue > 176 } {
+				# Non printable char
+				set currentChar "."
+			    } else {
+				set currentChar [format "%c" $intValue]
+			    }
+			    set asciiStr "$asciiStr$currentChar"
+			    if { $counter == 32 } {
+				$textBox insert end "$hexStr $asciiStr\n"
+				set hexStr ""
+				set asciiStr ""
+				set counter 2
+			    } else {
+				incr counter 2
+			    }
+			}
+			$textBox insert end "[format "%-47s %s\n" $hexStr $asciiStr]"
+		    }
+		}
+	    } else {
+		set psdata [SimpleQueryCmd\
+			$SERVERHOST $SERVERPORT "GetPSData [lindex [$currentSelectedPane.dateTimeFrame.list get $selectedIndex] 0] [$currentSelectedPane.srcIPFrame.list get $selectedIndex]"]
+		for { set i 0 } { $i < [expr [llength $psdata]-1] } {incr i} {
+		    $textBox insert end "[lindex $psdata $i]\n"
 		}
 	    }
 	}
-    	    
 	#  Once this whole mess is displayed, enable the send button and wait for a click	
 	$buttonBox buttonconfigure send -state normal
 	tkwait variable RETURN_FLAG
