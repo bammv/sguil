@@ -22,8 +22,8 @@ set SERVERPORT 7734
 set SENSORPORT 7736
 # Path to look for rules. Sguild will append the hostname (/etc/snort/rules/<hostname>/*.rules)
 set RULESDIR /snort_data/rules
-# Where to temporarily store PS data for loading into the DB
-set PSDATADIR /tmp
+# Where to temporarily store portscan and session data for loading into the DB
+set TMPDATADIR /tmp
 # Max number of portscan data rows to return to the client
 set MAX_PS_ROWS 200
 # DataBase Info
@@ -263,11 +263,56 @@ proc SensorConnect { socketID IPAddr port } {
   fconfigure $socketID -buffering line
   fileevent $socketID readable [list SensorCmdRcvd $socketID]
 }
+proc GetSensorID { sensorName } {
+  # For now we query the DB everytime we need the sid.
+  set sid [FlatDBQuery "SELECT sid FROM sensor WHERE hostname='$sensorName'"]
+  return $sid
+}
+proc RcvSsnFile { socketID fileName sensorName } {
+  global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS
+  set sensorID [GetSensorID $sensorName]
+  if {$DEBUG} {puts "Recieving session file $fileName."}
+  fconfigure $socketID -translation binary
+  set DB_OUTFILE $TMPDATADIR/$fileName
+  set fileID [open $DB_OUTFILE w]
+  fcopy $socketID $fileID
+  close $fileID
+  close $socketID
+
+  set inFileID [open $DB_OUTFILE r]
+  set outFileID [open $DB_OUTFILE.tmp w]
+  set i 0
+  foreach line [split [read $inFileID] \n] {
+    if {$line != ""} {puts $outFileID "$sensorID|$line"; incr i}
+  }
+  close $inFileID
+  close $outFileID
+  file delete $DB_OUTFILE
+
+  if {$DEBUG} {puts "Loading $i cnxs from $fileName into DB."}
+  if {$DBPASS != "" } {
+    set cmd "mysql -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
+     -e \"LOAD DATA LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE sessions FIELDS TERMINATED\
+     BY '|'\""
+    if {$DEBUG} {puts $cmd}
+  } else {
+    set cmd "mysql -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
+     -e \"LOAD DATA LOCAL INFILE '$PS_OUTFILE'.tmp INTO TABLE sessions FIELDS TERMINATED\
+     BY '|'\""
+    if {$DEBUG} {puts $cmd}
+  }
+  if [catch {eval exec $cmd} loadError] {
+    puts "Unable to load session data into DB."
+    puts $loadError
+  } else {
+    file delete $DB_OUTFILE.tmp
+  }
+}
 proc RcvPortscanFile { socketID fileName } {
-  global DEBUG PSDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS
+  global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS
   if {$DEBUG} {puts "Recieving portscan file $fileName."}
   fconfigure $socketID -translation binary
-  set PS_OUTFILE $PSDATADIR/$fileName
+  set PS_OUTFILE $TMPDATADIR/$fileName
   set fileID [open $PS_OUTFILE w]
   fcopy $socketID $fileID
   close $fileID
@@ -312,15 +357,13 @@ proc CleanUpDisconnectedAgent { socketID } {
   unset agentSensorName($socketID)
 }
 proc SensorCmdRcvd { socketID } {
-  global DEBUG connectedAgents
+  global DEBUG connectedAgents agentSensorName
   if { [eof $socketID] || [catch {gets $socketID data}] } {
     # Socket closed
     close $socketID
     if {$DEBUG} { puts "Socket $socketID closed" }
-    if { [info exists connectedAgents] } {
-      if { [lsearch -exact $connectedAgents $socketID] >= 0 } {
-        CleanUpDisconnectedAgent $socketID
-      }
+    if { [info exists connectedAgents] && [info exists agentSensorName($socketID)] } {
+      CleanUpDisconnectedAgent $socketID
     }
   } else {
     if {$DEBUG} { puts "Sensor Data Rcvd: $data" }
@@ -330,6 +373,8 @@ proc SensorCmdRcvd { socketID } {
       PSFile	{ RcvPortscanFile $socketID [lindex $data 1] }
       CONNECT   { SensorAgentConnect $socketID [lindex $data 1] }
       DiskReport { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
+      SsnFile	{ RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] }
+      PING	{ puts $socketID "PONG" }
       default	{ puts "Sensor Cmd Unkown: $sensorCmd" }
     }
   }
@@ -355,8 +400,8 @@ proc RuleRequest { socketID sensor message } {
           break
         }
       }
-      if {$RULEFOUND} {break}
       close $ruleFileID
+      if {$RULEFOUND} {break}
     }
   } else {
     set data "Could not find $ruleDir."

@@ -29,6 +29,7 @@ set MotionLowIndex -1
 set MOVEMENT_DIR ""
 set LASTINDEXSELECTED 1
 set MONITORFLAG 0
+set BUSY 0
 
 ######################## END GLOBALS ################################
 
@@ -951,6 +952,7 @@ proc InsertPayloadData { data } {
     }
     $dataText insert end "[format "%-47s %s\n" $hexStr $asciiStr]"
   }
+  Idle
 }
 
 #
@@ -1273,7 +1275,9 @@ proc ReSetMotion {} {
 # ShiftSelect: Enable MultiSelection using shift-click
 #
 proc ShiftSelect { winName index } {
-    global MULTI_SELECT currentSelectedPane LASTINDEXSELECTED MOVEMENT_DIR
+    global MULTI_SELECT currentSelectedPane LASTINDEXSELECTED MOVEMENT_DIR BUSY
+    # If we are busy then abort.
+    if {$BUSY} { bell; return }
     # check to see if we are in a new pane and if so, error.
     if { [info exists currentSelectedPane] && [winfo parent [winfo parent $winName]] != $currentSelectedPane } {
 	ErrorMessage "You may only shift-select from within the same event pane."
@@ -1314,6 +1318,11 @@ proc ShiftSelect { winName index } {
 #
 proc MotionSelect { winName index } {
   global currentSelectedPane MULTI_SELECT MotionHighIndex MotionLowIndex MotionStart MOVEMENT_DIR
+  global BUSY
+
+  # If we are busy then abort.
+  if {$BUSY} { bell; return }
+
   # check to see if we are in a new pane and if so, error.
   if { [info exists currentSelectedPane] && [winfo parent [winfo parent $winName]] != $currentSelectedPane } {
     ErrorMessage "You may only control-select from within the same event pane."
@@ -1404,7 +1413,11 @@ proc MotionSelect { winName index } {
 # CtrlSelect:  Enables selection of multiple rows using ctrl-click
 #
 proc CtrlSelect { winName index } {
-  global currentSelectedPane MULTI_SELECT LASTINDEXSELECTED 
+  global currentSelectedPane MULTI_SELECT LASTINDEXSELECTED BUSY
+
+  # If we are busy then abort.
+  if {$BUSY} { bell; return }
+
   # Check to see if we are in a new pane and if so, error.
   if { [info exists currentSelectedPane] && [winfo parent [winfo parent $winName]] != $currentSelectedPane } {
     ErrorMessage "You may only control-select from within the same event pane."
@@ -1440,7 +1453,11 @@ proc CtrlSelect { winName index } {
 # SingleSelect:  Selects a single row
 #
 proc SingleSelect { winName index } {
-  global currentSelectedPane ACTIVE_EVENT MULTI_SELECT LASTINDEXSELECTED
+  global currentSelectedPane ACTIVE_EVENT MULTI_SELECT LASTINDEXSELECTED BUSY
+
+  # If we are busy then abort.
+  if {$BUSY} { bell; return }
+
   set MULTI_SELECT 0 
   # Unhighlight anything that is highlighted
   if {[info exists currentSelectedPane]} {
@@ -1632,6 +1649,8 @@ proc GetPacketInfo {} {
   global ACTIVE_EVENT PACKETINFO currentSelectedPane socketID DEBUG MULTI_SELECT
   ClearPacketData
   if {$ACTIVE_EVENT && $PACKETINFO && !$MULTI_SELECT} {
+    Working
+    update
     set selectedIndex [$currentSelectedPane.eventIDFrame.list curselection]
     set eventID [$currentSelectedPane.eventIDFrame.list get $selectedIndex]
     set protocol [$currentSelectedPane.protoFrame.list get $selectedIndex]
@@ -1706,18 +1725,23 @@ proc ResolveHosts {} {
   global REVERSE_DNS currentSelectedPane ACTIVE_EVENT MULTI_SELECT
   ClearDNSText
   if {$REVERSE_DNS && $ACTIVE_EVENT && !$MULTI_SELECT} {
+    Working
+    update
     set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
     set srcIP [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
     set dstIP [$currentSelectedPane.dstIPFrame.list get $selectedIndex]
     set srcName [GetHostbyAddr $srcIP]
     set dstName [GetHostbyAddr $dstIP]
     InsertDNSData $srcIP $srcName $dstIP $dstName
+    Idle
   }
 }
 proc GetWhoisData {} {
   global ACTIVE_EVENT currentSelectedPane WHOISLIST whoisText WHOIS_PATH MULTI_SELECT
   ClearWhoisData
   if {$ACTIVE_EVENT && $WHOISLIST != "none" && !$MULTI_SELECT} {
+    Working
+    update
     set selectedIndex [$currentSelectedPane.$WHOISLIST.list curselection]
     set ip [$currentSelectedPane.$WHOISLIST.list get $selectedIndex]
     $whoisText insert end "Attempting whois query on $ip\n"
@@ -1728,6 +1752,7 @@ proc GetWhoisData {} {
     }
     catch {close $whoisCommandID} closeError
     $whoisText insert end $closeError
+    Idle
   }
 }
 #
@@ -2355,7 +2380,16 @@ proc CheckLineFormat { line } {
   return $RETURN
 }
 
-
+proc Working {} {
+  global BUSY
+  . configure -cursor watch
+  set BUSY 1
+}
+proc Idle {} {
+  global BUSY
+  . configure -cursor left_ptr
+  set BUSY 0
+}
 ################################ END PROCS ##################################
 
 ################################ MAIN #######################################
@@ -3069,9 +3103,9 @@ bind . <Key-Up> {
 	    $childWin.list see [expr $selectedIndex - 1]
           set SCROLL_HOME($currentSelectedPane) 0
 	}        
+      }
     }
-}
-}
+  }
 }
 
 # Down arrow moves selected event down one.
