@@ -2061,14 +2061,20 @@ proc GetWhoisData {} {
     update
     set selectedIndex [$currentSelectedPane.$WHOISLIST.list curselection]
     set ip [$currentSelectedPane.$WHOISLIST.list get $selectedIndex]
-    $whoisText insert end "Attempting whois query on $ip\n"
-    update
-    set whoisCommandID [open "| $WHOIS_PATH $ip" r]
-    while { [gets $whoisCommandID data] >= 0 } {
-      $whoisText insert end "$data\n"
+    if { $WHOIS_PATH == "SimpleWhois" } {
+      foreach line [SimpleWhois $ip] {
+        $whoisText insert end "$line\n"
+      }
+    } else {
+      $whoisText insert end "Attempting whois query on $ip\n"
+      update
+      set whoisCommandID [open "| $WHOIS_PATH $ip" r]
+      while { [gets $whoisCommandID data] >= 0 } {
+        $whoisText insert end "$data\n"
+      }
+      catch {close $whoisCommandID} closeError
+      $whoisText insert end $closeError
     }
-    catch {close $whoisCommandID} closeError
-    $whoisText insert end $closeError
     Idle
   }
 }
@@ -3049,6 +3055,9 @@ option add *Font ourStandardFont
 # Source required sguillibs
 source $SGUILLIB/dkffont.tcl
 source $SGUILLIB/email17.tcl
+if { $WHOIS_PATH == "SimpleWhois" } {
+  source $SGUILLIB/whois.tcl
+}
 
 ############################# GUI ############################################
 
@@ -3067,7 +3076,7 @@ option add *selectForeground $SELECTFOREGROUND
 
 
 # Load iwidgets and namespaces
-package require Iwidgets 3.0
+package require Iwidgets
 namespace import -force iwidgets::panedwindow
 namespace import -force iwidgets::tabnotebook
 namespace import -force iwidgets::scrolledtext
