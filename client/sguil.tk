@@ -2040,8 +2040,12 @@ proc DisplayCorrelatedEvents { winName } {
   }
 }
 proc DeleteTab { eventTabs tabName } {
-  global ACTIVE_EVENT
-  set ACTIVE_EVENT 0  
+  global ACTIVE_EVENT currentSelectedPane
+
+  # If the currenttab had the selected index then we need to let things no that 
+  # no event is active anymore
+  if [regexp "^$tabName" $currentSelectedPane] { set ACTIVE_EVENT 0 }
+
   set tabIndex [lsearch -exact [$eventTabs childsite] $tabName]
   $eventTabs delete $tabIndex
   if {$tabIndex > 2} {
