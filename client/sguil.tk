@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.105 2004/04/13 21:08:56 bamm Exp $ #
+# $Id: sguil.tk,v 1.106 2004/05/03 17:54:47 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -136,6 +136,13 @@ proc ServerCommandRcvd { socketID } {
       default { puts "Unrecognized command from $socketID: $origData" }
     }
   } 
+}
+#
+# Send PING/PONG every 60 secs to keep comms open thru pesky FWs.
+#
+proc HeartBeat {} {
+  SendToSguild "PING"
+  after 60000 HeartBeat
 }
 proc ConnectToSguild {} {
   global SERVERHOST SERVERPORT OPENSSL VERSION TLS_PATH DEBUG CONNECTED
@@ -2624,5 +2631,6 @@ if [catch { ConnectToSguild } socketID] {
   update
   SendToSguild "SendEscalatedEvents"
   SendToSguild "SendGlobalQryList"
+  HeartBeat
   # SendToSguild "SendReportQryList"
 }
