@@ -77,7 +77,7 @@ proc ServerCommandRcvd { socketID } {
       TableColumns { $serverCmd [lindex $data 1] [lrange $data 2 end] }
       InsertHistoryResults { $serverCmd [lindex $data 1] [lrange $data 2 end] }
       InsertEmailIPHdr { set EMAIL_RESULTS [lrange $data 1 end] }
-      UserMessage { $serverCmd [lindex $data 1] [lrange $data 2 end] }
+      UserMessage { $serverCmd [lindex $data 1] [lindex $data 2] }
       PONG { if {$DEBUG} {puts "Comm test successful"  } }
       default { puts "Unrecognized command from $socketID: $data" }
     }
@@ -426,7 +426,7 @@ proc EditWhere { whereTmp } {
 proc SendUserMsg {} {
   global USERMSG userMsgEntry
 
-  SendToSguild "UserMessage $USERMSG"
+  SendToSguild "UserMessage \{$USERMSG\}"
   [$userMsgEntry component entry] delete 0 end
 }
 
