@@ -1485,7 +1485,7 @@ proc SingleSelect { winName index } {
   # already been highlighted. We check so that we don't have to
   # go and get the whois etc info
   if { !$MULTI_SELECT && $ACTIVE_EVENT} {
-    if { [$currentSelectedPane.eventIDFrame.list selection includes $index] } { 
+    if { [$winName selection includes $index] } { 
       return
     }
   }
