@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: log_packets.sh,v 1.18 2004/06/29 18:43:23 bamm Exp $ #
+# $Id: log_packets.sh,v 1.19 2004/06/30 14:34:32 mboman Exp $ #
 
 ################################################
 #                                              #
@@ -32,7 +32,7 @@ LOG_DIR="/snort_data/dailylogs"
 # Percentage of disk to try and maintain
 MAX_DISK_USE=90
 # Interface to 'listen' to.
-INTERFACE="ed0"
+INTERFACE="eth0"
 # Other options to use when starting snort
 #OPTIONS="-u sguil -g sguil -m 122"
 # Where to store the pid
@@ -158,7 +158,7 @@ cleandisk() {
         rm -f $OLDEST_FILE
       else
         echo "  Removing empty dir: $OLDEST_DIR"
-        cd ..; rm -rf $LOG_DIR/$OLDEST_DIR
+        cd ..; rmdir $LOG_DIR/$OLDEST_DIR
       fi
       # Run cleandisk again as rm'ing one file might been enough
       # but we wait 5 secs in hopes any open writes are done.
