@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.12 2004/04/03 18:54:34 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.13 2004/04/03 19:31:51 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -230,18 +230,32 @@ function show_sessions( $where_query ) {
 			$lookup_url="hostlookup.php?src_ip=" . $row['src_ip'] . "&dst_ip=" . $row['dst_ip'];
 			
 			print("<tr bgcolor=\"" . $colours[$i] . "\">\n");
-			print("	<td>" . $row['hostname'] . "</td>\n");
-			print("	<td>" . $row['id'] . "</td>\n");			
-			print("	<td>" . $row['start_time'] . "</td>\n");
-			print("	<td>" . $row['end_time'] . "</td>\n");
-			print("	<td><a href=\"$lookup_url\" target=\"lookup_left\">" . $row['src_ip'] . "</a></td>\n");
-			print("	<td>" . $row['src_port'] . "</td>\n");
-			print("	<td><a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a></td>\n");
-			print("	<td>" . $row['dst_port'] . "</td>\n");
-			print("	<td>" . $row['src_pckts'] . "</td>\n");
-			print("	<td>" . $row['src_bytes'] . "</td>\n");
-			print("	<td>" . $row['dst_pckts'] . "</td>\n");
-			print("	<td>" . $row['dst_bytes'] . "</td>\n");
+			print("	<td>&nbsp;" . $row['hostname'] . "&nbsp;</td>\n");
+			print("	<td>&nbsp;" . $row['id'] . "&nbsp;</td>\n");			
+			print("	<td>&nbsp;" . $row['start_time'] . "&nbsp;</td>\n");
+			print("	<td>&nbsp;" . $row['end_time'] . "&nbsp;</td>\n");
+			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['src_ip'] . "</a>&nbsp;</td>\n");
+
+			$service_name = getservbyport( $row['src_port'] , 'tcp' );
+			
+			if ( $service_name == "" )
+				print("	<td>&nbsp;" . $row['src_port'] . "&nbsp;</td>\n");
+			else 
+				print("	<td>&nbsp;" . $row['src_port'] ." (" . $service_name . ")&nbsp;</td>\n");
+			
+			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a>&nbsp;</td>\n");
+
+			$service_name = getservbyport( $row['dst_port'] , 'tcp' );
+			
+			if ( $service_name == "" )
+				print("	<td>&nbsp;" . $row['dst_port'] . "&nbsp;</td>\n");
+			else
+				print("	<td>&nbsp;" . $row['dst_port'] ." (" . $service_name . ")&nbsp;</td>\n");
+
+			print("	<td>&nbsp;" . $row['src_pckts'] . "&nbsp;</td>\n");
+			print("	<td>&nbsp;" . $row['src_bytes'] . "&nbsp;</td>\n");
+			print("	<td>&nbsp;" . $row['dst_pckts'] . "&nbsp;</td>\n");
+			print("	<td>&nbsp;" . $row['dst_bytes'] . "&nbsp;</td>\n");
 			print("</tr>\n");
 
 			if( $i++ >= count($colours) ) {
