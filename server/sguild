@@ -1,4 +1,6 @@
-#!/usr/bin/tcl
+#!/bin/sh
+# Run tcl from users PATH \
+exec tcl -f "$0" ${1+"$@"}
 
 # Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -571,12 +573,12 @@ proc RcvSsnFile { socketID fileName sensorName } {
 
   if {$DEBUG} {puts "Loading $i cnxs from $fileName into DB."}
   if {$DBPASS != "" } {
-    set cmd "mysql -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
+    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
      -e \"LOAD DATA LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE sessions FIELDS TERMINATED\
      BY '|'\""
     if {$DEBUG} {puts $cmd}
   } else {
-    set cmd "mysql -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
+    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
      -e \"LOAD DATA LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE sessions FIELDS TERMINATED\
      BY '|'\""
     if {$DEBUG} {puts $cmd}
@@ -599,12 +601,12 @@ proc RcvPortscanFile { socketID fileName } {
   close $socketID
   if {$DEBUG} {puts "Loading $fileName into DB."}
   if {$DBPASS != "" } {
-    set cmd "mysql -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
+    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
      -e \"LOAD DATA LOCAL INFILE '$PS_OUTFILE' INTO TABLE portscan FIELDS TERMINATED\
      BY '|'\""
     if {$DEBUG} {puts $cmd}
   } else {
-    set cmd "mysql -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
+    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
      -e \"LOAD DATA LOCAL INFILE '$PS_OUTFILE' INTO TABLE portscan FIELDS TERMINATED\
      BY '|'\""
     if {$DEBUG} {puts $cmd}

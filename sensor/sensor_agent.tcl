@@ -1,4 +1,6 @@
-#!/usr/local/bin/tcl
+#!/bin/sh
+# Run tcl from users PATH \
+exec tcl -f "$0" ${1+"$@"}
 
 # Name of sguild server
 set SERVER_HOST syn

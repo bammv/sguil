@@ -1,4 +1,6 @@
-#!/usr/bin/tcl
+#!/bin/sh
+# Run tcl from users PATH \
+exec tcl -f "$0" ${1+"$@"}
 
 set SERVERPORT 7735
 # sguild and xscriptd should be ran on the same system.
