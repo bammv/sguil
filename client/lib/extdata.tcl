@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.5 2004/03/19 20:33:58 bamm Exp $
+# $Id: extdata.tcl,v 1.6 2004/06/11 15:19:58 bamm Exp $
 
 proc GetRuleInfo {} {
   global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT SSN_QUERY
@@ -209,17 +209,27 @@ proc CreateXscriptWin { winName } {
   pack $winName.menubutton -side top -anchor w
   pack $winName.sText $winName.debug -side top -fill both -expand true
 }
-proc InsertXscriptData { winName state data } {
-  global XSCRIPTDATARCVD
+proc XscriptMainMsg { winName data } {
+  global XSCRIPTDATARCVD SESSION_STATE
   if { ! [winfo exist $winName] } {
     CreateXscriptWin $winName
   }
-  #puts $XSCRIPTDATARCVD($winName)
   if {! $XSCRIPTDATARCVD($winName)} {
     $winName.sText clear
-    $winName configure -cursor left_ptr
     set XSCRIPTDATARCVD($winName) 1
   }
+  switch -exact -- $data {
+     HDR { set SESSION_STATE($winName) HDR }
+     SRC { set SESSION_STATE($winName) SRC }
+     DST { set SESSION_STATE($winName) DST }
+     DEBUG { set SESSION_STATE($winName) DEBUG }
+     DONE { unset SESSION_STATE($winName); unset XSCRIPTDATARCVD($winName); $winName configure -cursor left_ptr }
+     ERROR { set SESSION_STATE($winName) ERROR }
+     default { InsertXscriptData $winName $SESSION_STATE($winName) $data }
+  }
+}
+  
+proc InsertXscriptData { winName state data } {
   if { $state == "HDR" } {
     $winName.sText component text insert end "$data\n"
   } elseif { $state == "SRC" } {
@@ -236,21 +246,47 @@ proc InsertXscriptData { winName state data } {
     $winName.debug see end
   } 
 }
-proc XscriptServerCmdRcvd { socketID } {
-    global DEBUG XSCRIPT_STATE SESSION_STATE socketWinName
-  if { [eof $socketID] || [catch {gets $socketID data}] } {
-    close $socketID
-    if {$DEBUG} {puts "Socket $socketID closed."}
+proc XscriptDebugMsg { winName data } {
+    if [winfo exists $winName] {
+      $winName.debug component text insert end "$data\n"
+      $winName.debug see end
+    }
+}
+proc EtherealDataPcap { socketID fileName bytes } {
+  global ETHEREAL_STORE_DIR ETHEREAL_PATH
+  set outFileID [open $ETHEREAL_STORE_DIR/$fileName w]
+  fconfigure $outFileID -translation binary
+  fconfigure $socketID -translation binary
+  fcopy $socketID $outFileID -size $bytes
+  close $outFileID
+  fconfigure $socketID -encoding utf-8 -translation {auto crlf}
+  eval exec $ETHEREAL_PATH -n -r $ETHEREAL_STORE_DIR/$fileName &
+  InfoMessage\
+   "Raw file is stored in $ETHEREAL_STORE_DIR/$fileName. Please delete when finished"
+}
+# Archiving this till I know for sure binary xfers are working correctly
+proc EtherealDataBase64 { fileName data } {
+  global ETHEREAL_PATH ETHEREAL_STORE_DIR b64FileID DEBUG
+  if { $data == "BEGIN" } {
+    set tmpFileName $ETHEREAL_STORE_DIR/${fileName}.base64
+    set b64FileID($fileName) [open $tmpFileName w]
+  } elseif { $data == "END" } {
+    if [info exists b64FileID($fileName)] {
+      close $b64FileID($fileName)
+      set outFileID [open $ETHEREAL_STORE_DIR/$fileName w]
+      set inFileID [open $ETHEREAL_STORE_DIR/${fileName}.base64 r]
+      fconfigure $outFileID -translation binary
+      fconfigure $inFileID -translation binary
+      puts -nonewline $outFileID [::base64::decode [read -nonewline $inFileID]]
+      close $outFileID
+      close $inFileID
+      file delete $ETHEREAL_STORE_DIR/${fileName}.base64
+      eval exec $ETHEREAL_PATH -n -r $ETHEREAL_STORE_DIR/$fileName &
+      InfoMessage "Raw file is stored in $ETHEREAL_STORE_DIR/$fileName. Please delete when finished"
+    }
   } else {
-    if {$DEBUG} {puts "Client Command: $data"}
-    switch -exact -- $data {
-      HDR { set SESSION_STATE($socketID) HDR }
-      SRC { set SESSION_STATE($socketID) SRC }
-      DST { set SESSION_STATE($socketID) DST }
-      DEBUG { set SESSION_STATE($socketID) DEBUG }
-      DONE { close $socketID; unset SESSION_STATE($socketID); unset socketWinName($socketID) }
-      ERROR { set SESSION_STATE($socketID) ERROR }
-      default { InsertXscriptData $socketWinName($socketID) $SESSION_STATE($socketID) $data }
+    if [info exists b64FileID($fileName)] {
+      puts $b64FileID($fileName) $data
     }
   }
 }
@@ -282,79 +318,32 @@ proc GetXscript { type force } {
   set dstIP [$winParents.dstIPFrame.list get $eventIndex]
   set dstPort [$winParents.dstPortFrame.list get $eventIndex]
   set xscriptWinName ".${sensor}_${cnxID}"
-  if [catch {set socketID [socket $SERVERHOST $XSCRIPT_SERVER_PORT]}] {
-    ErrorMessage "Unable to connect to xscript server $SERVERHOST on port $XSCRIPT_SERVER_PORT."
-  } else {
-    # Version check
-    if {$OPENSSL} {
-      set tmpVERSION "$VERSION OPENSSL ENABLED"
-    } else {
-      set tmpVERSION "$VERSION OPENSSL DISABLED"
-    }     
-    if [catch {gets $socketID} serverVersion] {
-      puts "ERROR: $serverVersion"
-      return -code error "$serverVersion"
-    }
-    if { $serverVersion != $tmpVERSION } {
-      ErrorMessage "Mismatched versions with xscriptd.\nSERVER: ($serverVersion)\nCLIENT: ($tmpVERSION)"
-      return
-    }
-    puts $socketID $tmpVERSION
-    if {$OPENSSL} {
-      tls::import $socketID
-    }
-    puts $socketID "ValidateUser $USERNAME"
-    flush $socketID
-    set saltNonce [gets $socketID]
-    set tmpSalt [lindex $saltNonce 0]
-    set tmpNonce [lindex $saltNonce 1]
-    set passwdHash [::sha1::sha1 "${PASSWD}${tmpSalt}"]
-    set finalCheck [::sha1::sha1 "${tmpNonce}${tmpSalt}${passwdHash}"]
-    puts $socketID $finalCheck
-    flush $socketID
-    set USERID [lindex [gets $socketID] 1]
-    if { $USERID == "INVALID" } {
-      catch {close $socketID} closeError
-      ErrorMessage "Invalid Username/Password sent to xscriptd.\
-       Please exit and reauthenticate your client."
-       return
-    }
-    if { $type == "xscript"} {
-      fconfigure $socketID -buffering line
-      fileevent $socketID readable [list XscriptServerCmdRcvd $socketID]
-      if {$DEBUG} {
-        puts "Xscript Request sent: $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
-      }
-      #set xscriptWinName ".[join [split $eventID .] _]"
-      set socketWinName($socketID) $xscriptWinName
-      set SESSION_STATE($socketID) HDR
+  if { $type == "xscript"} {
+    if { ![winfo exists $xscriptWinName] } {
       CreateXscriptWin $xscriptWinName
-      $xscriptWinName.debug component text insert 0.0\
-       "Your request has been sent to the server.\nPlease be patient as this can take some time.\n"
-      $xscriptWinName configure -cursor watch
-      set XSCRIPTDATARCVD($xscriptWinName) 0
-      puts $socketID "XscriptRequest $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
-      
-    } elseif { $type == "ethereal" } {
-      if { $proto != "1" } {
-        if { $srcPort > $dstPort } {
-          set tmpFile "$ETHEREAL_STORE_DIR/${dstIP}_${dstPort}-${srcIP}_${srcPort}-${proto}.raw"
-        } else {
-          set tmpFile "$ETHEREAL_STORE_DIR/${srcIP}_${srcPort}-${dstIP}_${dstPort}-${proto}.raw"
-        }
-      } else {
-        set tmpFile "$ETHEREAL_STORE_DIR/${srcIP}_${dstIP}-${proto}.raw"
-      }
-      set tmpFileID [open $tmpFile w]
-      fconfigure $tmpFileID -translation binary
-      fconfigure $socketID -translation binary
-      fileevent $socketID readable [list CopyRawData $socketID $tmpFileID $tmpFile]
-      if {$DEBUG} {
-        puts "Ethereal Request sent: $sensor $xscriptWinName \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
-      }
-      puts $socketID "EtherealRequest $sensor $xscriptWinName \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
-      flush $socketID
+    } else {
+      InfoMessage "This transcipt is already being displayed by you. Please close\
+       that window before you request a new one."
+      # Try and bring the window to the top in case it is hidden.
+      wm withdraw $xscriptWinName
+      wm deiconify $xscriptWinName
+      return  
     }
+    set SESSION_STATE($xscriptWinName) HDR
+    XscriptDebugMsg $xscriptWinName\
+     "Your request has been sent to the server.\nPlease be patient as this can take some time."
+    $xscriptWinName configure -cursor watch
+    set XSCRIPTDATARCVD($xscriptWinName) 0
+    SendToSguild "XscriptRequest $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
+    if {$DEBUG} {
+      puts "Xscript Request sent: $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
+    }
+    
+  } elseif { $type == "ethereal" } {
+    if {$DEBUG} {
+      puts "Ethereal Request sent: $sensor \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
+    }
+    SendToSguild "EtherealRequest $sensor \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
   }
 }
 proc CopyDone { socketID tmpFileID tmpFile bytes {error {}} } {
