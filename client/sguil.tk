@@ -2400,12 +2400,7 @@ proc CopyDone { socketID tmpFileID tmpFile bytes {error {}} } {
   }
 }
 proc CopyRawData { socketID tmpFileID tmpFile } {
-  if { [catch {fcopy $socketID $tmpFileID -command [list CopyDone $socketID $tmpFileID $tmpFile]} dataError] } {
-    ErrorMessage $dataError
-    catch {close $socketID} closeError
-    catch {close $tmpFileID} closeError
-    file delete $tmpFile
-  }
+  catch {fcopy $socketID $tmpFileID -command [list CopyDone $socketID $tmpFileID $tmpFile]} dataError
 }
 proc SaveXscript { win } {
   set initialFile [string trimleft $win .]
