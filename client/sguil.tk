@@ -3798,3 +3798,5 @@ if [catch { ConnectToSguild } socketID] {
   SendToSguild "SendEscalatedEvents"
   SendToSguild "SendGlobalQryList"
 }
+# Happy Halloween
+tk_setPalette orange
