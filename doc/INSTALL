@@ -1,5 +1,5 @@
-# $Id: INSTALL,v 1.13 2003/12/22 17:14:52 shalligan Exp $ #
-
+# $Id: INSTALL,v 1.14 2003/12/22 17:17:00 shalligan Exp $ #
+ 
 Sguil should be installed in the following order:
 
 Step 1: Install mysql and create the sguil database.
