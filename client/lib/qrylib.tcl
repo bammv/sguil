@@ -93,7 +93,7 @@ proc SsnQueryRequest { whereStatement } {
 	  -relief raised -borderwidth 2 -pady 0 \
 	  -command "ExportResults $queryFrame ssn"]
   pack $closeButton $exportButton -side left -fill x -expand true
-  pack $buttonFrame $whereText -side bottom -fill x
+  pack $whereText $buttonFrame -side bottom -fill x
   pack $queryFrame -side top
   $queryFrame configure -cursor watch
   if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
