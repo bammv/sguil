@@ -9,6 +9,8 @@ CVS-HEAD
 
     * Proc SendSensorList now makes sure sensor.active=y.
 
+    * Added a salt to passwd hash
+
   sguild.conf
     * Vars for emailing selected events.
 

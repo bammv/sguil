@@ -132,17 +132,29 @@ proc AddUser { userName USERS_FILE } {
   exec stty -echo
   set passwd2 [gets stdin]
   exec stty echo
+  puts ""
   if { $passwd1 != $passwd2} {
     puts "ERROR: Passwords didn't match."
     puts "$USERS_FILE NOT updated."
     return
   }
+  # reset the random
+  random seed
+  set salt [format "%c%c" [GetRandAlphaNumInt] [GetRandAlphaNumInt] ]
   # make a hashed passwd
-  set hashPasswd [::sha1::sha1 $passwd1]
+  set hashPasswd [::sha1::sha1 "${passwd1}${salt}"]
   set fileID [open $USERS_FILE a]
-  puts $fileID "${userName}(.)(.)${hashPasswd}"
+  puts $fileID "${userName}(.)(.)${salt}${hashPasswd}"
   close $fileID
   puts "User \'$userName\' added successfully"
+}
+proc GetRandAlphaNumInt {} {
+  set x [expr [random 74] + 48]
+  while {!($x >= 48 && $x <= 57) && !($x >= 65 && $x <= 90)\
+      && !($x >= 97 && $x <= 122)} {
+     set x [expr [random 74] + 48]
+  }
+  return $x
 }
 #
 # CheckLineFormat - Parses CONF_FILE lines to make sure they are formatted
@@ -167,9 +179,10 @@ proc ValidateUser { socketID username passwd } {
     if { ![regexp ^# $line] && ![regexp ^$ $line] } {
       # Probably should check for corrupted info here
       set tmpUserName [ctoken line "(.)(.)"]
-      set tmpHash [ctoken line "(.)(.)"]
-      set passwdHash [::sha1::sha1 $passwd]
-      if { $tmpUserName == $username && $tmpHash == $passwdHash } {
+      set tmpSaltHash [ctoken line "(.)(.)"]
+      set tmpSalt [string range $tmpSaltHash 0 1]
+      set passwdHash [::sha1::sha1 "${passwd}${tmpSalt}"]
+      if { $tmpUserName == $username && $tmpSaltHash == "${tmpSalt}${passwdHash}" } {
         set VALID 1
       }
     }
