@@ -59,10 +59,10 @@ and event driven analysis of IDS alerts.
 %{__rm} -rf %{buildroot}
 
 %pre
-grep -q sguil /etc/passwd || useradd sguil
+grep -q %{server_user} /etc/passwd || useradd %{server_user}
 
 %postun 
-grep -q sguil /etc/passwd && userdel sguil
+grep -q %{server_user} /etc/passwd && userdel %{server_user}
 
 %files
 %defattr(-, root, root, 0755)
