@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.27 2005/01/28 00:07:39 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.28 2005/01/28 15:49:31 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -131,6 +131,7 @@ proc CheckForSsnFiles {} {
 proc CheckForSancpFiles {} {
 
     global DEBUG SANCP_DIR SENSOR_ID CONNECTED SSN_CHECK_DELAY_IN_MSECS
+    global HOSTNAME
 
     if { !$CONNECTED || ![info exists SENSOR_ID] } {
         # Try again later
@@ -149,7 +150,7 @@ proc CheckForSancpFiles {} {
                 set tmpDate [lindex $fdPair 1]
                 set fileBytes [file size $tmpFile]
                 # Tell sguild it has a file coming
-                SendToSguild [list SancpFile [file tail $tmpFile] $tmpDate $fileBytes] 
+                SendToSguild [list SancpFile $HOSTNAME [file tail $tmpFile] $tmpDate $fileBytes] 
                 BinCopyToSguild $tmpFile
                 file delete $fileName
             }
@@ -188,7 +189,7 @@ proc BinCopyToSguild { fileName } {
 #
 proc ParseSsnSancpFiles { fileName } {
 
-    global SENSOR_ID 
+    global SENSOR_ID HOSTNAME
     
     set inFileID [open $fileName r]
     while { [ gets $inFileID line] >= 0 } {
@@ -201,7 +202,7 @@ proc ParseSsnSancpFiles { fileName } {
         set fDate [clock format [clock scan $date] -gmt true -f "%Y%m%d"]
         # Files can contain data from different start days
         if { ![info exists outFileID($fDate)] } {
-            set outFile($fDate) "[file dirname $fileName]/parsed.[file tail $fileName].$fDate"
+            set outFile($fDate) "[file dirname $fileName]/parsed.$HOSTNAME.[file tail $fileName].$fDate"
             set outFileID($fDate) [open $outFile($fDate) w]
         } 
         # Prepend sensorID

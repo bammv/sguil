@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.7 2005/01/27 20:10:40 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.8 2005/01/28 15:49:32 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global connectedAgents agentSensorName
@@ -22,7 +22,7 @@ proc SensorCmdRcvd { socketID } {
     switch -exact -- $sensorCmd {
       RTEvent         { EventRcvd $socketID $data }
       SsnFile         { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
-      SancpFile       { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+      SancpFile       { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
       PSFile          { RcvPortscanFile $socketID [lindex $data 1] [lindex $data 2] }
       CONNECT         { SensorAgentConnect $socketID [lindex $data 1] }
       DiskReport      { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
@@ -59,7 +59,7 @@ proc RcvSsnFile { socketID fileName date bytes } {
 
 }
 
-proc RcvSancpFile { socketID fileName date bytes } {
+proc RcvSancpFile { socketID sensorName fileName date bytes } {
 
     global TMPDATADIR loaderWritePipe
 
@@ -67,7 +67,7 @@ proc RcvSancpFile { socketID fileName date bytes } {
     RcvBinCopy $socketID $sancpFile $bytes
     
     # The loader child proc does the LOAD for us.
-    puts $loaderWritePipe [list LoadSancpFile $sancpFile $date]
+    puts $loaderWritePipe [list LoadSancpFile $sensorName $sancpFile $date]
     flush $loaderWritePipe
 
 }

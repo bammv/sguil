@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.9 2005/01/28 02:47:54 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.10 2005/01/28 15:49:32 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -34,7 +34,7 @@ proc ForkLoader {} {
   
                     LoadPSFile { LoadFile [lindex $data 1] portscan }
                     LoadSsnFile { LoadSsnFile [lindex $data 1] [lindex $data 2] }
-                    LoadSancpFile { LoadSancpFile [lindex $data 1] [lindex $data 2] }
+                    LoadSancpFile { LoadSancpFile [lindex $data 1] [lindex $data 2] [lindex $data 3] }
                     default    { LogMessage "Unknown command recieved from sguild: $cmd" }
 
                 }
@@ -49,13 +49,13 @@ proc ForkLoader {} {
     return $childPid
 }
 
-proc CreateNewSancpTable { date } {
+proc CreateNewSancpTable { tableName } {
 
     global LOADERD_DB_ID SANCP_TBL_LIST
 
-    InfoMessage "loaderd: Creating sancp table: sancp_$date."
+    LogMessage "loaderd: Creating sancp table: $tableName."
     set createQuery "                                      \
-        CREATE TABLE sancp_$date                           \
+        CREATE TABLE $tableName                            \
         (                                                  \
         sid           INT UNSIGNED            NOT NULL,    \
         sancpid       BIGINT UNSIGNED         NOT NULL,    \
@@ -85,7 +85,7 @@ proc CreateNewSancpTable { date } {
     # Create the table
     mysqlexec $LOADERD_DB_ID $createQuery
     # Add the new table to our list
-    lappend SANCP_TBL_LIST "sancp_$date"
+    lappend SANCP_TBL_LIST "$tableName"
 
     # If the sancp table exists, then DROP it
     if { [mysqlsel $LOADERD_DB_ID {SHOW TABLES LIKE 'sancp'} -list] != "" } {
@@ -98,7 +98,7 @@ proc CreateSancpMergeTable {} {
 
     global LOADERD_DB_ID SANCP_TBL_LIST
     
-    InfoMessage "loaderd: Creating sancp MERGE table."
+    LogMessage "loaderd: Creating sancp MERGE table."
     set createQuery "                                      \
         CREATE TABLE sancp                                 \
         (                                                  \
@@ -144,17 +144,19 @@ proc InitLoaderd {} {
 
     # Get a list of current sancp tables
     set SANCP_TBL_LIST [mysqlsel $LOADERD_DB_ID {SHOW TABLES LIKE 'sancp_%'} -list]
-    InfoMessage "loaderd: sancp tables: $SANCP_TBL_LIST"
-    set todaysDate [clock format [clock scan today] -gmt true -format "%Y%m%d"]
+    LogMessage "loaderd: sancp tables: $SANCP_TBL_LIST"
+    #set todaysDate [clock format [clock scan today] -gmt true -format "%Y%m%d"]
     # Check to see if we have a sancp table for today
-    if { [lsearch -exact $SANCP_TBL_LIST "sancp_$todaysDate"] < 0 } {
-        CreateNewSancpTable $todaysDate
-    }
+    #if { [lsearch -exact $SANCP_TBL_LIST "sancp_$todaysDate"] < 0 } {
+    #    CreateNewSancpTable $todaysDate
+    #}
     
     # Check to see if sancp table exist
     if { [mysqlsel $LOADERD_DB_ID {SHOW TABLES LIKE 'sancp'} -list] == "" } {
-        # Create sancp merge table.
-        CreateSancpMergeTable
+        # Create sancp merge table if we have a list of sancp tables.
+        if { [info exists SANCP_TBL_LIST] && $SANCP_TBL_LIST != "" } {
+            CreateSancpMergeTable
+        }
     } else {
         # Make sure its a MERGE table and not the old monser
         set tableStatus [mysqlsel $LOADERD_DB_ID {SHOW TABLE STATUS LIKE 'sancp'} -flatlist]
@@ -195,14 +197,14 @@ proc LoadSsnFile { filename date } {
 
 }
 
-proc LoadSancpFile { filename date } {
+proc LoadSancpFile { sensor filename date } {
 
     global SANCP_TBL_LIST
 
-    set tableName "sancp_$date"
+    set tableName "sancp_${sensor}_${date}"
     # Make sure our table exists
     if { [lsearch -exact $SANCP_TBL_LIST $tableName] < 0 } {
-        CreateNewSancpTable $date
+        CreateNewSancpTable $tableName
     }
 
     # Not doing anything with the date yet
