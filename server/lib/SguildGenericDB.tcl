@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.1 2004/10/05 15:23:20 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.2 2004/10/14 17:34:46 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -111,4 +111,17 @@ proc UpdateDBStatusList { whereTmp timestamp uid status } {
   mysqlclose $dbSocketID
   return $execResults
 }
-
+proc UpdateDBStatus { eventID timestamp uid status } {
+  global DBNAME DBUSER DBPORT DBHOST DBPASS
+  set sid [lindex [split $eventID .] 0]
+  set cid [lindex [split $eventID .] 1]
+  set updateString\
+   "UPDATE event SET status=$status, last_modified='$timestamp', last_uid='$uid' WHERE sid=$sid AND cid=$cid"
+  if { $DBPASS == "" } {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+  } else {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+  }
+  set execResults [mysqlexec $dbSocketID $updateString]
+  mysqlclose $dbSocketID
+}
