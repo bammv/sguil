@@ -11,7 +11,7 @@
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.2.4"
+set VERSION "SGUIL-0.2.5"
 set DB_VERSION "0.6"
 
 # Config options moved to sguild.conf
