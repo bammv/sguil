@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: log_packets.sh,v 1.9 2003/11/19 18:18:14 bamm Exp $ #
+# $Id: log_packets.sh,v 1.10 2004/01/02 17:42:52 bamm Exp $ #
 
 ################################################
 #                                              #
@@ -13,15 +13,15 @@
 ################################################
 
 
-####################################################
-#                                                  #
-#  USAGE: ./log_packets.sh <start|stop|restart>    #
-#                                                  #
-# Recommendation for crontab:                      #
-#                                                  #
-# 00 0-23/1 * * * /path/to/log_packets.sh restart  #
-#                                                  #
-####################################################
+##############################################################
+#                                                            #
+#  USAGE: ./log_packets.sh <start|stop|restart|cleandisk>    #
+#                                                            #
+# Recommendation for crontab:                                #
+#                                                            #
+# 00 0-23/1 * * * /path/to/log_packets.sh restart            #
+#                                                            #
+##############################################################
 
 
 # Edit these for your setup
@@ -30,10 +30,12 @@
 SNORT_PATH="/usr/local/bin/snort"
 # Directory to log pcap data to (date dirs will be created in here)
 LOG_DIR="/snort_data/dailylogs"
+# Percentage of disk to try and maintain
+MAX_DISK_USE=90
 # Interface to 'listen' to.
-INTERFACE="eth0"
-# Other options
-OPTIONS="-u sguil -g sguil -m 122"
+INTERFACE="ed0"
+# Other options to use when starting snort
+#OPTIONS="-u sguil -g sguil -m 122"
 # Where to store the pid
 PIDFILE="/var/run/snort_log.pid"
 
@@ -107,16 +109,55 @@ restart() {
   fi
 }
 
+# This func checks the current space being used by LOG_DIR
+# and rm's data as necessary.
+cleandisk() {
+  echo "Checking disk space (limited to ${MAX_DISK_USE}%)..."
+  # grep, awk, tr...woohoo!
+  CUR_USE=`df $LOG_DIR | grep -v -i filesystem | awk '{print $5}' | tr -d %`
+  echo "  Current Disk Use: ${CUR_USE}%"
+  if [ $CUR_USE -gt $MAX_DISK_USE ]; then
+    # If we are here then we passed our disk limit
+    # First find the oldest DIR
+    cd $LOG_DIR
+    # Can't use -t on the ls since the mod time changes each time we
+    # delete a file. Good thing we use YYYY-MM-DD so we can sort.
+    OLDEST_DIR=`ls | sort | head -1`
+    cd $OLDEST_DIR
+    OLDEST_FILE=`ls -t | tail -1`
+    if [ $OLDEST_FILE ]; then
+      echo "  Removing file: $OLDEST_DIR/$OLDEST_FILE"
+      rm -f $OLDEST_FILE
+    else
+      echo "  Removing empty dir: $OLDEST_DIR"
+      cd ..; rm -rf $OLDEST_DIR
+    fi
+    # Run cleandisk again as rm'ing one file might been enough
+    # but we wait 5 secs in hopes any open writes are done.
+    sync
+    echo "  Waiting 5 secs for disk to sync..."
+    sleep 5
+    cleandisk
+  else
+    echo "Done."
+  fi
+}
+
 case "$1" in
   start)
     start
+    cleandisk
     ;;
   stop)
     stopproc
     ;;
   restart)
     restart
+    cleandisk
+    ;;
+  cleandisk)
+    cleandisk
     ;;
   *)
-    echo "Usage: $0 {start|stop|restart}"
+    echo "Usage: $0 {start|stop|restart|cleandisk}"
 esac
