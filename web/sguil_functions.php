@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.20 2004/04/04 20:03:26 dlowless Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.21 2004/04/04 20:21:57 dlowless Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -142,7 +142,7 @@ function show_alerts( $where_query, $aggregate_result ) {
 			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a>&nbsp;(" . getcountrycodebyaddr($row['dst_ip']) . ")&nbsp;</td>\n");
 
 			if ( (getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto']))=="") || ( getprotobynumber($row['ip_proto']) != 'udp' && getprotobynumber($row['ip_proto']) != 'tcp' ))
-				print("	<td>&nbsp;<a href=http://www.dshield.org/port_report.php?port=" .$row['dst_port']. " target=dshield>" . $row['dst_port'] . "</a>&nbsp;</td>\n");
+				print("	<td>&nbsp;<a href=http://www.dshield.org/port_report.php?port=" .$row['dst_port']. "&days=70 target=dshield>" . $row['dst_port'] . "</a>&nbsp;</td>\n");
 			else
 				print("	<td>&nbsp;<a href=http://www.dshield.org/port_report.php?port=" .$row['dst_port']. " target=dshield>" . $row['dst_port'] ."&nbsp;(" .getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto'])) . ")</a>&nbsp;</td>\n");
 
