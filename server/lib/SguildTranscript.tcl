@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.4 2004/10/18 15:28:20 shalligan Exp $ #
+# $Id: SguildTranscript.tcl,v 1.5 2004/11/12 20:40:34 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -40,9 +40,10 @@ proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
 }
 
 proc EtherealRequest { socketID sensor timestamp srcIP srcPort dstIP dstPort ipProto force } {
-  global TRANS_ID transInfoArray LOCAL_LOG_DIR
+  global NEXT_TRANS_ID transInfoArray LOCAL_LOG_DIR
     # Increment the xscript counter. Gives us a unique way to track the xscript
-  incr TRANS_ID
+  incr NEXT_TRANS_ID
+  set TRANS_ID $NEXT_TRANS_ID
   set date [lindex $timestamp 0]
   if [catch { InitRawFileArchive $date $sensor $srcIP $dstIP $srcPort $dstPort $ipProto }\
       rawDataFileNameInfo] {
@@ -96,7 +97,7 @@ proc SendEtherealData { fileName TRANS_ID } {
 }
 
 proc XscriptRequest { socketID sensor winID timestamp srcIP srcPort dstIP dstPort force } {
-  global TRANS_ID transInfoArray LOCAL_LOG_DIR TCPFLOW
+  global NEXT_TRANS_ID transInfoArray LOCAL_LOG_DIR TCPFLOW
   # If we don't have TCPFLOW then error to the user and return
   if { ![info exists TCPFLOW] || ![file exists $TCPFLOW] || ![file executable $TCPFLOW] } {
       SendSocket $socketID "ErrorMessage ERROR: tcpflow is not installed on the server."
@@ -104,7 +105,8 @@ proc XscriptRequest { socketID sensor winID timestamp srcIP srcPort dstIP dstPor
     return
   }
   # Increment the xscript counter. Gives us a unique way to track the xscript
-  incr TRANS_ID
+  incr NEXT_TRANS_ID
+  set TRANS_ID $NEXT_TRANS_ID
   set date [lindex $timestamp 0]
   if [catch { InitRawFileArchive $date $sensor $srcIP $dstIP $srcPort $dstPort 6 }\
       rawDataFileNameInfo] {
@@ -134,7 +136,7 @@ proc XscriptRequest { socketID sensor winID timestamp srcIP srcPort dstIP dstPor
   } else {
     # The data is archive locally.
     SendSocket $socketID "XscriptDebugMsg $winID Using archived data: $sensorDir/$rawDataFileName"
-    GenerateXscript $sensorDir/$rawDataFileName $socketID $winID
+    GenerateXscript $sensorDir/$rawDataFileName $socketID $winID $TRANS_ID
   }
 }
 
@@ -155,7 +157,7 @@ proc GetRawDataFromSensor { TRANS_ID sensor timestamp srcIP srcPort dstIP dstPor
       flush $sensorSocketID
       if { $type == "xscript" } {
 	  SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
-		  "XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] Raw data request sent to $sensor."
+	      "XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] Raw data request sent to $sensor."
       }
   } else {
       set RFLAG 0
@@ -180,20 +182,23 @@ proc RawDataFile { socketID fileName TRANS_ID } {
   catch {close $fileID}
   catch {close $socketID}
   if { $type == "xscript" } {
-    GenerateXscript $outfile [lindex $transInfoArray($TRANS_ID) 0] [lindex $transInfoArray($TRANS_ID) 1]
+    GenerateXscript $outfile [lindex $transInfoArray($TRANS_ID) 0] [lindex $transInfoArray($TRANS_ID) 1] $TRANS_ID
   } elseif { $type == "ethereal" } {
     SendEtherealData $outfile $TRANS_ID
   }
 }
 
 proc XscriptDebugMsg { TRANS_ID msg } {
-  global transInfoArray
-  SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
-     "XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] $msg"
+    global transInfoArray
+  
+    if [info exists transInfoArray($TRANS_ID)] {
+        SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
+           "XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] $msg"
+    }
 }
 
-proc GenerateXscript { fileName clientSocketID winName } {
-  global TRANS_ID transInfoArray TCPFLOW LOCAL_LOG_DIR P0F P0F_PATH
+proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
+  global transInfoArray TCPFLOW LOCAL_LOG_DIR P0F P0F_PATH
   set NODATAFLAG 1
   # We don't have a really good way for make xscripts yet and are unable
   # to figure out the true src. So we assume the low port was the server
