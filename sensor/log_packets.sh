@@ -1,6 +1,6 @@
 #!/bin/sh
 #set -x
-# $Id: log_packets.sh,v 1.15 2004/05/24 15:26:08 shalligan Exp $ #
+# $Id: log_packets.sh,v 1.16 2004/05/24 15:36:24 shalligan Exp $ #
 
 ################################################
 #                                              #
@@ -29,11 +29,11 @@
 # Path to snort binary
 SNORT_PATH="/usr/local/bin/snort"
 # Directory to log pcap data to (date dirs will be created in here)
-LOG_DIR="/var/log/snort/dailylogs"
+LOG_DIR="/snort_data/dailylogs"
 # Percentage of disk to try and maintain
 MAX_DISK_USE=90
 # Interface to 'listen' to.
-INTERFACE="vr0"
+INTERFACE="eth0"
 # Other options to use when starting snort
 #OPTIONS="-u sguil -g sguil -m 122"
 # Where to store the pid
