@@ -68,7 +68,7 @@ proc EmailEvents { detail sanitize } {
 
 		set eventIpHdr $REPORT_RESULTS
 		# clear REPORT_RESULTS 
-		set REPORT_RESULTS 0
+		set REPORT_RESULTS ""
 		$textBox insert end "IPVer=[lindex $eventIpHdr 2] "
 		$textBox insert end "hlen=[lindex $eventIpHdr 3] "
 		$textBox insert end "tos=[lindex $eventIpHdr 4] "
@@ -101,7 +101,7 @@ proc EmailEvents { detail sanitize } {
 			set REPORT_DONE 0
 			
 			set eventTcpHdr $REPORT_RESULTS
-			set REPORT_RESULTS 0
+			set REPORT_RESULTS ""
 			if { $eventTcpHdr == "error"} {
 			    ErrorMessage "Error getting TCP Header Data."
 			}
@@ -195,7 +195,7 @@ proc EmailEvents { detail sanitize } {
 			set REPORT_DONE 0
 			
 			set eventUDPHdr $REPORT_RESULTS
-			set REPORT_RESULTS 0
+			set REPORT_RESULTS ""
 			if { $eventUdpHdr == "error" } {
 			    ErrorMessage "Error getting UDP Header Data."
 			}
@@ -217,7 +217,7 @@ proc EmailEvents { detail sanitize } {
 		    set REPORT_DONE 0
 		    
 		    set eventIcmpHdr $REPORT_RESULTS
-		    set REPORT_RESULTS 0
+		    set REPORT_RESULTS ""
 		    $textBox insert end "Type=[lindex $eventIcmpHdr 0] "
 		    $textBox insert end "Code=[lindex $eventIcmpHdr 1] "
 		    $textBox insert end "chksum=[lindex $eventIcmpHdr 2] "
@@ -297,7 +297,7 @@ proc EmailEvents { detail sanitize } {
 		    set REPORT_DONE 0
 		    
 		    set eventPayload [lindex $REPORT_RESULTS 0]
-		    set REPORT_RESULTS 0
+		    set REPORT_RESULTS ""
 		    puts "are we here? $eventPayload"
 		    if { $eventPayload == "error" } {
 			ErrorMessage "Error getting payload data."
@@ -343,7 +343,7 @@ proc EmailEvents { detail sanitize } {
 		set REPORT_DONE 0
 
 		set psdata $REPORT_RESULTS
-		set REPORT_RESULTS 0
+		set REPORT_RESULTS ""
 		
 		for { set i 0 } { $i < [llength $psdata] } {incr i} {
 		    if { $sanitize == 1 } {
