@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.80 2004/02/10 17:25:20 bamm Exp $ #
+# $Id: sguild,v 1.81 2004/02/10 18:36:35 shalligan Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -957,20 +957,27 @@ proc ForkQueryd {} {
         set dbCmd [lindex $data 3]
         set clientSocketID [lindex $data 0]
         set clientWinName [lindex $data 1]
+	if {[lindex $clientWinName 0] == "REPORT"} {
+	    set ClientCommand "ReportResponse"
+	    set clientWinName [lindex $clientWinName 1]
+	} else {
+	    set ClientCommand "InsertQueryResults"
+	}
         set query [lindex $data 2]
         if {$DEBUG} {puts "Sending DB Query: $query"}
+	if {$DEBUG} {puts "Client Win Name is: $clientWinName"}
         set dbSocketID [eval $dbCmd]
         if [catch {mysqlsel $dbSocketID "$query" -list} selResults] {
           puts $outPipeID "$clientSocketID InfoMessage $selResults"
         } else {
           set count 0
           foreach row $selResults {
-            puts $outPipeID "$clientSocketID InsertQueryResults $clientWinName $row"
+            puts $outPipeID "$clientSocketID $ClientCommand $clientWinName $row"
             incr count
           }
-          puts $outPipeID "$clientSocketID InfoMessage Query returned $count row(s)."
+          if { $ClientCommand != "ReportResponse" } {puts $outPipeID "$clientSocketID InfoMessage Query returned $count row(s)."}
         }
-        puts $outPipeID "$clientSocketID InsertQueryResults $clientWinName done"
+        puts $outPipeID "$clientSocketID $ClientCommand $clientWinName done"
         flush $outPipeID
         mysqlclose $dbSocketID
       }
@@ -1120,44 +1127,36 @@ proc ReportBuilder { socketID type sid cid } {
     switch -exact -- $type {
 	TCP {
 	    set query\
-		"SELECT tcp_seq, tcp_ack, tcp_off, tcp_res, tcp_flags, tcp_win, tcp_csum, tcp_urp\
-		FROM tcphdr\
-		WHERE sid=$sid and cid=$cid"
-	    set queryResults [FlatDBQuery $query]
-	    set portQuery [FlatDBQuery "SELECT src_port, dst_port FROM event WHERE sid=$sid AND cid=$cid"]
-	    catch {SendSocket $socketID "ReportResponse $type $queryResults $portQuery"} tmpError
+		"SELECT tcphdr.tcp_seq, tcphdr.tcp_ack, tcphdr.tcp_off, tcphdr.tcp_res,\
+		tcphdr.tcp_flags, tcphdr.tcp_win, tcphdr.tcp_csum, tcphdr.tcp_urp, event.src_port, event.dst_port\
+		FROM tcphdr, event\
+		WHERE event.sid=tcphdr.sid AND event.cid=tcphdr.cid and event.sid=$sid and event.cid=$cid"
+	    QueryDB $socketID {REPORT TCP} $query
 	}
 	UDP {
 	    set query\
-		"SELECT udp_len, udp_csum FROM udphdr WHERE sid=$sid and cid=$cid"
-
-	    set queryResults [FlatDBQuery $query]
-	    set portQuery [FlatDBQuery "SELECT src_port, dst_port FROM event WHERE sid=$sid AND cid=$cid"]
-	    catch {SendSocket $socketID "ReportResponse $type $queryResults $portQuery"} tmpError
+		"select udphdr.udp_len, udphdr.udp_csum, event.src_port, event.dst_port\
+		FROM udphdr, event\
+		WHERE event.sid = udphdr.sid and event.cid=udphdr.cid and event.sid=$sid and event.cid = $cid"
+	
+	    QueryDB $socketID {REPORT UDP} $query
 	}
         ICMP {
 	    set query\
-		"SELECT event.icmp_type, event.icmp_code, icmphdr.icmp_csum, icmphdr.icmp_id, icmphdr.icmp_seq\
-		FROM event, icmphdr\
-		WHERE event.sid=icmphdr.sid AND event.cid=icmphdr.cid AND event.sid=$sid AND event.cid=$cid"
+		"SELECT event.icmp_type, event.icmp_code, icmphdr.icmp_csum, icmphdr.icmp_id, icmphdr.icmp_seq, data.data_payload\
+		FROM event, icmphdr, data\
+		WHERE event.sid=icmphdr.sid AND event.cid=icmphdr.cid\
+		AND event.sid=data.sid AND event.cid=data.cid AND event.sid=$sid AND event.cid=$cid"
 
-	    set queryResults [FlatDBQuery $query]
-  
-	    set query\
-		"SELECT data_payload FROM data WHERE sid=$sid and cid=$cid"
-  
-	    set plqueryResults [FlatDBQuery $query]
-	    catch {SendSocket $socketID "ReportResponse $type $queryResults $plqueryResults"} tmpError
+	    QueryDB $socketID {REPORT ICMP} $query
 	}
 	PAYLOAD {
 	    set query\
-		"SELECT data_payload FROM data WHERE sid=$sid and cid=$cid"
+		"SELECT data_payload FROM data WHERE data.sid=$sid and data.cid=$cid"
 
-	    set queryResults [FlatDBQuery $query] 
-	    catch {SendSocket $socketID "ReportResponse $type \{$queryResults\}"} tmpError
+	    QueryDB $socketID {REPORT PAYLOAD} $query 
 	}
 	PORTSCAN {
-	    global DBNAME DBUSER DBPASS DBPORT DBHOST DEBUG
 	    set MAX_PS_ROWS 200
 	    set timestamp $sid
 	    set srcIP $cid
@@ -1168,17 +1167,7 @@ proc ReportBuilder { socketID type sid cid } {
 		set query\
 		    "SELECT * FROM portscan WHERE timestamp > '$timestamp' AND src_ip='$srcIP' LIMIT $MAX_PS_ROWS"
 	    }
-	    if {$DEBUG} {puts "Getting PS data: $query"}
-	    if {$DBPASS == ""} {
-		set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
-	    } else {
-		set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
-	    }
-	    foreach row [mysqlsel $dbSocketID "$query" -list] {
-		catch {SendSocket $socketID "ReportResponse $type $row"} tmpError
-	    }
-	    mysqlclose $dbSocketID
-	    catch {SendSocket $socketID "ReportResponse $type DONE"} tmpError
+	    QueryDB $socketID {REPORT PORTSCAN} $query
        }
        IP {
 	    set query\
@@ -1187,9 +1176,18 @@ proc ReportBuilder { socketID type sid cid } {
 		FROM event\
 		WHERE sid=$sid and cid=$cid"
 
+	    QueryDB $socketID {REPORT IP} $query
+       }
+       CATCOUNT {
+	    set query "SELECT  status.description , COUNT(event.status) from event, status WHERE event.status = status.status_id"
+	    if { $sid != "ALL" } {
+		set query "${query} AND event.sid = 3"
+	    }
+	    set query "${query} GROUP BY status.description"
 	    set queryResults [FlatDBQuery $query]
 	    catch {SendSocket $socketID "ReportResponse $type $queryResults"} tmpError
-       }
+	}
+	
     }
 }
 

@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.10 2003/12/02 14:48:17 shalligan Exp $ #
+# $Id: report.tcl,v 1.11 2004/02/10 18:36:35 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -196,24 +196,99 @@ proc ReportResponse { type data } {
 	PAYLOAD -
 	UDP { 
 	    # UDP, IP, TCP, ICMP and PAYLOAD are all the same
+	    if { $data == "done" } { 
+		set REPORT_DONE 1
+		return
+	    }
 	    set REPORT_RESULTS $data
-	    set REPORT_DONE 1
 	}
 	PORTSCAN {
 	    # We gotta get tricky here since this data is going to 
 	    # come back in more than one response
 	 
 	    
-	    if { $data != "DONE" } {
+	    if { $data != "done" } {
 		lappend REPORT_RESULTS $data
 	    } else {
 		set REPORT_DONE 1
 	    }
 	}
+	CATCOUNT {
+	    set REPORT_RESULTS $data
+	    set REPORT_DONE 1
+	}
     }
 }
 	
+proc PHBReport {} { 
+    global RETURN_FLAG REPORTNUM REPORT_DONE REPORT_RESULTS monitorList
+   
+    set RETURN_FLAG 0
+    incr REPORTNUM
+    set phbReport .phbReport
+    if { [winfo exists $phbReport] } {
+	wm withdraw $phbReport
+	wm deiconify $phbReport
+	return
+    }
+    toplevel $phbReport
+    wm geometry $phbReport +200+200
+    wm title $phbReport "Sensor Summary Report"
+    
+    set sensorBox [checkbox $phbReport.sensorBox -labeltext "Select a Sensor" -orient horizontal]
+    foreach sensor $monitorList {
+	$sensorBox add $sensor -text [string totitle $sensor]
+    }
+    set reportBox [checkbox $phbReport.reportBox -labeltext "Select Report Elements" -orient veritcal]
+    $reportBox add CATCOUNT -text "Counts of Events by Category"
+    $reportBox add CAT1 -text "Category I Events"
+    $reportBox add CAT2 -text "Category II Events"
+    $reportBox add CAT3 -text "Category III Events"
+    $reportBox add CAT4 -text "Category IV Events"
+    $reportBox add CAT5 -text "Category V Events"
+    $reportBox add CAT6 -text "Category VI Events"
+    $reportBox add CAT7 -text "Category VII Events"
+    $reportBox add NA -text "NA Events"
+    $reportBox add ESC -text "Escalated Events"
+    $reportBox add RT -text "Real-Time Events"
+    $reportBox add TTSRC -text "Top Ten Source Addresses"
+    $reportBox add TTSIG -text "Top Ten Events"
+    
+    
+    #set textBox [scrolledtext $phbReport.textBox -textbackground white -vscrollmode dynamic \
+		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 80x10 -textfont ourFixedFont \
+		-labeltext "Report"]
+    set buttonBox [buttonbox $phbReport.buttonBox]
+    $buttonBox add build  -text "Build Report" -command "set RETURN_FLAG 1"
+    $buttonBox add cancel -text "Cancel" -command "set RETURN_FLAG 0"
+    pack $sensorBox $textBox $buttonBox
+    tkwait variable RETURN_FLAG
+    if {$RETURN_FLAG = 1} {
+	set reports [$reportBox get]
+	set sensors [$sensorBox get]
+	BuildPHBReport $sensors $reports
+    }
+    destroy $phbReport
+    return
+}
 
+proc BuildPHBReport { sensors reports } {
+
+    global REPORT_DONE REPORT_RESULTS
+    
+
+    # Send the Report Request to the server
+    SendToSguild "ReportRequest CATCOUNT $sensor empty"
+    
+    # wait for the response to fill in
+    tkwait variable REPORT_DONE
+    # Reset REPORT_DONE to 0 for the next report
+    set REPORT_DONE 0
+    
+    $reportWin.textBox insert end $REPORT_RESULTS
+    # clear REPORT_RESULTS 
+    set REPORT_RESULTS ""
+}
 proc HumanText { detail sanitize winname curselection } {
     global DEBUG REPORT_DONE REPORT_RESULTS
     set ReturnString ""
@@ -994,3 +1069,4 @@ proc ExportDelimitedSSNText { winname SepChar quote header } {
     }
     return $ReturnString
 }
+
