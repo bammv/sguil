@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.78 2004/01/30 21:34:04 bamm Exp $ #
+# $Id: sguild,v 1.79 2004/01/30 21:37:27 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -736,6 +736,8 @@ proc GetSensorID { sensorName } {
 }
 proc RcvSsnFile { socketID fileName sensorName } {
   global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe
+  # Silly bugfix till the sancp stuff gets here
+  set tableName sessions
   set sensorID [GetSensorID $sensorName]
   if {$DEBUG} {puts "Recieving session file $fileName."}
   fconfigure $socketID -translation binary
