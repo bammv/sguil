@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.89 2004/05/26 18:25:11 bamm Exp $ #
+# $Id: sguild,v 1.90 2004/05/26 22:14:16 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -36,7 +36,7 @@ proc ForkLoader {} {
       global DEBUG
       fconfigure $pipeID -buffering line
       if { [eof $pipeID] || [catch {gets $pipeID data}] } {
-        CleanExit
+        exit
       } else {
         set fileName [lindex $data 0]
         set cmd [lindex $data 1]
@@ -206,6 +206,7 @@ proc AutoCat { data } {
 }
 proc CleanExit {} {
   global PID_FILE FORKD_PIDS
+  puts "DEBUG #### CleanExit Called"
   if { [info exists PID_FILE] && [file exists $PID_FILE] } {
     if [catch {file delete -force $PID_FILE} delError] {
       puts "ERROR: $delError"
@@ -1103,7 +1104,7 @@ proc ForkQueryd {} {
       global DEBUG
       fconfigure $inPipeID -buffering line
       if { [eof $inPipeID] || [catch {gets $inPipeID data}] } {
-        CleanExit
+        exit
       } else {
         set dbCmd [lindex $data 3]
         set clientSocketID [lindex $data 0]
@@ -1472,7 +1473,6 @@ proc Daemonize {} {
     puts $pidFileID $PID
     close $pidFileID
   }
-  signal trap {QUIT TERM} CleanExit
 }
 ######################## END PROCS ##############################
 
@@ -1804,6 +1804,7 @@ if [catch {eval $sensorSocketCmd} sensorSocket] {
 puts "Sguild Initialized."
 
 signal trap {HUP} HupTrapped
+signal trap {QUIT TERM} CleanExit
 
 # Infinate wait
 vwait FOREVER
