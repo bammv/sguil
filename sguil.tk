@@ -271,14 +271,26 @@ proc DisplayIncidentCats {} {
   $categoryText component text insert end "Category VII\tVirus Infection\n"
 }
 proc ValidateEvent { status } {
-  global ACTIVE_EVENT currentSelectedPane
+  global ACTIVE_EVENT currentSelectedPane eventArray correlateArray socketID DEBUG
   if {$ACTIVE_EVENT} {
-     # set selectedIndex [$currentSelectedPane.eventIDFrame.list curselection]
      foreach selectedIndex\
       [lsort -integer -decreasing [$currentSelectedPane.eventIDFrame.list curselection]] {
-       # puts "Validating Index: $selectedIndex"
-       RemoveEvent $currentSelectedPane $selectedIndex $status
+       # Get the eventID to be deleted
+       set eventID [$currentSelectedPane.eventIDFrame.list get $selectedIndex]
+       lappend deleteEventIDList $eventID
+       # Remove the selected line from the console
+       DeleteLine $currentSelectedPane $selectedIndex
+       if { [info exists correlateArray($eventID)] } {
+         foreach event $correlateArray($eventID) {
+           if { [info exists eventArray($event)] } { unset eventArray($event) }
+           lappend deleteEventIDList $event
+         }
+         unset correlateArray($eventID)
+       } 
      }
+     SelectNextEvent $currentSelectedPane $selectedIndex
+     if {$DEBUG} { puts "Sending Server: DeleteEventIDList $status $deleteEventIDList" }
+     puts $socketID "DeleteEventIDList $status $deleteEventIDList"
      if { [llength [$currentSelectedPane.eventIDFrame.list curselection]] > 1} {
 	 # puts "unslecting multiple events"
 	 UnHighLightListLine $currentSelectedPane
@@ -990,34 +1002,6 @@ proc GetColorByPriority { priority } {
   }
   
   return $rtColor
-}
-
-
-proc RemoveEvent { paneName index status} {
-  global eventArray correlateArray socketID DEBUG
-
-  # Get the eventID to be deleted
-  set eventID [$paneName.eventIDFrame.list get $index]
-  # Remove the selected line from the console
-  DeleteLine $paneName $index 
-
-  if { [info exists eventArray($eventID)] } { 
-    unset eventArray($eventID)
-  }
-  # If the event has been correlated then update all the events else
-  # just the one.
-  if { [info exists correlateArray($eventID)] } {
-    foreach event $correlateArray($eventID) {
-      if { [info exists eventArray($event)] } { unset eventArray($event) }
-    }
-    if {$DEBUG} { puts "Sending Server: DeleteEventIDList $eventID $status $correlateArray($eventID)" }
-    puts $socketID "DeleteEventIDList $status $eventID $correlateArray($eventID)"
-    unset correlateArray($eventID)
-  } else {
-    if {$DEBUG} {puts "Sending Server: DeleteEventID $eventID $status"}
-    puts $socketID "DeleteEventID $eventID $status"
-  }
-  SelectNextEvent $paneName $index
 }
 
 #
