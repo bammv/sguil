@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.21 2004/10/18 18:21:34 shalligan Exp $ #
+# $Id: report.tcl,v 1.22 2004/10/18 22:19:28 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -227,7 +227,7 @@ proc ReportResponse { type data } {
 }
 	
 proc PHBReport {} { 
-    global RETURN_FLAG REPORTNUM REPORT_DONE REPORT_RESULTS monitorList REPORT_QRY_LIST
+    global RETURN_FLAG REPORTNUM REPORT_DONE REPORT_RESULTS monitorList REPORT_QRY_LIST sbList
 #    puts $REPORT_QRY_LIST
 #    puts [string length $REPORT_QRY_LIST]
     set rList {}
@@ -270,23 +270,28 @@ proc PHBReport {} {
     set winLabel [label $sensorFrame.label -text "Select Sensor(s) to Report" -background lightblue]
     pack $winLabel -side top -fill both -expand true
      # We create a new frame for every 5 sensors to keep the look clean.
+    set abMonitorList [lsort -dictionary $monitorList]
     set i 0
     set boxNumber 0
     set currentBox [checkbox $sensorFrame.subBox$boxNumber -orient horizontal -borderwidth 0 -background lightblue]
-    foreach sensorName $monitorList {
-      if { $i < 5 } {
-        $currentBox add $sensorName -text [string totitle $sensorName] -selectcolor darkred -activebackground lightblue
-        incr i
-      } else {
-        pack $currentBox -side top -fill x -pady 0
-        incr boxNumber
-        set currentBox [checkbox $sensorFrame.subBox$boxNumber -orient horizontal -borderwidth 0 -background lightblue]
-        $currentBox add $sensorName -text [string totitle $sensorName] -selectcolor darkred -activebackground lightblue
-        set i 1
-      }
-  
+    lappend sbList $currentBox
+    foreach sensorName $abMonitorList {
+	if { $i < 5 } {
+	    $currentBox add $sensorName -text [string totitle $sensorName] -selectcolor darkred -activebackground lightblue -width 12
+	    incr i
+	} else {
+	    pack $currentBox -side top -fill x -pady 0
+	    incr boxNumber
+	    set currentBox [checkbox $sensorFrame.subBox$boxNumber -orient horizontal -borderwidth 0 -background lightblue]
+	    lappend sbList $currentBox
+	    $currentBox add $sensorName -text [string totitle $sensorName] -selectcolor darkred -activebackground lightblue -width 12
+	    set i 1
+	}
+	
     }
     pack $currentBox -side top -fill x -pady 0 
+    set selectAll [button $sensorFrame.selectAll -text "Select All" -command "ReportSelectAll"]
+    pack $selectAll -side top -fill x -pady 0
     set timestampLabelFrame [frame $phbReport.timestampLabelFrame]
         set timeStartLabel [label $timestampLabelFrame.timeStartLabel -text "Start Date/Time"]
         set timeEndLabel [label $timestampLabelFrame.timeEndLabel -text "End Date/Time"]
@@ -362,6 +367,16 @@ proc PHBReport {} {
     return
 }
 
+proc ReportSelectAll {} {
+    global sbList
+    foreach sb $sbList {
+	set i [llength [winfo children $sb.childsite]]
+	for {set j 0} { $j < $i } {incr j} {
+	    $sb select $j
+	}
+    }
+}
+	    
 proc MoveReportUp { reportFrame } {
 
     set reportBox $reportFrame.reportBox
