@@ -331,7 +331,7 @@ proc EmailEvents { detail } {
 	toplevel $editEmail
 	wm geometry $editEmail +200+200
 	wm title $editEmail "E-Mail Event"
-	
+	$editEmail configure -cursor watch
 	set textBox [scrolledtext $editEmail.textBox -textbackground white -vscrollmode dynamic \
 		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 80x10 -textfont ourFixedFont \
 		-labeltext "Edit Email"]
@@ -598,6 +598,7 @@ proc EmailEvents { detail } {
 	}
 	#  Once this whole mess is displayed, enable the send button and wait for a click	
 	$buttonBox buttonconfigure send -state normal
+	$editEmail configure -cursor left_ptr
 	tkwait variable RETURN_FLAG
 	if {$RETURN_FLAG} {
 	    global HOSTNAME MAILSERVER
