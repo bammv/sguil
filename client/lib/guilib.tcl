@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.4 2003/12/29 16:55:49 shalligan Exp $
+# $Id: guilib.tcl,v 1.5 2004/07/20 20:02:08 shalligan Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -501,22 +501,28 @@ proc BindSelectionToAllLists { listName } {
     foreach buttonEvent { "ButtonRelease-1" } {
 	bind $listName <$buttonEvent> { ReSetMotion }
     }
-    foreach buttonEvent { "MouseWheel" "Button-5" "Button-4" } {
-	bind $listName <$buttonEvent> { WheelScroll %D %W "Button"; break }
+    foreach buttonEvent { "MouseWheel" "Button-5" } {
+	bind $listName <$buttonEvent> { WheelScroll %D %W "5"; break }
+    }
+    foreach buttonEvent { "Button-4" } {
+	bind $linstName <$buttonEvent> { WheelScroll %D %W "4"; break }
     }
 }    
 proc BindSelectionToAllPSLists { listName } {
-
-    foreach buttonEvent { "MouseWheel" "Button-5" "Button-4" } {
-	    bind $listName <$buttonEvent> { WheelScroll %D %W "Button"; break }
-	}
+    
+    foreach buttonEvent { "MouseWheel" "Button-5" } {
+	bind $listName <$buttonEvent> { WheelScroll %D %W "5"; break }
+    }
+    foreach buttonEvent { "Button-4" } {
+	bind $linstName <$buttonEvent> { WheelScroll %D %W "4"; break }
+    }
 }
 #
 # WheelScroll: Scroll all of the lists together on a mousey-wheely-scrolly
 #
 proc WheelScroll { delta winName source } {
     global SCROLL_HOME
-    if { $source == "Button" } {
+    if { $source == 4 || $source == 5 } {
 	set parentWin [winfo parent [winfo parent $winName]]
     } else {
 	set parentWin $winName
@@ -526,7 +532,11 @@ proc WheelScroll { delta winName source } {
     # Windows will trigger on MouseWheel events and delta will be high (at least more than 10)
     # if it is a negative number, then we are looking a a MouseWheel event
     # XWindows (in most cases generate Button-4 or -5 events and delta will be 4 or 5
-    
+    # Some strange mice in some X systems in some WM's don't fill in delta
+    # so instead, we grab which button event happened and use it for delta
+    if { $delta == "??" } {
+	set delta $source
+    }
     # X-Windows wheel motion
     if { $delta == 4 || $delta == 5 } {
 	if { $delta == 4 } { set move -3 }
