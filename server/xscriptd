@@ -114,7 +114,11 @@ proc GetRawDataFromSensor { sensor timestamp srcIP srcPort dstIP dstPort sensorD
   }
   if {$DEBUG} { puts "Creating unique data file on $sensor." } 
   if {$socketID != "NONE"} { puts $socketID "Creating unique data file on $sensor." }
-  set tcpdumpFilter "host $srcIP and host $dstIP and port $srcPort and port $dstPort"
+  if { $srcPort == "88888" } {
+      set tcpdumpFilter "host $srcIP and host $dstIP and proto 1"
+  } else {
+      set tcpdumpFilter "host $srcIP and host $dstIP and port $srcPort and port $dstPort"
+  }  
   eval exec $SSH $sensor $TCPDUMP -r $REMOTE_LOG_DIR/$date/$logFileName -w /tmp/$rawDataFileName $tcpdumpFilter
 
   if {$DEBUG} { puts "Copying the file from $sensor." }

@@ -2157,6 +2157,10 @@ proc GetXscript { type force } {
   set srcPort [$winParents.srcPortFrame.list get $eventIndex]
   set dstIP [$winParents.dstIPFrame.list get $eventIndex]
   set dstPort [$winParents.dstPortFrame.list get $eventIndex]
+  if { $proto == "1" } {
+      set $srcPort 88888
+      set $dstPort 88888
+  }
   set xscriptWinName ".${sensor}_${cnxID}"
   if [catch {set socketID [socket $SERVERHOST $XSCRIPT_SERVER_PORT]}] {
     if {$DEBUG} {puts "Unable to connect to xscript server $SERVERHOST on port $XSCRIPT_SERVER_PORT."}
