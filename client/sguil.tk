@@ -514,9 +514,9 @@ proc ValidateEvent { status {c_flag {0}} } {
      }
      update
      if {$DEBUG} {
-       puts "Sending Server: DeleteEventIDList $eventComment::$status::$deleteEventIDList"
+       puts "Sending Server: DeleteEventIDList $eventComment $status $deleteEventIDList"
      }
-     SendToSguild "DeleteEventIDList $status::$eventComment::$deleteEventIDList"
+     SendToSguild "DeleteEventIDList $status $eventComment $deleteEventIDList"
      if { [llength [$currentSelectedPane.eventIDFrame.list curselection]] > 1} {
 	 # puts "unslecting multiple events"
 	 UnHighLightListLine $currentSelectedPane
