@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.3 2004/11/22 22:42:41 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.4 2004/11/22 23:14:47 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -29,14 +29,15 @@ proc EventRcvd { socketID data } {
     # the autocat, then we send off the rule
     if { ![array exists acRules] || ![AutoCat $eventDataList] } {
       # Correlation/aggregation checks here: CorrelateEvent SrcIP Message
-      set sid [lindex $eventDataList 13]
-      set matchAID [ CorrelateEvent $sid [lindex $eventDataList 8] [lindex $eventDataList 7] ]
+      set sensorID [lindex $eventDataList 5]
+      set matchAID [ CorrelateEvent $sensorID [lindex $eventDataList 8] [lindex $eventDataList 7] ]
       if { $matchAID == 0 } {
         AddEventToEventArray $eventDataList
         # Clients don't need the sid and rev
         SendEvent "[lrange $eventDataList 0 12] 1"
         if { $EMAIL_EVENTS } {
           #Ug-ly. Things will get better when the rules are in the DB.
+          set sid [lindex $eventDataList 13]
           set class [lindex $eventDataList 2]
           if { ([lsearch -exact $EMAIL_CLASSES $class] >= 0\
                && [lsearch -exact $EMAIL_DISABLE_SIDS $sid] < 0)
