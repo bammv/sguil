@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/hostlookup.php,v 1.3 2004/04/03 16:21:46 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/hostlookup.php,v 1.4 2004/04/03 16:34:16 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -32,12 +32,12 @@
 					<td>
 						<table cellpadding="0" cellspacing="3" border="0" width="100%">
 							<tr>
-								<td>Src IP:</td><td><input type="text" name="src_ip" size="20" value="<?php
+								<td>&nbsp;Src&nbsp;IP:&nbsp;</td><td><input type="text" name="src_ip" size="20" value="<?php
 									print($_REQUEST['src_ip']);
 								?>"></td>
 							</tr>
 							<tr>
-								<td>Src Name:</td><td><input type="text" name="src_name" size="20" value="<?php
+								<td>&nbsp;Src&nbsp;Name:&nbsp;</td><td><input type="text" name="src_name" size="20" value="<?php
 									if (preg_match("/^[\d\.]+$/", $_REQUEST['src_ip'])) {
 										$hostname = gethostbyaddr($_REQUEST['src_ip']);
 										print($hostname);
@@ -48,12 +48,12 @@
 								<td colspan="2"><hr></td>
 							</tr>
 							<tr>
-								<td>Dst IP:</td><td><input type="text" name="dst_ip" size="20" value="<?php
+								<td>&nbsp;Dst&nbsp;IP:&nbsp;</td><td><input type="text" name="dst_ip" size="20" value="<?php
 									print($_REQUEST['dst_ip']);
 								?>"></td>
 							</tr>
 							<tr>
-								<td>Dst Name:</td><td><input type="text" name="dst_name" size="20" value="<?php
+								<td>&nbsp;Dst&nbsp;Name:&nbsp;</td><td><input type="text" name="dst_name" size="20" value="<?php
 									if (preg_match("/^[\d\.]+$/", $_REQUEST['dst_ip'])) {
 										$hostname = gethostbyaddr($_REQUEST['dst_ip']);
 										print($hostname);
@@ -70,9 +70,9 @@
 		<td>
 			<p>WHOIS Information:</p>
 			<optgroup label="whois">
-				<input type="radio" name="whois_lookup" value="src"> Src IP
-				<input type="radio" name="whois_lookup" value="dst"> Dst IP
-				<input type="radio" name="whois_lookup" value="none" checked> None
+				<input type="radio" name="whois_lookup" value="src">&nbsp;Src&nbsp;IP&nbsp;
+				<input type="radio" name="whois_lookup" value="dst">&nbsp;Dst&nbsp;IP&nbsp;
+				<input type="radio" name="whois_lookup" value="none" checked>&nbsp;None&nbsp;
 			</optgroup>
 			<input value="Whois lookup" type="submit">
 			<textarea name="whois" rows="6" cols="60">
