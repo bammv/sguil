@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.87 2004/05/13 21:12:03 bamm Exp $ #
+# $Id: sguild,v 1.88 2004/05/13 21:13:55 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -155,11 +155,11 @@ proc LoadAccessFile { filename } {
       }
     }
   }
-  if {![info exists CLIENT_ACCESS_LIST] || [$CLIENT_ACCESS_LIST == ""] } {
+  if {![info exists CLIENT_ACCESS_LIST] || $CLIENT_ACCESS_LIST == "" } {
     puts "ERROR: No client access lists found in $filename."
     CleanExit
   }
-  if {![info exists SENSOR_ACCESS_LIST] || [$SENSOR_ACCESS_LIST == ""] } {
+  if {![info exists SENSOR_ACCESS_LIST] || $SENSOR_ACCESS_LIST == "" } {
     puts "ERROR: No sensor access lists found in $filename."
     CleanExit
   }
