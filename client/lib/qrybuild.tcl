@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.24 2004/11/09 20:26:45 shalligan Exp $ #
+# $Id: qrybuild.tcl,v 1.25 2004/11/16 18:31:59 shalligan Exp $ #
 proc QryBuild {tableSelected whereTmp } {
     global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList
@@ -138,10 +138,10 @@ proc QryBuild {tableSelected whereTmp } {
       iwidgets::Labeledwidget::alignlabels $metaList $catList $itemList
     
     # Button box for Submit/Cancel
-    set bb [buttonbox $mainFrame.bb]
-      $bb add Submit -text "Submit" -command "set RETURN_FLAG 1"
-      $bb add Cancel -text "Cancel" -command "set RETURN_FLAG 0"
-
+    set buttonFrame [frame $mainFrame.bFrame]
+      set submitButton [button $buttonFrame.submitButton -text "Submit" -command "set RETURN_FLAG 1"]
+      set cancelButton [button $buttonFrame.cancelButton -text "Cancel" -command "set RETURN_FLAG 0"]
+      pack $submitButton $cancelButton -side left -expand true 
     # pack the qryType box to the top no fill no expand	
     pack $qryTypeBox -side top -fill none -expand false
     
@@ -149,13 +149,12 @@ proc QryBuild {tableSelected whereTmp } {
     pack $editFrame -side top -fill both -expand yes
 
     # pack the select frame and submit/cancel box to the top fill and expand
-    pack  $selectFrame $bb -side top -fill both -expand true -pady 1
+    pack  $selectFrame $buttonFrame -side top -fill both -expand true -pady 1
     eval $metaList insert 0 $mlst
 
     #pack the main frame
     pack $mainFrame -side top -pady 1 -expand true -fill both
 update
-
 
     tkwait variable RETURN_FLAG
     set returnWhere [list cancel cancel]
