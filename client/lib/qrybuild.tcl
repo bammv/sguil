@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.25 2004/11/16 18:31:59 shalligan Exp $ #
+# $Id: qrybuild.tcl,v 1.26 2004/11/16 18:50:40 shalligan Exp $ #
 proc QryBuild {tableSelected whereTmp } {
     global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList
@@ -18,7 +18,7 @@ proc QryBuild {tableSelected whereTmp } {
     set qryBldWin .qryBldWin
     if { [winfo exists $qryBldWin] } {
 	wm withdraw $qryBldWin
-	wm deiconify $qryBldWIn
+	wm deiconify $qryBldWin
 	return
     }
     
