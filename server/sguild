@@ -567,7 +567,7 @@ proc RcvSsnFile { socketID fileName sensorName } {
     if {$DEBUG} {puts $cmd}
   } else {
     set cmd "mysql -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
-     -e \"LOAD DATA LOCAL INFILE '$PS_OUTFILE'.tmp INTO TABLE sessions FIELDS TERMINATED\
+     -e \"LOAD DATA LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE sessions FIELDS TERMINATED\
      BY '|'\""
     if {$DEBUG} {puts $cmd}
   }

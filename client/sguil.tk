@@ -431,7 +431,7 @@ proc SendUserMsg {} {
 }
 
 proc UserMessage { user userMsg } {
-  global userMsgText messageTabs MESSAGE_TAB
+  global userMsgText messageTabs MESSAGE_TAB USER_MSG_SCROLL
 
   if { [$messageTabs view] != 1 } {
     # BOING!
@@ -440,7 +440,8 @@ proc UserMessage { user userMsg } {
   } else {
     $messageTabs pageconfigure 1 -background
   }
-  [$userMsgText component text] insert end "\[[lindex [GetCurrentTimeStamp] 1]\] <$user> $userMsg\n"
+  [$userMsgText component text] insert end "\n\[[lindex [GetCurrentTimeStamp] 1]\] <$user> $userMsg"
+  if { $USER_MSG_SCROLL } { [$userMsgText component text] see end }
 }
 proc DisplayIncidentCats {} {
   set categoryTl [toplevel .categoryTl]
@@ -513,9 +514,9 @@ proc ValidateEvent { status {c_flag {0}} } {
      }
      update
      if {$DEBUG} {
-       puts "Sending Server: DeleteEventIDList $eventComment $status $deleteEventIDList"
+       puts "Sending Server: DeleteEventIDList $eventComment::$status::$deleteEventIDList"
      }
-     SendToSguild "DeleteEventIDList $status $eventComment $deleteEventIDList"
+     SendToSguild "DeleteEventIDList $status::$eventComment::$deleteEventIDList"
      if { [llength [$currentSelectedPane.eventIDFrame.list curselection]] > 1} {
 	 # puts "unslecting multiple events"
 	 UnHighLightListLine $currentSelectedPane
@@ -3542,6 +3543,7 @@ set userMsgsFrame [frame [$messageTabs childsite 1].userMsgsFrame]
   bind [$userMsgEntry component entry] <Return> { SendUserMsg }
 pack $userMsgsFrame -side top -fill both -expand true
 $messageTabs select 0
+set USER_MSG_SCROLL 1
 
 
 set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
