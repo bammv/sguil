@@ -1972,6 +1972,18 @@ proc SelectAllSensors {} {
     }
   }
 }
+#
+# CheckLineFormat - Parses CONF_FILE lines to make sure they are formatted
+#                   correctly (set varName value). Returns 1 if good.
+#
+proc CheckLineFormat { line } {
+  
+  set RETURN 1
+  # Right now we just check the length and for "set".
+  if { [llength $line] != 3 || [lindex $line 0] != "set" } { set RETURN 0 }
+  return $RETURN
+}
+
 
 ################################ END PROCS ##################################
 
@@ -2003,8 +2015,24 @@ if { ![info exists CONF_FILE] } {
     DisplayUsage $argv0
   }
 }
+set i 0
 if { [info exists CONF_FILE] } {
-  source $CONF_FILE
+  # Parse the config file. Currently the only option is to 
+  # create a variable using 'set varName value' 
+  for_file line $CONF_FILE {
+    incr i
+    if { ![regexp ^# $line] && ![regexp ^$ $line] } {
+      if { [CheckLineFormat $line] } {
+        if { [catch {eval $line} evalError] } {
+          puts "Error at line $i in $CONF_FILE: $line"
+          CleanExit
+        }
+      } else {
+        puts "Error at line $i in $CONF_FILE: $line"
+        CleanExit
+      }
+    }
+  }
 } else {
   DisplayUsage $argv0
 }
