@@ -1,4 +1,4 @@
-# $Id: sancp.tcl,v 1.3 2005/01/20 20:02:29 shalligan Exp $ 
+# $Id: sancp.tcl,v 1.4 2005/02/07 15:21:22 shalligan Exp $ 
 #
 # Build a sancp query tab and send the query to sguild.
 #
@@ -47,12 +47,12 @@ proc SancpQueryRequest { whereStatement } {
 }
 
 proc GetSancpData {} {
-  global CONNECTED ACTIVE_EVENT SANCP_QUERY CUR_SEL_PANE SANCPINFO
+  global CONNECTED ACTIVE_EVENT CUR_SEL_PANE SANCPINFO
 
   ClearSancpFlags
   # Shouldn't be called in w/o a sancp query being selected
   # but we double check.
-  if {$SANCP_QUERY && $ACTIVE_EVENT && $SANCPINFO} {
+  if {$CUR_SEL_PANE(type) == "SANCP" && $ACTIVE_EVENT && $SANCPINFO} {
      # Make sure we are still connected to sguild.
      if {!$CONNECTED} {
       ErrorMessage "Not connected to sguild. Cannot make a request for packet data."
