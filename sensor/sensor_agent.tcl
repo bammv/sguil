@@ -63,6 +63,7 @@ proc CopyDataToServer { fileName socketID } {
     puts "Error: $fcopyError"
     return
   }
+  set BUSY 1
   vwait BUSY
   file delete $fileName
 }
@@ -83,9 +84,7 @@ proc CheckForPortscanFiles {} {
     if {$DEBUG} {puts "Checking for PS files in $PORTSCAN_DIR."}
     foreach fileName [glob -nocomplain $PORTSCAN_DIR/portscan_log.*] {
       puts $fileName
-      if { [file size $fileName] > 0 } {
-        SendPSDataToSvr $fileName
-      }
+      SendPSDataToSvr $fileName
     }
   }
   after $PS_CHECK_DELAY_IN_MSECS CheckForPortscanFiles
@@ -96,9 +95,7 @@ proc CheckForSsnFiles {} {
     if {$DEBUG} {puts "Checking for Session files in $SSN_DIR."}
     foreach fileName [glob -nocomplain $SSN_DIR/ssn_log.*] {
       puts $fileName
-      if { [file size $fileName] > 0 } {
-        SendSsnDataToSvr $fileName
-      }
+      SendSsnDataToSvr $fileName
     }
   }
   after $SSN_CHECK_DELAY_IN_MSECS CheckForSsnFiles
