@@ -2,6 +2,8 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
+# $Id: sensor_agent.tcl,v 1.12 2003/11/19 18:18:14 bamm Exp $ #
+
 # Name of sguild server
 set SERVER_HOST syn
 # Port sguild listens on for sensor connects

@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# $Id: log_packets.sh,v 1.9 2003/11/19 18:18:14 bamm Exp $ #
+
 ################################################
 #                                              #
 # log_packets.sh is just a quick shell script  #

@@ -2,6 +2,8 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
+# $Id: sguild,v 1.66 2003/11/19 18:18:14 bamm Exp $ #
+
 # Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
 # This program is distributed under the terms of version 1.0 of the 

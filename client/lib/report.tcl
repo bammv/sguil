@@ -1,3 +1,5 @@
+# $Id: report.tcl,v 1.9 2003/11/19 18:18:13 bamm Exp $ #
+
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
 # email17.tcl

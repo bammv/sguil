@@ -1,3 +1,5 @@
+# $Id: stdquery.tcl,v 1.8 2003/11/19 18:18:13 bamm Exp $ #
+
 # stdquery.tcl launches a popup containing global and user
 # queries. It returns the WHERE clause of the selected 
 # query or nothing if no query was selected.

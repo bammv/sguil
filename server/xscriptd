@@ -2,6 +2,8 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
+# $Id: xscriptd,v 1.16 2003/11/19 18:18:14 bamm Exp $ #
+
 set SERVERPORT 7735
 # sguild and xscriptd should be ran on the same system.
 # If you run these servers on the sensor then set LOCALSENSOR
@@ -9,7 +11,7 @@ set SERVERPORT 7735
 # Set LOCALSENSOR to 0 if the sensor is on a remote machine. xscriptd
 # will then use ssh to get the data back here. Read the INSTALL for more
 # info about setting ssh up correctly.
-set LOCALSENSOR 1
+set LOCALSENSOR 0
 # 1=on 0=off DEBUG is very chatty.
 set DEBUG 1
 # Where you want to archive raw file locally when xscripts are requested.

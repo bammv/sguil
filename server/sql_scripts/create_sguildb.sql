@@ -1,3 +1,4 @@
+-- $Id: create_sguildb.sql,v 1.8 2003/11/19 18:18:14 bamm Exp $
 -- Users may want to use a different DB name.
 -- CREATE DATABASE IF NOT EXISTS sguildb;
 -- USE sguildb;

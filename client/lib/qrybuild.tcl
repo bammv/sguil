@@ -1,3 +1,4 @@
+# $Id: qrybuild.tcl,v 1.19 2003/11/19 18:18:13 bamm Exp $ #
 proc QryBuild {tableSelected whereTmp } {
     global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList

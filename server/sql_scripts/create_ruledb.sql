@@ -1,3 +1,5 @@
+-- $Id
+
 CREATE DATABASE IF NOT EXISTS sguildb;
 
 USE sguildb;

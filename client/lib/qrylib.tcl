@@ -1,3 +1,4 @@
+# $Id: qrylib.tcl,v 1.16 2003/11/19 18:18:13 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 

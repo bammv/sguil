@@ -1,3 +1,5 @@
+# $Id: USAGE,v 1.3 2003/11/19 18:18:14 bamm Exp $ #
+
 Connecting to the Server:
 Once the server (sguild) is running and the client (sguil.tk) can
 connect, you can manage events on a near realtime basis. Events
@@ -28,11 +30,13 @@ clients. Hot keys can also be used:
 
 Querying the DB:
 Searches can be initiated using different "templates". For a blank
-template, use Query->Event Query. Once selected, a query builder allowing you to
-edit the query will pop up. Only the WHERE statement can be edited.
-IMPORTANT: DO NOT DELETE THE JOIN (event.sid=sensor.sid), it is 
-required on ALL queries. Other templates are available by selecting
-an event and right clicking on the src/dst ip columns.
+template, use Query->Event Query. Once selected, a query builder
+allowing you to edit the query will pop up. Only the WHERE statement
+can be edited. Other templates are available by selecting an event
+and right clicking on the src/dst ip columns. NOTE: JOINs are now
+handled internally. The WHERE will be scanned and the appropriate
+FROM table1 JOIN table2 ON table1.foo=table2.foo will be prepended
+to your query.
 
 A blank template for session queries can be found under Query->Session Query
 and a completely blank query builder can be found under Query->Query Builder.

@@ -1,3 +1,5 @@
+# $Id: README,v 1.3 2003/11/19 18:18:13 bamm Exp $ #
+
 Sguil (pronounced "sgweel") is a graphical interface to snort 
 (www.snort.org), an open source intrusion detection system. 
 The actual interface and GUI server are written in tcl/tk 

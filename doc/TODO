@@ -1,10 +1,25 @@
-*  ctl-1 ctl-2 ctl-n for user configurable categories
-*  move keepstats to spp_conversation
-*  size limit for tcpflow data
-*  auth xscript and sensors
-*  move query functions out to queryd
-*  optional threading?
-*  heartbeat for client/server
-*  auto categorization
-*  PMPDB
-*  Multi-honed sensor support
+# $Id: TODO,v 1.9 2003/11/19 18:18:14 bamm Exp $ #
+
+    TODO
+=================================================
+
+** Code Review **
+
+- Performance Items
+  * move query functions out to queryd
+  * move portscan and session loading to loaderd
+  * PMPDB
+  * threaded version of sguild?
+- Management Console
+  * DB schema
+  * Interface
+  * sensor <-> server comms
+- Other
+  * Custom category support
+  * size limit for tcpflow data
+  * auth xscript and sensors
+  * heartbeat for client/server
+  * Move Correlation/Aggregation to sguild
+  * Sancp
+  * Startup scripts
+  * Disk management in log_packets.sh

@@ -1,3 +1,15 @@
+# $Id: CHANGES,v 1.31 2003/11/19 18:18:13 bamm Exp $ #
+#
+sguil-0.3.0p1 (11 Nov 2003)
+
+  sguil.tk 
+    * (qrylib.tcl) Grouped src_ip OR dst_ip statement with ()'s - bamm
+
+    * (qrylib.tcl) Parse WHERE statement and build appropriate INNER JOIN(s) - bamm
+
+  sguild.queries
+     * Rm'd JOIN (event.sid=sensor.sid) as qrylib.tcl handles this now - bamm
+
 sguil-0.3.0 (30 Oct 2003)
 
   **** WARNING WARNING WARNING ****
