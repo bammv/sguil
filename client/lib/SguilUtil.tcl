@@ -1,4 +1,4 @@
-# $Id: SguilUtil.tcl,v 1.9 2005/02/01 17:13:28 shalligan Exp $
+# $Id: SguilUtil.tcl,v 1.10 2005/02/01 18:04:47 shalligan Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
@@ -229,59 +229,33 @@ proc GpgText { winName sign encrypt text recips sender } {
 	close $tempOutFID
 	set tempInFile "$tempOutFile.asc"
 	if { $sign && $encrypt } {
-	    if [ catch {open "| $GPG_PATH -ase --yes --passphrase-fd 0 -u $sender \
-		    --no-tty $recipstr --batch $tempOutFile" r+ } gpgID ] { 
-		ErrorMessage $gpgID
-		destroy $passPrompt
-		return cancel
-	    }
-	    puts $gpgID "$passphrase\n"
-	    flush $gpgID
-	    if [ catch {close $gpgID } err ] { 
-		if [regexp "gpg:.*skipped.*" $err realerr] {
-		    ErrorMessage "GPG Error: $realerr"
-		    destroy $passPrompt
-		    return cancel
-		} else {
-		    set DONE 1
-		}
-	    }
+	    set gpgcmd "$GPG_PATH -ase --yes --passphrase-fd 0 -u $sender --no-tty $recipstr --batch $tempOutFile"
 	} elseif { $encrypt } {
-	    if [ catch {open "| $GPG_PATH -ae --yes --passphrase-fd 0 -u $sender \
-		    --no-tty $recipstr --batch $tempOutFile" r+ } gpgID ] { 
-		ErrorMessage $gpgID
-		destroy $passPrompt
-		return cancel
-	    }
-	    puts $gpgID "$passphrase\n"
-	    flush $gpgID
-	    if [ catch {close $gpgID } err ] { 
-		if [regexp "gpg:.*skipped.*" $err realerr] {
-		    ErrorMessage "GPG Error: $realerr"
-		    destroy $passPrompt
-		    return cancel
-		} else {
-		    set DONE 1
-		}
-	    }
+	    set gpgcmd "$GPG_PATH -ae --yes --passphrase-fd 0 -u $sender --no-tty $recipstr --batch $tempOutFile"
 	} else {
-	    if [ catch {open "| $GPG_PATH --clearsign --yes --passphrase-fd 0 -u $sender --no-tty --batch $tempOutFile" r+ } gpgID ] { 
-		ErrorMessage $gpgID
+	    set gpgcmd "$GPG_PATH --clearsign --yes --passphrase-fd 0 -u $sender --no-tty --batch $tempOutFile"
+	}
+
+	if [ catch {open "| $gpgcmd" r+ } gpgID ] { 
+	    ErrorMessage $gpgID
+	    destroy $passPrompt
+	    return cancel
+	}
+	puts $gpgID "$passphrase\n"
+	flush $gpgID
+	if [ catch {close $gpgID } err ] { 
+	    if [regexp "gpg: skipped.*bad passphrase" $err realerr] {
+		ErrorMessage "GPG Error: $realerr"
+		destroy $passPrompt
+		continue
+	    } elseif [regexp "gpg:.*skipped.*" $err realerr] {
+		ErrorMessage "GPG Error: $realerr"
 		destroy $passPrompt
 		return cancel
+	    } else {
+		set DONE 1
 	    }
 	    
-	    puts $gpgID "$passphrase\n"
-	    flush $gpgID
-	    if [ catch {close $gpgID } err ] { 
-		if [regexp "gpg: skipped.*" $err realerr] {
-		    ErrorMessage "GPG Error: $realerr"
-		    destroy $passPrompt
-		    continue
-		} else {
-		    set DONE 1
-		}
-	    }
 	} 
     }
     set tempInFID [open $tempInFile r]
