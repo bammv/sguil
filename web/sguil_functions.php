@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.8 2004/04/03 15:39:12 dlowless Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.9 2004/04/03 16:21:49 dlowless Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -103,24 +103,24 @@ function show_alerts( $where_query ) {
 			$detail_url="alert_detail.php?sid=" . $row['sid'] . "&cid=" . $row['cid'];
 			
 			print("<tr bgcolor=\"" . $colours[$i] . "\">\n");
-			print("	<td bgcolor=\"" . $status_colour[$row['status']] . "\">" . $status_desc[$row['status']] . "</td>\n");
-			print("	<td>" . $row['CNT'] . "</td>\n");
-			print("	<td>" . $row['hostname'] . "</td>\n");
-			print("	<td><a href=\"$detail_url\" target=\"lookup_right\">" . $row['sid'] . "." . $row['cid'] . "</a></td>\n");
-			print("	<td>" . $row['timestamp'] . "</td>\n");
-			print("	<td><a href=\"$lookup_url\" target=\"lookup_left\">" . $row['src_ip'] . "</a></td>\n");
+			print("	<td bgcolor=\"" . $status_colour[$row['status']] . "\">&nbsp;" . $status_desc[$row['status']] . "&nbsp;</td>\n");
+			print("	<td>&nbsp;" . $row['CNT'] . "&nbsp;</td>\n");
+			print("	<td>&nbsp;" . $row['hostname'] . "&nbsp;</td>\n");
+			print("	<td>&nbsp;<a href=\"$detail_url\" target=\"lookup_right\">" . $row['sid'] . "." . $row['cid'] . "</a>&nbsp;</td>\n");
+			print("	<td>&nbsp;" . $row['timestamp'] . "</td>\n");
+			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['src_ip'] . "</a>&nbsp;</td>\n");
 			print("	<td>" . $row['src_port'] . "</td>\n");
-			print("	<td><a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a></td>\n");
+			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a>&nbsp;</td>\n");
 			if ( (getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto']))=="") || ( getprotobynumber($row['ip_proto']) != 'udp' && getprotobynumber($row['ip_proto']) != 'tcp' ))
 			{
-				print("	<td>" . $row['dst_port'] . "</td>\n");
+				print("	<td>&nbsp;" . $row['dst_port'] . "&nbsp;</td>\n");
 			}
 			else
 			{
-				print("	<td>" . $row['dst_port'] ." (" .getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto'])) . ")</td>\n");
+				print("	<td>&nbsp;" . $row['dst_port'] ." (" .getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto'])) . ")&nbsp;</td>\n");
 			}
-			print("	<td>" . $row['ip_proto'] ."&nbsp;(" . getprotobynumber($row['ip_proto']). ")" . "</td>\n");
-			print("	<td>" . $row['signature'] . "</td>\n");
+			print("	<td>" . $row['ip_proto'] ."&nbsp;(" . getprotobynumber($row['ip_proto']). ")" . "&nbsp;</td>\n");
+			print("	<td>" . $row['signature'] . "&nbsp;</td>\n");
 			print("</tr>\n");
 			
 			if( $i++ >= count($colours) ) {
