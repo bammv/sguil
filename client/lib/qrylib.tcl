@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.18 2004/06/07 22:29:40 bamm Exp $ #
+# $Id: qrylib.tcl,v 1.19 2004/07/08 18:19:31 taosecurity Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -17,6 +17,14 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } } {
     set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
     set srcIP [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
     set whereTmp "$whereTmp ($tableName.src_ip = INET_ATON('$srcIP') OR $tableName.dst_ip = INET_ATON('$srcIP'))"
+  } elseif { $queryType == "srcport" } {
+    set selectedIndex [$currentSelectedPane.srcPortFrame.list curselection]
+    set srcport [$currentSelectedPane.srcPortFrame.list get $selectedIndex]
+    set whereTmp "$whereTmp ($tableName.src_port = '$srcport' OR $tableName.dst_port = '$srcport')"
+  } elseif { $queryType == "dstport" } {
+    set selectedIndex [$currentSelectedPane.dstPortFrame.list curselection]
+    set dstport [$currentSelectedPane.dstPortFrame.list get $selectedIndex]
+    set whereTmp "$whereTmp ($tableName.src_port = '$dstport' OR $tableName.dst_port = '$dstport')"
   } elseif { $queryType == "dstip" } {
     set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
     set dstIP [$currentSelectedPane.dstIPFrame.list get $selectedIndex]
