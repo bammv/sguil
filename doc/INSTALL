@@ -64,9 +64,9 @@ Sguild is a tcl script and I would recommend using tcl-8.3
 or better. I haven't had time to test lesser versions but
 they may work. 
 
-1) Make sure tcl is installed along wigh the extended (tclx)
+1) Make sure tcl is installed along with the extended (tclx)
 libs (http://tclx.sourceforge.net). Tclx is a common tcl
-extensions and packages can be found most OSs/distros.
+extensions and packages can be found for most OSes/distros.
 
 2) Sguild requires mysqltcl support and it can
 be downloaded from http://www.xdobry.de/mysqltcl/. Once
@@ -95,7 +95,7 @@ forget to copy these rule files over after installing the sensor.
 5) Add users to sguild.users file.
 
 6) Start the daemon, it will send a query to the DB to get
-any archived alerts and then echo "Waiting for events from sensors."
+any archived alerts and then echo "Sguild Initialized."
 
 
 ############################################

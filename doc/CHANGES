@@ -1,3 +1,10 @@
+CVS-HEAD
+  sguild
+    * Added -D (daemonize) and -P <pidFile> switches.
+
+  xscriptd
+    * Added -D (daemonize) and -P <pidFile> switches.
+
 Version 0.2
   sguil.tk
     * Re-arranged menu

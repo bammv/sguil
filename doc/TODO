@@ -10,4 +10,3 @@
 *  move query functions out to queryd
 *  OpenSSL sockets
 *  optional threading?
-*  -D (deamonize) switch for sguild/xscriptd.
