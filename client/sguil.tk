@@ -1734,7 +1734,6 @@ proc GetRuleInfo {} {
       return
     }
     set selectedIndex [$currentSelectedPane.msgFrame.list curselection]
-    puts "DEBUG :: $eventArray([$currentSelectedPane.eventIDFrame.list get $selectedIndex])"
     set message [$currentSelectedPane.msgFrame.list get $selectedIndex]
     set sensorName [$currentSelectedPane.sensorFrame.list get $selectedIndex]
     if {$DEBUG} {puts  "RuleRequest $sensorName $message"}
