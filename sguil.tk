@@ -29,8 +29,6 @@ set MotionLowIndex -1
 set MOVEMENT_DIR ""
 set LASTINDEXSELECTED 1
 set MONITORFLAG 0
-set HOSTNAME "homefries.geeksquad.com"
-set MAILSERVER "mail.333tech.com"
 
 ######################## END GLOBALS ################################
 
@@ -295,6 +293,7 @@ proc EmailEvents {} {
 	pack $fromBox $toBox $subjectBox -side top -fill x -padx 10 -expand 0
 	pack $textBox -side top -fill both -expand true
 	pack $buttonBox -side top -fill none -expand 0
+        iwidgets::Labeledwidget::alignlabels $fromBox $toBox $subjectBox
 	
 	foreach selectedIndex [$currentSelectedPane.eventIDFrame.list curselection] {
 	    puts "Emailing index: $selectedIndex"
@@ -325,6 +324,9 @@ proc EmailEvents {} {
 	    set EmailFrom [$fromBox get]
 	    set EmailSubj [$subjectBox get]
 	    set EmailBody [$textBox get 0.0 end]
+            if { ![info exists HOSTNAME] } {
+              set HOSTNAME [info hostname]
+            }
 	    EMail::Init $EmailFrom $HOSTNAME $MAILSERVER
 	    EMail::Send $EmailTo $EmailCC $EmailBCC $EmailSubj $EmailBody -command
 	}  
