@@ -1,4 +1,4 @@
-# $Id: SguilUtil.tcl,v 1.13 2005/02/01 18:23:25 shalligan Exp $
+# $Id: SguilUtil.tcl,v 1.14 2005/02/01 18:47:21 shalligan Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
@@ -209,18 +209,19 @@ proc GpgText { winName sign encrypt text recips sender } {
 	set recipstr "$recipstr -r $recip "
     }
     set DONE 0
+    set passPrompt [promptdialog $winName.pd -modality global -title Passphrase -labeltext "GPG Passphrase:" -show *]
     while { !$DONE } {
-	puts "DEBUG###### I AM BATMAN!!!"
-	set passPrompt [promptdialog $winName.pd -modality global -title Passphrase -labeltext "GPG Passphrase:" -show *]
-	$passPrompt hide Apply
-	$passPrompt hide Help
-	$passPrompt center
-	focus [$passPrompt component prompt component entry]
-	if { [$passPrompt activate] } {
-	    set passphrase [$passPrompt get]
-	} else {
-	    destroy $passPrompt
-	    return cancel
+	if { $sign } {
+	    $passPrompt hide Apply
+	    $passPrompt hide Help
+	    $passPrompt center
+	    focus [$passPrompt component prompt component entry]
+	    if { [$passPrompt activate] } {
+		set passphrase [$passPrompt get]
+	    } else {
+		destroy $passPrompt
+		return cancel
+	    }
 	}
 	# write the text out to a tempfile
 	random seed
@@ -232,7 +233,7 @@ proc GpgText { winName sign encrypt text recips sender } {
 	if { $sign && $encrypt } {
 	    set gpgcmd "$GPG_PATH -ase --yes --passphrase-fd 0 -u $sender --no-tty $recipstr --batch $tempOutFile"
 	} elseif { $encrypt } {
-	    set gpgcmd "$GPG_PATH -ae --yes --passphrase-fd 0 -u $sender --no-tty $recipstr --batch $tempOutFile"
+	    set gpgcmd "$GPG_PATH -ae --yes -u $sender --no-tty $recipstr --batch $tempOutFile"
 	} else {
 	    set gpgcmd "$GPG_PATH --clearsign --yes --passphrase-fd 0 -u $sender --no-tty --batch $tempOutFile"
 	}
@@ -242,25 +243,22 @@ proc GpgText { winName sign encrypt text recips sender } {
 	    destroy $passPrompt
 	    return cancel
 	}
-	puts $gpgID "$passphrase\n"
+	if { $sign } {
+	    puts $gpgID "$passphrase\n"
+	}
 	flush $gpgID
 	if [ catch {close $gpgID } err ] { 
 	    if [regexp "gpg: skipped.*bad passphrase" $err realerr] {
 		ErrorMessage "GPG Error: $realerr"
 		destroy $passPrompt
 		continue
-	    } elseif [regexp "gpg:.*skipped.*" $err realerr] {
-		ErrorMessage "GPG Error: $realerr"
+	    } else {
+		ErrorMessage "GPG Error: $err"
 		destroy $passPrompt
 		return cancel
-	    } else {
-		set DONE 1
-		puts " DEBUG##### DONE!!"
 	    }
 	} else {
 	    set DONE 1
-	    puts "DEBUG#### DONE!! and gpg didn't give us any nice text"
-
 	}
     }
     set tempInFID [open $tempInFile r]
