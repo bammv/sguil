@@ -504,7 +504,7 @@ proc SensorCmdRcvd { socketID } {
     if {$DEBUG} { puts "Sensor Data Rcvd: $data" }
     set sensorCmd [lindex $data 0]
     switch -exact -- $sensorCmd {
-      RTEvent	{ EventRcvd [lrange $data 1 end] }
+      RTEvent	{ EventRcvd $data }
       PSFile	{ RcvPortscanFile $socketID [lindex $data 1] }
       CONNECT   { SensorAgentConnect $socketID [lindex $data 1] }
       DiskReport { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
