@@ -4,3 +4,7 @@
 *  auth xscript and sensors
 *  move query functions out to queryd
 *  optional threading?
+*  heartbeat for client/server
+*  auto categorization
+*  PMPDB
+*  Multi-honed sensor support

@@ -1,3 +1,12 @@
+CVS-HEAD
+
+  sguild
+    * Alpha support for emailing events. Need to add better
+      error checking.
+
+  sguild.conf
+    * Vars for emailing selected events.
+
 sguil-0.2.5 (15 Jul 2003)
 
   * Multiple undocumented bugfixes. I recommend updating

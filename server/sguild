@@ -289,11 +289,10 @@ proc ClientExitClose { socketID } {
 }
 
 #
-# EventRcvd: Called by main when events are received. File id sent as arg.
+# EventRcvd: Called by main when events are received.
 #
 proc EventRcvd { data } {
-  global DEBUG
-  puts "IN EventRcvd"
+  global DEBUG EMAIL_EVENTS EMAIL_CLASSES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS
   set eventDataList [lrange [split $data |] 1 end]
   if { [lindex $eventDataList 2] == "system-info" } {
     if {$DEBUG} {
@@ -308,7 +307,36 @@ proc EventRcvd { data } {
     }
     AddEventToEventArray $eventDataList
     SendEvent $eventDataList
+    if { $EMAIL_EVENTS } {
+      #Ug-ly. Things will get better when the rules are in the DB.
+      set sid [lindex $eventDataList 13]
+      set class [lindex $eventDataList 2]
+      if { ([lsearch -exact $EMAIL_CLASSES $class] >= 0\
+           && [lsearch -exact $EMAIL_DISABLE_SIDS $sid] < 0)
+           || [lsearch -exact $EMAIL_ENABLE_SIDS $sid] >= 0 } {
+        EmailEvent $eventDataList
+      }
+    }
   }
+}
+proc EmailEvent { dataList } {
+  global SMTP_SERVER EMAIL_RCPT_TO EMAIL_FROM EMAIL_SUBJECT EMAIL_MSG
+  global DEBUG
+  set msg [lindex $dataList 7]
+  set sn [lindex $dataList 3]
+  set t [lindex $dataList 4]
+  set sip [lindex $dataList 8]
+  set dip [lindex $dataList 9]
+  set sp [lindex $dataList 11]
+  set dp [lindex $dataList 12]
+  regsub -all {%} $EMAIL_MSG {$} tmpMsg
+  set tmpMsg [subst -nobackslashes -nocommands $tmpMsg]
+  if {$DEBUG} {puts "Sending Email: $tmpMsg"}
+  set token [mime::initialize -canonical text/plain -string $tmpMsg]
+  if { [info exists EMAIL_SUBJECT] } { mime::setheader $token Subject $EMAIL_SUBJECT }
+  smtp::sendmessage $token -recipients $EMAIL_RCPT_TO -servers $SMTP_SERVER -originator $EMAIL_FROM
+  mime::finalize $token
+  if {$DEBUG} {puts "Email sent to: $EMAIL_RCPT_TO"}
 }
 
 proc GetCurrentTimeStamp {} {
@@ -1188,6 +1216,15 @@ set currentDBVer [FlatDBQuery "SELECT version FROM version"]
 if { $DB_VERSION != $currentDBVer } {
   puts "ERROR: Incompatable DB schema.\nRequired Version: $DB_VERSION\nInstalled Version: $currentDBVer"
   exit
+}
+
+# If emailing of events is enabled, we need to make sure the libs are installed.
+if { [info exists EMAIL_EVENTS] && $EMAIL_EVENTS } {
+  package require mime
+  package require smtp
+} else {
+  # Just in case the var doesn't get set in sguild.conf
+  set EMAIL_EVENTS 0
 }
 
 if {$DEBUG} {
