@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.154 2004/11/12 21:57:22 bamm Exp $ #
+# $Id: sguil.tk,v 1.155 2004/11/12 22:01:34 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1579,7 +1579,7 @@ foreach arg $argv {
       }
     }
     conf { set CONF_FILE $arg; set state flag }
-    debug_level { set DEBUG_OVERRIDE 1; set DEBUG $arg; set DEBUG_LEVEL $arg }
+    debug_level { set DEBUG_OVERRIDE 1; set DEBUG $arg; set DEBUG_LEVEL $arg; set state flag }
     default { DisplayUsage $argv0 }
   }
 }
