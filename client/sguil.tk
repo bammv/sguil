@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.128 2004/07/26 19:45:55 shalligan Exp $ #
+# $Id: sguil.tk,v 1.129 2004/07/26 20:52:42 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -340,7 +340,6 @@ proc ValidateEvent { status {c_flag {0}} } {
       #update 
       lappend tmpDeletedEIDList $eventID
     }
-    Idle
     update
     if { [llength [$currentSelectedPane.eventIDFrame.list curselection]] > 1} {
       # puts "unslecting multiple events"
@@ -357,6 +356,7 @@ proc ValidateEvent { status {c_flag {0}} } {
       }
     }
   }
+  Idle
 }
 
 proc OptimizeTables {} {
