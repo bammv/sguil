@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.116 2004/08/09 16:28:06 shalligan Exp $ #
+# $Id: sguild,v 1.117 2004/08/09 17:11:08 shalligan Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -188,6 +188,14 @@ proc AddAutoCatRule { line rid } {
   if {$DEBUG} {puts "Adding AutoCat Rule: $line"}
   foreach dIndex [list 3 8 11 9 12 10 7] {
     set tmpVar [ctoken line "||"]
+    if { $dIndex == 7 } {
+	if [catch {regexp -expanded [list $dIndex $tmpVar] "XXTESTINGXX" } tmpError] {
+	    puts "Bad regexp in autocat rule $rid Error: $tmpError dropping rule"
+	    set acRules($rid) {}
+	    set acCat($rid) ""
+	    return
+        }
+    }
     if { $tmpVar != "any" && $tmpVar != "ANY" } {
       lappend acRules($rid) [list $dIndex $tmpVar]
     }
@@ -198,20 +206,21 @@ proc AutoCat { data } {
   global acRules acCat DEBUG AUTOID
   foreach rid [array names acRules] {
     set MATCH 1
+    if { [llength $acRules($rid)] > 0 } { return 0 }
     foreach rule [lrange $acRules($rid) 0 end] {
-      set rIndex [lindex $rule 0]
-      set rMatch [lindex $rule 1]
-      if { $rIndex != 7 } {
-	  if { [lindex $data $rIndex] != $rMatch } {
-	      set MATCH 0
-              break
-          }
-      } else {
-          if { ![regexp -expanded $rMatch [lindex $data $rIndex]] } {
-	      set MATCH 0
-	      break
-          }
-      }
+        set rIndex [lindex $rule 0]
+        set rMatch [lindex $rule 1]
+        if { $rIndex != 7 } {
+            if { [lindex $data $rIndex] != $rMatch } {
+                set MATCH 0
+                break
+            }
+        } else {
+            if { ![regexp -expanded $rMatch [lindex $data $rIndex]] } {
+                set MATCH 0
+                break
+            }
+        }
     }
     if { $MATCH } {
       if {$DEBUG} {puts "AUTO MARKING EVENT AS : $acCat($rid)"}
