@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.26 2004/11/16 18:50:40 shalligan Exp $ #
+# $Id: qrybuild.tcl,v 1.27 2004/11/17 15:49:16 shalligan Exp $ #
 proc QryBuild {tableSelected whereTmp } {
     global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList
@@ -57,14 +57,16 @@ proc QryBuild {tableSelected whereTmp } {
     set mainFrame [frame $qryBldWin.mFrame -background #dcdcdc -borderwidth 1]
 
     # Query Type Box 
-    set qryTypeBox [radiobox $mainFrame.qTypeBox -orient horizontal -labeltext "Select Query Type" -labelpos n -foreground darkblue]
-      $qryTypeBox add event -text "Events" -selectcolor red -foreground black
-      $qryTypeBox add sessions -text "Sessions" -selectcolor red -foreground black
-      $qryTypeBox add sancp -text "Sancp" -selectcolor red -foreground black  
+    set qryFrame [frame $mainFrame.qFrame]
+      set qryTypeBox [radiobox $qryFrame.qTypeBox -orient horizontal -labeltext "Select Query Type" -labelpos n -foreground darkblue]
+        $qryTypeBox add event -text "Events" -selectcolor red -foreground black
+        $qryTypeBox add sessions -text "Sessions" -selectcolor red -foreground black
+        $qryTypeBox add sancp -text "Sancp" -selectcolor red -foreground black  
  
-      $qryTypeBox select $SELECTEDTABLE
-      $qryTypeBox configure -command {typeChange}
-
+        $qryTypeBox select $SELECTEDTABLE
+        $qryTypeBox configure -command {typeChange}
+      #pack the children of the queryFrame
+      pack $qryTypeBox -side left -expand false
     # Edit Frame
     set editFrame [frame $mainFrame.eFrame -background black -borderwidth 1]
       
@@ -142,8 +144,8 @@ proc QryBuild {tableSelected whereTmp } {
       set submitButton [button $buttonFrame.submitButton -text "Submit" -command "set RETURN_FLAG 1"]
       set cancelButton [button $buttonFrame.cancelButton -text "Cancel" -command "set RETURN_FLAG 0"]
       pack $submitButton $cancelButton -side left -expand true 
-    # pack the qryType box to the top no fill no expand	
-    pack $qryTypeBox -side top -fill none -expand false
+    # pack the qryFrame to the top no fill no expand	
+    pack $qryFrame -side top  -expand true
     
     # pack the main edit frame to the top fill and expand
     pack $editFrame -side top -fill both -expand yes
@@ -279,15 +281,15 @@ proc typeChange {} {
     $mainFrame.sFrame.iList delete 0 end
     $mainFrame.sFrame.cList delete 0 end
     
-    if {[$mainFrame.qTypeBox get] == "event" } {
+    if {[$mainFrame.qFrame.qTypeBox get] == "event" } {
 	$mainFrame.eFrame.eBox insert end "WHERE  LIMIT 500"
 	set SELECTEDTABLE "event"
-    } elseif {[$mainFrame.qTypeBox get] == "sessions" } {
+    } elseif {[$mainFrame.qFrame.qTypeBox get] == "sessions" } {
 	set SELECTEDTABLE "sessions"
 	$mainFrame.eFrame.eBox insert end "WHERE  LIMIT 500"
     } else {
 	set SELECTEDTABLE "sancp"
-	$mainFrame.eFrame.eBox insert end "WHERE LIMIT 500"
+	$mainFrame.eFrame.eBox insert end "WHERE  LIMIT 500"
     }
     
     $mainFrame.eFrame.eBox mark set insert "end -11 c"
