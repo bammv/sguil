@@ -1,14 +1,31 @@
+proc ClientSocketTimeOut { host port timeout } {
+  global WHOIS_CONNECTED
+  after $timeout {set WHOIS_CONNECTED timeout}
+  if [ catch {socket -async $host $port} socketID ] {
+    return -code error "Could not connect to $host"
+  }
+  fileevent $socketID w {set WHOIS_CONNECTED "connected"}
+  tkwait variable WHOIS_CONNECTED
+  if {$WHOIS_CONNECTED == "connected"} {
+    return $socketID
+  } else {
+    return -code error "Connection to $host timed out"
+  }
+}
 proc SimpleWhois { ipAddr } {
   # Here is an attempt to do away with third party whois tools.
   # We only lookup by IP addr right now so it shouldn't be a big
   # deal. That's the theory anyway.
 
+  global DEBUG
+
   set nicSrvr "whois.arin.net"
+  if {$DEBUG} {puts "Whois request: $ipAddr"}
   
   # Connect to arin first.
-  if [catch {socket $nicSrvr 43} socketID] {
+  if [catch {ClientSocketTimeOut $nicSrvr 43 10000} socketID] {
     puts "ERROR: $socketID"
-    return
+    return "{ERROR: $socketID}"
   } 
   fconfigure $socketID -buffering line
   puts $socketID $ipAddr
@@ -56,7 +73,7 @@ proc SimpleWhois { ipAddr } {
   }
 
   if { $nicSrvr != $newNicSrvr } {
-    if [catch {socket $newNicSrvr 43} socketID] {
+    if [catch {ClientSocketTimeOut $newNicSrvr 43 10000} socketID] {
       return "ERROR: $socketID"
     } 
     fconfigure $socketID -buffering line
@@ -79,7 +96,7 @@ proc SimpleWhois { ipAddr } {
          [regexp {(.*)\((.*)\) $} [lindex $results 2] match blkName netBlk] } {
       # Looks like we got one
       lappend results "\n----- Querying Reassigned Block: $blkName ----\n"
-      if [catch {socket $nicSrvr 43} socketID] {
+      if [catch {ClientSocketTimeOut $nicSrvr 43 10000} socketID] {
         return "ERROR: $socketID"
       }
       fconfigure $socketID -buffering line
