@@ -1,20 +1,33 @@
-# $Id: SguildEmailEvent.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $ #
+# $Id: SguildEmailEvent.tcl,v 1.3 2004/11/04 17:30:43 bamm Exp $ #
 
 proc EmailEvent { dataList } {
-  global SMTP_SERVER EMAIL_RCPT_TO EMAIL_FROM EMAIL_SUBJECT EMAIL_MSG
-  set msg [lindex $dataList 7]
-  set sn [lindex $dataList 3]
-  set t [lindex $dataList 4]
-  set sip [lindex $dataList 8]
-  set dip [lindex $dataList 9]
-  set sp [lindex $dataList 11]
-  set dp [lindex $dataList 12]
-  regsub -all {%} $EMAIL_MSG {$} tmpMsg
-  set tmpMsg [subst -nobackslashes -nocommands $tmpMsg]
-  InfoMessage "Sending Email: $tmpMsg"
-  set token [mime::initialize -canonical text/plain -string $tmpMsg]
-  if { [info exists EMAIL_SUBJECT] } { mime::setheader $token Subject $EMAIL_SUBJECT }
-  smtp::sendmessage $token -recipients $EMAIL_RCPT_TO -servers $SMTP_SERVER -originator $EMAIL_FROM
-  mime::finalize $token
-  InfoMessage "Email sent to: $EMAIL_RCPT_TO"
+
+    global SMTP_SERVER EMAIL_RCPT_TO EMAIL_FROM EMAIL_SUBJECT EMAIL_MSG
+
+    # These will be used for substitutions as configged by the user in
+    # the sguild.conf
+    set msg [lindex $dataList 7]
+    set sn [lindex $dataList 3]
+    set t [lindex $dataList 4]
+    set sip [lindex $dataList 8]
+    set dip [lindex $dataList 9]
+    set sp [lindex $dataList 11]
+    set dp [lindex $dataList 12]
+
+    # Do the subs
+    regsub -all {%} $EMAIL_MSG {$} tmpMsg
+    if { [info exists EMAIL_SUBJECT] } {
+      regsub -all {%} $EMAIL_SUBJECT {$} tmpSubject
+    }
+    set tmpMsg [subst -nobackslashes -nocommands $tmpMsg]
+    set tmpSubject [subst -nobackslashes -nocommands $tmpSubject]
+
+    # Build and send the email
+    InfoMessage "Sending Email: $tmpMsg"
+    set token [mime::initialize -canonical text/plain -string $tmpMsg]
+    if { [info exists tmpSubject] } { mime::setheader $token Subject $tmpSubject }
+    smtp::sendmessage $token -recipients $EMAIL_RCPT_TO -servers $SMTP_SERVER -originator $EMAIL_FROM
+    mime::finalize $token
+    InfoMessage "Email sent to: $EMAIL_RCPT_TO"
+
 }
