@@ -293,7 +293,7 @@ if { $EVENT } {
         if { !$QUIET } { puts "No event data to archive." }
         exit
     }
-    if { !$QUIET } { puts "Total Number of rows in ${PREVIX}event: $newTableRows" }
+    if { !$QUIET } { puts "Total Number of rows in ${PREFIX}event: $newTableRows" }
     
     #
     # Delete archived data from the event table
