@@ -74,27 +74,32 @@ proc SsnQueryRequest { whereStatement } {
   $eventTabs add -label "Ssn Query $SSN_QUERY_NUMBER"
   set currentTab [$eventTabs childsite end]
   set tabIndex [$eventTabs index end]
-  set queryFrame [frame $currentTab.ssnquery_${SSN_QUERY_NUMBER}]
+  set queryFrame [frame $currentTab.ssnquery_${SSN_QUERY_NUMBER} -background black -borderwidth 1]
   $eventTabs select end
   # Here is where we build the session display lists.
   CreateSessionLists $queryFrame
-  set whereText [text $currentTab.text -height 1 -background white]
+  set buttonFrame [frame $currentTab.buttonFrame]
+  set whereText [text $buttonFrame.text -height 1 -background white -wrap none]
   $whereText insert 0.0 $whereStatement
   bind $whereText <Return> {
     set whereStatement [%W get 0.0 end]
     SsnQueryRequest $whereStatement
     break
   }
-  set buttonFrame [frame $currentTab.buttonFrame]
-  set closeButton [button $buttonFrame.close -text "Close Tab" \
+  set closeButton [button $buttonFrame.close -text "Close" \
 	  -relief raised -borderwidth 2 -pady 0 \
 	  -command "DeleteTab $eventTabs $currentTab"]
-  set exportButton [button $buttonFrame.export -text "Export Query Results" \
+  set exportButton [button $buttonFrame.export -text "Export" \
 	  -relief raised -borderwidth 2 -pady 0 \
 	  -command "ExportResults $queryFrame ssn"]
-  pack $closeButton $exportButton -side left -fill x -expand true
-  pack $whereText $buttonFrame -side bottom -fill x
-  pack $queryFrame -side top
+  set rsubmitButton [button $buttonFrame.rsubmit -text "Submit " \
+	  -relief raised -borderwidth 2 -pady 0 \
+	  -command "SsnQueryRequest \[$whereText get 0.0 end\] "]
+  pack $closeButton $exportButton -side left
+  pack $whereText -side left -fill x -expand true
+  pack $rsubmitButton -side left
+  pack $buttonFrame -side top -fill x
+  pack $queryFrame -side bottom -fill both
   $queryFrame configure -cursor watch
   if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
   SendToSguild "QueryDB $queryFrame $selectQuery"
@@ -119,26 +124,31 @@ proc DBQueryRequest { whereStatement {winTitle {none} } } {
   }
   set currentTab [$eventTabs childsite end]
   set tabIndex [$eventTabs index end]
-  set queryFrame [frame $currentTab.query_$QUERY_NUMBER]
+  set queryFrame [frame $currentTab.query_$QUERY_NUMBER -background black -borderwidth 1]
   $eventTabs select end
   CreateEventLists $queryFrame
-  set whereText [text $currentTab.text -height 1 -background white]
+  set buttonFrame [frame $currentTab.buttonFrame]
+  set whereText [text $buttonFrame.text -background white -height 1 -wrap none]
   $whereText insert 0.0 $whereStatement
   bind $whereText <Return> {
     set whereStatement [%W get 0.0 end]
     DBQueryRequest $whereStatement
     break
   }
-  set buttonFrame [frame $currentTab.buttonFrame]
-  set closeButton [button $buttonFrame.close -text "Close Tab" \
+  set closeButton [button $buttonFrame.close -text "Close" \
 	  -relief raised -borderwidth 2 -pady 0 \
 	  -command "DeleteTab $eventTabs $currentTab"]
-  set exportButton [button $buttonFrame.export -text "Export Query Results" \
+  set exportButton [button $buttonFrame.export -text "Export " \
 	  -relief raised -borderwidth 2 -pady 0 \
 	  -command "ExportResults $queryFrame event"]
-  pack $closeButton $exportButton -side left -fill x -expand true -padx 5
-  pack $whereText $buttonFrame -side bottom -fill x
-  pack $queryFrame -side top
+  set rsubmitButton [button $buttonFrame.rsubmit -text "Submit " \
+	  -relief raised -borderwidth 2 -pady 0 \
+	  -command "DBQueryRequest \[$whereText get 0.0 end\] "]
+  pack $closeButton $exportButton -side left
+  pack $whereText -side left -fill x -expand true
+  pack $rsubmitButton  -side left
+  pack $buttonFrame -side top -fill x
+  pack $queryFrame -side bottom -fill both
   $queryFrame configure -cursor watch
   if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
   SendToSguild "QueryDB $queryFrame $selectQuery"
