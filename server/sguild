@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.73 2003/12/29 17:36:21 shalligan Exp $ #
+# $Id: sguild,v 1.74 2004/01/02 18:29:21 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -1561,9 +1561,9 @@ set AUTOID [GetUserID auto]
 
 if {$DEBUG} {
   puts "Querying DB for archived events..."
-  puts "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=0"
+  puts "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp ASC"
 }
-foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=0" -list] {
+foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp ASC" -list] {
   if {$DEBUG} {puts "Archived Alert: $row"}
   if { ![array exists acRules] || ![AutoCat $row] } {
     AddEventToEventArray $row
@@ -1572,9 +1572,9 @@ foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, event.cl
 }
 if {$DEBUG} {
   puts "Querying DB for escalated events..."
-  puts "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=2"
+  puts "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=2 ORDER BY event.timestamp ASC"
 }
-foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=2" -list] {
+foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=2 ORDER BY event.timestamp ASC" -list] {
   if {$DEBUG} {puts "Escalated Event: $row"}
   set escalatedEventID "[lindex $row 5].[lindex $row 6]"
   lappend escalateIDList $escalatedEventID
