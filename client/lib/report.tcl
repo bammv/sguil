@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.26 2004/11/30 18:22:20 shalligan Exp $ #
+# $Id: report.tcl,v 1.27 2004/12/02 15:56:47 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -231,6 +231,7 @@ proc PHBReport {} {
 #    puts $REPORT_QRY_LIST
 #    puts [string length $REPORT_QRY_LIST]
     set rList {}
+    set sensors {}
     if {[string length $REPORT_QRY_LIST] > 0} {
 	set scanindex 0
 	set stop 0
@@ -347,7 +348,6 @@ proc PHBReport {} {
 	    }
 	}
 	foreach sensorBox [winfo children $sensorFrame] {
-	    puts $sensorBox
 	    if { [winfo name $sensorBox] != "label" &&\
                  [winfo name $sensorBox] != "selectAll"} {
 		set sensorSelect [$sensorBox get]
