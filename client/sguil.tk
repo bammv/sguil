@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.144 2004/10/12 20:33:46 shalligan Exp $ #
+# $Id: sguil.tk,v 1.145 2004/10/18 16:20:39 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -363,107 +363,6 @@ proc ValidateEvent { status {c_flag {0}} } {
   }
   Idle
 }
-
-proc OptimizeTables {} {
-    global socketID DEBUG RETURN_FLAG
-    global CONNECTED
-    if {!$CONNECTED} {
-      ErrorMessage "Not connected to sguild. Unable to send optimize request."
-      return
-    }
-    set RETURN_FLAG 0
-    set optimizeTables .optimizeTables
-    if { [winfo exists $optimizeTables] } {
-	wm withdraw $optimizeTables
-	wm deiconify $optimizeTables
-	return
-    }
-    toplevel $optimizeTables
-    wm geometry $optimizeTables +200+200
-    wm title $optimizeTables "Optimize Database Tables"
-    set checkBox1 [checkbox $optimizeTables.checkBox1]
-    set tables1 [list data icmphdr sensor status tcphdr udphdr]
-    foreach t [lsort $tables1] {
-	$checkBox1 add $t -text [string totitle $t]
-	
-    }
-    set checkBox2 [checkbox $optimizeTables.checkBox2]
-    set tables2 [list event portscan sessions]
-    foreach t [lsort $tables2] {
-	$checkBox2 add $t -text [string totitle $t]
-    }
-    set buttonBox [buttonbox $optimizeTables.buttonBox]
-    $buttonBox add Run -text "Run" -command "set RETURN_FLAG 1"
-    $buttonBox add Cancel -text "Cancel" -command "set RETURN_FLAG 0"
-    pack $checkBox1 $checkBox2 $buttonBox -side top -fill x -padx 10 -expand 0
-    tkwait variable RETURN_FLAG
-    if { $RETURN_FLAG } {
-	set tableList1 [$checkBox1 get]
-	set tableList2 [$checkBox2 get]
-	if { [llength $tableList1] == 0 && [llength $tableList2] == 0 } {
-	    destroy $optimizeTables
-	    return
-	} else {
-	    set tableList [concat $tableList1 $tableList2]
-	    # puts $tableList
-	    # puts [llength $tableList]
-	    set optimizeQuery "OPTIMIZE TABLE [lindex $tableList 0]"
-	    if { [llength $tableList] > 1 } {
-		for { set i 1 } { $i < [llength $tableList] } {incr i 1} {
-		    # puts [lindex $tableList $i]
-		    set optimizeQuery "$optimizeQuery, [lindex $tableList $i]"
-		    puts $optimizeQuery
-		}
-	    }
-	  set answer [tk_messageBox -title confirm -type okcancel -icon warning -message "WARNING: Optimization can cause tables to corrupt.  If you don't know how to fix corruption, DO NOT PROCEED."]
-	    if { $answer == "ok" } {
-		if {$DEBUG} { puts "Send Server: ExecDB $optimizeQuery" }
-		SendToSguild "ExecDB $optimizeQuery"
-	    }
-	   
-	}
-	
-    } 
-    destroy $optimizeTables
-    return
-}
-	    
-    
-proc DeleteRequest { deletetype } {
-    global socketID DEBUG RETURN_FLAG
-    global CONNECTED
-    if {!$CONNECTED} {
-      ErrorMessage "Not Connected to sguild. Unable to delete events."
-      return
-    }
-    set RETURN_FLAG 0
-    set deleteRequest .deleteRequest
-    if { [winfo exists $deleteRequest] } {
-	wm withdraw $deleteRequest
-	wm deiconify $deleteRequest
-	return
-    }
-    toplevel $deleteRequest
-    wm geometry $deleteRequest +200+200
-    if { $deletetype == "sessions" } {
-	wm title $deleteRequest "Purge Session Data"
-	set deleteDate [entryfield $deleteRequest.deleteDate -labeltext "Date:" ]
-	$deleteDate insert end [lindex [GetCurrentTimeStamp "1 month ago"] 0]
-	set buttonBox [buttonbox $deleteRequest.buttonBox]
-	$buttonBox add Run -text "Run" -command "set RETURN_FLAG 1"
-	$buttonBox add cancel -text "Cancel" -command "set RETURN_FLAG 0"
-	pack $deleteDate $buttonBox -side top -fill x -padx 10 -expand 0
-	tkwait variable RETURN_FLAG
-	if { $RETURN_FLAG } {
-	    set deleteQuery "DELETE from sessions WHERE sessions.start_time <= '[$deleteDate get]'"
-	    if {$DEBUG} { puts "Sending Server: ExecDB $deleteQuery" }
-	    SendToSguild "ExecDB $deleteQuery"
-	}
-	destroy $deleteRequest
-	return
-    }
-}
-
 
 
 #
@@ -1741,7 +1640,6 @@ set topFrame [frame .topFrame]
   set fileMenu [menubutton $topFrame.fileMenu -text File -underline 0 -menu $topFrame.fileMenu.menu]
   set queryMenu [menubutton $topFrame.queryMenu -text Query -underline 0 -menu $topFrame.queryMenu.menu]
   set reportMenu [menubutton $topFrame.reportMenu -text Reports -underline 0 -menu $topFrame.reportMenu.menu]
-  set databaseMenu [menubutton $topFrame.databaseMenu -text Database -underline 0 -menu $topFrame.databaseMenu.menu]
   set soundFrame [frame $topFrame.soundFrame]
     set soundLabel [label $soundFrame.label -text "  Sound:"]
     set soundStatus [label $soundFrame.status -text "Off" -foreground red] 
@@ -1758,7 +1656,7 @@ set topFrame [frame .topFrame]
     set userIDLabel [label $userIDFrame.label -text "  UserID:"]
     set userIDText [label $userIDFrame.uidText -text "*" -foreground red] 
     pack $userIDLabel $userIDText -side left
-  pack $fileMenu $queryMenu $reportMenu $databaseMenu $soundFrame\
+  pack $fileMenu $queryMenu $reportMenu $soundFrame\
    $serverNameFrame $userNameFrame $userIDFrame -side left
   if {$GMTCLOCK } {
     set gmtClock [label $topFrame.gmtClock -text "YYYY-MM-DD HH:MM:SS GMT" -relief groove]
@@ -1816,9 +1714,6 @@ set topFrame [frame .topFrame]
       $summaryMenu add command -label "Sanitized" -command {EmailEvents 0 1}
     $reportList add command -label "Sensor Reports" -command "PHBReport"
     $reportList add command -label "Import Nessus Report" -command "NessusLoad"
-  set databaseList [menu $databaseMenu.menu -tearoff 0]
-    $databaseList add command -label "Purge Session Data" -command "DeleteRequest sessions"
-    $databaseList add command -label "Optimize Tables" -command "OptimizeTables"
   #$menuList add command -label "License" -command "DisplayLicense"
 
 
