@@ -515,6 +515,41 @@ proc SendCurrentEvents { socketID } {
     }
   }
 }
+proc CreateDB { DBNAME } {
+  global dbSocketID
+  puts -nonewline "The database $DBNAME does not exist. Create it (\[y\]/n)?: "
+  flush stdout
+  set answer [gets stdin]
+  if { $answer == "" } { set answer y }
+  if { ![regexp {^[yY]} $answer] } { return 0 }
+  set fileName "./scripts/create_sguildb.sql"
+  puts -nonewline "Path to create_sguildb.sql \[$fileName\]: "
+  flush stdout
+  set answer [gets stdin]
+  if { $answer != "" } { set fileName $answer }
+  if { ! [file exists $fileName] } {
+    puts "File does not exist: $fileName"
+    return 0
+  }
+  puts -nonewline "Creating the DB $DBNAME..."
+  if [ catch {mysqlexec $dbSocketID "CREATE DATABASE $DBNAME"} createDBError] {
+    puts $createDBError
+    return 0
+  }
+  mysqluse $dbSocketID $DBNAME
+  puts "Okay."
+  if [catch {set fileID [open $fileName r]} openFileError] {
+    puts $openFileError
+    return 0
+  }
+  foreach mysqlCmd [split [read -nonewline $fileID] \;] {
+    puts -nonewline "Creating table [lindex $mysqlCmd 2] in $DBNAME..."
+    if { $mysqlCmd != "" } {mysqlexec $dbSocketID $mysqlCmd}
+    puts "Okay."
+  }
+  close $fileID
+  return 1
+}
 
 ######################## END PROCS ##############################
 
@@ -525,9 +560,17 @@ package require mysqltcl
 
 # Get archived alerts from the DB
 if { $DBPASS == "" } {
-  set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+  #set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+  set dbSocketID [mysqlconnect -host $DBHOST -user $DBUSER -port $DBPORT]
 } else {
-  set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+  #set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+  set dbSocketID [mysqlconnect -host $DBHOST -user $DBUSER -port $DBPORT -password $DBPASS]
+}
+# See if the DB we want to use exists
+if { [catch {mysqluse $dbSocketID $DBNAME} noDBError] } {
+  puts "Error: $noDBError"
+  # Create the DB or die.
+  if {![CreateDB $DBNAME]} { exit }
 }
 if {$DEBUG} {
   puts "Querying DB for archived events..."
