@@ -253,16 +253,21 @@ proc DeleteEventIDList { socketID status comment deleteEventIDList } {
     SendSocket $socket "DeleteEventIDList $deleteEventIDList"
   }
   foreach eventID $deleteEventIDList {
+    if { [info exists escalateIDList] } {set escalateIDList [ldelete $escalateIDList $eventID]}
     # If status == 2 then escalate
     if {$status == 2} {
       lappend escalateIDList $eventID
-      set escalateArray($eventID) $eventIDArray($eventID)
+      if [info exists eventIDArray($eventID)] {
+        set escalateArray($eventID) $eventIDArray($eventID)
+      } else {
+        set escalateArray($eventID) [FlatDBQuery\
+         "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.sid=[lindex [split $eventID .] 0] AND event.cid=[lindex [split $eventID .] 1]"]
+      }
       foreach socket $clientList {
         SendSocket $socket "InsertEscalatedEvent $escalateArray($eventID)"
       }
     }
     if { [info exists eventIDArray($eventID)] } { unset eventIDArray($eventID) }
-    if { [info exists escalateIDList] } {set escalateIDList [ldelete $escalateIDList $eventID]}
     if [info exists eventIDList] {
       set eventIDList [ldelete $eventIDList $eventID]
     }
