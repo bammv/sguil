@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/alerts.php,v 1.8 2004/04/04 17:12:47 dlowless Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/alerts.php,v 1.9 2004/04/05 10:02:33 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -12,6 +12,7 @@
  */
 
 	require("sguil_functions.php");
+	require("std_functions.php");
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -29,12 +30,16 @@
 			
 			printf("	<meta http-equiv=\"refresh\" content=\"" . $_REQUEST['autorefresh_interval'] . "; URL=" . $url ."\">\n");
 	}
+	
 	include('css.php');
+	jscript_topmenu_head();
 ?>
 </head>
 <body>
 
 <?php
+	navbar();
+	
 	if( $_REQUEST['aggregate'] == "" || $_REQUEST['aggregate'] == "0" )
 		$aggregate = 0;
 	else

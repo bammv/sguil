@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/index.php,v 1.3 2004/04/04 19:17:23 dlowless Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/index.php,v 1.4 2004/04/05 10:02:33 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -17,8 +17,7 @@
 <meta name="author" content="Michael Boman">
 <meta name="copyright" content="Copyright 2004 Michael Boman <mboman@users.sourceforge.net>. All Rights Reserved.">
 </head>
-<frameset rows="50,50%,50%">
-<frame src="tabs.php" name="tabbar">
+<frameset rows="50%,50%">
 <frame name="alerts" src="alerts.php?aggregate=1">
 <frame name="lookup" src="lookup_frameset.php">
 <noframes>
