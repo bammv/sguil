@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.14 2004/08/04 21:07:13 shalligan Exp $ #
+# $Id: report.tcl,v 1.15 2004/08/05 14:06:39 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -226,8 +226,9 @@ proc ReportResponse { type data } {
 	
 proc PHBReport {} { 
     global RETURN_FLAG REPORTNUM REPORT_DONE REPORT_RESULTS monitorList REPORT_QRY_LIST
-    puts $REPORT_QRY_LIST
-    puts [string length $REPORT_QRY_LIST]
+#    puts $REPORT_QRY_LIST
+#    puts [string length $REPORT_QRY_LIST]
+    set rList {}
     if {[string length $REPORT_QRY_LIST] > 0} {
 	set scanindex 0
 	set stop 0
@@ -235,7 +236,7 @@ proc PHBReport {} {
 	    if { [regexp -start $scanindex {(.*?)\|\|(.*?)\|\|(.*?)\|\|(.*?)\|\|(.*?)\|\|} \
 		    $REPORT_QRY_LIST match name description type sql fields] } {
 		set rName($cIndex) $name
-		puts "$name $description $type"
+#		puts "$name $description $type"
 		set rDesc($cIndex) $description
 		lappend rList $description
 		set rType($cIndex) $type
@@ -307,7 +308,7 @@ proc PHBReport {} {
 	#we want is and then grabbing all of those indicies and sticking them in new arrays
 	set j 0
 	foreach reportdesc $reports {
-	    puts "desc is $reportdesc"
+#	    puts "desc is $reportdesc"
 	    for { set i 0 } { $i < $cIndex } {incr i} {
 		if { $reportdesc == $rDesc($i) } {
 		    set sName($j) $rName($i)
@@ -323,8 +324,8 @@ proc PHBReport {} {
 	set sensors [$sensorBox get]
 	set datetimestart "[clock format [$dateStart get -clicks] -f "%Y-%m-%d"] [$timeStart get]"
 	set datetimeend "[clock format [$dateEnd get -clicks] -f "%Y-%m-%d"] [$timeEnd get]"
-	puts $datetimestart 
-	puts $datetimeend
+#	puts $datetimestart 
+#	puts $datetimeend
 	destroy $phbReport
 	BuildPHBReport $sensors $datetimestart $datetimeend sName sDesc sType sSql sFields
     }
@@ -390,7 +391,7 @@ proc BuildPHBReport { sensors datetimestart datetimeend sName sDesc sType sSql s
     set k [array size Name]
     for {set i 0 } { $i < $k } {incr i} {
 	if { $Type($i) == "query" } {
-	    set REPORT_RESULT {}
+	    set REPORT_RESULTS {}
 	    SendToSguild "ReportRequest BUILDER $Name($i) $datalist"
     
 	    # wait for the response to fill in
@@ -400,13 +401,17 @@ proc BuildPHBReport { sensors datetimestart datetimeend sName sDesc sType sSql s
 	    set description $Desc($i)
 	    $reportText insert end "${description}\n"
 	    $reportText insert end "--------------------\n"
-	    foreach report $REPORT_RESULTS {
-		for { set j 0 } { $j < $Fields($i) } { incr j } {
-		    $reportText insert end [lindex $report $j]
-		    $reportText insert end "\t"
+	    if { $REPORT_RESULTS == {} } {
+		$reportText insert end "Zero Rows Returned\n"
+	    } else {
+		foreach report $REPORT_RESULTS {
+		    for { set j 0 } { $j < $Fields($i) } { incr j } {
+			$reportText insert end [lindex $report $j]
+			$reportText insert end "\t"
+		    }
+		    $reportText insert end "\n"
 		}
-		$reportText insert end "\n"
-	    }
+	    }	
 	    $reportText insert end "\n"
 	    #$reportText insert end "${REPORT_RESULTS}\n"
 	    #puts $REPORT_RESULTS
