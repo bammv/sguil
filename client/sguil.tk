@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.136 2004/08/05 17:47:15 bamm Exp $ #
+# $Id: sguil.tk,v 1.137 2004/08/06 14:48:50 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1543,7 +1543,7 @@ proc MonitorSensors { winName } {
 proc SelectAllSensors {} {
   global cbList
   foreach cb $cbList {
-    $cb invoke
+    $cb select
   }
 }
 #
