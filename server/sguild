@@ -13,29 +13,32 @@
 
 set VERSION "sguil 0.2"
 
-# DEBUG 1=on 0=off This is VERY chatty.
-set DEBUG 1
-# What port for sguild to listen on.
-# Client Connects
-set SERVERPORT 7734
-# Sensor connects
-set SENSORPORT 7736
-# Path to look for rules. Sguild will append the hostname (/etc/snort/rules/<hostname>/*.rules)
-set RULESDIR /snort_data/rules
-# Where to temporarily store portscan and session data for loading into the DB
-set TMPDATADIR /tmp
-# Max number of portscan data rows to return to the client
-set MAX_PS_ROWS 200
-# DataBase Info
-set DBNAME sguildb
-set DBHOST localhost
-set DBPORT 1211
-set DBUSER root 
-set DBPASS "dbpasswd"
+# Config options moved to sguild.conf
 
 ######################## END GLOBALS ################################
 
 ########################## PROCS ####################################
+
+proc DisplayUsage { cmdName } {
+  puts "Usage: $cmdName -- -c <filename>"
+  puts "  where <filename> is the PATH to the sguild config file (sguild.conf)"
+  exit 1
+}
+proc CleanExit {} {
+  puts "Exiting..."
+  exit
+}
+#
+# CheckLineFormat - Parses CONF_FILE lines to make sure they are formatted
+#                   correctly (set varName value). Returns 1 if good.
+#
+proc CheckLineFormat { line } {
+  
+  set RETURN 1
+  # Right now we just check the length and for "set".
+  if { [llength $line] != 3 || [lindex $line 0] != "set" } { set RETURN 0 }
+  return $RETURN
+}   
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -665,6 +668,55 @@ proc CreateDB { DBNAME } {
 
 # Load mysql support.
 package require mysqltcl
+
+# GetOpts
+set state flag
+foreach arg $argv {
+  switch -- $state {
+    flag {
+      switch -glob -- $arg {
+        -c { set state conf }
+        default { DisplayUsage $argv0 }
+      }
+    }
+    conf { set CONF_FILE $arg; set state flag }
+    default { DisplayUsage $argv0 }
+  }
+}
+
+if { ![info exists CONF_FILE] } {
+  # No conf file specified check the defaults
+  if { [file exists ./sguild.conf] } {
+    set CONF_FILE ./sguild.conf
+  } elseif { [file exists /etc/sguil/sguild.conf] } {
+    set CONF_FILE /etc/sguil/sguild.conf
+  } else {
+    puts "Couldn't determine where the sguil config file is"
+    puts "Looked for ./sguild.conf and /etc/sguil/sguild.conf."
+    DisplayUsage $argv0
+  }
+}
+set i 0
+if { [info exists CONF_FILE] } {
+  # Parse the config file. Currently the only option is to 
+  # create a variable using 'set varName value' 
+  for_file line $CONF_FILE {
+    incr i
+    if { ![regexp ^# $line] && ![regexp ^$ $line] } {
+      if { [CheckLineFormat $line] } {
+        if { [catch {eval $line} evalError] } {
+          puts "Error at line $i in $CONF_FILE: $line"
+          CleanExit
+        }
+      } else {
+        puts "Error at line $i in $CONF_FILE: $line"
+        CleanExit
+      }
+    }
+  }
+} else {
+  DisplayUsage $argv0
+}
 
 # Get archived alerts from the DB
 if { $DBPASS == "" } {
