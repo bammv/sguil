@@ -1,4 +1,4 @@
-/* $Id: op_sguil.c,v 1.12 2005/03/04 22:44:09 bamm Exp $ */
+/* $Id: op_sguil.c,v 1.13 2005/03/08 20:34:49 bamm Exp $ */
 
 /*
 ** Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@sguil.net> 
@@ -219,8 +219,6 @@ int OpSguil_Log(void *context, void *ul_data)
 
     bzero(buffer, STD_BUFFER);
 
-    RenderTimestamp(record->log.pkth.ts.tv_sec, timestamp, TIMEBUF_SIZE);
-
     //LogMessage("Event id ==> %u\n", record->log.event.event_id);
     //LogMessage("Ref time ==> %lu\n", record->log.event.ref_time.tv_sec);
 
@@ -235,49 +233,89 @@ int OpSguil_Log(void *context, void *ul_data)
     ** proper tcl list format. 
     ** RT FORMAT:
     ** 
-    **     0      1    2     3          4          5         6      7      8          9          10           11
-    ** {RTEVENT} {0} {sid} {cid} {sensor name} {sig_gen} {sig id} {rev} {message} {timestamp} {priority} {class_type} 
+    **     0      1    2     3          4            5                  6                7
+    ** {RTEVENT} {0} {sid} {cid} {sensor name} {snort event_id} {snort event_ref} {snort ref_time} 
     **
-    **      12         13             14           15            16        17       18
+    **     8         9      10      11         12         13          14
+    ** {sig_gen} {sig id} {rev} {message} {timestamp} {priority} {class_type} 
+    **
+    **      15            16           17           18           19       20        21
     ** {sip (dec)} {sip (string)} {dip (dec)} {dip (string)} {ip proto} {ip ver} {ip hlen}
     **
-    **    19      20        21       22        23      24        25
+    **    22       23      24        25        26       27       28
     ** {ip tos} {ip len} {ip id} {ip flags} {ip off} {ip ttl} {ip csum}
     **
-    **      26         27          28         29         30
+    **      29         30           31        32         33
     ** {icmp type} {icmp code} {icmp csum} {icmp id} {icmp seq}
     ** 
-    **     31         32
+    **     34         35
     ** {src port} {dst port}
     **
-    **     33        34        35        36        37         38        39          40
+    **     36        37        38        39        40         41        42          43
     ** {tcp seq} {tcp ack} {tcp off} {tcp res} {tcp flags} {tcp win} {tcp csum} {tcp urp}
     **
-    **     41        42
+    **     44        45
     ** {udp len} {udp csum}
     **
-    **      43
+    **      46
     ** {data payload}
     */
 
     Tcl_DStringInit(&list);
+
+    /* RTEVENT */
     Tcl_DStringAppendElement(&list, "RTEVENT");
+
+    /* Status - 0 */
     Tcl_DStringAppendElement(&list, "0");
+
+    /* Sensor ID  (sid) */
     sprintf(buffer, "%u", data->sensor_id);
     Tcl_DStringAppendElement(&list, buffer);
+
+    /* Event ID (cid) */
     sprintf(buffer, "%u", data->event_id);
     Tcl_DStringAppendElement(&list, buffer);
+
+    /* Sensor Name */
     Tcl_DStringAppendElement(&list, data->sensor_name);
+
+    /* Snort Event ID */
+    sprintf(buffer, "%u", record->log.event.event_id);
+    Tcl_DStringAppendElement(&list, buffer);
+
+    /* Snort Event Ref */
+    sprintf(buffer, "%u", record->log.event.event_reference);
+    Tcl_DStringAppendElement(&list, buffer);
+
+    /* Snort Event Ref Time */
+    RenderTimestamp(record->log.event.ref_time.tv_sec, timestamp, TIMEBUF_SIZE);
+    Tcl_DStringAppendElement(&list, timestamp);
+
+    /* Generator ID */
     sprintf(buffer, "%d", sid->gen);
     Tcl_DStringAppendElement(&list, buffer);
+
+    /* Signature ID */
     sprintf(buffer, "%d", sid->sid);
     Tcl_DStringAppendElement(&list, buffer);
+
+    /* Signature Revision */
     sprintf(buffer, "%d", sid->rev);
     Tcl_DStringAppendElement(&list, buffer);
+
+    /* Signature Msg */
     Tcl_DStringAppendElement(&list, sid->msg);
+
+    /* Packet Timestamp */
+    RenderTimestamp(record->log.pkth.ts.tv_sec, timestamp, TIMEBUF_SIZE);
     Tcl_DStringAppendElement(&list, timestamp);
+
+    /* Alert Priority */
     sprintf(buffer, "%u", record->log.event.priority);
     Tcl_DStringAppendElement(&list, buffer);
+
+    /* Alert Classification */
     if (class_type == NULL)
     {
         Tcl_DStringAppendElement(&list, "unknown");

@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.32 2005/03/03 21:07:44 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.33 2005/03/08 20:34:49 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -92,10 +92,11 @@ proc SendToSguild { data } {
 
 proc BYEventRcvd { socketID eventInfo } {
 
-    if { [llength $eventInfo] != 43 } { 
-        puts "Bad Event!"
+    if { [llength $eventInfo] != 46 } { 
+        puts "Bad Event! List length != 46."
         puts $eventInfo
         puts "len = [llength $eventInfo]"
+        # We'll do something better when we are out of BETA
         exit 
     }
    
@@ -576,9 +577,9 @@ if {[info exists DAEMON] && $DAEMON} {Daemonize}
 
 ConnectToSguilServer
 InitBYSocket $BY_PORT
-#CheckForPortscanFiles
-#if { [info exists S4_KEEP_STATS] && $S4_KEEP_STATS } { CheckForSsnFiles }
-#if { [info exists SANCP] && $SANCP } { CheckForSancpFiles }
-#CheckDiskSpace
-#if {$PING_DELAY != 0} { PingServer }
+CheckForPortscanFiles
+if { [info exists S4_KEEP_STATS] && $S4_KEEP_STATS } { CheckForSsnFiles }
+if { [info exists SANCP] && $SANCP } { CheckForSancpFiles }
+CheckDiskSpace
+if {$PING_DELAY != 0} { PingServer }
 vwait FOREVER

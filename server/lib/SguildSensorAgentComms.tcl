@@ -22,8 +22,9 @@ proc AgentLastCidReq { socketID req_socketID sid } {
 
 }
 
-proc BYEventRcvd { socketID req_socketID status sid cid sensorName sig_gen sig_id sig_rev \
-                   msg timestamp priority class_type dec_sip str_sip dec_dip str_dip \
+proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
+                   u_event_ref u_ref_time  sig_gen sig_id sig_rev  msg timestamp \
+                   priority class_type dec_sip str_sip dec_dip str_dip \
                    ip_proto ip_ver ip_hlen ip_tos ip_len ip_id ip_flags ip_off ip_ttl \
                    ip_csum icmp_type icmp_code icmp_csum icmp_id icmp_seq src_port \
                    dst_port tcp_seq tcp_ack tcp_off tcp_res tcp_flags tcp_win tcp_csum \
@@ -31,10 +32,11 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName sig_gen sig_i
 
 
     # Insert Event Hdr
-    if [catch { InsertEventHdr $sid $cid $msg $sig_gen $sig_id $sig_rev $timestamp \
-                $priority $class_type $status $dec_sip $dec_dip $ip_proto $ip_ver  \
-                $ip_hlen $ip_tos $ip_len $ip_id $ip_flags $ip_off $ip_ttl $ip_csum \
-                $icmp_type $icmp_code $src_port $dst_port } tmpError] {
+    if [catch { InsertEventHdr $sid $cid $u_event_id $u_event_ref $u_ref_time \
+                $msg $sig_gen $sig_id $sig_rev $timestamp $priority $class_type \
+                $status $dec_sip $dec_dip $ip_proto $ip_ver $ip_hlen $ip_tos \
+                $ip_len $ip_id $ip_flags $ip_off $ip_ttl $ip_csum $icmp_type \
+                $icmp_code $src_port $dst_port } tmpError] {
 
         SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
         return

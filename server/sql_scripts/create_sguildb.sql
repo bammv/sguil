@@ -1,38 +1,41 @@
--- $Id: create_sguildb.sql,v 1.13 2005/01/28 19:54:33 bamm Exp $
+-- $Id: create_sguildb.sql,v 1.14 2005/03/08 20:35:04 bamm Exp $
 -- Users may want to use a different DB name.
 -- CREATE DATABASE IF NOT EXISTS sguildb;
 -- USE sguildb;
 
 CREATE TABLE event
 (
-  sid		INT UNSIGNED	NOT NULL,
-  cid		INT UNSIGNED	NOT NULL,
-  signature 	VARCHAR(255)	NOT NULL,
-  signature_gen	INT UNSIGNED	NOT NULL,
-  signature_id	INT UNSIGNED	NOT NULL,
-  signature_rev	INT UNSIGNED	NOT NULL,
-  timestamp	DATETIME	NOT NULL,
-  priority	INT UNSIGNED,
-  class		VARCHAR(20),
-  status	SMALLINT UNSIGNED DEFAULT 0,
-  src_ip	INT UNSIGNED,
-  dst_ip	INT UNSIGNED,
-  src_port	INT UNSIGNED,
-  dst_port	INT UNSIGNED,
-  icmp_type	TINYINT UNSIGNED,
-  icmp_code	TINYINT UNSIGNED,
-  ip_proto	TINYINT UNSIGNED,
-  ip_ver	TINYINT UNSIGNED,
-  ip_hlen	TINYINT UNSIGNED,
-  ip_tos	TINYINT UNSIGNED,
-  ip_len	SMALLINT UNSIGNED,
-  ip_id 	SMALLINT UNSIGNED,
-  ip_flags	TINYINT UNSIGNED,
-  ip_off	SMALLINT UNSIGNED,
-  ip_ttl	TINYINT UNSIGNED,
-  ip_csum	SMALLINT UNSIGNED,
-  last_modified	DATETIME,
-  last_uid	INT UNSIGNED,
+  sid			INT UNSIGNED	NOT NULL,
+  cid			INT UNSIGNED	NOT NULL,
+  signature 		VARCHAR(255)	NOT NULL,
+  signature_gen		INT UNSIGNED	NOT NULL,
+  signature_id		INT UNSIGNED	NOT NULL,
+  signature_rev		INT UNSIGNED	NOT NULL,
+  timestamp		DATETIME	NOT NULL,
+  unified_event_id	INT UNSIGNED, 
+  unified_event_ref	INT UNSIGNED,
+  unified_ref_time	DATETIME,
+  priority		INT UNSIGNED,
+  class			VARCHAR(20),
+  status		SMALLINT UNSIGNED DEFAULT 0,
+  src_ip		INT UNSIGNED,
+  dst_ip		INT UNSIGNED,
+  src_port		INT UNSIGNED,
+  dst_port		INT UNSIGNED,
+  icmp_type		TINYINT UNSIGNED,
+  icmp_code		TINYINT UNSIGNED,
+  ip_proto		TINYINT UNSIGNED,
+  ip_ver		TINYINT UNSIGNED,
+  ip_hlen		TINYINT UNSIGNED,
+  ip_tos		TINYINT UNSIGNED,
+  ip_len		SMALLINT UNSIGNED,
+  ip_id 		SMALLINT UNSIGNED,
+  ip_flags		TINYINT UNSIGNED,
+  ip_off		SMALLINT UNSIGNED,
+  ip_ttl		TINYINT UNSIGNED,
+  ip_csum		SMALLINT UNSIGNED,
+  last_modified		DATETIME,
+  last_uid		INT UNSIGNED,
   abuse_queue		enum('Y','N'),
   abuse_sent		enum('Y','N'),
   PRIMARY KEY (sid,cid),
@@ -230,5 +233,5 @@ CREATE TABLE version
   installed	DATETIME
 );
 
-INSERT INTO version (version, installed) VALUES ("0.10", now());
+INSERT INTO version (version, installed) VALUES ("0.11", now());
 

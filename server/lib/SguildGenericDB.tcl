@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.7 2005/03/04 22:19:02 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.8 2005/03/08 20:35:03 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -178,23 +178,25 @@ proc SafeMysqlExec { query } {
 
 }
 
-proc InsertEventHdr { sid cid msg sig_gen sig_id sig_rev timestamp priority     \
-                      class_type status dec_sip dec_dip ip_proto ip_ver ip_hlen \
-                      ip_tos ip_len ip_id ip_flags ip_off ip_ttl ip_csum        \
-                      icmp_type icmp_code src_port dst_port } {
+proc InsertEventHdr { sid cid u_event_id u_event_ref u_ref_time msg sig_gen \
+                      sig_id sig_rev timestamp priority class_type status   \
+                      dec_sip dec_dip ip_proto ip_ver ip_hlen ip_tos ip_len \
+                      ip_id ip_flags ip_off ip_ttl ip_csum icmp_type        \
+                      icmp_code src_port dst_port } {
 
     # Event columns we are INSERTing
     set tmpTables \
-         "sid, cid, signature, signature_gen, signature_id, signature_rev,     \
-         timestamp, priority, class, status, src_ip, dst_ip, ip_proto,         \
-         ip_ver, ip_hlen, ip_tos, ip_len, ip_id, ip_flags, ip_off, ip_ttl,     \
-         ip_csum"
+         "sid, cid, unified_event_id, unified_event_ref, unified_ref_time,  \
+         signature, signature_gen, signature_id, signature_rev, timestamp,  \
+         priority, class, status, src_ip, dst_ip, ip_proto, ip_ver, ip_hlen,\
+         ip_tos, ip_len, ip_id, ip_flags, ip_off, ip_ttl, ip_csum"
                                                                                                                        
     # And their corresponding values.
     set tmpValues \
-         "$sid, $cid, '$msg', '$sig_gen', '$sig_id', '$sig_rev', '$timestamp', \
-         '$priority', '$class_type', '$status', '$dec_sip', '$dec_dip',        \
-         '$ip_proto', '$ip_ver', '$ip_hlen', '$ip_tos', '$ip_len', '$ip_id',   \
+         "$sid, $cid, $u_event_id, $u_event_ref, '$u_ref_time', '$msg',  \
+         '$sig_gen', '$sig_id', '$sig_rev', '$timestamp', '$priority',   \
+         '$class_type', '$status', '$dec_sip', '$dec_dip', '$ip_proto',  \
+         '$ip_ver', '$ip_hlen', '$ip_tos', '$ip_len', '$ip_id',          \
          '$ip_flags', '$ip_off', '$ip_ttl', '$ip_csum'"
                                                                                                                        
     # ICMP, TCP, & UDP have extra columns
