@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.15 2004/04/28 19:38:50 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.16 2004/05/07 14:10:29 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -159,6 +159,7 @@ proc CheckDiskSpace {} {
     set diskUse [lindex [lindex [split $output \n] 1] 4]
     puts "DiskReport $WATCH_DIR $diskUse"
     puts $socketID "DiskReport $WATCH_DIR $diskUse"
+    flush $socketID
     after $DISK_CHECK_DELAY_IN_MSECS CheckDiskSpace
   }
 }
