@@ -79,7 +79,7 @@ Section -AdditionalIcons
   WriteIniStr "$INSTDIR\BOSECO.url" "InternetShortcut" "URL" "http://www.boseco.com/"
   CreateDirectory "$SMPROGRAMS\SGUIL Client"
   CreateShortCut "$SMPROGRAMS\SGUIL Client\SGUIL Client.lnk" "$INSTDIR\sguil_tk.tcl"
-  CreateShortCut "$SMPROGRAMS\SGUIL Client\Sguil Configuration.lnk" "write.exe" '"$INSTDIR\sguil.conf"'
+  CreateShortCut "$SMPROGRAMS\SGUIL Client\Edit Sguil Configuration.lnk" "write.exe" '"$INSTDIR\sguil.conf"'
   CreateShortCut "$SMPROGRAMS\SGUIL Client\Website.lnk" "$INSTDIR\${PRODUCT_NAME}.url"
   CreateShortCut "$SMPROGRAMS\SGUIL Client\ActiveState TCL.lnk" "$INSTDIR\ActiveState TCL.url"
   CreateShortCut "$SMPROGRAMS\SGUIL Client\BOSECO.lnk" "$INSTDIR\BOSECO.url"
@@ -145,7 +145,7 @@ Section Uninstall
   Delete "$SMPROGRAMS\SGUIL Client\Uninstall.lnk"
   Delete "$SMPROGRAMS\SGUIL Client\Website.lnk"
   Delete "$SMPROGRAMS\SGUIL Client\SGUIL Client.lnk"
-  Delete "$SMPROGRAMS\SGUIL Client\Sguil Configuration.lnk"
+  Delete "$SMPROGRAMS\SGUIL Client\Edit Sguil Configuration.lnk"
   Delete "$SMPROGRAMS\SGUIL Client\ActiveState TCL.lnk"
   Delete "$SMPROGRAMS\SGUIL Client\BOSECO.lnk"
   Delete "$DESKTOP\SGUIL Client.lnk"
