@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.4 2004/11/22 23:14:47 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.5 2004/11/24 16:50:20 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -206,26 +206,29 @@ proc DeleteEventID { socketID eventID status } {
 }
 
 proc CorrelateEvent { sid srcip msg } {
-  global eventIDArray eventIDList eventIDCountArray SENSOR_AGGREGATION_ON
-  set MATCH 0
-  # Loop thru the RTEVENTS for a match on srcip msg
-  foreach rteid $eventIDList {
+    global eventIDArray eventIDList eventIDCountArray SENSOR_AGGREGATION_ON
+    set MATCH 0
 
-    if { [lindex $eventIDArray($rteid) 8] == $srcip && [lindex $eventIDArray($rteid) 7] == $msg } {
-      # Have a match
-      set MATCH $rteid
+    # Loop thru the RTEVENTS for a match on srcip msg
+    if {$SENSOR_AGGREGATION_ON} {
+        # Match alerts from just this sensor (sid)
+        set tmpList [array names eventIDArray ${sid}.*] 
+    } else {
+        # Match alerts from any sensor
+        set tmpList $eventIDList
+    }
 
-      # Do sid check if needed here
-      if {$SENSOR_AGGREGATION_ON} {
-        if { [lindex [split $rteid .] 0] != $sid } {
-          set MATCH 0
-        }
+    foreach rteid $tmpList {
+
+      # This checks to see if we have a matching srcip and alert message
+      if { [lindex $eventIDArray($rteid) 8] == $srcip && [lindex $eventIDArray($rteid) 7] == $msg } {
+          # Have a match
+          set MATCH $rteid
       }
 
     }
 
-  }
-  return $MATCH
+    return $MATCH
 }
 
 
