@@ -1,4 +1,4 @@
-CVS-HEAD
+CVS-HEAD aka sguil-0.3.0beta
 
   **** WARNING WARNING WARNING ****
   * If you run CVS-HEAD, make sure*
@@ -13,6 +13,18 @@ CVS-HEAD
       a new connect for each event.
 
   sguil.tk
+    * Added Text Export Button to send query reults to a 
+      text file (human-readable or delimited(CSV, TAB, etc) -SRH
+
+    * Added A Human-Readable text report to the reports menu
+      to output full event details (with or without payload) to
+      a text file. -SRH
+
+    * Revamped the way reports get their data.  It now happens
+      over the main sguil-sguild socket.  Much faster.  -SRH
+
+    * User and Global Standard queries supported (started by Bamm, finished by SRH)
+
     * Fixed Mouse-Wheel scrolling in X and Windows (geek2)
 
     * Added a GUI Query Builder, for easy SQL editing. (geek2)	
@@ -33,7 +45,9 @@ CVS-HEAD
     * Modified client authentication. See sguild comments for
       more information. (NOTE: sguil.tk now REQUIRES tcllib)
 
-    * Added initial support for standard queries.
+    * Many Bug Fixes
+
+
 
   sguild
     * Sustained cnx with op_sguil (barnyard). 
@@ -49,7 +63,7 @@ CVS-HEAD
       the server. (NOTE: Old sguild.users files will NOT
       work.)
 
-    * Added initial support for standard queries. 
+    * Support for standard queries. 
 
     * Auto-categorizing of alerts introduced.
 
