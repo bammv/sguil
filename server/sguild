@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.105 2004/07/15 12:49:29 bamm Exp $ #
+# $Id: sguild,v 1.106 2004/07/15 17:12:01 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -521,7 +521,9 @@ proc SendEtherealData { fileName TRANS_ID } {
   
   set clientSocketID [lindex $transInfoArray($TRANS_ID) 0]
   #puts $clientSocketID "EtherealDataBase64 [file tail $fileName] [file size $fileName]"
-  puts $clientSocketID "EtherealDataPcap [file tail $fileName] [file size $fileName]"
+  # Clean up the filename for win32 systems
+  regsub -all {:} [file tail $fileName] {_} cleanFileName
+  puts $clientSocketID "EtherealDataPcap $cleanFileName [file size $fileName]"
   set rFileID [open $fileName r]
   fconfigure $rFileID -translation binary
   fconfigure $clientSocketID -translation binary
