@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.31 2005/01/27 15:13:00 shalligan Exp $ #
+# $Id: qrybuild.tcl,v 1.32 2005/02/09 16:13:36 shalligan Exp $ #
 proc QryBuild {tableSelected whereTmp } {
     global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList
@@ -286,15 +286,18 @@ proc typeChange {} {
     if {[$mainFrame.qFrame.qTypeBox get] == "event" } {
 	$mainFrame.eFrame.eBox insert end "WHERE  LIMIT 500"
 	set SELECTEDTABLE "event"
+	$mainFrame.eFrame.eBox mark set insert "end -11 c"
     } elseif {[$mainFrame.qFrame.qTypeBox get] == "sessions" } {
 	set SELECTEDTABLE "sessions"
 	$mainFrame.eFrame.eBox insert end "WHERE  LIMIT 500"
+	$mainFrame.eFrame.eBox mark set insert "end -11 c"
     } else {
 	set SELECTEDTABLE "sancp"
-	$mainFrame.eFrame.eBox insert end "WHERE  LIMIT 500"
+	$mainFrame.eFrame.eBox insert end "WHERE  ORDER BY sancp.start_time LIMIT 500"
+	$mainFrame.eFrame.eBox mark set insert "end -36 c"
     }
     
-    $mainFrame.eFrame.eBox mark set insert "end -11 c"
+    
     # return $tableSelected
 }
 
@@ -421,7 +424,8 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
 	    set tmpWhere "WHERE ${SELECTEDTABLE}.timestamp > '$timestamp' AND $inserttext LIMIT 500"
 	} else {
 	    set timestamp [lindex [GetCurrentTimeStamp "1 day ago"] 0]
-	    set tmpWhere "WHERE ${SELECTEDTABLE}.start_time > '${timestamp}' AND $inserttext LIMIT 500"
+	    set tmpWhere "WHERE ${SELECTEDTABLE}.start_time > '${timestamp}' AND \
+		    $inserttext ORDER BY ${SELECTEDTABLE}.start_time  LIMIT 500"
 	}
 	# Are we going to the builder or submitting the query
 	if { $RETURN_FLAG_IP == 2 } {
@@ -432,9 +436,9 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
 	    if { $SELECTEDTABLE == "event" } {
 		DBQueryRequest $tmpWhere
 	    } elseif { $SELECTEDTABLE == "sessions" } {
-		SsnQueryRequest $whereStatement
+		SsnQueryRequest $tmpWhere
 	    } elseif { $SELECTEDTABLE == "sancp" } {
-		SancpQueryRequest $whereStatement
+		SancpQueryRequest $tmpWhere
 	    }
 	} 
     }

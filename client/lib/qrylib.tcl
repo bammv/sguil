@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.24 2005/01/28 14:49:30 bamm Exp $ #
+# $Id: qrylib.tcl,v 1.25 2005/02/09 16:13:35 shalligan Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -62,8 +62,11 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 	set eventMsg [$CUR_SEL_PANE(name).msgFrame.list get $selectedIndex]
 	set whereTmp "$whereTmp event.signature = '$eventMsg'"
     }
-
-    if { $build == "build" } {
+    # if it is a sancp query tack a order by start_time on it.  MERGE tables mess up the returned order.
+    if { $tableName == "sancp" } {
+	set whereTmp "$whereTmp ORDER BY $tableName.start_time"
+    }
+    if { $build != "quick" } {
 	set tmpWhereStatement [QryBuild $tableName $whereTmp]
 	set whereStatement [lindex $tmpWhereStatement 1]
 	set tableName [lindex $tmpWhereStatement 0]
