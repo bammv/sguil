@@ -1,19 +1,33 @@
-#!/bin/sh
+#!/usr/local/bin/tcl
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.12 2003/11/19 18:18:14 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.13 2004/02/10 17:25:19 bamm Exp $ #
 
 # Name of sguild server
 set SERVER_HOST syn
 # Port sguild listens on for sensor connects
 set SERVER_PORT 7736
-# Local hostname (sensorname)
+# Local hostname
 set HOSTNAME gateway
 # Where to look for files created by modded spp_portscan
 set PORTSCAN_DIR /snort_data/portscans
+
+#
+# Sguil currently supports two types of session/connecton/stream/flow
+# loggers - spp_stream4 (keep_stats patch) and sancp (http://www.metre.net/sancp.html)
+#
+
+#Enable Stream4 keep_stats (1=enable 0=disable)
+set S4_KEEP_STATS 1
 # Where to look for ssn files created by modded spp_stream4
 set SSN_DIR /snort_data/ssn_logs
+
+# Enable sancp stats (1=enable 0=disable)
+set SANCP 0
+# Where stats from sancp are kept
+set SANCP_DIR /snort_data/sancp
+
 # What directory to report size stats (df -h) on.
 set WATCH_DIR /snort_data
 
@@ -47,8 +61,10 @@ proc FinishedCopy { fileID socketID bytes {error {}} } {
 }
 proc SendPSDataToSvr { fileName } {
   global SERVER_HOST SERVER_PORT DEBUG
-  if [catch {set socketID [socket $SERVER_HOST $SERVER_PORT]}] {
+  if [catch {socket $SERVER_HOST $SERVER_PORT} socketID] {
     puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT"
+    puts "ERROR: $socketID"
+    catch {close $socketID} closeError
   } else {
     fconfigure $socketID -translation binary
     puts $socketID "PSFile [file tail $fileName]"
@@ -60,7 +76,7 @@ proc CopyDataToServer { fileName socketID } {
   global DEBUG SERVER_HOST BUSY
   if {$DEBUG} {puts "Copying $fileName to $SERVER_HOST."}
   set fileID [open $fileName r]
-  fconfigure $fileID -translation binary
+  fconfigure $fileID -translation binary -buffering none
   if [catch {fcopy $fileID $socketID -command [list FinishedCopy $fileID $socketID]} fcopyError] {
     puts "Error: $fcopyError"
     return
@@ -70,13 +86,15 @@ proc CopyDataToServer { fileName socketID } {
   file delete $fileName
 }
 
-proc SendSsnDataToSvr { fileName } {
+proc SendSsnDataToSvr { type fileName } {
   global SERVER_HOST SERVER_PORT DEBUG HOSTNAME
-  if [catch {set socketID [socket $SERVER_HOST $SERVER_PORT]}] {
+  if [catch {socket $SERVER_HOST $SERVER_PORT} socketID ] {
     puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT"
+    puts "ERROR: $socketID"
+    catch {close $socketID} closeError
   } else {
-    fconfigure $socketID -translation binary
-    puts $socketID "SsnFile [file tail $fileName] $HOSTNAME"
+    fconfigure $socketID -translation binary -buffering none
+    puts $socketID "SsnFile $type [file tail $fileName] $HOSTNAME"
     CopyDataToServer $fileName $socketID
   }
 }
@@ -96,15 +114,30 @@ proc CheckForPortscanFiles {} {
   after $PS_CHECK_DELAY_IN_MSECS CheckForPortscanFiles
 }
 proc CheckForSsnFiles {} {
-  global SSN_DIR SSN_CHECK_DELAY_IN_MSECS DEBUG CONNECTED
+  global SSN_DIR S4_KEEP_STATS SANCP SANCP_DIR SSN_CHECK_DELAY_IN_MSECS DEBUG CONNECTED
   if {$CONNECTED} {
-    if {$DEBUG} {puts "Checking for Session files in $SSN_DIR."}
-    foreach fileName [glob -nocomplain $SSN_DIR/ssn_log.*] {
-      puts $fileName
-      if { [file size $fileName] > 0 } {
-        SendSsnDataToSvr $fileName
-      } else { 
-        file delete $fileName
+    if { $S4_KEEP_STATS } {
+      if {$DEBUG} {puts "Checking for Session files in $SSN_DIR."}
+      foreach fileName [glob -nocomplain $SSN_DIR/ssn_log.*] {
+        puts $fileName
+        update
+        if { [file size $fileName] > 0 } {
+          SendSsnDataToSvr sessions $fileName
+        } else { 
+          file delete $fileName
+        }
+      }
+    }
+    if { $SANCP } {
+      if {$DEBUG} {puts "Checking for sancp stats files in $SANCP_DIR."}
+      foreach fileName [glob -nocomplain $SANCP_DIR/stats.*.*] {
+        puts $fileName
+        update
+        if { [file size $fileName] > 0 } {
+          SendSsnDataToSvr sancp $fileName
+        } else {
+          file delete $fileName
+        }
       }
     }
   }
@@ -136,7 +169,7 @@ proc ConnectToSguilServer {} {
     puts "Trying again in 15 seconds"
     after 15000
   }
-  fconfigure $socketID -buffering line
+  fconfigure $socketID
   puts $socketID "CONNECT $HOSTNAME"
   fileevent $socketID readable [list SguildCmdRcvd $socketID]
   set CONNECTED 1
