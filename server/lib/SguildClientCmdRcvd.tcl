@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.3 2004/10/18 15:28:20 shalligan Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.4 2004/10/18 20:49:37 shalligan Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -275,19 +275,39 @@ proc GetUdpData { socketID sid cid } {
 #                 In the future sensorList will contain a list of sensors, for
 #                 now the client gets everything.
 #
-proc MonitorSensors { socketID sensorList } {
-  global clientList clientMonitorSockets connectedAgents socketInfo sensorUsers
-  LogMessage "$socketID added to clientList"
-  lappend clientList $socketID
-  foreach sensorName $sensorList {
-    lappend clientMonitorSockets($sensorName) $socketID
-    lappend sensorUsers($sensorName) [lindex $socketInfo($socketID) 2]
-  }
-  SendSystemInfoMsg sguild "User [lindex $socketInfo($socketID) 2] is monitoring sensors: $sensorList"
-  SendCurrentEvents $socketID
-  #if { [info exists connectedAgents] } {
-  #  SendSystemInfoMsg sguild "Connected sensors - $connectedAgents"
-  #}
+proc MonitorSensors { socketID ClientSensorList } {
+    global clientList clientMonitorSockets connectedAgents socketInfo sensorUsers sensorList
+   
+
+    if {[lsearch -exact $clientList $socketID] < 0} { 
+	LogMessage "$socketID added to clientList"
+	lappend clientList $socketID
+    }
+    # Find this socketID in other sensors and delete it 
+    foreach sensor $sensorList {
+	if [info exists clientMonitorSockets($sensor)] {
+	    set index [lsearch $clientMonitorSockets($sensor) $socketID]
+	    if { $index > -1 } {
+		set clientMonitorSockets($sensor) [lreplace clientMonitorSockets($sensor) $index $index]
+	    }
+	}
+	if [info exists sensorUsers($sensor)] {
+	    set index [lsearch $sensorUsers($sensor) [lindex $socketInfo($socketID) 2]]
+	    if { $index > -1 } {
+		set sensorUsers($sensor) [lreplace sensorUsers($sensor) $index $index]
+	    }
+	}
+    }
+
+    foreach sensorName $ClientSensorList {
+	lappend clientMonitorSockets($sensorName) $socketID
+	lappend sensorUsers($sensorName) [lindex $socketInfo($socketID) 2] 
+    }
+    SendSystemInfoMsg sguild "User [lindex $socketInfo($socketID) 2] is monitoring sensors: $ClientSensorList"
+    SendCurrentEvents $socketID
+    #if { [info exists connectedAgents] } {
+	#  SendSystemInfoMsg sguild "Connected sensors - $connectedAgents"
+    #}
 }
                                                                                                             
 proc SendEscalatedEvents { socketID } {

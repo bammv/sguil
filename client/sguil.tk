@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.146 2004/10/18 17:22:45 shalligan Exp $ #
+# $Id: sguil.tk,v 1.147 2004/10/18 20:49:36 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -248,6 +248,20 @@ proc ReconnectToSguild {} {
     UpdateUserName "$USERNAME" $USERID
     SendToSguild "SendReportQryList"
   }
+}
+proc ChangeSensors {} {
+    global CONNECTED USERNAME PASSWD socketID monitorList
+	
+    ClearAllEventLists
+    SendToSguild "SendSensorList"
+    tkwait variable MONITORFLAG
+    wm deiconify .
+    update
+    SendToSguild "MonitorSensors $monitorList"
+    SendToSguild "SendEscalatedEvents"
+    SendToSguild "SendGlobalQryList"
+    SendToSguild "SendReportQryList"
+ 
 }
 proc SendToSguild { data } {
   global socketID CONNECTED
@@ -1633,7 +1647,7 @@ source $SGUILLIB/guilib.tcl
 source $SGUILLIB/extdata.tcl
 source $SGUILLIB/sancp.tcl
 source $SGUILLIB/sound.tcl
-source $SGUILLIB/domtree.tcl
+
 if { $WHOIS_PATH == "SimpleWhois" } {
   source $SGUILLIB/whois.tcl
 }
@@ -1676,6 +1690,7 @@ set topFrame [frame .topFrame]
   set fileList [menu $fileMenu.menu -tearoff 0]
     $fileList add command -label "Display Incident Categories" -command DisplayIncidentCats  
     $fileList add command -label "Sleep (Ctrl-s)" -command "GoToSleep"
+    $fileList add command -label "Change Sensor(s)" -command "ChangeSensors"
     $fileList add cascade -label "Change Font" -menu $fileList.font
     set fontMenu [menu $fileList.font -tearoff 0]
       $fontMenu add command -label "Standard" -command {ChangeFont ourStandardFont}
