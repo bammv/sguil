@@ -1,4 +1,4 @@
--- $Id: create_sguildb.sql,v 1.9 2004/03/15 14:48:43 mboman Exp $
+-- $Id: create_sguildb.sql,v 1.10 2004/03/15 15:01:54 mboman Exp $
 -- Users may want to use a different DB name.
 -- CREATE DATABASE IF NOT EXISTS sguildb;
 -- USE sguildb;
@@ -180,4 +180,4 @@ CREATE TABLE version
   installed	DATETIME
 );
 
-INSERT INTO version (version, installed) VALUES ("0.7", now());
+INSERT INTO version (version, installed) VALUES ("0.8", now());
