@@ -339,10 +339,7 @@ proc ClientCmdRcvd { socketID } {
     set origData $data
     set clientCmd [ctoken data " "]
     # Check to make the client validated itself
-    if { $clientCmd != "ValidateUser" && $clientCmd != "GetIcmpData" &&\
-         $clientCmd != "GetIPData" && $clientCmd != "GetPayloadData" &&\
-         $clientCmd != "GetPSData" && $clientCmd != "GetTcpData" &&\
-         $clientCmd != "GetUdpData" && $clientCmd != "PING" } {
+    if { $clientCmd != "ValidateUser" && $clientCmd != "PING" } {
       if { [lsearch -exact $validSockets $socketID] < 0 } {
         catch {SendSocket $socketID\
          "InfoMessage {Client does not appear to be logged in. Please exit and log back in.}"} tmpError
