@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.12 2005/01/28 19:45:46 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.13 2005/01/28 20:12:26 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -180,7 +180,7 @@ proc LoadFile { fileName table } {
 
     global  LOADERD_DB_ID
 
-    set dbCmd "LOAD DATA CONCURRENT LOCAL INFILE '$fileName' INTO TABLE $table\
+    set dbCmd "LOAD DATA CONCURRENT LOCAL INFILE '$fileName' INTO TABLE `$table`\
                FIELDS TERMINATED BY '|'"
 
     if [catch {mysqlexec $LOADERD_DB_ID $dbCmd} execResults] {
