@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.22 2004/03/24 20:42:06 shalligan Exp $ #
+# $Id: qrybuild.tcl,v 1.23 2004/10/18 21:46:05 shalligan Exp $ #
 proc QryBuild {tableSelected whereTmp } {
     global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList
@@ -9,22 +9,28 @@ proc QryBuild {tableSelected whereTmp } {
 	set SELECTEDTABLE "event"
     }
     if {$whereTmp == "empty"} {
-      set whereTmp "WHERE"
+	set whereTmp "WHERE"
     }
-
+    
     # Grab the current pointer locations
     set xy [winfo pointerxy .]
     # Create the window
     set qryBldWin .qryBldWin
     if { [winfo exists $qryBldWin] } {
-	    wm withdraw $qryBldWin
-	    wm deiconify $qryBldWIn
-	    return
-	}
-  
+	wm withdraw $qryBldWin
+	wm deiconify $qryBldWIn
+	return
+    }
+    
     toplevel $qryBldWin
     wm title $qryBldWin "Query Builder"
-    wm geometry $qryBldWin +[lindex $xy 0]+[lindex $xy 1]
+    set height [winfo height .]
+    set width [winfo width .]
+    set y [expr ( ( $height / 2 ) - 250)]
+    if { $y < 0 } { set y 0 }
+    set x [expr ( ( $width / 2 ) - 350)]
+    if { $x < 0 } { set x 0 }
+    wm geometry $qryBldWin +$x+$y
     
     # Create some arrays for the lists
     # funclist are lists of {LABEL FUNCTION} pairs.  In most cases they will be the same.
@@ -126,10 +132,7 @@ proc QryBuild {tableSelected whereTmp } {
     pack  $selectFrame $bb -side top -fill both -expand true -pady 1
     eval $metaList insert 0 $mlst
     pack $mainFrame -side top -pady 1 -expand true -fill both
-
-    
-
-
+update
 
 
     tkwait variable RETURN_FLAG
