@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.3 2004/11/04 19:48:03 shalligan Exp $ #
 
 proc ForkLoader {} {
   global loaderWritePipe
@@ -15,7 +15,7 @@ proc ForkLoader {} {
         set fileName [lindex $data 0]
         set cmd [lindex $data 1]
         if [catch {eval exec $cmd} loadError] {
-          LogMessage "Unable to load PS data into DB. $loadError"
+          LogMessage "Unable to load data into DB. $loadError"
         } else {
           file delete $fileName
           InfoMessage "$cmd"
