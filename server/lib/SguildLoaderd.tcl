@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.6 2005/01/28 00:07:40 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.7 2005/01/28 01:51:39 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -118,6 +118,7 @@ proc CreateSancpMergeTable {} {
         dst_bytes     INT UNSIGNED            NOT NULL,    \
         src_flags     TINYINT UNSIGNED        NOT NULL,    \
         dst_flags     TINYINT UNSIGNED        NOT NULL,    \
+        INDEX p_key (sid,sancpid),
         INDEX src_ip (src_ip),                             \
         INDEX dst_ip (dst_ip),                             \
         INDEX dst_port (dst_port),                         \
