@@ -11,7 +11,7 @@ CVS-HEAD
       added by geek2)
  
     * Modified client authentication. See sguild comments for
-      more information.
+      more information. (NOTE: sguil.tk now REQUIRES tcllib)
 
   sguild
     * Alpha support for emailing events. 
