@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.66 2003/11/19 18:18:14 bamm Exp $ #
+# $Id: sguild,v 1.67 2003/11/21 19:54:14 bamm Exp $ #
 
 # Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -24,6 +24,32 @@ set DB_VERSION "0.7"
 
 ########################## PROCS ####################################
 
+proc ForkLoader {} {
+  global DEBUG loaderWritePipe
+  # First create some pipes to communicate thru
+  pipe loaderReadPipe loaderWritePipe
+  # Fork the child
+  if {[set childPid [fork]] == 0 } {
+    # We are the child now.
+    proc ParentCmdRcvd { pipeID } {
+      fconfigure $pipeID -buffering line
+      if { [eof $pipeID] || [catch {gets $pipeID data}] } {
+        exit
+      } else {
+        set fileName [lindex $data 0]
+        set cmd [lindex $data 1]
+        if [catch {eval exec $cmd} loadError] {
+          puts "Unable to load PS data into DB."
+          puts $loadError
+        } else {
+          file delete $fileName
+        }
+      }
+    }
+    fileevent $loaderReadPipe readable [list ParentCmdRcvd $loaderReadPipe]
+    if {$DEBUG} { puts "Loader Forked" }
+  }
+}
 proc DisplayUsage { cmdName } {
   puts "Usage: $cmdName \[-D\] \[-h\] \[-o\] \[-c <filename>\] \[-u <filename>\] \[-P <filename>\]"
   puts "         \[-O <filename>\] \[-C <directory\]"
@@ -708,7 +734,7 @@ proc GetSensorID { sensorName } {
   return $sid
 }
 proc RcvSsnFile { socketID fileName sensorName } {
-  global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS
+  global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe
   set sensorID [GetSensorID $sensorName]
   if {$DEBUG} {puts "Recieving session file $fileName."}
   fconfigure $socketID -translation binary
@@ -750,15 +776,12 @@ proc RcvSsnFile { socketID fileName sensorName } {
      BY '|'\""
     if {$DEBUG} {puts $cmd}
   }
-  if [catch {eval exec $cmd} loadError] {
-    puts "Unable to load session data into DB."
-    puts $loadError
-  } else {
-    file delete $DB_OUTFILE.tmp
-  }
+  # The loader child proc does the LOAD for us.
+  puts $loaderWritePipe [list $DB_OUTFILE.tmp $cmd]
+  flush $loaderWritePipe
 }
 proc RcvPortscanFile { socketID fileName } {
-  global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS
+  global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe
   if {$DEBUG} {puts "Recieving portscan file $fileName."}
   fconfigure $socketID -translation binary
   set PS_OUTFILE $TMPDATADIR/$fileName
@@ -778,12 +801,9 @@ proc RcvPortscanFile { socketID fileName } {
      BY '|'\""
     if {$DEBUG} {puts $cmd}
   }
-  if [catch {eval exec $cmd} loadError] {
-    puts "Unable to load PS data into DB."
-    puts $loadError
-  } else {
-    file delete $PS_OUTFILE
-  }
+  # The loader child proc does the LOAD for us.
+  puts $loaderWritePipe [list $PS_OUTFILE $cmd]
+  flush $loaderWritePipe
 }
 
 proc DiskReport { socketID fileSystem percentage } {
@@ -1541,6 +1561,8 @@ if [catch {socket -server SensorConnect $SENSORPORT} sensorSocket] {
   puts "ERROR: $sensorSocket"
 }
 puts "Sguild Initialized."
+# Fork a child to load PS/SSN info
+ForkLoader
 
 signal trap {HUP} HupTrapped
 
