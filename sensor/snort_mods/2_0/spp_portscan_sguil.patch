@@ -1,0 +1,175 @@
+Index: spp_portscan.c
+===================================================================
+RCS file: /cvsroot/snort/snort/src/preprocessors/spp_portscan.c,v
+retrieving revision 1.45
+diff -r1.45 spp_portscan.c
+25c25,29
+< 
+---
+> /* This is a modified version of spp_portsan. It is meant to be used in
+>  * conjuction with sguil (Snort GUI for Lamerz). Changes include using
+>  * CallLogFuncs and the output format.
+> */
+>  
+27a32,34
+> //  Bammkkkk
+> #include <sys/stat.h>
+> #include <unistd.h>
+237c244,253
+< FILE *logFile;
+---
+> // Bammkkkk
+> long GetMilliseconds()
+> {
+>   struct timeval tv;
+>   gettimeofday(&tv, NULL);
+> 
+>   return (long)(tv.tv_sec * 1000 + tv.tv_usec / 1000);
+> }
+> char *logDirName;
+> char *sensorName;
+985c1001,1002
+<                 CallAlertFuncs(NULL , logMessage, NULL, &event);
+---
+>                 // CallAlertFuncs(NULL , logMessage, NULL, &event);
+> 		CallLogFuncs(p , logMessage, NULL, &event);
+1236c1253
+<     char *logFileName;
+---
+>     struct stat st;    
+1244c1261
+<         FatalError(MODNAME ": %s (%d) => portscan configuration format:  address/mask ports seconds [logfile]\n", file_name, file_line);
+---
+>         FatalError(MODNAME ": %s (%d) => portscan configuration format:  address/mask ports seconds logDir sensor_name\n", file_name, file_line);
+1247a1265
+>     /* the sguil mod adds a seventh arg -> sensorName - Bammkkkk */
+1249c1267
+<     toks = mSplit(args, " ", 6, &numToks, 0);
+---
+>     toks = mSplit(args, " ", 7, &numToks, 0);
+1251c1269
+<     toks = mSplit(args, " ", 6, &numToks, '\\');    /* ZDNOTE What does the
+---
+>     toks = mSplit(args, " ", 7, &numToks, '\\');    /* ZDNOTE What does the
+1255c1273,1275
+<     if((numToks < 3) || (numToks > 6))
+---
+>     /* Went ahead and made all the args mandatory. - Bammkkkk */
+>     printf("Number of toks: %i\n", numToks);
+>     if((numToks != 5))
+1257c1277
+<         FatalError(MODNAME "%s(%d) => portscan configuration format:  address/mask ports seconds [logfile]\n", file_name, file_line);
+---
+>         FatalError(MODNAME "%s(%d) => portscan configuration format:  address/mask ports seconds logDir snesor_name\n", file_name, file_line);
+1266,1310c1286,1306
+< 
+<     /*
+<      * Now we use the default log directory if provided from the command line
+<      * (-l).
+<      */
+<     if(numToks == 4)
+<     {
+< #ifdef WIN32
+<         logFileName = (char *) calloc(strlen(toks[3]) + 1 + 1, 1);
+<         strncpy(logFileName, toks[3], strlen(toks[3]));
+< #else
+<         if(pv.log_dir && (*toks[3] != '/'))
+<         {
+<             if(*(pv.log_dir + strlen(pv.log_dir) - 1) != '/')
+<             {
+<                 logFileName = (char *)calloc(strlen(pv.log_dir) 
+<                         + strlen(toks[3]) + 1 + 1, 1);
+< 
+<                 strncat(logFileName, pv.log_dir, strlen(pv.log_dir) + 1);
+<                 strncat(logFileName, "/", 1);
+<                 strncat(logFileName, toks[3], strlen(toks[3]));
+<             }
+<             else
+<             {
+<                 logFileName = (char *)calloc(strlen(pv.log_dir) 
+<                         + strlen(toks[3]) + 1, 1);
+<                    
+<                 strncat(logFileName, pv.log_dir, strlen(pv.log_dir) + 1);
+<                 strncat(logFileName, toks[3], strlen(toks[3]));
+<             }
+<         }
+<         else
+<         {
+<             logFileName = (char *)calloc(strlen(toks[3]) + 1, 1);
+<                
+<             strncat(logFileName, toks[3], strlen(toks[3]) + 1);
+<         }
+< #endif  /* WIN32 */
+< 
+<         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,MODNAME ": logFileName = %s\n", logFileName););
+< 
+<         logFile = fopen(logFileName, "a+");
+<         if(!logFile)
+<         {
+<             perror("fopen");
+---
+>     /* Lots of stuff deleted - Bammkkkk */
+>   
+>     logDirName = toks[3];
+>     //strncat(logDirName, toks[3], strlen(toks[3]) + 1);
+>     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,MODNAME ": logDirName = %s\n", logDirName););
+>     if(stat(logDirName, &st) < 0)
+>       {
+> 	FatalError(MODNAME ": Unable to stat directory (%s)\n", logDirName);
+>       }
+>     if((!S_ISDIR(st.st_mode) || access(logDirName, W_OK) < 0))
+>       {
+> 	FatalError(MODNAME ": %s is not a directory or is not writable", logDirName);
+>       }
+>   
+>     logLevel |= lFILE;
+>     
+>     /* - Bammkkkk
+>        logFile = fopen(logFileName, "a+");
+>        if(!logFile)
+>        {
+>        perror("fopen");
+1312a1309,1312
+>     */
+> 
+>     /* Set the sensor name for the log file - Bammkkkk */
+>     sensorName = toks[4];
+1314,1315d1313
+<         logLevel |= lFILE;
+<     }
+1318,1320c1316,1318
+<     {
+<         FatalError(MODNAME ": %s (%d) => portscan configuration format:  address/mask ports seconds [logfile]\n", file_name, file_line);
+<     }
+---
+>       {
+> 	FatalError(MODNAME ": ERROR: %s (%d) => portscan configuration format:  address/mask ports seconds logDir sensor_name\n", file_name, file_line);
+>       }
+1384a1383,1396
+>     char currentTime[80];
+>     char logFileName[STD_BUF];
+>     FILE *logFile;
+> 
+>     /* Open file to log to - Bammkkkk */
+>     snprintf(logFileName, STD_BUF, "%s/portscan_log.%lu", logDirName, GetMilliseconds());
+>     logFile = fopen(logFileName, "a");
+>     if(!logFile)
+>       {
+> 	perror("fopen");
+> 	FatalError(MODNAME ": Unable to open logfile (%s)\n", logFileName);
+>       }
+>   
+> 
+1409c1421
+< 
+---
+> 	    strftime(currentTime, 80, "%F %T", time);
+1509a1522
+> 	    /*
+1513a1527,1530
+> 	    */
+> 	    fprintf(logFile, "%s|%s|%s|%d|%s|%d|%s %s %s\n", sensorName, currentTime, sourceAddress, 
+> 		    currentConnection->sport, destinationAddress, currentConnection->dport, 
+> 		    scanType, currentConnection->tcpFlags, reservedBits);
+1518a1536
+>     fclose(logFile);

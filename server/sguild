@@ -1,0 +1,724 @@
+#!/usr/local/bin/tclsh8.3
+
+# Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>
+#
+# This program is distributed under the terms of version 1.0 of the 
+# Q Public License.  See LICENSE.QPL for further details.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+########################## GLOBALS ##################################
+
+set VERSION "sguil 0.2"
+
+# DEBUG 1=on 0=off This is VERY chatty.
+set DEBUG 1
+# What port for sguild to listen on.
+# Client Connects
+set SERVERPORT 7734
+# Sensor connects
+set SENSORPORT 7736
+# Path to look for rules. Sguild will append the hostname (/etc/snort/rules/<hostname>/*.rules)
+set RULESDIR /snort_data/rules
+# Where to temporarily store portscan and session data for loading into the DB
+set TMPDATADIR /tmp
+# Max number of portscan data rows to return to the client
+set MAX_PS_ROWS 200
+# DataBase Info
+set DBNAME sguildb
+set DBHOST localhost
+set DBPORT 1211
+set DBUSER flatty 
+set DBPASS "J6O6P6Y"
+
+######################## END GLOBALS ################################
+
+########################## PROCS ####################################
+
+#
+# ClientCmdRcvd: Called when client sends commands.
+#
+proc ClientCmdRcvd { socketID } {
+  global DEBUG clientList
+
+  if { [eof $socketID] || [catch {gets $socketID data}] } {
+    # Socket closed
+    close $socketID
+    ClientExitClose $socketID
+    if {$DEBUG} { puts "Socket $socketID closed" }
+  } else {
+    if {$DEBUG} {puts "Clent Command Recieved: $data"}
+    set clientCmd [lindex $data 0]
+    switch -exact $clientCmd {
+      SendSensorList { $clientCmd $socketID }
+      MonitorSensors { $clientCmd $socketID [lrange $data 1 end] } 
+      SendEscalatedEvents { $clientCmd $socketID }
+      RuleRequest { $clientCmd $socketID [lindex $data 1] [lrange $data 2 end] }
+      DeleteEventID { $clientCmd $socketID [lindex $data 1] [lindex $data 2]}
+      DeleteEventIDList { $clientCmd $socketID [lindex $data 1] [lrange $data 2 end] }
+      GetUdpData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+      GetIcmpData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+      GetTcpData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+      GetIPData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+      GetPayloadData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+      QueryDB { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+      ExecDB { $clientCmd $socketID [lindex $data 1] }
+      GetPSData { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+      SendDBInfo { $clientCmd $socketID }
+      default { puts "Unrecognized command from $socketID: $data" }
+    }
+  }
+}
+
+proc ClientExitClose { socketID } {
+  global clientList  clientMonitorSockets
+  if { [info exists clientList] } {
+    set clientList [ldelete $clientList $socketID]
+  }
+  if { [info exists clientMonitorSockets] } {
+    foreach sensorName [array names clientMonitorSockets] {
+      set clientMonitorSockets($sensorName) [ldelete $clientMonitorSockets($sensorName) $socketID]
+    }
+  }
+}
+
+#
+# EventRcvd: Called by main when events are received. File id sent as arg.
+#
+proc EventRcvd { data } {
+  global DEBUG
+
+  set eventDataList [lrange [split $data |] 1 end]
+  if { [lindex $eventDataList 2] == "system-info" } {
+    if {$DEBUG} {
+      puts "SYSTEM INFO: $eventDataList"
+    }
+    set sensorName [lindex $eventDataList 3]
+    set message [lindex $eventDataList 5]
+    SendSystemInfoMsg $sensorName $message
+  } else {
+    if {$DEBUG} {
+      puts "Alert Received: $eventDataList"
+    }
+    AddEventToEventArray $eventDataList
+    SendEvent $eventDataList
+  }
+}
+
+proc GetCurrentTimeStamp {} {
+  set timestamp [clock format [clock seconds] -gmt true -f "%Y-%m-%d %T"]
+  return $timestamp 
+} 
+
+
+#
+# ldelete: Delete item from a list
+#
+proc ldelete { list value } {
+  set ix [lsearch -exact $list $value]
+  if {$ix >= 0} {
+    return [lreplace $list $ix $ix]
+  } else {
+    return $list
+  }
+}
+
+
+#
+# SendSocket: Send command to client
+#
+proc SendSocket { socketID command } {
+  global clientList DEBUG
+  if {$DEBUG} {puts "Sending $socketID: $command"}
+  if { [catch {puts $socketID $command} sendError] } {
+    if {$DEBUG} { puts "Error sending \"$command\" to $socketID" }
+    catch { close $socketID } closeError
+    # Remove socket from the client list
+    CleanCloseError $socketID
+    return
+  }
+  catch {flush $socketID} flushError
+}
+
+#
+# SendEvent: Send events to connected clients
+#
+proc SendEvent { eventDataList } {
+  global DEBUG clientList
+  if { [info exists clientList] && [llength $clientList] > 0 } {
+    foreach clientSocket $clientList {
+      SendSocket $clientSocket "InsertEvent $eventDataList"
+    }
+  } else {
+    if {$DEBUG} { puts "No clients to send alert to." }
+  }
+}
+proc SendSystemInfoMsg { sensor msg } {
+  global clientList DEBUG
+  if { [info exists clientList] && [llength $clientList] > 0 } {
+    foreach clientSocket $clientList {
+      SendSocket $clientSocket "InsertSystemInfoMsg $sensor $msg"
+    }
+  } else {
+    if {$DEBUG} { puts "No clients to send info msg to." }
+  }
+}
+#
+# AddEventToEventArray: Global eventIDArray contains current events.
+#
+proc AddEventToEventArray { eventDataList } {
+  global eventIDArray eventIDList sensorIDList
+  set eventID [join [lrange $eventDataList 5 6] .]
+  set sensorName [lindex $eventDataList 3]
+  set eventIDArray($eventID) $eventDataList
+  # Arrays are not kept in any particular order so we have to keep
+  # a list in order to control the order the clients recieve events
+  lappend eventIDList $eventID
+}
+
+proc DeleteEventIDList { socketID status deleteEventIDList } {
+  global eventIDArray eventIDList clientList escalateArray escalateIDList
+  set count 0
+  set updateTmp ""
+  foreach socket $clientList {
+    # Sending a DeleteEventID to the originating client allows us
+    # to remove events from the RT panes when deleting from a query.
+    # Problem is, we could delete a correlated event parent without
+    # deleting the children thus leaving alerts that haven't been 
+    # dealt with. 
+    SendSocket $socket "DeleteEventIDList $deleteEventIDList"
+  }
+  foreach eventID $deleteEventIDList {
+    # If status == 2 then escalate
+    if {$status == 2} {
+      lappend escalateIDList $eventID
+      set escalateArray($eventID) $eventIDArray($eventID)
+      foreach socket $clientList {
+        SendSocket $socket "InsertEscalatedEvent $escalateArray($eventID)"
+      }
+    }
+    if { [info exists eventIDArray($eventID)] } { unset eventIDArray($eventID) }
+    set eventIDList [ldelete $eventIDList $eventID]
+    set splitID [split $eventID .]
+    if { $count < 1000 } {
+      set updateTmp "$updateTmp (sid=[lindex $splitID 0] AND cid=[lindex $splitID 1])"
+    } else {
+      regsub -all {\) \(} $updateTmp {) OR (} whereTmp
+      UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $status
+      set count 0
+      set updateTmp ""
+    }
+    incr count
+  }
+  regsub -all {\) \(} $updateTmp {) OR (} whereTmp
+  UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $status
+}
+proc DeleteEventID { socketID eventID status } {
+  global eventIDArray eventIDList clientList escalateArray escalateIDList
+  
+  foreach socket $clientList {
+    # See comments in DeleteEventIDList
+    SendSocket $socket "DeleteEventID $eventID"
+  }
+  # If status == 2 then escalate
+  if { $status == 2 } {
+    lappend escalateIDList $eventID
+    set escalateArray($eventID) $eventIDArray($eventID)
+    foreach socket $clientList {
+      SendSocket $socket "InsertEscalatedEvent $escalateArray($eventID)"
+    }
+  }
+  if { [info exists escalateArray($eventID)] } { unset escalateArray($eventID) }
+  if { [info exists escalateIDList] } {set escalateIDList [ldelete $escalateIDList $eventID]}
+  if { [info exists eventIDArray($eventID)] } { unset eventIDArray($eventID) }
+  set eventIDList [ldelete $eventIDList $eventID]
+  UpdateDBStatus $eventID [GetCurrentTimeStamp] $status
+}
+
+proc SendDBInfo { socketID } {
+  global tableNameList tableArray 
+  SendSocket $socketID "TableNameList $tableNameList"
+  foreach tableName $tableNameList {
+    SendSocket $socketID "TableColumns $tableName $tableArray($tableName)"
+  }
+}
+#
+# ClientConnect: Sets up comms for client/server
+#
+proc ClientConnect { socketID IPAddr port } {
+  global DEBUG
+  if {$DEBUG} {
+    puts "Client Connect: $IPAddr $port $socketID"
+  }
+  fconfigure $socketID -buffering line
+  fileevent $socketID readable [list ClientCmdRcvd $socketID]
+  # Send the client a list of tables and column names/info
+  #SendDBInfo $socketID
+} 
+
+proc SensorConnect { socketID IPAddr port } {
+  global DEBUG
+  puts "Connect from $IPAddr:$port $socketID"
+  fconfigure $socketID -buffering line
+  fileevent $socketID readable [list SensorCmdRcvd $socketID]
+}
+proc GetSensorID { sensorName } {
+  # For now we query the DB everytime we need the sid.
+  set sid [FlatDBQuery "SELECT sid FROM sensor WHERE hostname='$sensorName'"]
+  return $sid
+}
+proc RcvSsnFile { socketID fileName sensorName } {
+  global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS
+  set sensorID [GetSensorID $sensorName]
+  if {$DEBUG} {puts "Recieving session file $fileName."}
+  fconfigure $socketID -translation binary
+  set DB_OUTFILE $TMPDATADIR/$fileName
+  set fileID [open $DB_OUTFILE w]
+  fcopy $socketID $fileID
+  close $fileID
+  close $socketID
+
+  set inFileID [open $DB_OUTFILE r]
+  set outFileID [open $DB_OUTFILE.tmp w]
+  # Use i to keep track of how many lines we loaded into the database for DEBUG.
+  set i 0
+  # Load the entire file into memory (read $inFileID), then create a list
+  # delimited by \n. Finally loop through each 'line', prepend the sensorID (sid)
+  # to it, and append the new line to the tmp file.
+  foreach line [split [read $inFileID] \n] {
+    if {$line != ""} {puts $outFileID "$sensorID|$line"; incr i}
+  }
+  close $inFileID
+  close $outFileID
+  file delete $DB_OUTFILE
+
+  if {$DEBUG} {puts "Loading $i cnxs from $fileName into DB."}
+  if {$DBPASS != "" } {
+    set cmd "mysql -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
+     -e \"LOAD DATA LOCAL INFILE '$DB_OUTFILE.tmp' INTO TABLE sessions FIELDS TERMINATED\
+     BY '|'\""
+    if {$DEBUG} {puts $cmd}
+  } else {
+    set cmd "mysql -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
+     -e \"LOAD DATA LOCAL INFILE '$PS_OUTFILE'.tmp INTO TABLE sessions FIELDS TERMINATED\
+     BY '|'\""
+    if {$DEBUG} {puts $cmd}
+  }
+  if [catch {eval exec $cmd} loadError] {
+    puts "Unable to load session data into DB."
+    puts $loadError
+  } else {
+    file delete $DB_OUTFILE.tmp
+  }
+}
+proc RcvPortscanFile { socketID fileName } {
+  global DEBUG TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS
+  if {$DEBUG} {puts "Recieving portscan file $fileName."}
+  fconfigure $socketID -translation binary
+  set PS_OUTFILE $TMPDATADIR/$fileName
+  set fileID [open $PS_OUTFILE w]
+  fcopy $socketID $fileID
+  close $fileID
+  close $socketID
+  if {$DEBUG} {puts "Loading $fileName into DB."}
+  if {$DBPASS != "" } {
+    set cmd "mysql -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
+     -e \"LOAD DATA LOCAL INFILE '$PS_OUTFILE' INTO TABLE portscan FIELDS TERMINATED\
+     BY '|'\""
+    if {$DEBUG} {puts $cmd}
+  } else {
+    set cmd "mysql -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
+     -e \"LOAD DATA LOCAL INFILE '$PS_OUTFILE' INTO TABLE portscan FIELDS TERMINATED\
+     BY '|'\""
+    if {$DEBUG} {puts $cmd}
+  }
+  if [catch {eval exec $cmd} loadError] {
+    puts "Unable to load PS data into DB."
+    puts $loadError
+  } else {
+    file delete $PS_OUTFILE
+  }
+}
+
+proc DiskReport { socketID fileSystem percentage } {
+  global agentSensorName
+  SendSystemInfoMsg $agentSensorName($socketID) "$fileSystem $percentage"
+}
+proc SensorAgentConnect { socketID sensorName } {
+  global connectedAgents agentSocket agentSensorName
+  lappend connectedAgents $sensorName
+  set agentSocket($sensorName) $socketID
+  set agentSensorName($socketID) $sensorName
+  SendSystemInfoMsg $sensorName "Agent connected."
+}
+proc CleanUpDisconnectedAgent { socketID } {
+  global connectedAgents agentSocket agentSensorName
+
+  set connectedAgents [ldelete $connectedAgents $agentSensorName($socketID)]
+  set sensorName $agentSensorName($socketID)
+  unset agentSocket($sensorName)
+  unset agentSensorName($socketID)
+}
+proc SensorCmdRcvd { socketID } {
+  global DEBUG connectedAgents agentSensorName
+  if { [eof $socketID] || [catch {gets $socketID data}] } {
+    # Socket closed
+    close $socketID
+    if {$DEBUG} { puts "Socket $socketID closed" }
+    if { [info exists connectedAgents] && [info exists agentSensorName($socketID)] } {
+      CleanUpDisconnectedAgent $socketID
+    }
+  } else {
+    if {$DEBUG} { puts "Sensor Data Rcvd: $data" }
+    set sensorCmd [lindex $data 0]
+    switch -exact -- $sensorCmd {
+      RTEvent	{ EventRcvd [lrange $data 1 end] }
+      PSFile	{ RcvPortscanFile $socketID [lindex $data 1] }
+      CONNECT   { SensorAgentConnect $socketID [lindex $data 1] }
+      DiskReport { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
+      SsnFile	{ RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] }
+      PING	{ puts $socketID "PONG" }
+      default	{ puts "Sensor Cmd Unkown: $sensorCmd" }
+    }
+  }
+}
+
+#
+# RuleRequest finds rule based on message. Should change this to
+# use sig ids in the future.
+#
+proc RuleRequest { socketID sensor message } {
+  global RULESDIR DEBUG
+
+  set RULEFOUND 0
+  set ruleDir $RULESDIR/$sensor
+  if { [file exists $ruleDir] } {
+    foreach ruleFile [glob -nocomplain $ruleDir/*.rules] {
+      if {$DEBUG} {puts "Checking $ruleFile..."}
+      set ruleFileID [open $ruleFile r]
+      while { [gets $ruleFileID data] >= 0 } {
+        if { [string match "*$message*" $data] } {
+          set RULEFOUND 1
+          if {$DEBUG} {puts "Matching rule found in $ruleFile."}
+          break
+        }
+      }
+      close $ruleFileID
+      if {$RULEFOUND} {break}
+    }
+  } else {
+    set data "Could not find $ruleDir."
+  }
+  if {$RULEFOUND} { 
+    SendSocket $socketID "InsertRuleData \{$data\}"
+  } else {
+    SendSocket $socketID "InsertRuleData \{Unable to find matching rule in $ruleDir.\}"
+  }
+}
+proc GetPSData { socketID timestamp srcIP } {
+  global MAX_PS_ROWS DBNAME DBUSER DBPASS DBPORT DBHOST DEBUG
+  set query\
+   "SELECT * FROM portscan WHERE timestamp > '$timestamp' AND src_ip='$srcIP' LIMIT $MAX_PS_ROWS"
+  if {$DEBUG} {puts "Getting PS data: $query"}
+  if {$DBPASS == ""} {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+  } else {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+  }
+  foreach row [mysqlsel $dbSocketID "$query" -list] {
+    SendSocket $socketID "PSDataResults $row"
+  }
+  mysqlclose $dbSocketID
+  SendSocket $socketID "PSDataResults DONE"
+}
+proc ExecDB { socketID query } {
+  global DBNAME DBUSER DBPASS DBPORT DBHOST DEBUG
+  if {$DEBUG} {puts "Sending DB Query: $query"}
+  if { $DBPASS == "" } {
+      set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+  } else {
+      set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+  }
+  if [catch {mysqlexec $dbSocketID $query} execResults] {
+	SendSocket $socketID "InfoMessage \{ERROR running DELETE query, perhaps you don't have DELETE permission.\nError:$execResults\}"
+  } else {
+  SendSocket $socketID "InfoMessage \{Query deleted $execResults rows.\}"
+  }
+  mysqlclose $dbSocketID
+}
+ 
+proc QueryDB { socketID clientWinName query } {
+  global DBNAME DBUSER DBPASS DBPORT DBHOST DEBUG 
+
+  if {$DEBUG} {puts "Sending DB Query: $query"}
+  if { $DBPASS == "" } {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+  } else {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+  }
+  if [catch {mysqlsel $dbSocketID "$query" -list} selResults] {
+    SendSocket $socketID "InfoMessage \{$selResults\}"   
+  } else {
+    set count 0
+    foreach row $selResults {
+      SendSocket $socketID "InsertQueryResults $clientWinName $row"
+      incr count
+    }
+    SendSocket $socketID "InfoMessage \{Query returned $count row(s).\}"
+  }
+  SendSocket $socketID "InsertQueryResults $clientWinName done"
+  mysqlclose $dbSocketID
+}
+proc FlatDBQuery { query } {
+  global DBNAME DBUSER DBPORT DBHOST DBPASS
+
+  if { $DBPASS == "" } {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+  } else {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+  }
+  set queryResults [mysqlsel $dbSocketID $query -flatlist]
+  mysqlclose $dbSocketID
+  return $queryResults
+}
+proc UpdateDBStatusList { whereTmp timestamp status } {
+  global DBNAME DBUSER DBPORT DBHOST DBPASS
+  set startTime [GetCurrentTimeStamp]
+  set updateString "UPDATE event SET status=$status, last_modified='$timestamp' WHERE $whereTmp"
+  #set updateString "UPDATE event SET status=$status WHERE $whereTmp"
+  if { $DBPASS == "" } {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+  } else {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+  }
+  
+  #mysqlexec $dbSocketID "SET AUTOCOMMIT=0"
+  #mysqlexec $dbSocketID "BEGIN"
+  set execResults [mysqlexec $dbSocketID $updateString]
+  #mysqlexec $dbSocketID "COMMIT"
+  mysqlclose $dbSocketID
+  set endTime [GetCurrentTimeStamp]
+}
+proc UpdateDBStatus { eventID timestamp status } {
+  global DBNAME DBUSER DBPORT DBHOST DBPASS
+  set sid [lindex [split $eventID .] 0]
+  set cid [lindex [split $eventID .] 1]
+  set updateString\
+   "UPDATE event SET status=$status, last_modified='$timestamp' WHERE sid=$sid AND cid=$cid"
+  if { $DBPASS == "" } {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+  } else {
+    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+  }
+  set execResults [mysqlexec $dbSocketID $updateString]
+  mysqlclose $dbSocketID
+}
+proc GetIPData { socketID sid cid } {
+  set query\
+   "SELECT INET_NTOA(src_ip), INET_NTOA(dst_ip), ip_ver, ip_hlen, ip_tos, ip_len, ip_id,\
+    ip_flags, ip_off, ip_ttl, ip_csum\
+   FROM event\
+   WHERE sid=$sid and cid=$cid"
+
+  set queryResults [FlatDBQuery $query]
+  SendSocket $socketID "InsertIPHdr $queryResults"
+}
+proc GetTcpData { socketID sid cid } {
+  set query\
+   "SELECT tcp_seq, tcp_ack, tcp_off, tcp_res, tcp_flags, tcp_win, tcp_csum, tcp_urp\
+   FROM tcphdr\
+   WHERE sid=$sid and cid=$cid"
+  set queryResults [FlatDBQuery $query]
+  set portQuery [FlatDBQuery "SELECT src_port, dst_port FROM event WHERE sid=$sid AND cid=$cid"]
+  SendSocket $socketID "InsertTcpHdr $queryResults $portQuery"
+}
+proc GetIcmpData { socketID sid cid } {
+  set query\
+   "SELECT event.icmp_type, event.icmp_code, icmphdr.icmp_csum, icmphdr.icmp_id, icmphdr.icmp_seq\
+   FROM event, icmphdr\
+   WHERE event.sid=icmphdr.sid AND event.cid=icmphdr.cid AND event.sid=$sid AND event.cid=$cid"
+
+  set queryResults [FlatDBQuery $query]
+  
+  set query\
+   "SELECT data_payload FROM data WHERE sid=$sid and cid=$cid"
+  
+  set plqueryResults [FlatDBQuery $query]
+
+  SendSocket $socketID "InsertIcmpHdr $queryResults $plqueryResults"
+}
+proc GetPayloadData { socketID sid cid } {
+  set query\
+   "SELECT data_payload FROM data WHERE sid=$sid and cid=$cid"
+
+  set queryResults [FlatDBQuery $query]
+  SendSocket $socketID "InsertPayloadData \{$queryResults\}"
+}
+proc GetUdpData { socketID sid cid } {
+  set query\
+   "SELECT udp_len, udp_csum FROM udphdr WHERE sid=$sid and cid=$cid"
+
+  set queryResults [FlatDBQuery $query]
+  set portQuery [FlatDBQuery "SELECT src_port, dst_port FROM event WHERE sid=$sid AND cid=$cid"]
+  SendSocket $socketID "InsertUdpHdr $queryResults $portQuery"
+}
+
+#
+# SendSensorList: Sends a list of sensors for the end user to select from.
+#
+proc SendSensorList { socketID } {
+  global sensorList
+  set query "SELECT hostname FROM sensor"
+  set sensorList [FlatDBQuery $query]
+  if { $sensorList != "" } {
+    puts $socketID "SensorList $sensorList"
+  } else {
+    puts $socketID "SensorList 0none0"
+  }
+}
+#
+# MonitorSensors: Sends current events to client. Adds client to clientList
+#                 In the future sensorList will contain a list of sensors, for
+#                 now the client gets everything.
+#
+proc MonitorSensors { socketID sensorList } {
+  global DEBUG clientList clientMonitorSockets connectedAgents
+  if {$DEBUG} {puts "$socketID added to clientList"}
+  lappend clientList $socketID
+  foreach sensorName $sensorList {
+    lappend clientMonitorSockets($sensorName) $socketID
+  }
+  SendCurrentEvents $socketID
+  if { [info exists connectedAgents] } {
+    SendSystemInfoMsg sguild "Connected sensors - $connectedAgents"
+  }
+}
+
+proc SendEscalatedEvents { socketID } {
+  global escalateIDList escalateArray
+  if [info exists escalateIDList] {
+    foreach escalateID $escalateIDList {
+      SendSocket $socketID "InsertEscalatedEvent $escalateArray($escalateID)"
+    }
+  }
+}
+
+#
+# SendCurrentEvents: Sends newly connected clients the current event list
+#
+proc SendCurrentEvents { socketID } {
+  global eventIDArray eventIDList DEBUG clientMonitorSockets
+  
+  if { [info exists eventIDList] && [llength $eventIDList] > 0 } {
+    foreach eventID $eventIDList {
+      set sensorName [lindex $eventIDArray($eventID) 3]
+      if { [info exists clientMonitorSockets($sensorName)] } {
+        if { [lsearch -exact $clientMonitorSockets($sensorName) $socketID] >= 0} {
+          if {$DEBUG} { puts "Sending client $socketID: InsertEvent $eventIDArray($eventID)" }
+          SendSocket $socketID "InsertEvent $eventIDArray($eventID)"
+        }
+      }
+    }
+  }
+}
+proc CreateDB { DBNAME } {
+  global dbSocketID
+  puts -nonewline "The database $DBNAME does not exist. Create it (\[y\]/n)?: "
+  flush stdout
+  set answer [gets stdin]
+  if { $answer == "" } { set answer y }
+  if { ![regexp {^[yY]} $answer] } { return 0 }
+  set fileName "./scripts/create_sguildb.sql"
+  puts -nonewline "Path to create_sguildb.sql \[$fileName\]: "
+  flush stdout
+  set answer [gets stdin]
+  if { $answer != "" } { set fileName $answer }
+  if { ! [file exists $fileName] } {
+    puts "File does not exist: $fileName"
+    return 0
+  }
+  puts -nonewline "Creating the DB $DBNAME..."
+  if [ catch {mysqlexec $dbSocketID "CREATE DATABASE $DBNAME"} createDBError] {
+    puts $createDBError
+    return 0
+  }
+  mysqluse $dbSocketID $DBNAME
+  puts "Okay."
+  if [catch {set fileID [open $fileName r]} openFileError] {
+    puts $openFileError
+    return 0
+  }
+  foreach mysqlCmd [split [read -nonewline $fileID] \;] {
+    puts -nonewline "Creating table [lindex $mysqlCmd 2] in $DBNAME..."
+    if { $mysqlCmd != "" } {mysqlexec $dbSocketID $mysqlCmd}
+    puts "Okay."
+  }
+  close $fileID
+  return 1
+}
+
+######################## END PROCS ##############################
+
+###################### MAIN #####################################
+
+# Load mysql support.
+package require mysqltcl
+
+# Get archived alerts from the DB
+if { $DBPASS == "" } {
+  #set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+  set dbSocketID [mysqlconnect -host $DBHOST -user $DBUSER -port $DBPORT]
+} else {
+  #set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+  set dbSocketID [mysqlconnect -host $DBHOST -user $DBUSER -port $DBPORT -password $DBPASS]
+}
+# See if the DB we want to use exists
+if { [catch {mysqluse $dbSocketID $DBNAME} noDBError] } {
+  puts "Error: $noDBError"
+  # Create the DB or die.
+  if {![CreateDB $DBNAME]} { exit }
+}
+if {$DEBUG} {
+  puts "Querying DB for archived events..."
+  puts "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=0"
+}
+foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=0" -list] {
+  if {$DEBUG} {puts "Archived Alert: $row"}
+  AddEventToEventArray $row
+  SendEvent $row
+}
+if {$DEBUG} {
+  puts "Querying DB for escalated events..."
+  puts "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=2"
+}
+foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=2" -list] {
+  if {$DEBUG} {puts "Escalated Event: $row"}
+  set escalatedEventID "[lindex $row 5].[lindex $row 6]"
+  lappend escalateIDList $escalatedEventID
+  set escalateArray($escalatedEventID) $row
+}
+# Get DB info (table names and column info)
+if {$DEBUG} { puts "Retrieving DB info..." }
+set tableNameList [mysqlinfo $dbSocketID tables]
+if {$DEBUG} {puts "Table names: $tableNameList"}
+foreach tableName $tableNameList {
+  set tableArray($tableName) [mysqlcol $dbSocketID $tableName {name type length}]
+}
+mysqlclose $dbSocketID
+set sensorQuery "SELECT hostname FROM sensor"
+set sensorList [FlatDBQuery $sensorQuery]
+puts "Unique sensors in the DB: $sensorList"
+
+
+# Open a socket for clients to connect to
+set serverSocket [socket -server ClientConnect $SERVERPORT]
+puts "Clients can now connect."
+# Open a socket for sensors to connect to
+set sensorSocket [socket -server SensorConnect $SENSORPORT]
+puts "Waiting for events from sensors."
+
+# Infinate wait
+vwait FOREVER
+
