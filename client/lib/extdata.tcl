@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.12 2004/10/14 18:51:21 shalligan Exp $
+# $Id: extdata.tcl,v 1.13 2004/11/12 22:58:02 bamm Exp $
 
 proc GetRuleInfo {} {
   global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT SSN_QUERY
@@ -207,7 +207,7 @@ proc CreateXscriptWin { winName } {
     $winName.sText tag configure dstTag -foreground red
     set dataSearchFrame [frame $winName.dataSearchFrame -bd 0]
     set dataSearchText [entryfield $dataSearchFrame.dataSearchText -width 20 -background white]
-    set dataSearchButton [button $dataSearchFrame.dataSearchButton -text "Search Packet Payload"\
+    set dataSearchButton [button $dataSearchFrame.dataSearchButton -text "Search Transcript"\
 	    -command "SearchXscript $winName"]
     set dataSearchCaseCheck [checkbutton $dataSearchFrame.dataSearchCaseCheck -variable dataSearchCase -text "NoCase"]
     pack $dataSearchText $dataSearchButton $dataSearchCaseCheck -side left -fill x
