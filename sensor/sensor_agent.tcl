@@ -118,7 +118,6 @@ proc ConnectToSguilServer {} {
   fileevent $socketID readable [list SguildCmdRcvd $socketID]
   set CONNECTED 1
   if {$DEBUG} {puts "Connected to $SERVER_HOST"}
-  CheckDiskSpace
 }
 proc SguildCmdRcvd { socketID } {
   global DEBUG
@@ -142,5 +141,6 @@ proc SguildCmdRcvd { socketID } {
 ConnectToSguilServer
 CheckForPortscanFiles
 CheckForSsnFiles
+CheckDiskSpace
 if {$PING_DELAY != 0} { PingServer }
 vwait FOREVER
