@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.104 2004/07/08 16:06:25 bamm Exp $ #
+# $Id: sguild,v 1.105 2004/07/15 12:49:29 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -776,7 +776,7 @@ proc CorrelateEvent { srcip msg } {
 #
 proc EventRcvd { socketID data } {
   global DEBUG EMAIL_EVENTS EMAIL_CLASSES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS eventIDCountArray
-  global acRules acCat correlatedEventArray
+  global acRules acCat correlatedEventArray eventIDList
   set eventDataList [lrange [split $data |] 1 13]
   if { [lindex $eventDataList 2] == "system-info" } {
     if {$DEBUG} {
@@ -792,10 +792,20 @@ proc EventRcvd { socketID data } {
     }
     puts $socketID "CONFIRM [lindex $eventDataList 6]"
     flush $socketID
+    # Make sure we don't have a dupe. If so, report an error and return.
+    set currentEventAID [join [lrange $eventDataList 4 5] .]
+    if { [lsearch $eventIDList $currentEventAID] >= 0] } {
+      # Have a dupe. Could be b/c we just initialized and a sensor
+      # was waiting to send us an alert that we pulled from the DB.
+      if {$DEBUG} {
+        puts "Non-fatal Error: recieved a duplicate alert. : $currentEventAID"
+      }
+      return
+    }
     # If we don't have any auto-cat rules, or we don't match on
     # the autocat, then we send off the rule
     if { ![array exists acRules] || ![AutoCat $eventDataList] } {
-      # Correlation/aggregation checks here: CorrelateEvent sid aid SrcIP Message
+      # Correlation/aggregation checks here: CorrelateEvent SrcIP Message
       set matchAID [ CorrelateEvent [lindex $eventDataList 8] [lindex $eventDataList 7] ]
       if { $matchAID == 0 } {
         AddEventToEventArray $eventDataList
