@@ -1,4 +1,13 @@
 CVS-HEAD
+  sguil.tk
+    * Added lib/whois.tcl, a simple replacement for those
+      third party whois scripts.
+
+    * Client remains up on disconnect from sguild. Attempts
+      to reconnect after 10 seconds.
+
+    * Decode ICMP redirect
+
   sguild
     * Added -D (daemonize) and -P <pidFile> switches.
 
@@ -8,6 +17,8 @@ CVS-HEAD
     * Added OpenSSL for client <> server comms.
 
     * Does version checking with clients
+
+    * Checks for compatable DB schema
 
   xscriptd
     * Added -D (daemonize) and -P <pidFile> switches.

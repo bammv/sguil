@@ -12,6 +12,7 @@
 ########################## GLOBALS ##################################
 
 set VERSION "SGUIL-0.2.1"
+set DB_VERSION "0.6"
 
 # Config options moved to sguild.conf
 
@@ -1032,6 +1033,13 @@ if { [catch {mysqluse $dbSocketID $DBNAME} noDBError] } {
   # Create the DB or die.
   if {![CreateDB $DBNAME]} { exit }
 }
+# Make sure we have a compatible DB version
+set currentDBVer [FlatDBQuery "SELECT version FROM version"]
+if { $DB_VERSION != $currentDBVer } {
+  puts "ERROR: Incompatable DB schema.\nRequired Version: $DB_VERSION\nInstalled Version: $currentDBVer"
+  exit
+}
+
 if {$DEBUG} {
   puts "Querying DB for archived events..."
   puts "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.status=0"
