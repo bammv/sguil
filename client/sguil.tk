@@ -306,12 +306,14 @@ proc CreateTableListBox { winName columnList } {
 proc SendUserMsg {} {
   global USERMSG userMsgEntry
 
-  SendToSguild "UserMessage \{$USERMSG\}"
+  SendToSguild "[list UserMessage $USERMSG]"
   [$userMsgEntry component entry] delete 0 end
 }
 
 proc UserMessage { user userMsg } {
   global userMsgText messageTabs MESSAGE_TAB USER_MSG_SCROLL
+
+  set userMsg [lindex $userMsg 0]
 
   if { [$messageTabs view] != 1 } {
     # BOING!
