@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/hostlookup.php,v 1.1 2004/03/30 23:24:08 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/hostlookup.php,v 1.2 2004/04/03 15:54:19 dlowless Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -17,6 +17,7 @@
 <title>Host Lookup</title>
 <meta name="author" content="Michael Boman">
 <meta name="copyright" content="Copyright 2004 Michael Boman <mboman@users.sourceforge.net>. All Rights Reserved.">
+<?php include('css.php'); ?>
 </head>
 <body>
 
