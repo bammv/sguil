@@ -1,4 +1,4 @@
-# $Id: configure.in,v 1.1 2005/03/08 20:34:49 bamm Exp $ 
+# $Id: configure.in,v 1.2 2005/03/08 20:37:40 bamm Exp $ 
 AC_INIT(src/barnyard.c)
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE(barnyard,0.2.0)
@@ -324,7 +324,7 @@ if test "yes" = "$enable_tcl"; then
 	. $tclpath/tclConfig.sh
 	AC_MSG_CHECKING([for the tcl version number])
 	AC_MSG_RESULT([$TCL_VERSION, patchlevel $TCL_PATCH_LEVEL])
-        LIBS="$LIBS $TCL_LIB_SPEC"
+        LIBS="$LIBS $TCL_LIBS $TCL_LIB_SPEC"
 	TCL_INCLUDE="$TCL_PREFIX/include/tcl$TCL_VERSION"
 	CPPFLAGS="$CPPFLAGS -I$TCL_INCLUDE -DENABLE_TCL";
     fi
