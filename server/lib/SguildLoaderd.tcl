@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.8 2005/01/28 02:45:43 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.9 2005/01/28 02:47:54 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -157,7 +157,7 @@ proc InitLoaderd {} {
         CreateSancpMergeTable
     } else {
         # Make sure its a MERGE table and not the old monser
-        set tableStatus [mysqlsel $LOADERD_DB_ID {SHOW TABLE STATUS LIKE 'sancp'} -list]
+        set tableStatus [mysqlsel $LOADERD_DB_ID {SHOW TABLE STATUS LIKE 'sancp'} -flatlist]
         if { [lindex $tableStatus 1] != "MRG_MyISAM" } {
             ErrorMessage "ERROR: loaderd: You appear to be using an old version of the\n\
                           sguil database schema that does not support the MERGE sancp\n\
