@@ -84,7 +84,9 @@ proc CheckForPortscanFiles {} {
     if {$DEBUG} {puts "Checking for PS files in $PORTSCAN_DIR."}
     foreach fileName [glob -nocomplain $PORTSCAN_DIR/portscan_log.*] {
       puts $fileName
-      SendPSDataToSvr $fileName
+      if { [file size $fileName] > 0 } {
+        SendPSDataToSvr $fileName
+      }
     }
   }
   after $PS_CHECK_DELAY_IN_MSECS CheckForPortscanFiles
@@ -95,7 +97,9 @@ proc CheckForSsnFiles {} {
     if {$DEBUG} {puts "Checking for Session files in $SSN_DIR."}
     foreach fileName [glob -nocomplain $SSN_DIR/ssn_log.*] {
       puts $fileName
-      SendSsnDataToSvr $fileName
+      if { [file size $fileName] > 0 } {
+        SendSsnDataToSvr $fileName
+      }
     }
   }
   after $SSN_CHECK_DELAY_IN_MSECS CheckForSsnFiles
