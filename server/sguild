@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.126 2004/10/18 15:28:19 shalligan Exp $ #
+# $Id: sguild,v 1.127 2004/10/18 17:05:55 shalligan Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -91,6 +91,11 @@ proc QuerydCmdRcvd { pipeID } {
 
 set validSockets ""
 set clientList {}
+set LOGGER ""
+# Check for the existance of logger 
+foreach path [split $env(PATH) :] {
+    if { [file exists $path/logger] && [file executable $path/logger] } { set LOGGER $path/logger }
+}
 # Load mysql support.
 if [catch {package require mysqltcl} mysqltclVersion] {
   puts "ERROR: The mysqltcl extension does NOT appear to be installed on this sysem."

@@ -1,22 +1,22 @@
-# $Id: SguildUtils.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $ #
+# $Id: SguildUtils.tcl,v 1.3 2004/10/18 17:05:56 shalligan Exp $ #
 
 proc Daemonize {} {
-  global PID_FILE
-  set childPID [fork]
-  # Parent exits.
-  if { $childPID == 0 } { exit }
-  id process group set
-  if {[fork]} {exit 0}
-  set PID [id process]
-  if { ![info exists PID_FILE] } { set PID_FILE "/var/run/sguild.pid" }
-  set PID_DIR [file dirname $PID_FILE]
-  if { ![file exists $PID_DIR] || ![file isdirectory $PID_DIR] || ![file writable $PID_DIR] } {
-    LogMessage "ERROR: Directory $PID_DIR does not exists or is not writable. Process ID will not be written to file."
-  } else {
-    set pidFileID [open $PID_FILE w]
-    puts $pidFileID $PID
-    close $pidFileID
-  }
+    global PID_FILE env LOGGER
+    set childPID [fork]
+    # Parent exits.
+    if { $childPID == 0 } { exit }
+    id process group set
+    if {[fork]} {exit 0}
+    set PID [id process]
+    if { ![info exists PID_FILE] } { set PID_FILE "/var/run/sguild.pid" }
+    set PID_DIR [file dirname $PID_FILE]
+    if { ![file exists $PID_DIR] || ![file isdirectory $PID_DIR] || ![file writable $PID_DIR] } {
+	LogMessage "ERROR: Directory $PID_DIR does not exists or is not writable. Process ID will not be written to file."
+    } else {
+	set pidFileID [open $PID_FILE w]
+	puts $pidFileID $PID
+	close $pidFileID
+    }
 }
 
 proc HupTrapped {} {
@@ -114,8 +114,8 @@ proc LoadReportQueries { fileName } {
 #  Puts an error to std_out or to syslog if in daemon
 #  mode and then calls CleanExit {}
 proc ErrorMessage { msg } {
-    global DAEMON
-    if {$DAEMON} {
+    global DAEMON LOGGER
+    if { $DAEMON && [string length $LOGGER] > 0 } {
 	Syslog $msg err
     } else {
 	puts $msg
@@ -127,9 +127,9 @@ proc ErrorMessage { msg } {
 #  mode only if debug == 2.  Use this for noisy less important
 #  messages
 proc InfoMessage { msg } {
-    global DEBUG DAEMON
+    global DEBUG DAEMON LOGGER
     if { $DEBUG > 1 } {
-	if { $DAEMON } {
+	if { $DAEMON && [string length $LOGGER] > 0 } {
 	    Syslog $msg info
 	} else {
 	    puts $msg
@@ -141,9 +141,9 @@ proc InfoMessage { msg } {
 #  mode only if debug >  0.  Use this for important messages
 #  that we don't need to die on.
 proc LogMessage { msg } {
-    global DEBUG DAEMON
+    global DEBUG DAEMON LOGGER
     if { $DEBUG > 0 } {
-	if { $DAEMON } {
+	if { $DAEMON && [string length $LOGGER] > 0 } {
 	    Syslog $msg notice
 	} else {
 	    puts $msg
