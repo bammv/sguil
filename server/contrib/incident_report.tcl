@@ -178,7 +178,7 @@ if { $TYPE == "weekly" } {
     if { [info exists START_DATE] && [info exists END_DATE] } {
         set startDate [clock format [clock scan $START_DATE] -gmt true -f "%Y-%m-%d"]
         set endDate [clock format [clock scan $END_DATE] -gmt true -f "%Y-%m-%d"]
-        set reportDate [clock format [clock scan yesterday -base $END_DATE] -gmt true -f "%Y-%m-%d"]
+        set reportDate [clock format [clock scan yesterday -base [clock scan $END_DATE]] -gmt true -f "%Y-%m-%d"]
     } else {
         puts "ERROR: Need a start date and an end date for the report."
         DisplayUsage $argv0
