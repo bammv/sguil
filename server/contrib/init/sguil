@@ -1,0 +1,38 @@
+# /etc/sysconfig/snort
+# all of these options cannot be specified in the sguild.conf file
+# as they are command line only options.
+
+# enable OpenSSL
+OPENSSL=0
+
+# path to sguild.conf file
+# leave blank for default /etc/sguild/sguild.conf
+CONF=
+
+# path to the sguild users file
+# leave blank for default /etc/sguild/sguild.users
+USERS=
+
+# name of file to write the PID to
+# leave blank for default /var/run/sguild.pid
+PID=
+
+# directory that contains sguild.pem and sguild.key files
+# leave blank to not enable
+KEY=
+
+# enable OpenSSL using this path to TLS (TCL OpenSSL) lib
+# leave blank to not enable
+TLSPATH=/usr/lib/tls1.5/libtls1.50.so
+       
+# path to the autocat file
+# leave blank for default /etc/sguild/autocat.conf
+AUTOCAT=
+
+# path to the global queries file
+# leave blank for default /etc/sguild/sguild.queries
+GQUERIES=
+
+# path to the access file
+# leave blank for default /etc/sguild/sguild.access
+ACCESS=

@@ -1,0 +1,134 @@
+#!/bin/bash
+#
+# Init file for sguild
+#
+# chkconfig: 2345 40 60
+# description: sguild
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+# source the local configuration file
+. /etc/sysconfig/sguil
+
+prog="sguild"
+RETVAL=0
+SGUILD=/usr/local/bin/${prog}
+
+# convert the /etc/sysconfig/snort settings to something sguild can
+# use on the cmd line
+
+if [ "$OPENSSL"X = "1X" ]; then 
+   OPENSSL="-o" 
+else
+   OPENSSL="" 
+fi
+
+if [ "$CONF"X = "X" ]; then
+   CONF=""   
+else
+   CONF="-c $CONF"   
+fi
+
+if [ "$USERS"X = "X" ]; then
+   USERS=""
+else
+   USERS="-u $USERS"
+fi
+
+if [ "$PID"X = "X" ]; then
+   PID=""
+else
+   PID="-P $PID"
+fi
+
+if [ "$KEY"X = "X" ]; then
+   KEY=""
+else
+   KEY="-C $KEY"
+fi
+
+if [ "$TLSPATH"X = "X" ]; then
+   TLSPATH=""
+else
+   TLSPATH="-O $TLSPATH"
+fi
+
+if [ "$AUTOCAT"X = "X" ]; then
+   AUTOCAT=""
+else
+   AUTOCAT="-a $AUTOCAT"
+fi
+
+if [ "$GQUERIES"X = "X" ]; then
+   GQUERIES=""
+else
+   GQUERIES="-g $GQUERIES"
+fi
+
+if [ "$ACCESS"X = "X" ]; then
+   ACCESS=""
+else
+   ACCESS="-A $ACCESS"
+fi
+
+start()
+{
+        if [ -f /var/run/sguild.pid ]; then
+          echo "sguild already running"
+          exit
+        fi
+        if [ -x $SGUILD ] ; then               
+         echo -n $"Starting $prog:"
+         $SGUILD $OPENSSL $CONF $USERS $PID $KEY $TLSPATH $AUTOCAT $GQUERIES $ACCESS -D > /dev/null 2>&1
+
+         if [ $? = 0 ]; then
+           echo " [ OK ]"
+         else
+           echo " [ Failed ]"
+         fi
+        else
+         echo "can't find sguild"               
+        fi
+}
+
+stop()
+{
+        if [ -f /var/run/sguild.pid ]; then     
+          echo -n $"Stopping $prog:"
+          kill `cat /var/run/sguild.pid`
+          rm -f /var/run/sguild.pid
+          if [ $? = 0 ]; then
+            echo " [ OK ]"
+          else
+            echo " [ Failed ]"
+          fi
+        else
+          echo "sguild doesn't appear to be running"
+        fi
+}
+
+case "$1" in
+        start)
+                start
+                ;;
+        stop)
+                stop
+                ;;
+        restart)
+                stop
+                sleep 1
+                start
+                ;;
+        status)
+                if [ -f /var/run/sguild.pid ]; then
+                  echo "sguild is running"
+                else
+                  echo "sguild stopped"
+                fi
+                ;;
+        *)
+                echo $"Usage: $0 {start|stop|restart|status}"
+                RETVAL=1
+esac
+exit $RETVAL
