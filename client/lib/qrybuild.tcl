@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.32 2005/02/09 16:13:36 shalligan Exp $ #
+# $Id: qrybuild.tcl,v 1.33 2005/02/14 17:02:08 shalligan Exp $ #
 proc QryBuild {tableSelected whereTmp } {
     global RETURN_FLAG SELECTEDTABLE
     global  tableColumnArray tableList funcList
@@ -346,7 +346,7 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
     # Main Frame
     set mainFrame [frame $ipAddressWin.mFrame -background #dcdcdc -borderwidth 1]
     set ipBox [entryfield $mainFrame.ipBox -textbackground white -textfont ourFixedFont \
-		-labeltext "Enter IP Address/Net"]
+		-labeltext "Enter IP Address/Net" -command "set RETURN_FLAG_IP 1"]
     set srcdstBox [radiobox $mainFrame.srcdstToggle -orient horizontal]
     $srcdstBox add src -text "Src" 
     $srcdstBox add dst -text "Dst"
@@ -376,6 +376,7 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
     }
     pack $buttonFrame -side top -expand false
     pack $mainFrame
+    focus $ipBox
     tkwait variable RETURN_FLAG_IP
     if { $RETURN_FLAG_IP == 0 } {
 	destroy $ipAddressWin
