@@ -422,6 +422,64 @@ proc SimpleQueryCmd { host port cmd} {
   close $tmpSocketID
   return $data
 }
+proc OptimizeTables {} {
+    global socketID DEBUG RETURN_FLAG
+    set RETURN_FLAG 0
+    set optimizeTables .optimizeTables
+    if { [winfo exists $optimizeTables] } {
+	wm withdraw $optimizeTables
+	wm deiconify $optimizeTables
+	return
+    }
+    toplevel $optimizeTables
+    wm geometry $optimizeTables +200+200
+    wm title $optimizeTables "Optimize Database Tables"
+    set checkBox1 [checkbox $optimizeTables.checkBox1]
+    set tables1 [list data icmphdr sensor status tcphdr udphdr]
+    foreach t [lsort $tables1] {
+	$checkBox1 add $t -text [string totitle $t]
+    }
+    set checkBox2 [checkbox $optimizeTables.checkBox2]
+    set tables2 [list event portscan sessions]
+    foreach t [lsort $tables2] {
+	$checkBox2 add $t -text [string totitle $t]
+    }
+    set buttonBox [buttonbox $optimizeTables.buttonBox]
+    $buttonBox add Run -text "Run" -command "set RETURN_FLAG 1"
+    $buttonBox add Cancel -text "Cancel" -command "set RETURN_FLAG 0"
+    pack $checkBox1 $checkBox2 $buttonBox -side top -fill x -padx 10 -expand 0
+    tkwait variable RETURN_FLAG
+    if { $RETURN_FLAG } {
+	set tableList1 [$checkBox1 get]
+	set tableList2 [$checkBox2 get]
+	if { [llength $tableList1] == 0 && [llength $tableList2] == 0 } {
+	    destroy $optimizeTables
+	    return
+	} else {
+	    set tableList [concat $tableList1 $tableList2]
+	    # puts $tableList
+	    # puts [llength $tableList]
+	    set optimizeQuery "OPTIMIZE TABLE [lindex $tableList 0]"
+	    if { [llength $tableList] > 1 } {
+		for { set i 1 } { $i < [llength $tableList] } {incr i 1} {
+		    # puts [lindex $tableList $i]
+		    set optimizeQuery "$optimizeQuery, [lindex $tableList $i]"
+		    puts $optimizeQuery
+		}
+	    }
+	    messagedialog .optimizeConfirm -title "Confirm" -text "WARNING: Optimization can cause tables to corrupt.  If you don't know how to fix corruption, DO NOT PROCEED." -modality global
+	    if { [.optimizeConfirm activate] } {
+		if {$DEBUG} { puts "Send Server: ExecDB $optimizeQuery" }
+		puts $socketID "ExecDB \{$optimizeQuery\}"
+	    }
+	    destroy .optimizeConfirm
+	}
+	destroy $optimizeTables
+	return
+    }
+}
+	    
+    
 proc DeleteRequest { deletetype } {
     global socketID DEBUG RETURN_FLAG
     set RETURN_FLAG 0
@@ -442,7 +500,6 @@ proc DeleteRequest { deletetype } {
 	$buttonBox add cancel -text "Cancel" -command "set RETURN_FLAG 0"
 	pack $deleteDate $buttonBox -side top -fill x -padx 10 -expand 0
 	tkwait variable RETURN_FLAG
-	puts "$RETURN_FLAG"
 	if { $RETURN_FLAG } {
 	    set deleteQuery "DELETE from sessions WHERE sessions.start_time <= '[$deleteDate get]'"
 	    if {$DEBUG} { puts "Sending Server: ExecDB $deleteQuery" }
@@ -2816,6 +2873,8 @@ namespace import iwidgets::scrolledtext
 namespace import iwidgets::optionmenu
 namespace import iwidgets::buttonbox
 namespace import iwidgets::entryfield
+namespace import iwidgets::checkbox
+namespace import iwidgets::messagedialog
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
   label $winFrame.label -text "$labelText" -foreground black -background $bgColor -anchor s -height $height
@@ -2873,6 +2932,7 @@ set topFrame [frame .topFrame]
       $summaryMenu add command -label "Sanatized" -command {EmailEvents 0 1}
   set databaseList [menu $databaseMenu.menu -tearoff 0]
     $databaseList add command -label "Purge Session Data" -command "DeleteRequest sessions"
+    $databaseList add command -label "Optimize Tables" -command "OptimizeTables"
   #$menuList add command -label "License" -command "DisplayLicense"
 
 
