@@ -2211,8 +2211,8 @@ proc CopyDone { socketID tmpFileID tmpFile bytes {error {}} } {
 proc CopyRawData { socketID tmpFileID tmpFile } {
   if { [catch {fcopy $socketID $tmpFileID -command [list CopyDone $socketID $tmpFileID $tmpFile]} dataError] } {
     ErrorMessage $dataError
-    close $socketID
-    close $tmpFileID
+    catch {close $socketID} closeError
+    catch {close $tmpFileID} closeError
     file delete $tmpFile
   }
 }
