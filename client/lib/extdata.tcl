@@ -3,20 +3,20 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.17 2005/01/06 14:25:18 bamm Exp $
+# $Id: extdata.tcl,v 1.18 2005/01/20 20:02:09 shalligan Exp $
 
 proc GetRuleInfo {} {
-  global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT SSN_QUERY
-  global CONNECTED eventArray SANCP_QUERY
+  global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
+  global CONNECTED eventArray
   ClearRuleText
-  if {$ACTIVE_EVENT && $SHOWRULE && !$MULTI_SELECT && !$SSN_QUERY && !$SANCP_QUERY} {
+  if {$ACTIVE_EVENT && $SHOWRULE && !$MULTI_SELECT && $CUR_SEL_PANE(type) == "EVENT"} {
     if {!$CONNECTED} {
       ErrorMessage "Not connected to sguild. Cannot make rule request."
       return
     }
-    set selectedIndex [$currentSelectedPane.msgFrame.list curselection]
-    set message [$currentSelectedPane.msgFrame.list get $selectedIndex]
-    set sensorName [$currentSelectedPane.sensorFrame.list get $selectedIndex]
+    set selectedIndex [$CUR_SEL_PANE(name).msgFrame.list curselection]
+    set message [$CUR_SEL_PANE(name).msgFrame.list get $selectedIndex]
+    set sensorName [$CUR_SEL_PANE(name).sensorFrame.list get $selectedIndex]
     if {$DEBUG} {puts  "RuleRequest $sensorName $message"}
     SendToSguild "RuleRequest $sensorName $message"
   } else {
@@ -40,13 +40,13 @@ proc InsertRuleData { ruleData } {
   }
 }
 proc GetDshieldIP { arg } {
-  global DEBUG BROWSER_PATH currentSelectedPane ACTIVE_EVENT MULTI_SELECT
+  global DEBUG BROWSER_PATH CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT
   if { $ACTIVE_EVENT && !$MULTI_SELECT} {
-    set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
+    set selectedIndex [$CUR_SEL_PANE(name).srcIPFrame.list curselection]
     if { $arg == "srcip" } {
-      set ipAddr [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
+      set ipAddr [$CUR_SEL_PANE(name).srcIPFrame.list get $selectedIndex]
     } else {
-      set ipAddr [$currentSelectedPane.dstIPFrame.list get $selectedIndex]
+      set ipAddr [$CUR_SEL_PANE(name).dstIPFrame.list get $selectedIndex]
     }
     if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
 	exec $BROWSER_PATH http://www.dshield.org/ipinfo.php?ip=$ipAddr &
@@ -59,13 +59,13 @@ proc GetDshieldIP { arg } {
   }
 }
 proc GetDshieldPort { arg } {
-  global DEBUG BROWSER_PATH currentSelectedPane ACTIVE_EVENT MULTI_SELECT
+  global DEBUG BROWSER_PATH CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT
   if { $ACTIVE_EVENT && !$MULTI_SELECT} {
-    set selectedIndex [$currentSelectedPane.srcPortFrame.list curselection]
+    set selectedIndex [$CUR_SEL_PANE(name).srcPortFrame.list curselection]
     if { $arg == "srcport" } {
-      set ipPort [$currentSelectedPane.srcPortFrame.list get $selectedIndex]
+      set ipPort [$CUR_SEL_PANE(name).srcPortFrame.list get $selectedIndex]
     } else {
-      set ipPort [$currentSelectedPane.dstPortFrame.list get $selectedIndex]
+      set ipPort [$CUR_SEL_PANE(name).dstPortFrame.list get $selectedIndex]
     }
     if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
 	exec $BROWSER_PATH http://www.dshield.org/port_report.php?port=$ipPort &
@@ -124,14 +124,14 @@ proc GetIcat {} {
 # DnsButtonActy: Called when the reverse DNS button is released
 #
 proc ResolveHosts {} {
-  global REVERSE_DNS currentSelectedPane ACTIVE_EVENT MULTI_SELECT
+  global REVERSE_DNS CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT
   ClearDNSText
   if {$REVERSE_DNS && $ACTIVE_EVENT && !$MULTI_SELECT} {
     Working
     update
-    set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
-    set srcIP [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
-    set dstIP [$currentSelectedPane.dstIPFrame.list get $selectedIndex]
+    set selectedIndex [$CUR_SEL_PANE(name).srcIPFrame.list curselection]
+    set srcIP [$CUR_SEL_PANE(name).srcIPFrame.list get $selectedIndex]
+    set dstIP [$CUR_SEL_PANE(name).dstIPFrame.list get $selectedIndex]
     set srcName [GetHostbyAddr $srcIP]
     set dstName [GetHostbyAddr $dstIP]
     InsertDNSData $srcIP $srcName $dstIP $dstName
@@ -139,13 +139,13 @@ proc ResolveHosts {} {
   }
 }
 proc GetWhoisData {} {
-  global ACTIVE_EVENT currentSelectedPane WHOISLIST whoisText WHOIS_PATH MULTI_SELECT
+  global ACTIVE_EVENT CUR_SEL_PANE WHOISLIST whoisText WHOIS_PATH MULTI_SELECT
   ClearWhoisData
   if {$ACTIVE_EVENT && $WHOISLIST != "none" && !$MULTI_SELECT} {
     Working
     update
-    set selectedIndex [$currentSelectedPane.$WHOISLIST.list curselection]
-    set ip [$currentSelectedPane.$WHOISLIST.list get $selectedIndex]
+    set selectedIndex [$CUR_SEL_PANE(name).$WHOISLIST.list curselection]
+    set ip [$CUR_SEL_PANE(name).$WHOISLIST.list get $selectedIndex]
     if { $WHOIS_PATH == "SimpleWhois" } {
       foreach line [SimpleWhois $ip] {
         $whoisText insert end "$line\n"
@@ -358,14 +358,14 @@ proc EtherealDataBase64 { fileName data } {
   }
 }
 proc GetXscript { type force } {
-  global ACTIVE_EVENT SERVERHOST XSCRIPT_SERVER_PORT DEBUG currentSelectedPane XSCRIPTDATARCVD
-  global socketWinName SESSION_STATE SSN_QUERY ETHEREAL_STORE_DIR SANCP_QUERY
+  global ACTIVE_EVENT SERVERHOST XSCRIPT_SERVER_PORT DEBUG CUR_SEL_PANE XSCRIPTDATARCVD
+  global socketWinName SESSION_STATE ETHEREAL_STORE_DIR
   global OPENSSL VERSION USERNAME PASSWD
   if {!$ACTIVE_EVENT} {return}
-  set winName $currentSelectedPane.sensorFrame.list
+  set winName $CUR_SEL_PANE(name).sensorFrame.list
   set eventIndex [$winName curselection]
   set winParents [winfo parent [winfo parent $winName]]
-  if {$SSN_QUERY || $SANCP_QUERY} {
+  if { $CUR_SEL_PANE(format) == "SSN" } {
     set cnxID [$winParents.xidFrame.list get $eventIndex]
     set timestamp [$winParents.startTimeFrame.list get $eventIndex]
     set proto [$winParents.ipProtoFrame.list get $eventIndex]
@@ -444,13 +444,13 @@ proc SaveXscript { win } {
 
 proc NessusReport { arg } {
     global REPORTNUM REPORT_RESULTS REPORT_DONE RETURN_FLAG SGUILLIB env BROWSER_PATH
-    global DEBUG BROWSER_PATH currentSelectedPane ACTIVE_EVENT MULTI_SELECT
+    global DEBUG BROWSER_PATH CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT
     if { $ACTIVE_EVENT && !$MULTI_SELECT} {
-	set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
+	set selectedIndex [$CUR_SEL_PANE(name).srcIPFrame.list curselection]
 	if { $arg == "srcip" } {
-	    set ip [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
+	    set ip [$CUR_SEL_PANE(name).srcIPFrame.list get $selectedIndex]
 	} else {
-	    set ip [$currentSelectedPane.dstIPFrame.list get $selectedIndex]
+	    set ip [$CUR_SEL_PANE(name).dstIPFrame.list get $selectedIndex]
 	}
 	random seed
 	incr REPORTNUM

@@ -1,4 +1,4 @@
-# $Id: sancp.tcl,v 1.2 2004/06/07 22:29:42 bamm Exp $ 
+# $Id: sancp.tcl,v 1.3 2005/01/20 20:02:29 shalligan Exp $ 
 #
 # Build a sancp query tab and send the query to sguild.
 #
@@ -47,7 +47,7 @@ proc SancpQueryRequest { whereStatement } {
 }
 
 proc GetSancpData {} {
-  global CONNECTED ACTIVE_EVENT SANCP_QUERY currentSelectedPane SANCPINFO
+  global CONNECTED ACTIVE_EVENT SANCP_QUERY CUR_SEL_PANE SANCPINFO
 
   ClearSancpFlags
   # Shouldn't be called in w/o a sancp query being selected
@@ -61,9 +61,9 @@ proc GetSancpData {} {
     # Pretty hour glass says no clicky-clicky
     Working
     update
-    set selectedIndex [$currentSelectedPane.sensorFrame.list curselection]
-    set sensorName [$currentSelectedPane.sensorFrame.list get $selectedIndex]
-    set cnxID [$currentSelectedPane.xidFrame.list get $selectedIndex]
+    set selectedIndex [$CUR_SEL_PANE(name).sensorFrame.list curselection]
+    set sensorName [$CUR_SEL_PANE(name).sensorFrame.list get $selectedIndex]
+    set cnxID [$CUR_SEL_PANE(name).xidFrame.list get $selectedIndex]
     #
     # We don't have the sid in the session data (stoopid). So we'll
     # count on sguild to do the JOIN and get the correct one. We may

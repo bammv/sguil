@@ -2,7 +2,7 @@
 # Sguil procs that deal with selection and         #
 # Multi-selection of events                        #
 ####################################################
-# $Id: sellib.tcl,v 1.3 2004/03/19 20:33:58 bamm Exp $
+# $Id: sellib.tcl,v 1.4 2005/01/20 20:02:29 shalligan Exp $
 #
 # ReSetMotion: Reset Motion Vars on a button release
 #
@@ -17,11 +17,11 @@ proc ReSetMotion {} {
 # ShiftSelect: Enable MultiSelection using shift-click
 #
 proc ShiftSelect { winName index } {
-    global MULTI_SELECT currentSelectedPane LASTINDEXSELECTED MOVEMENT_DIR BUSY
+    global MULTI_SELECT CUR_SEL_PANE LASTINDEXSELECTED MOVEMENT_DIR BUSY
     # If we are busy then abort.
     if {$BUSY} { bell; return }
     # check to see if we are in a new pane and if so, error.
-    if { [info exists currentSelectedPane] && [winfo parent [winfo parent $winName]] != $currentSelectedPane } {
+    if { [info exists CUR_SEL_PANE(name)] && [winfo parent [winfo parent $winName]] != $CUR_SEL_PANE(name) } {
 	ErrorMessage "You may only shift-select from within the same event pane."
 	return
     }
@@ -36,21 +36,21 @@ proc ShiftSelect { winName index } {
     # Check to see if the current index is higher or lower that the LASTSELECTEDINDEX
     if { $index > $LASTINDEXSELECTED } {
 	set MOVEMENT_DIR "shift"
-	foreach childWin [winfo children $currentSelectedPane] {
+	foreach childWin [winfo children $CUR_SEL_PANE(name)] {
 	      if { [winfo name $childWin] != "scroll" } {
 		  $childWin.list select clear 0 end
 	      }
 	  }
-	  HighLightListLine $currentSelectedPane $index $LASTINDEXSELECTED 
+	  HighLightListLine $CUR_SEL_PANE(name) $index $LASTINDEXSELECTED 
 	  return
       } else {
 	  set MOVEMENT_DIR "shift"
-	  foreach childWin [winfo children $currentSelectedPane] {
+	  foreach childWin [winfo children $CUR_SEL_PANE(name)] {
 	      if { [winfo name $childWin] != "scroll" } {
 		  $childWin.list select clear 0 end
 	      }
 	  }
-	  HighLightListLine $currentSelectedPane $index $LASTINDEXSELECTED 
+	  HighLightListLine $CUR_SEL_PANE(name) $index $LASTINDEXSELECTED 
 	  return
       }
 }
@@ -60,14 +60,14 @@ proc ShiftSelect { winName index } {
 # MotionSelect: Enable selection of multiple rows using button-1 motion
 #
 proc MotionSelect { winName index } {
-  global currentSelectedPane MULTI_SELECT MotionHighIndex MotionLowIndex MotionStart MOVEMENT_DIR
+  global CUR_SEL_PANE MULTI_SELECT MotionHighIndex MotionLowIndex MotionStart MOVEMENT_DIR
   global BUSY
 
   # If we are busy then abort.
   if {$BUSY} { bell; return }
 
   # check to see if we are in a new pane and if so, error.
-  if { [info exists currentSelectedPane] && [winfo parent [winfo parent $winName]] != $currentSelectedPane } {
+  if { [info exists CUR_SEL_PANE(name)] && [winfo parent [winfo parent $winName]] != $CUR_SEL_PANE(name) } {
     ErrorMessage "You may only control-select from within the same event pane."
     return
   }
@@ -107,7 +107,7 @@ proc MotionSelect { winName index } {
       # Were we going up and turned down?
       if { $MotionHighIndex == $MotionStart } {
 	  #unselect everything between the current index and the old MotionLowIndex
-	  foreach childWin [winfo children $currentSelectedPane] {
+	  foreach childWin [winfo children $CUR_SEL_PANE(name)] {
 	      if { [winfo name $childWin] != "scroll" } {
 		  $childWin.list select clear $MotionLowIndex [expr $index-1]
 	      }
@@ -119,7 +119,7 @@ proc MotionSelect { winName index } {
       # Were we going down and turned up?
       if { $MotionLowIndex == $MotionStart } {
 	  #unselect everything between the current index and the old MotionHighIndex
-	  foreach childWin [winfo children $currentSelectedPane] {
+	  foreach childWin [winfo children $CUR_SEL_PANE(name)] {
 	      if { [winfo name $childWin] != "scroll" } {
 		  $childWin.list select clear [expr $index+1] $MotionHighIndex
 	      }
@@ -143,9 +143,9 @@ proc MotionSelect { winName index } {
   }
   # Select everything between high and low
   if { $MOVEMENT_DIR == "down" } {
-        HighLightListLine $currentSelectedPane $MotionHighIndex $MotionLowIndex
+        HighLightListLine $CUR_SEL_PANE(name) $MotionHighIndex $MotionLowIndex
   } else {
-        HighLightListLine $currentSelectedPane $MotionLowIndex $MotionHighIndex
+        HighLightListLine $CUR_SEL_PANE(name) $MotionLowIndex $MotionHighIndex
   }
     
   return
@@ -157,13 +157,13 @@ proc MotionSelect { winName index } {
 # CtrlSelect:  Enables selection of multiple rows using ctrl-click
 #
 proc CtrlSelect { winName index } {
-  global currentSelectedPane MULTI_SELECT LASTINDEXSELECTED BUSY
+  global  MULTI_SELECT CUR_SEL_PANE LASTINDEXSELECTED BUSY
 
   # If we are busy then abort.
   if {$BUSY} { bell; return }
 
   # Check to see if we are in a new pane and if so, error.
-  if { [info exists currentSelectedPane] && [winfo parent [winfo parent $winName]] != $currentSelectedPane } {
+  if { [info exists CUR_SEL_PANE(name)] && [winfo parent [winfo parent $winName]] != $CUR_SEL_PANE(name) } {
     ErrorMessage "You may only control-select from within the same event pane."
     return
   }
@@ -180,7 +180,7 @@ proc CtrlSelect { winName index } {
   }
   # If ctrl-clicking an already selected event we should unselect it
   if { [$winName selection includes $index] == 1 } {
-        foreach childWin [winfo children $currentSelectedPane] {
+        foreach childWin [winfo children $CUR_SEL_PANE(name)] {
 	  if { [winfo name $childWin] != "scroll" } {
 	      $childWin.list select clear $index
 	  }
@@ -197,7 +197,7 @@ proc CtrlSelect { winName index } {
 # SingleSelect:  Selects a single row
 #
 proc SingleSelect { winName index } {
-  global currentSelectedPane ACTIVE_EVENT MULTI_SELECT LASTINDEXSELECTED BUSY
+  global CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT LASTINDEXSELECTED BUSY
 
   # If we are busy then abort.
   if {$BUSY} { bell; return }
@@ -213,8 +213,8 @@ proc SingleSelect { winName index } {
 
   set MULTI_SELECT 0 
   # Unhighlight anything that is highlighted
-  if {[info exists currentSelectedPane]} {
-    UnHighLightListLine $currentSelectedPane
+  if {[info exists CUR_SEL_PANE(name)]} {
+    UnHighLightListLine $CUR_SEL_PANE(name)
   }
   # Save index in $LASTINDEXSELECTED
   set LASTINDEXSELECTED $index
@@ -237,30 +237,30 @@ proc SelectNextEvent { paneName index } {
 # SelectAllLists: Highlight all lists and update event data info.
 #
 proc SelectAllLists { winName index } {
-  global MULTI_SELECT currentSelectedPane ACTIVE_EVENT DISPLAYEDDETAIL portscanDataFrame packetDataFrame
-  global SSN_QUERY sancpFrame SANCP_QUERY
+  global MULTI_SELECT ACTIVE_EVENT DISPLAYEDDETAIL portscanDataFrame packetDataFrame
+  global sancpFrame CUR_SEL_PANE
 
   set ACTIVE_EVENT 1
-  set currentSelectedPane [winfo parent [winfo parent $winName]]
+  set CUR_SEL_PANE(name) [winfo parent [winfo parent $winName]]
   if { $index < 0 } {
     set ACTIVE_EVENT 0
     return
   }
  
-  HighLightListLine $currentSelectedPane $index $index
+  HighLightListLine $CUR_SEL_PANE(name) $index $index
 
 
   # Check to see if we are working with a session query tab
-  set winType [lindex [ split [winfo name $currentSelectedPane] _] 0]
+  set winType [lindex [ split [winfo name $CUR_SEL_PANE(name)] _] 0]
   if { $winType  == "ssnquery" } {
-    set SSN_QUERY 1 
-    set SANCP_QUERY 0
+    set CUR_SEL_PANE(type) "SSN" 
+    set CUR_SEL_PANE(format) "SSN"
   } elseif { $winType == "sancpquery" } {
-    set SANCP_QUERY 1
-    set SSN_QUERY 0 
+    set CUR_SEL_PANE(type) "SANCP"
+    set CUR_SEL_PANE(format) "SSN"
   } else {
-    set SSN_QUERY 0
-    set SANCP_QUERY 0
+    set CUR_SEL_PANE(type) "EVENT"
+    set CUR_SEL_PANE(format) "EVENT"
   }
 
 #
@@ -268,9 +268,9 @@ proc SelectAllLists { winName index } {
 # So lets stick this below bit in a conditional
 #
   if { !$MULTI_SELECT } {
-    if {$SSN_QUERY} {
+    if { $CUR_SEL_PANE(type) == "SSN" } {
       UnSelectPacketOptions
-    } elseif { $SANCP_QUERY } {
+    } elseif { $CUR_SEL_PANE(type) == "SANCP" } {
       if { $DISPLAYEDDETAIL != $sancpFrame } {
         pack forget $DISPLAYEDDETAIL
         pack $sancpFrame -fill both -expand true
@@ -278,8 +278,7 @@ proc SelectAllLists { winName index } {
       }
       GetSancpData
     } else {
-      #puts [regexp "^spp_portscan:" [$currentSelectedPane.msgFrame.list get $index]]
-      if { [regexp "^spp_portscan:" [$currentSelectedPane.msgFrame.list get $index]] } {
+      if { [regexp "^spp_portscan:" [$CUR_SEL_PANE(name).msgFrame.list get $index]] } {
         if { $DISPLAYEDDETAIL != $portscanDataFrame } {
           #pack forget $packetDataFrame
           pack forget $DISPLAYEDDETAIL
@@ -294,7 +293,7 @@ proc SelectAllLists { winName index } {
           pack $packetDataFrame -fill both -expand true
           set DISPLAYEDDETAIL $packetDataFrame
         }
-        DisplayPacketHdr $currentSelectedPane $index
+        DisplayPacketHdr $CUR_SEL_PANE(name) $index
         GetRuleInfo
         GetPacketInfo
       }

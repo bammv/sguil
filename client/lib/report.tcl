@@ -1,11 +1,11 @@
-# $Id: report.tcl,v 1.29 2004/12/02 16:40:15 shalligan Exp $ #
+# $Id: report.tcl,v 1.30 2005/01/20 20:02:28 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
 # email17.tcl
 
 proc EmailEvents { detail sanitize } {
-    global ACTIVE_EVENT currentSelectedPane RETURN_FLAG REPORTNUM
+    global ACTIVE_EVENT CUR_SEL_PANE RETURN_FLAG REPORTNUM
     global EMAIL_FROM EMAIL_CC EMAIL_HEAD EMAIL_TAIL EMAIL_SUBJECT DEBUG
     set RETURN_FLAG 0
     incr REPORTNUM
@@ -40,8 +40,8 @@ proc EmailEvents { detail sanitize } {
 	pack $buttonBox -side top -fill none -expand 0
         iwidgets::Labeledwidget::alignlabels $fromBox $toBox $ccBox $bccBox $subjectBox
 	# save the currentSelectPane in case someone clicks a new pane while the report is being built
-	set winname $currentSelectedPane
-	set curselection [$currentSelectedPane.eventIDFrame.list curselection]
+	set winname $CUR_SEL_PANE(name)
+	set curselection [$CUR_SEL_PANE(name).eventIDFrame.list curselection]
 	set MessageText [HumanText $detail $sanitize $winname $curselection]
 	
 	# insert the String into the textbox
@@ -82,7 +82,7 @@ proc EmailEvents { detail sanitize } {
     }
 }	
 proc ExportResults { currentTab type } {
-    global currentSelectedPane RETURN_FLAG env quote header
+    global CUR_SEL_PANE RETURN_FLAG env quote header
 
     set RETURN_FLAG 0
     set exportPromptWin [dialogshell .exportPromptWin -title "Select a Text Report Type"\
@@ -141,7 +141,7 @@ proc ExportResults { currentTab type } {
      -message "File Saved as $filename"
 }
 proc TextReport  { detail sanitize } {
-    global ACTIVE_EVENT currentSelectedPane RETURN_FLAG REPORTNUM REPORT_RESULTS REPORT_DONE
+    global ACTIVE_EVENT CUR_SEL_PANE RETURN_FLAG REPORTNUM REPORT_RESULTS REPORT_DONE
     global DEBUG env
     set RETURN_FLAG 0
     incr REPORTNUM
@@ -165,8 +165,8 @@ proc TextReport  { detail sanitize } {
 
 	set filename [tk_getSaveFile -initialdir $env(HOME)]
 	if {$filename == "" } {return}
-	set winname $currentSelectedPane
-	set curselection [$currentSelectedPane.eventIDFrame.list curselection]
+	set winname $CUR_SEL_PANE(name)
+	set curselection [$CUR_SEL_PANE(name).eventIDFrame.list curselection]
 	# Build the text we are going to output before we open the file
 	if { $SepChar == "HUMAN-READABLE" } {
 	    set OutputText [HumanText $detail $sanitize $winname $curselection]

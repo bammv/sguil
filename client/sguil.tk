@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.157 2004/12/06 21:18:21 bamm Exp $ #
+# $Id: sguil.tk,v 1.158 2005/01/20 20:02:07 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -85,7 +85,7 @@ set LASTINDEXSELECTED 1
 set MONITORFLAG 0
 set BUSY 0
 set REPORTNUM 0
-set currentSelectedPane 0 
+set CUR_SEL_FRAME(name) 0 
 set COUNTER 0
 set SEARCHFRAME 1
 ######################## END GLOBALS ################################
@@ -335,7 +335,7 @@ proc GetComment {} {
   return $comment
 }
 proc ValidateEvent { status {c_flag {0}} } {
-  global ACTIVE_EVENT currentSelectedPane eventArray correlateArray socketID DEBUG
+  global ACTIVE_EVENT CUR_SEL_PANE eventArray correlateArray socketID DEBUG
   global MULTI_SELECT CONNECTED
 
   if {!$CONNECTED} {
@@ -350,22 +350,22 @@ proc ValidateEvent { status {c_flag {0}} } {
       if { $eventComment == "" } { InfoMessage "No comment, aborting."; Idle; return }
     }
     foreach selectedIndex\
-     [lsort -integer -decreasing [$currentSelectedPane.eventIDFrame.list curselection]] {
+     [lsort -integer -decreasing [$CUR_SEL_PANE(name).eventIDFrame.list curselection]] {
       # Get the eventID to be deleted
-      set eventID [$currentSelectedPane.eventIDFrame.list get $selectedIndex]
+      set eventID [$CUR_SEL_PANE(name).eventIDFrame.list get $selectedIndex]
       # Remove the selected line from the console
-      DeleteLine $currentSelectedPane $selectedIndex
+      DeleteLine $CUR_SEL_PANE(name) $selectedIndex
       #update 
       lappend tmpDeletedEIDList $eventID
     }
     update
-    if { [llength [$currentSelectedPane.eventIDFrame.list curselection]] > 1} {
+    if { [llength [$CUR_SEL_PANE(name).eventIDFrame.list curselection]] > 1} {
       # puts "unslecting multiple events"
-      UnHighLightListLine $currentSelectedPane
+      UnHighLightListLine $CUR_SEL_PANE(name)
     } 
     set MULTI_SELECT 0
     if { [info exists selectedIndex] && $selectedIndex != "" } { 
-      SelectNextEvent $currentSelectedPane $selectedIndex
+      SelectNextEvent $CUR_SEL_PANE(name) $selectedIndex
     }
     if { [info exists tmpDeletedEIDList] && $tmpDeletedEIDList != "" } {
       SendToSguild "DeleteEventIDList ${status}::${eventComment}::${tmpDeletedEIDList}"
@@ -713,7 +713,7 @@ proc ClearPSLists {} {
   }
 }
 proc DisplayPortscanData {} {
-  global ACTIVE_EVENT PSINFO currentSelectedPane DEBUG socketID portscanDataFrame MULTI_SELECT
+  global ACTIVE_EVENT PSINFO CUR_SEL_PANE DEBUG socketID portscanDataFrame MULTI_SELECT
   global CONNECTED psMaxRows MAX_PS_ROWS
   ClearPSLists
   if {$ACTIVE_EVENT && $PSINFO && !$MULTI_SELECT} {
@@ -722,9 +722,9 @@ proc DisplayPortscanData {} {
       return 
     }
     $psMaxRows configure -state normal
-    set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
-    set srcIP [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
-    set timestamp [lindex [$currentSelectedPane.dateTimeFrame.list get $selectedIndex] 0]
+    set selectedIndex [$CUR_SEL_PANE(name).srcIPFrame.list curselection]
+    set srcIP [$CUR_SEL_PANE(name).srcIPFrame.list get $selectedIndex]
+    set timestamp [lindex [$CUR_SEL_PANE(name).dateTimeFrame.list get $selectedIndex] 0]
     SendToSguild "GetPSData $timestamp $srcIP $MAX_PS_ROWS"
     $portscanDataFrame configure -cursor watch
   } elseif { !$PSINFO } {
@@ -747,19 +747,19 @@ proc InsertPSData { data } {
   }
 }
 proc GetPacketInfo {} {
-  global ACTIVE_EVENT PACKETINFO currentSelectedPane socketID DEBUG MULTI_SELECT SSN_QUERY
-  global CONNECTED SANCP_QUERY
+  global ACTIVE_EVENT PACKETINFO CUR_SEL_PANE socketID DEBUG MULTI_SELECT
+  global CONNECTED
   ClearPacketData
-  if {$ACTIVE_EVENT && $PACKETINFO && !$MULTI_SELECT && !$SSN_QUERY && !$SANCP_QUERY} {
+  if {$ACTIVE_EVENT && $PACKETINFO && !$MULTI_SELECT && $CUR_SEL_PANE(type) == "EVENT"} {
     if {!$CONNECTED} {
       ErrorMessage "Not connected to sguild. Cannot make a request for packet data."
       return
     }
     Working
     update
-    set selectedIndex [$currentSelectedPane.eventIDFrame.list curselection]
-    set eventID [$currentSelectedPane.eventIDFrame.list get $selectedIndex]
-    set protocol [$currentSelectedPane.protoFrame.list get $selectedIndex]
+    set selectedIndex [$CUR_SEL_PANE(name).eventIDFrame.list curselection]
+    set eventID [$CUR_SEL_PANE(name).eventIDFrame.list get $selectedIndex]
+    set protocol [$CUR_SEL_PANE(name).protoFrame.list get $selectedIndex]
     set sid [lindex [split $eventID .] 0]
     set cid [lindex [split $eventID .] 1]
     SendToSguild "GetIPData $sid $cid"
@@ -813,11 +813,11 @@ proc DisplayCorrelatedEvents { winName } {
   SendToSguild "GetCorrelatedEvents $eventID $correlateFrame"
 }
 proc DeleteTab { eventTabs tabName } {
-  global ACTIVE_EVENT currentSelectedPane
+  global ACTIVE_EVENT CUR_SEL_PANE
 
   # If the currenttab had the selected index then we need to let things no that 
   # no event is active anymore
-  if [regexp "^$tabName" $currentSelectedPane] { set ACTIVE_EVENT 0 }
+  if [regexp "^$tabName" $CUR_SEL_PANE(name)] { set ACTIVE_EVENT 0 }
 
   set totalTabs [llength [$eventTabs childsite]]
   set tabIndex [lsearch -exact [$eventTabs childsite] $tabName]
@@ -1482,12 +1482,12 @@ proc CheckLineFormat { line } {
   return $RETURN
 }
 proc GetEventHistory {} {
-  global ACTIVE_EVENT currentSelectedPane SSN_QUERY SANCP_QUERY socketID 
+  global ACTIVE_EVENT CUR_SEL_PANE socketID 
   if {!$ACTIVE_EVENT} { return }
-  if {$SSN_QUERY || $SANCP_QUERY } {InfoMessage "History is available for event data only."; return}
-  set winName $currentSelectedPane.eventIDFrame.list
+  if { CUR_SEL_FRAME(type) != "EVENT" } {InfoMessage "History is available for event data only."; return}
+  set winName $CUR_SEL_PANE(name).eventIDFrame.list
   set index [$winName curselection]
-  if { [$currentSelectedPane.statusFrame.list get $index] == "RT" } {
+  if { [$CUR_SEL_PANE(name).statusFrame.list get $index] == "RT" } {
     InfoMessage "New (RT) events do not have a history."
     return
   }
@@ -2429,7 +2429,7 @@ $sigQueryMenu add command -label "Query RT Events" -command "QueryRequest event 
 set correlateMenu [ menu .correlateMenu -background blue -foreground white\
  -activeforeground blue -activebackground white -tearoff 0 ]
 $correlateMenu add command -label "View Correlated Events"\
- -command "DisplayCorrelatedEvents \$currentSelectedPane.countFrame.list"
+ -command "DisplayCorrelatedEvents \$CUR_SEL_PANE(name).countFrame.list"
 
 # Query Incident Categories Menu
 set statusMenu [ menu .statusMenu -background blue -foreground white\
@@ -2560,15 +2560,15 @@ bind . <Control-Key-Left> {
 # Globally grabbing the space bar is bad :)  Bammkkkk
 bind . <Control-Key-space> {
     if {!$SSN_QUERY && !$SANCP_QUERY} { 
-      set activeIndex [$currentSelectedPane.eventIDFrame.list index active]
-      CtrlSelect $currentSelectedPane.sensorFrame.list $activeIndex
+      set activeIndex [$CUR_SEL_PANE(name).eventIDFrame.list index active]
+      CtrlSelect $CUR_SEL_PANE(name).sensorFrame.list $activeIndex
     }
 }
 # ctrl-up moves active event without changing selection
 bind . <Control-Key-Up> {
-    set activeIndex [$currentSelectedPane.sensorFrame.list index active]
-    $currentSelectedPane.sensorFrame.list activate [expr $activeIndex-1]
-    foreach childWin [winfo children $currentSelectedPane] {
+    set activeIndex [$CUR_SEL_PANE(name).sensorFrame.list index active]
+    $CUR_SEL_PANE(name).sensorFrame.list activate [expr $activeIndex-1]
+    foreach childWin [winfo children $CUR_SEL_PANE(name)] {
         if { [winfo name $childWin] != "scroll" } {
           $childWin.list itemconfigure $activeIndex -foreground black
 	    $childWin.list itemconfigure [expr $activeIndex - 1] -foreground red
@@ -2577,9 +2577,9 @@ bind . <Control-Key-Up> {
     }
 }
 bind . <Control-Key-Down> {
-    set activeIndex [$currentSelectedPane.sensorFrame.list index active]
-    $currentSelectedPane.sensorFrame.list activate [expr $activeIndex+1]
-    foreach childWin [winfo children $currentSelectedPane] {
+    set activeIndex [$CUR_SEL_PANE(name).sensorFrame.list index active]
+    $CUR_SEL_PANE(name).sensorFrame.list activate [expr $activeIndex+1]
+    foreach childWin [winfo children $CUR_SEL_PANE(name)] {
         if { [winfo name $childWin] != "scroll" } {
           $childWin.list itemconfigure $activeIndex -foreground black
 	    $childWin.list itemconfigure [expr $activeIndex + 1] -foreground red
@@ -2590,16 +2590,16 @@ bind . <Control-Key-Down> {
 # Up arrow moves selected event up one.
 bind . <Key-Up> {
   if {$ACTIVE_EVENT} {
-      set selectedIndex [$currentSelectedPane.sensorFrame.list index active]
+      set selectedIndex [$CUR_SEL_PANE(name).sensorFrame.list index active]
     
-    set listSize [$currentSelectedPane.sensorFrame.list size]
+    set listSize [$CUR_SEL_PANE(name).sensorFrame.list size]
     if { $selectedIndex != 0 && $selectedIndex < $listSize  } {
-      SingleSelect $currentSelectedPane.sensorFrame.list [expr $selectedIndex - 1]
-      foreach childWin [winfo children $currentSelectedPane] {
+      SingleSelect $CUR_SEL_PANE(name).sensorFrame.list [expr $selectedIndex - 1]
+      foreach childWin [winfo children $CUR_SEL_PANE(name)] {
         if { [winfo name $childWin] != "scroll" } {
 	    $childWin.list itemconfigure $selectedIndex -foreground black
 	    $childWin.list see [expr $selectedIndex - 1]
-          set SCROLL_HOME($currentSelectedPane) 0
+          set SCROLL_HOME($CUR_SEL_PANE(name)) 0
 	}        
       }
     }
@@ -2609,15 +2609,15 @@ bind . <Key-Up> {
 # Down arrow moves selected event down one.
 bind . <Key-Down> {
   if {$ACTIVE_EVENT} {
-    set selectedIndex [$currentSelectedPane.sensorFrame.list index active]
-    set listSize [$currentSelectedPane.sensorFrame.list size]
+    set selectedIndex [$CUR_SEL_PANE(name).sensorFrame.list index active]
+    set listSize [$CUR_SEL_PANE(name).sensorFrame.list size]
     if { $selectedIndex < [expr $listSize -1]  } {
-      SingleSelect $currentSelectedPane.sensorFrame.list [expr $selectedIndex + 1]
-      foreach childWin [winfo children $currentSelectedPane] {
+      SingleSelect $CUR_SEL_PANE(name).sensorFrame.list [expr $selectedIndex + 1]
+      foreach childWin [winfo children $CUR_SEL_PANE(name)] {
         if { [winfo name $childWin] != "scroll" } {
           $childWin.list see [expr $selectedIndex + 1]
 	  $childWin.list itemconfigure $selectedIndex -foreground black
-          set SCROLL_HOME($currentSelectedPane) 0
+          set SCROLL_HOME($CUR_SEL_PANE(name)) 0
         }
       }
     }
@@ -2632,9 +2632,9 @@ bind . <Key-Escape> {
 
 # Should be depreciated
 #bind . <MouseWheel> {
-#    if { $currentSelectedPane != 0 } {
+#    if { $CUR_SEL_PANE(name) != 0 } {
 #       puts "DEBUG #### %W"
-#	WheelScroll %D $currentSelectedPane "MouseWheel"
+#	WheelScroll %D $CUR_SEL_PANE(name) "MouseWheel"
 #    }
 #}
 # Toggle SOUND when off/on is clicked

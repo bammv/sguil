@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.21 2004/10/20 20:45:40 shalligan Exp $ #
+# $Id: qrylib.tcl,v 1.22 2005/01/20 20:02:28 shalligan Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -6,9 +6,8 @@
 # and finally call DBQueryRequest or SsnQueryRequest.
 #
 proc QueryRequest { tableName queryType { incidentCat {NULL} } } {
-    global currentSelectedPane
+    global CUR_SEL_PANE
     set timestamp [lindex [GetCurrentTimeStamp "1 week ago"] 0]
-    set hourago [GetCurrentTimeStamp "1 hour ago"]
     if { $tableName == "event" } {
 	if { $incidentCat == 0 } {
 	    set whereTmp "WHERE $tableName.timestamp > '$timestamp' AND event.status = 0 AND "
@@ -17,39 +16,49 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } } {
 	}   
     } else {
 	if { ( $queryType == "srcip" || $queryType == "dstip" || $queryType == "src2dst" ) && $incidentCat == 1 } {
-	    set whereTmp "WHERE $tableName.start_time > '$hourago' AND "
+	    if { $CUR_SEL_PANE(format) == "SSN" } {
+		set selectedIndex [$CUR_SEL_PANE(name).startTimeFrame.list curselection]
+		set starttime [clock scan "30 min ago" -base [clock scan [$CUR_SEL_PANE(name).startTimeFrame.list get $selectedIndex]]]
+	    } else {
+		set selectedIndex [$CUR_SEL_PANE(name).dateTimeFrame.list curselection]
+		set starttime [clock scan "30 min ago" -base [clock scan [$CUR_SEL_PANE(name).dateTimeFrame.list get $selectedIndex]]]
+	    }
+	    set endtime [expr $starttime + 3600]
+	    set tminus [clock format $starttime -f "%Y-%m-%d %T"]
+	    set tplus [clock format $endtime -f "%Y-%m-%d %T"]
+	    set whereTmp "WHERE $tableName.start_time > '$tminus' AND $tableName.start_time < '$tplus' AND "
 	} else {
 	    set whereTmp "WHERE $tableName.start_time > '$timestamp' AND "
 	}  
     }
     if { $queryType == "srcip" } {
-	set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
-	set srcIP [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
+	set selectedIndex [$CUR_SEL_PANE(name).srcIPFrame.list curselection]
+	set srcIP [$CUR_SEL_PANE(name).srcIPFrame.list get $selectedIndex]
 	set whereTmp "$whereTmp ($tableName.src_ip = INET_ATON('$srcIP') OR $tableName.dst_ip = INET_ATON('$srcIP'))"
     } elseif { $queryType == "srcport" } {
-	set selectedIndex [$currentSelectedPane.srcPortFrame.list curselection]
-	set srcport [$currentSelectedPane.srcPortFrame.list get $selectedIndex]
+	set selectedIndex [$CUR_SEL_PANE(name).srcPortFrame.list curselection]
+	set srcport [$CUR_SEL_PANE(name).srcPortFrame.list get $selectedIndex]
 	set whereTmp "$whereTmp ($tableName.src_port = '$srcport' OR $tableName.dst_port = '$srcport')"
     } elseif { $queryType == "dstport" } {
-	set selectedIndex [$currentSelectedPane.dstPortFrame.list curselection]
-	set dstport [$currentSelectedPane.dstPortFrame.list get $selectedIndex]
+	set selectedIndex [$CUR_SEL_PANE(name).dstPortFrame.list curselection]
+	set dstport [$CUR_SEL_PANE(name).dstPortFrame.list get $selectedIndex]
 	set whereTmp "$whereTmp ($tableName.src_port = '$dstport' OR $tableName.dst_port = '$dstport')"
     } elseif { $queryType == "dstip" } {
-	set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
-	set dstIP [$currentSelectedPane.dstIPFrame.list get $selectedIndex]
+	set selectedIndex [$CUR_SEL_PANE(name).srcIPFrame.list curselection]
+	set dstIP [$CUR_SEL_PANE(name).dstIPFrame.list get $selectedIndex]
 	set whereTmp "$whereTmp ($tableName.src_ip  = INET_ATON('$dstIP') OR $tableName.dst_ip = INET_ATON('$dstIP'))"
     } elseif { $queryType == "empty" } {
 	set whereTmp "$whereTmp <Insert Query Here>"
     } elseif { $queryType == "src2dst" } {
-	set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
-	set srcIP [$currentSelectedPane.srcIPFrame.list get $selectedIndex]
-	set dstIP [$currentSelectedPane.dstIPFrame.list get $selectedIndex]
+	set selectedIndex [$CUR_SEL_PANE(name).srcIPFrame.list curselection]
+	set srcIP [$CUR_SEL_PANE(name).srcIPFrame.list get $selectedIndex]
+	set dstIP [$CUR_SEL_PANE(name).dstIPFrame.list get $selectedIndex]
 	set whereTmp "$whereTmp $tableName.src_ip  = INET_ATON('$srcIP') AND $tableName.dst_ip = INET_ATON('$dstIP')"
     } elseif { $queryType == "category" } {
 	set whereTmp "$whereTmp event.status = $incidentCat"
     } elseif { $queryType == "signature" } {
-	set selectedIndex [$currentSelectedPane.srcIPFrame.list curselection]
-	set eventMsg [$currentSelectedPane.msgFrame.list get $selectedIndex]
+	set selectedIndex [$CUR_SEL_PANE(name).srcIPFrame.list curselection]
+	set eventMsg [$CUR_SEL_PANE(name).msgFrame.list get $selectedIndex]
 	set whereTmp "$whereTmp event.signature = '$eventMsg'"
     }
     set tmpWhereStatement [QryBuild $tableName $whereTmp]
