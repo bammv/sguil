@@ -28,6 +28,9 @@ CVS-HEAD
   sguild.conf
     * Vars for emailing selected events.
 
+  log_packets.sh
+    * Removed some legacy hostname stuff.
+
 sguil-0.2.5 (15 Jul 2003)
 
   * Multiple undocumented bugfixes. I recommend updating
