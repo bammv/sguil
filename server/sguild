@@ -20,12 +20,21 @@ set VERSION "sguil 0.2"
 ########################## PROCS ####################################
 
 proc DisplayUsage { cmdName } {
-  puts "Usage: $cmdName -- -c <filename> -u <filename>"
+  puts "Usage: $cmdName \[-D\] \[-c <filename>\] \[-u <filename>\] \[-P <filename>\]"
   puts "  -c <filename>: PATH to the sguild config (sguild.conf) file."
   puts "  -u <filename>: PATH to the sguild users (sguild.users) file."
+  puts "  -P <filename>: Name of file to write the PID to."
+  puts "                 Default is /var/run/sguild.pid"
+  puts "  -D Runs sguild in daemon mode."
   exit 1
 }
 proc CleanExit {} {
+  global PID_FILE
+  if { [info exists PID_FILE] && [file exists $PID_FILE] } {
+    if [catch {file delete -force $PID_FILE} delError] {
+      puts "ERROR: $delError"
+    }
+  }
   puts "Exiting..."
   exit
 }
@@ -123,7 +132,7 @@ proc ClientCmdRcvd { socketID } {
       SendEscalatedEvents { $clientCmd $socketID }
       SendDBInfo { $clientCmd $socketID }
       ValidateUser { ValidateUser $socketID [lindex $data 1] [lindex $data 2]}
-      default { puts "Unrecognized command from $socketID: $data" }
+      default { if {$DEBUG} {puts "Unrecognized command from $socketID: $data"} }
     }
   }
 }
@@ -199,7 +208,7 @@ proc SendSocket { socketID command } {
     if {$DEBUG} { puts "Error sending \"$command\" to $socketID" }
     catch { close $socketID } closeError
     # Remove socket from the client list
-    CleanCloseError $socketID
+    ClientExitClose $socketID
     return
   }
   catch {flush $socketID} flushError
@@ -350,7 +359,7 @@ proc ClientConnect { socketID IPAddr port } {
 
 proc SensorConnect { socketID IPAddr port } {
   global DEBUG
-  puts "Connect from $IPAddr:$port $socketID"
+  if {$DEBUG} {puts "Connect from $IPAddr:$port $socketID"}
   fconfigure $socketID -buffering line
   fileevent $socketID readable [list SensorCmdRcvd $socketID]
 }
@@ -801,7 +810,27 @@ proc CreateDB { DBNAME } {
   puts "Done."
   return 1
 }
-
+proc Daemonize {} {
+  global PID_FILE DEBUG
+  set DEBUG 0
+  set childPID [fork]
+  # Parent exits.
+  if { $childPID == 0 } { exit }
+  id process group set
+  if {[fork]} {exit 0}
+  set PID [id process]
+  if { ![info exists PID_FILE] } { set PID_FILE "/var/run/sguild.pid" }
+  set PID_DIR [file dirname $PID_FILE]
+  if { ![file exists $PID_DIR] || ![file isdirectory $PID_DIR] || ![file writable $PID_DIR] } {
+    puts "ERROR: Directory $PID_DIR does not exists or is not writable."
+    puts "Process ID will not be written to file."
+  } else {
+    set pidFileID [open $PID_FILE w]
+    puts $pidFileID $PID
+    close $pidFileID
+  }
+  signal trap {QUIT TERM} CleanExit
+}
 ######################## END PROCS ##############################
 
 ###################### MAIN #####################################
@@ -816,18 +845,20 @@ package require Tclx
 # GetOpts
 set state flag
 foreach arg $argv {
-  puts $arg
   switch -- $state {
     flag {
       switch -glob -- $arg {
         -- { set state flag }
         -c { set state conf }
         -u { set state users_file }
+        -D { set DAEMON_CONF_OVERRIDE 1 }
+        -P { set state pid_file }
         default { DisplayUsage $argv0 }
       }
     }
     conf { set CONF_FILE $arg; set state flag }
     users_file { set USERS_FILE $arg; set state flag }
+    pid_file { set PID_FILE $arg; set state flag }
     default { DisplayUsage $argv0 }
   }
 }
@@ -865,6 +896,9 @@ if { [info exists CONF_FILE] } {
 } else {
   DisplayUsage $argv0
 }
+# Deamon
+if {[info exists DAEMON_CONF_OVERRIDE] && $DAEMON_CONF_OVERRIDE} { set DAEMON 1}
+if {$DAEMON} { Daemonize }
 # Check for a valid USERS file
 if { ![info exists USERS_FILE] } {
   # No users file was specified. Go with the defaults
@@ -918,22 +952,24 @@ foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, event.cl
 # Get DB info (table names and column info)
 if {$DEBUG} { puts "Retrieving DB info..." }
 set tableNameList [mysqlinfo $dbSocketID tables]
-if {$DEBUG} {puts "Table names: $tableNameList"}
 foreach tableName $tableNameList {
   set tableArray($tableName) [mysqlcol $dbSocketID $tableName {name type length}]
 }
 mysqlclose $dbSocketID
 set sensorQuery "SELECT hostname FROM sensor"
 set sensorList [FlatDBQuery $sensorQuery]
-puts "Unique sensors in the DB: $sensorList"
 
 
 # Open a socket for clients to connect to
-set serverSocket [socket -server ClientConnect $SERVERPORT]
-puts "Clients can now connect."
+if [catch {socket -server ClientConnect $SERVERPORT} serverSocket] {
+  puts "ERROR: $serverSocket"
+  exit
+}
 # Open a socket for sensors to connect to
-set sensorSocket [socket -server SensorConnect $SENSORPORT]
-puts "Waiting for events from sensors."
+if [catch {socket -server SensorConnect $SENSORPORT} sensorSocket] {
+  puts "ERROR: $sensorSocket"
+}
+puts "Sguild Initialized."
 
 # Infinate wait
 vwait FOREVER

@@ -280,7 +280,6 @@ proc XscriptRequest { socketID sensor eventID timestamp srcIP srcPort dstIP dstP
   puts $socketID "Src Port:\t\t$srcPort"
   puts $socketID "Dst Port:\t\t$dstPort"
   if {$P0F} {
-    puts "Getting HERE"
     #set p0fID [open "| $P0F_PATH -s $rawDataFile 2>@ stdout"]
     set p0fID [open "| $P0F_PATH -q -s $rawDataFile"]
     while { [gets $p0fID data] >= 0 } {
@@ -331,9 +330,70 @@ proc ClientCmdRcvd { socketID } {
     }
   }
 }
+proc Daemonize {} {
+  global PID_FILE DEBUG
+  set DEBUG 0
+  set childPID [fork]
+  # Parent exits.
+  if { $childPID == 0 } { exit }
+  id process group set
+  if {[fork]} {exit 0}
+  set PID [id process]
+  if { ![info exists PID_FILE] } { set PID_FILE "/var/run/xscriptd.pid" }
+  set PID_DIR [file dirname $PID_FILE]
+  if { ![file exists $PID_DIR] || ![file isdirectory $PID_DIR] || ![file writable $PID_DIR] } {
+    puts "ERROR: Directory $PID_DIR does not exists or is not writable."
+    puts "Process ID will not be written to file."
+  } else {
+    set pidFileID [open $PID_FILE w]
+    puts $pidFileID $PID
+    close $pidFileID
+  } 
+  signal trap {QUIT TERM} CleanExit
+}
+proc DisplayUsage { cmdName } {
+  puts "Usage: $cmdName \[-D\] \[-P <filename>\]"
+  puts "  -P <filename>: Name of file to write the PID to."
+  puts "                 Default is /var/run/xscriptd.pid"
+  puts "  -D Runs xscriptd in daemon mode."
+  exit 1 
+}
+proc CleanExit {} {
+  global PID_FILE 
+  if { [info exists PID_FILE] && [file exists $PID_FILE] } {
+    if [catch {file delete -force $PID_FILE} delError] {
+      puts "ERROR: $delError"
+    }
+  }
+  puts "Exiting..." 
+  exit
+} 
+
+
 #################### MAIN #######################
 
+# Load extended tcl
+package require Tclx
+
+# GetOpts
+set state flag
+foreach arg $argv {
+  switch -- $state {
+    flag {
+      switch -glob -- $arg {
+        -- { set state flag }
+        -D { set DAEMON 1 }
+        -P { set state pid_file }
+        default { DisplayUsage $argv0 }
+      }
+    }
+    pid_file { set PID_FILE $arg; set state flag }
+    default { DisplayUsage $argv0 }
+  }
+}
+if {[info exists DAEMON] && $DAEMON} { Daemonize }
+
 set serverSocket [socket -server ClientConnect $SERVERPORT]
-puts "Listening for xscript requests..."
+puts "Xscriptd Initialized."
 vwait FOREVERBABY
 
