@@ -1,4 +1,4 @@
-/* $Id: op_sguil.c,v 1.13 2005/03/08 20:34:49 bamm Exp $ */
+/* $Id: op_sguil.c,v 1.14 2005/03/16 14:56:09 bamm Exp $ */
 
 /*
 ** Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@sguil.net> 
@@ -289,8 +289,15 @@ int OpSguil_Log(void *context, void *ul_data)
     Tcl_DStringAppendElement(&list, buffer);
 
     /* Snort Event Ref Time */
-    RenderTimestamp(record->log.event.ref_time.tv_sec, timestamp, TIMEBUF_SIZE);
-    Tcl_DStringAppendElement(&list, timestamp);
+    if(record->log.event.ref_time.tv_sec == 0) 
+    {
+        Tcl_DStringAppendElement(&list, "");
+    }
+    else
+    {    
+        RenderTimestamp(record->log.event.ref_time.tv_sec, timestamp, TIMEBUF_SIZE);
+        Tcl_DStringAppendElement(&list, timestamp);
+    }
 
     /* Generator ID */
     sprintf(buffer, "%d", sid->gen);
@@ -330,14 +337,14 @@ int OpSguil_Log(void *context, void *ul_data)
     {
         if(p.iph)
         {
+            int i;
+
             /* Add IP header */
             OpSguil_AppendIPHdrData(&list, &p);
 
             /* Add icmp || udp || tcp data */
             if(!(p.pkt_flags & PKT_FRAG_FLAG))
             {
-
-                int i;
 
                 switch(p.iph->ip_proto)
                 {
@@ -361,6 +368,14 @@ int OpSguil_Log(void *context, void *ul_data)
                         break;
                 }
 
+            }
+            else
+            {
+                /* Null out TCP/UDP/ICMP fields */
+                for(i = 0; i < 17; ++i)
+                {
+                    Tcl_DStringAppendElement(&list, "");
+                }
             }
         }
         else
