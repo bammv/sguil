@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.13 2004/08/23 23:12:23 bamm Exp $
+# $Id: guilib.tcl,v 1.14 2005/02/23 17:32:40 shalligan Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -359,67 +359,21 @@ proc InsertIcmpHdr { data pldata } {
   # If the ICMP packet is a dest unreachable, redirect or a time exceeded,
   # check to see if it is network, host, port unreachable or admin prohibited or filtered
   # then show some other stuff
-
-  if {[lindex $data 0] == "3" || [lindex $data 0] == "11" || [lindex $data 0] == "5"} {
-	if {[lindex $data 1] == "0" || [lindex $data 1] == "4" || [lindex $data 1] == "9" || [lindex $data 1] == "13" || [lindex $data 1] == "1" || [lindex $data 1] == "3" || [lindex $data 1] == "2" } {
-	    global protoIcmpDecodeFrame sipIcmpDecodeFrame sportIcmpDecodeFrame dipIcmpDecodeFrame dportIcmpDecodeFrame gipIcmpDecodeFrame
-	    
-	    #  There may be 32-bits of NULL padding at the start of the payload
-	    # or a 32-bit gateway address on a redirect
-	    set offset 0
-	    # puts [string range $pldata 0 7]
-	    if {[string range $pldata 0 7] == "00000000" || [lindex $data 0] == "5"} {
-		set offset 8
-		if {[lindex $data 0] == "5"} {
-		    set giphex1 [string range $pldata 0 1]
-		    set giphex2 [string range $pldata 2 3]
-		    set giphex3 [string range $pldata 4 5]
-		    set giphex4 [string range $pldata 6 7]
-		    $gipIcmpDecodeFrame.text insert 0.0 [format "%i" 0x$giphex1].[format "%i" 0x$giphex2].[format "%i" 0x$giphex3].[format "%i" 0x$giphex4]
-		}
-	    }
-	    # puts [string range $pldata [expr $offset+24] [expr $offset+25]]
-	    
-	    # Build the protocol
-	    set protohex [string range $pldata [expr $offset+18] [expr $offset+19]]
-	    $protoIcmpDecodeFrame.text insert 0.0 [format "%i" 0x$protohex]
-
-	    # Build the src address
-	    set srchex1 [string range $pldata [expr $offset+24] [expr $offset+25]]
-	    set srchex2 [string range $pldata [expr $offset+26] [expr $offset+27]]
-	    set srchex3 [string range $pldata [expr $offset+28] [expr $offset+29]]
-	    set srchex4 [string range $pldata [expr $offset+30] [expr $offset+31]]
-	    $sipIcmpDecodeFrame.text insert 0.0 [format "%i" 0x$srchex1].[format "%i" 0x$srchex2].[format "%i" 0x$srchex3].[format "%i" 0x$srchex4]
-	    
-	    # Build the dst address
-	    set dsthex1 [string range $pldata [expr $offset+32] [expr $offset+33]]
-	    set dsthex2 [string range $pldata [expr $offset+34] [expr $offset+35]]
-	    set dsthex3 [string range $pldata [expr $offset+36] [expr $offset+37]]
-	    set dsthex4 [string range $pldata [expr $offset+38] [expr $offset+39]]
-	    $dipIcmpDecodeFrame.text insert 0.0 [format "%i" 0x$dsthex1].[format "%i" 0x$dsthex2].[format "%i" 0x$dsthex3].[format "%i" 0x$dsthex4]
-	    
-	    # Find and build the src port
-	    set hdroffset [expr [string index $pldata [expr ($offset+1)]] * 8 + $offset]
-	    puts "header offset = $hdroffset"
-	    puts "header lenght = [string index $pldata [expr ($offset+1)]]"
-	    puts "offset = $offset"
-	    puts "looking for length at [expr ($offset+1)]"
-	    puts "pldata is $pldata"
-	    set sporthex [string range $pldata $hdroffset [expr $hdroffset+3]]
-	    $sportIcmpDecodeFrame.text insert 0.0 [format "%i" 0x$sporthex]
-	    
-	    # Dest Port
-	    set dporthex [string range $pldata [expr $hdroffset+4] [expr $hdroffset+7]]
-	    $dportIcmpDecodeFrame.text insert 0.0 [format "%i" 0x$dporthex]
-	    
-	    pack $icmpDecodeFrame -after $icmpHdrFrame -fill x
-	} else {
-            pack forget $icmpDecodeFrame
-        }
+    global protoIcmpDecodeFrame sipIcmpDecodeFrame sportIcmpDecodeFrame dipIcmpDecodeFrame dportIcmpDecodeFrame gipIcmpDecodeFrame
+    
+    set ICMPList [DecodeICMP [lindex $data 0] [lindex $data 1] $pldata]
+    if { $ICMPList != "NA" } {
+	$gipIcmpDecodeFrame.text insert 0.0 [lindex $ICMPList 0]
+	$protoIcmpDecodeFrame.text insert 0.0 [lindex $ICMPList 1]
+	$sipIcmpDecodeFrame.text insert 0.0 [lindex $ICMPList 2]
+	$dipIcmpDecodeFrame.text insert 0.0 [lindex $ICMPList 3]
+	$sportIcmpDecodeFrame.text insert 0.0 [lindex $ICMPList 4]
+	$dportIcmpDecodeFrame.text insert 0.0 [lindex $ICMPList 5]
+	
+	pack $icmpDecodeFrame -after $icmpHdrFrame -fill x
     } else {
-        pack forget $icmpDecodeFrame
-    }
-	    
+	pack forget $icmpDecodeFrame
+    }	    
 }
 proc InsertPayloadData { data } {
   global dataText dataHex dataSearchButton

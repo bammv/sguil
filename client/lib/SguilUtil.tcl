@@ -1,4 +1,4 @@
-# $Id: SguilUtil.tcl,v 1.14 2005/02/01 18:47:21 shalligan Exp $
+# $Id: SguilUtil.tcl,v 1.15 2005/02/23 17:32:36 shalligan Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
@@ -269,4 +269,77 @@ proc GpgText { winName sign encrypt text recips sender } {
     file delete $tempOutFile
     destroy $passPrompt
     return $newtext
+}
+
+# 
+# DecodeICMP: Breaks an ICMP Payload out into fields
+#             Returns a List of the ICMP Fields in this order:
+#             {GatewayIP} {Protocol} {SourceIP} {DestIP} {SourcePort} {DestPort}
+#
+proc DecodeICMP { type code payload } {
+    
+    set GatewayIP ""
+    set Protocol ""
+    set SourceIP ""
+    set DestIP ""
+    set SourcePort ""
+    set DestPort ""
+    
+    if { $type  == "3" || $type == "11" || $type == "5"} {
+	if { $code == "0" || $code  == "4" || $code == "9" || $code == "13" || $code == "1" || \
+		 $code == "3" || $code == "2" } {
+	    
+	    #  There may be 32-bits of NULL padding at the start of the payload
+	    # or a 32-bit gateway address on a redirect
+	    set offset 0
+	    if {[string range $payload 0 7] == "00000000" || $type == "5"} {
+		set offset 8
+		if { $type == "5"} {
+		    set giphex1 [string range $payload 0 1]
+		    set giphex2 [string range $payload 2 3]
+		    set giphex3 [string range $payload 4 5]
+		    set giphex4 [string range $payload 6 7]
+		    set GatewayIP [format "%i" 0x$giphex1].[format "%i" 0x$giphex2].[format "%i" 0x$giphex3].[format "%i" 0x$giphex4]
+		}
+	    }
+	    
+	    # Build the protocol
+	    set protohex [string range $payload [expr $offset+18] [expr $offset+19]]
+	    set Protocol [format "%i" 0x$protohex]
+
+	    # Build the src address
+	    set srchex1 [string range $payload [expr $offset+24] [expr $offset+25]]
+	    set srchex2 [string range $payload [expr $offset+26] [expr $offset+27]]
+	    set srchex3 [string range $payload [expr $offset+28] [expr $offset+29]]
+	    set srchex4 [string range $payload [expr $offset+30] [expr $offset+31]]
+	    set SourceIP [format "%i" 0x$srchex1].[format "%i" 0x$srchex2].[format "%i" 0x$srchex3].[format "%i" 0x$srchex4]
+	    
+	    # Build the dst address
+	    set dsthex1 [string range $payload [expr $offset+32] [expr $offset+33]]
+	    set dsthex2 [string range $payload [expr $offset+34] [expr $offset+35]]
+	    set dsthex3 [string range $payload [expr $offset+36] [expr $offset+37]]
+	    set dsthex4 [string range $payload [expr $offset+38] [expr $offset+39]]
+	    set DestIP [format "%i" 0x$dsthex1].[format "%i" 0x$dsthex2].[format "%i" 0x$dsthex3].[format "%i" 0x$dsthex4]
+	    
+	    # Find and build the src port
+	    set hdroffset [expr [string index $payload [expr ($offset+1)]] * 8 + $offset]
+	    set sporthex [string range $payload $hdroffset [expr $hdroffset+3]]
+	    set SourcePort [format "%i" 0x$sporthex]
+	    
+	    # Dest Port
+	    set dporthex [string range $payload [expr $hdroffset+4] [expr $hdroffset+7]]
+	    set DestPort [format "%i" 0x$dporthex]
+	    
+	    # Create the list to return 
+	    set ICMPList [list $GatewayIP $Protocol $SourceIP $DestIP $SourcePort $DestPort]
+	} else {
+	    # not a decodable code
+	    set ICMPList "NA"
+	}
+    } else {
+	# not a decodable type
+	set ICMPList "NA"
+    }
+    
+    return $ICMPList
 }

@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.31 2005/01/28 22:03:20 shalligan Exp $ #
+# $Id: report.tcl,v 1.32 2005/02/23 17:32:40 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -707,62 +707,33 @@ proc HumanText { detail sanitize winname curselection } {
 		# If the ICMP packet is a dest unreachable or a time exceeded,
 		# check to see if it is network, host, port unreachable or admin prohibited or filtered
 		# then show some other stuff
-		if {[lindex $eventIcmpHdr 0] == "3" || [lindex $eventIcmpHdr 0] == "11"} {
-		    if {[lindex $eventIcmpHdr 1] == "0" || [lindex $eventIcmpHdr 1] == "4"\
-			    || [lindex $eventIcmpHdr 1] == "9" || [lindex $eventIcmpHdr 1] == "13"\
-			    || [lindex $eventIcmpHdr 1] == "1" || [lindex $eventIcmpHdr 1] == "3"} {
+		set ICMPList [DecodeICMP [lindex $eventIcmpHdr 0] [lindex $eventIcmpHdr 1] [lindex $eventIcmpHdr 5]]
+		if { $ICMPList != "NA" } {
+		    if { [lindex $ICMPList 0] != "" } {
+			set ReturnString "${ReturnString}Gateway Address=[lindex $ICMPList 0] "
+		    }
+		    set ReturnString "${ReturnString}Orig Protocol=[lindex $ICMPList 1] "
+		    
+		    if { $sanitize == 0 } {
+			set ReturnString "${ReturnString}\
+				    Orig Src IP:Port->Dst IP:Port [lindex $ICMPList 2]:"
+		    } else {
+			set ReturnString "${ReturnString}Orig Src IP:Port->Dst IP:Port a.b.c.d:"
+		    }
+		    set ReturnString "${ReturnString}[lindex $ICMPList 4]->"
 			
-			#  There may be 32-bits of NULL padding at the start of the payload
-			set offset 0
-			set pldata [lindex $eventIcmpHdr 5]
-			
-			if {[string range $pldata 0 7] == "00000000"} {
-			    set offset 8
-			}
-			# puts [string range $pldata [expr $offset+24] [expr $offset+25]]
-			
-			# Build the protocol
-			set protohex [string range $pldata [expr $offset+18] [expr $offset+19]]
-			set ReturnString "${ReturnString}Orig Protocol=[format "%i" 0x$protohex] "
-			
-			if { $sanitize == 0 } {
-			    # Build the src address 
-			    set srchex1 [string range $pldata [expr $offset+24] [expr $offset+25]]
-			    set srchex2 [string range $pldata [expr $offset+26] [expr $offset+27]]
-			    set srchex3 [string range $pldata [expr $offset+28] [expr $offset+29]]
-			    set srchex4 [string range $pldata [expr $offset+30] [expr $offset+31]]
-			    set ReturnString "${ReturnString}\
-				    Orig Src IP:Port->Dst IP:Port [format "%i" 0x$srchex1]\
-				    .[format "%i" 0x$srchex2]\
-				    .[format "%i" 0x$srchex3].[format "%i" 0x$srchex4]:"
-			} else {
-			    set ReturnString "${ReturnString}Orig Src IP:Port->Dst IP:Port a.b.c.d:"
-			}
-			
-			# Find and build the src port
-			set hdroffset [expr [string index $pldata [expr ($offset+1)]] * 8 + $offset]
-			set sporthex [string range $pldata $hdroffset [expr $hdroffset+3]]
-			set ReturnString "${ReturnString}[format "%i" 0x$sporthex]->"
-			
-			if { $sanitize == 0 } {
-			    # Build the dst address
-			    set dsthex1 [string range $pldata [expr $offset+32] [expr $offset+33]]
-			    set dsthex2 [string range $pldata [expr $offset+34] [expr $offset+35]]
-			    set dsthex3 [string range $pldata [expr $offset+36] [expr $offset+37]]
-			    set dsthex4 [string range $pldata [expr $offset+38] [expr $offset+39]]
-			    set ReturnString "${ReturnString}\
-				    [format "%i" 0x$dsthex1].[format "%i" 0x$dsthex2]\
-				    .[format "%i" 0x$dsthex3].[format "%i" 0x$dsthex4]:"
+		    if { $sanitize == 0 } {
+			set ReturnString "${ReturnString}[lindex $ICMPList 3]:"
 			} else {
 			    set ReturnString "${ReturnString}e.f.g.h:"
 			}
 			
 			# Dest Port
-			set dporthex [string range $pldata [expr $hdroffset+4] [expr $hdroffset+7]]
-			set ReturnString "${ReturnString}[format "%i" 0x$dporthex]\n"
+		
+		    set ReturnString "${ReturnString}[lindex $ICMPList 5]\n"
 			
-		    }
 		}
+		
 	    }
 	    # Get and insert the pack payload all pretty like if detail is set to 1
 	    if { $detail == "1" } {
