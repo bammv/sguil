@@ -86,11 +86,11 @@ proc SsnQueryRequest { whereStatement } {
     break
   }
   set buttonFrame [frame $currentTab.buttonFrame]
-  set closeButton [button $buttonFrame.close -text "Close Tab" -borderwidth 1 -width 1\
-	  -pady 0 -padx 1 -relief groove\
+  set closeButton [button $buttonFrame.close -text "Close Tab" \
+	  -relief raised -borderwidth 2 -pady 0 \
 	  -command "DeleteTab $eventTabs $currentTab"]
-  set exportButton [button $buttonFrame.export -text "Export Query Results" -borderwidth 1 -width 1\
-	  -pady 0 -padx 1 -relief groove\
+  set exportButton [button $buttonFrame.export -text "Export Query Results" \
+	  -relief raised -borderwidth 2 -pady 0 \
 	  -command "ExportResults $queryFrame ssn"]
   pack $closeButton $exportButton -side left -fill x -expand true
   pack $buttonFrame $whereText -side bottom -fill x
@@ -130,14 +130,14 @@ proc DBQueryRequest { whereStatement {winTitle {none} } } {
     break
   }
   set buttonFrame [frame $currentTab.buttonFrame]
-  set closeButton [button $buttonFrame.close -text "Close Tab" -borderwidth 1 -width 1\
-	  -pady 0 -padx 1 -relief groove\
+  set closeButton [button $buttonFrame.close -text "Close Tab" \
+	  -relief raised -borderwidth 2 -pady 0 \
 	  -command "DeleteTab $eventTabs $currentTab"]
-  set exportButton [button $buttonFrame.export -text "Export Query Results" -borderwidth 1 -width 1\
-	  -pady 0 -padx 1 -relief groove\
+  set exportButton [button $buttonFrame.export -text "Export Query Results" \
+	  -relief raised -borderwidth 2 -pady 0 \
 	  -command "ExportResults $queryFrame event"]
-  pack $closeButton $exportButton -side left -fill x -expand true
-  pack $buttonFrame $whereText -side bottom -fill x
+  pack $closeButton $exportButton -side left -fill x -expand true -padx 5
+  pack $whereText $buttonFrame -side bottom -fill x
   pack $queryFrame -side top
   $queryFrame configure -cursor watch
   if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
