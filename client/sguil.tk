@@ -3006,7 +3006,7 @@ set topFrame [frame .topFrame]
 
 
 pack $topFrame -side top -fill x -padx 0 -pady 0
-wm title . "Snort GUI for Lamerz \[sguil\] - $VERSION - Happy Halloween"
+wm title . "Snort GUI for Lamerz \[sguil\] - $VERSION"
 
 set eventPane [panedwindow .eventPane -width 1000 -height 700]
   $eventPane add eventLists -margin 0
@@ -3797,5 +3797,3 @@ if [catch { ConnectToSguild } socketID] {
   SendToSguild "SendEscalatedEvents"
   SendToSguild "SendGlobalQryList"
 }
-# Happy Halloween
-tk_setPalette orange
