@@ -1,0 +1,37 @@
+Index: snort.org.spec
+===================================================================
+RCS file: /cvsroot/snort/contrib/rpm/snort.org.spec,v
+retrieving revision 1.12
+diff -u -b -B -w -p -r1.12 snort.org.spec
+--- snort.org.spec	28 Sep 2004 15:06:21 -0000	1.12
++++ snort.org.spec	13 Oct 2004 13:37:49 -0000
+@@ -26,6 +26,8 @@
+ # See pg 399 of _Red_Hat_RPM_Guide_ for rpmbuild --with and --without options.
+ ################################################################
+ 
++%define sguil_version 0.5.2
++
+ # Other useful bits
+ %define OracleHome    /opt/oracle/OraHome1
+ %define SnortRulesDir /etc/snort/rules
+@@ -88,6 +90,7 @@ Epoch: 0
+ License: GPL
+ Group: Applications/Internet
+ Source0: http://www.snort.org/dl/%{name}-%{version}.tar.gz
++Source1: http://sguil.sourceforge.net/sguil-%{sguil_version}.tar.gz
+ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+ Url: http://www.snort.org/
+ Packager: Official Snort.org %{for_distro}
+@@ -200,6 +203,12 @@ fi
+ 
+ 
+ %build
++tar xvzf %{SOURCE1}
++
++cd src/preprocessors
++patch -p0 < ../../sguil-%{sguil_version}/sensor/snort_mods/2_1/spp_portscan_sguil.patch
++patch -p0 < ../../sguil-%{sguil_version}/sensor/snort_mods/2_1/spp_stream4_sguil.patch
++cd ../..
+ 
+ BuildSnort() {
+    mkdir "$1"
