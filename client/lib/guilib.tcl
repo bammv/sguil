@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.15 2005/03/09 22:16:35 shalligan Exp $
+# $Id: guilib.tcl,v 1.16 2005/03/10 16:00:23 shalligan Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -201,7 +201,7 @@ proc ClearPacketData {} {
   global idIcmpHdrFrame seqIcmpHdrFrame sipIcmpDecodeFrame
   global dipIcmpDecodeFrame sportIcmpDecodeFrame dportIcmpDecodeFrame protoIcmpDecodeFrame gipIcmpDecodeFrame
   global dataText dataHex dataSearchButton
-  global prioritySfpDataFrame connectionsSfpDataFrame ipCountSfpDataFrame ipRangeSfpDataFrame protoCountSfpDataFrame protoRangeSfpDataFrame
+  global prioritySfpDataFrame connectionsSfpDataFrame ipCountSfpDataFrame ipRangeSfpDataFrame protoCountSfpDataFrame protoRangeSfpDataFrame sfpOPDataText
 
   $srcIPHdrFrame.text delete 0.0 end
   $dstIPHdrFrame.text delete 0.0 end
@@ -258,6 +258,7 @@ proc ClearPacketData {} {
   $ipRangeSfpDataFrame.text delete 0.0 end
   $protoCountSfpDataFrame.text delete 0.0 end
   $protoRangeSfpDataFrame.text delete 0.0 end
+  $sfpOPDataText delete 0.0 end
 }
 proc InsertIPHdr { data } {
   global srcIPHdrFrame dstIPHdrFrame verIPHdrFrame hdrLenIPHdrFrame
