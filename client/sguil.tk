@@ -547,7 +547,7 @@ proc DeleteRequest { deletetype } {
 	if { $RETURN_FLAG } {
 	    set deleteQuery "DELETE from sessions WHERE sessions.start_time <= '[$deleteDate get]'"
 	    if {$DEBUG} { puts "Sending Server: ExecDB $deleteQuery" }
-	    SendToSquild "ExecDB $deleteQuery"
+	    SendToSguild "ExecDB $deleteQuery"
 	}
 	destroy $deleteRequest
 	return
