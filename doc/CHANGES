@@ -11,6 +11,9 @@ CVS-HEAD
     * Added option to change the max number of rows returned
       for portscan event data. Set the default in sguil.conf.
 
+    * Added 'User Messages' box for analyst to communicate
+      via text messages.
+
   sguild
     * Added -D (daemonize) and -P <pidFile> switches.
 

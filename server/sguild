@@ -11,7 +11,7 @@
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.2.1"
+set VERSION "SGUIL-0.2.3"
 set DB_VERSION "0.6"
 
 # Config options moved to sguild.conf
@@ -237,7 +237,7 @@ proc ClientCmdRcvd { socketID } {
       GetIcmpData { $clientCmd $socketID $index1 $index2 }
       GetIPData { $clientCmd $socketID $index1 $index2 }
       GetPayloadData { $clientCmd $socketID $index1 $index2 }
-      GetPSData { $clientCmd $socketID $index1 $index2 }
+      GetPSData { $clientCmd $socketID $index1 $index2 $data }
       GetTcpData { $clientCmd $socketID $index1 $index2 }
       GetUdpData { $clientCmd $socketID $index1 $index2 }
       MonitorSensors { $clientCmd $socketID $data1 } 
@@ -248,11 +248,19 @@ proc ClientCmdRcvd { socketID } {
       SendDBInfo { $clientCmd $socketID }
       ValidateUser { ValidateUser $socketID $index1 $index2 }
       PING { puts $socketID "PONG" }
+      UserMessage { UserMsgRcvd $socketID $data1 }
       default { if {$DEBUG} {puts "Unrecognized command from $socketID: $origData"} }
     }
   }
 }
 
+proc UserMsgRcvd { socketID userMsg } {
+  global socketInfo clientList
+
+  foreach client $clientList {
+    SendSocket $client "UserMessage [lindex $socketInfo($socketID) 2] $userMsg"
+  }
+}
 proc ClientExitClose { socketID } {
   global clientList  clientMonitorSockets validSockets socketInfo
   if { [info exists clientList] } {
@@ -681,10 +689,15 @@ proc RuleRequest { socketID sensor message } {
     catch {SendSocket $socketID "InsertRuleData \{Unable to find matching rule in $ruleDir.\}"} tmpError
   }
 }
-proc GetPSData { socketID timestamp srcIP } {
-  global MAX_PS_ROWS DBNAME DBUSER DBPASS DBPORT DBHOST DEBUG
-  set query\
-   "SELECT * FROM portscan WHERE timestamp > '$timestamp' AND src_ip='$srcIP' LIMIT $MAX_PS_ROWS"
+proc GetPSData { socketID timestamp srcIP MAX_PS_ROWS } {
+  global DBNAME DBUSER DBPASS DBPORT DBHOST DEBUG
+  if { $MAX_PS_ROWS == 0 } {
+    set query\
+    "SELECT * FROM portscan WHERE timestamp > '$timestamp' AND src_ip='$srcIP'"
+  } else {
+    set query\
+    "SELECT * FROM portscan WHERE timestamp > '$timestamp' AND src_ip='$srcIP' LIMIT $MAX_PS_ROWS"
+  }
   if {$DEBUG} {puts "Getting PS data: $query"}
   if {$DBPASS == ""} {
     set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]

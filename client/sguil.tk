@@ -19,7 +19,7 @@ package require Tclx
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.2.2"
+set VERSION "SGUIL-0.2.3"
 
 set ACTIVE_EVENT 0
 set MULTI_SELECT 0
@@ -77,6 +77,7 @@ proc ServerCommandRcvd { socketID } {
       TableColumns { $serverCmd [lindex $data 1] [lrange $data 2 end] }
       InsertHistoryResults { $serverCmd [lindex $data 1] [lrange $data 2 end] }
       InsertEmailIPHdr { set EMAIL_RESULTS [lrange $data 1 end] }
+      UserMessage { $serverCmd [lindex $data 1] [lrange $data 2 end] }
       PONG { if {$DEBUG} {puts "Comm test successful"  } }
       default { puts "Unrecognized command from $socketID: $data" }
     }
@@ -421,6 +422,16 @@ proc EditWhere { whereTmp } {
   }
   destroy $editWhere
   return $whereStatement
+}
+proc SendUserMsg {} {
+  global USERMSG userMsgEntry
+
+  SendToSguild "UserMessage $USERMSG"
+  [$userMsgEntry component entry] delete 0 end
+}
+proc UserMessage { user userMsg } {
+  global userMsgText
+  [$userMsgText component text] insert end "\[[lindex [GetCurrentTimeStamp] 1]\] <$user> $userMsg\n"
 }
 proc DisplayIncidentCats {} {
   set categoryTl [toplevel .categoryTl]
@@ -3480,11 +3491,27 @@ set ipDataFrame [frame [$ipDataPane childsite 0].ipDataFrame]
 pack $ipDataFrame -fill both -expand true -padx 0 -pady 0
 $whoisNoneButton invoke
 
-set systemInfoFrame [frame [$ipDataPane childsite 1].systemInfoFrame]
+set messageTabs [tabnotebook [$ipDataPane childsite 1].messageTabs\
+ -angle 0 -bevelamount 4 -tabpos n -tabbackground darkgrey]
+pack $messageTabs -side left -expand true -fill both -padx 0 -pady 0
+$messageTabs add -label "System Messages"
+$messageTabs add -label "User Messages"
+set systemInfoFrame [frame [$messageTabs childsite 0].systemInfoFrame]
 set systemInfoText [scrolledtext $systemInfoFrame.systemInfoText -vscrollmode static -hscrollmode dynamic\
- -wrap word -visibleitems 20x4 -labelpos n -labeltext "System Messages" -sbwidth 10]
+ -wrap word -visibleitems 20x4 -sbwidth 10]
 pack $systemInfoText -side top -fill both -expand true
 pack $systemInfoFrame -fill both -expand true
+set userMsgsFrame [frame [$messageTabs childsite 1].userMsgsFrame]
+  set userMsgText [scrolledtext $userMsgsFrame.userMsgText -vscrollmode static -hscrollmode dynamic\
+   -wrap word -visibleitems 20x4 -sbwidth 10]
+  set userMsgEntry [entryfield $userMsgsFrame.userMsgEntry -textvariable USERMSG\
+   -labeltext "MSG: " -labelpos w -width 20]
+  pack $userMsgText -side top -fill both -expand true
+  pack $userMsgEntry -side top -fill x
+  bind [$userMsgEntry component entry] <Return> { SendUserMsg }
+pack $userMsgsFrame -side top -fill both -expand true
+$messageTabs select 0
+
 
 set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
     set portscanDataFrame [frame $detailDataFrame.portscanFrame]
@@ -3862,12 +3889,13 @@ bind . <Control-Key-Left> {
   $eventTabs prev
 }
 # Space selects the active event.  Used when navigating using ctrl-arrow
-bind . <Key-space> {
-    if {!$SSN_QUERY} { 
-      set activeIndex [$currentSelectedPane.eventIDFrame.list index active]
-      CtrlSelect $currentSelectedPane.eventIDFrame.list $activeIndex
-    }
-}
+# Globally grabbing the space bar is bad :)  Bammkkkk
+#bind . <Key-space> {
+#    if {!$SSN_QUERY} { 
+#      set activeIndex [$currentSelectedPane.eventIDFrame.list index active]
+#      CtrlSelect $currentSelectedPane.eventIDFrame.list $activeIndex
+#    }
+#}
 # ctrl-up moves active event without changing selection
 bind . <Control-Key-Up> {
     set activeIndex [$currentSelectedPane.eventIDFrame.list index active]
