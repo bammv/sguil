@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.13 2004/07/14 13:08:47 bamm Exp $ #
+# $Id: report.tcl,v 1.14 2004/08/04 21:07:13 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -209,10 +209,10 @@ proc ReportResponse { type data } {
 	    }
 	    set REPORT_RESULTS $data
 	}
+	BUILDER -
 	PORTSCAN {
 	    # We gotta get tricky here since this data is going to 
 	    # come back in more than one response
-	 
 	    
 	    if { $data != "done" } {
 		lappend REPORT_RESULTS $data
@@ -220,16 +220,38 @@ proc ReportResponse { type data } {
 		set REPORT_DONE 1
 	    }
 	}
-	CATCOUNT {
-	    set REPORT_RESULTS $data
-	    set REPORT_DONE 1
-	}
+	
     }
 }
 	
 proc PHBReport {} { 
-    global RETURN_FLAG REPORTNUM REPORT_DONE REPORT_RESULTS monitorList
-   
+    global RETURN_FLAG REPORTNUM REPORT_DONE REPORT_RESULTS monitorList REPORT_QRY_LIST
+    puts $REPORT_QRY_LIST
+    puts [string length $REPORT_QRY_LIST]
+    if {[string length $REPORT_QRY_LIST] > 0} {
+	set scanindex 0
+	set stop 0
+	for {set cIndex 0} { $stop != 1 } {incr cIndex} {
+	    if { [regexp -start $scanindex {(.*?)\|\|(.*?)\|\|(.*?)\|\|(.*?)\|\|(.*?)\|\|} \
+		    $REPORT_QRY_LIST match name description type sql fields] } {
+		set rName($cIndex) $name
+		puts "$name $description $type"
+		set rDesc($cIndex) $description
+		lappend rList $description
+		set rType($cIndex) $type
+		set rSQL($cIndex) $sql
+		set rFields($cIndex) $fields
+		
+		regexp -indices -start $scanindex {.*?\|\|.*?\|\|.*?\|\|.*?\|\|.*?\|(\|)} $REPORT_QRY_LIST match endindex
+		set scanindex [expr [lindex $endindex 1] + 1]
+	    } else { 
+		set stop 1
+	    }
+	}
+    } else { 
+	InfoMessage "There are no reports defined.  Reports are defined on the Sguil Server at this time."
+	return
+    }
     set RETURN_FLAG 0
     incr REPORTNUM
     set phbReport .phbReport
@@ -246,56 +268,172 @@ proc PHBReport {} {
     foreach sensor $monitorList {
 	$sensorBox add $sensor -text [string totitle $sensor]
     }
-    set reportBox [checkbox $phbReport.reportBox -labeltext "Select Report Elements" -orient veritcal]
-    $reportBox add CATCOUNT -text "Counts of Events by Category"
-    $reportBox add CAT1 -text "Category I Events"
-    $reportBox add CAT2 -text "Category II Events"
-    $reportBox add CAT3 -text "Category III Events"
-    $reportBox add CAT4 -text "Category IV Events"
-    $reportBox add CAT5 -text "Category V Events"
-    $reportBox add CAT6 -text "Category VI Events"
-    $reportBox add CAT7 -text "Category VII Events"
-    $reportBox add NA -text "NA Events"
-    $reportBox add ESC -text "Escalated Events"
-    $reportBox add RT -text "Real-Time Events"
-    $reportBox add TTSRC -text "Top Ten Source Addresses"
-    $reportBox add TTSIG -text "Top Ten Events"
+    set timestampLabelFrame [frame $phbReport.timestampLabelFrame]
+        set timeStartLabel [label $timestampLabelFrame.timeStartLabel -text "Start Date/Time"]
+        set timeEndLabel [label $timestampLabelFrame.timeEndLabel -text "End Date/Time"]
+        pack $timeStartLabel $timeEndLabel -side left -expand 1 -fill x
+    set timestampFrame [frame $phbReport.timestampFrame]
+        set timeStartFrame [frame $timestampFrame.timeStartFrame]
+            set dateStart [dateentry $timeStartFrame.dateStart]
+            set timeStart [timeentry $timeStartFrame.timeStart -format military]
+            $dateStart show [clock scan "5 days ago" -gmt true]
+            $timeStart show [clock format [clock scan "now"] -gmt true -f "%T" ]
+            pack $dateStart $timeStart -side left
+        set timeEndFrame [frame $timestampFrame.timeendFrame]
+            set dateEnd [dateentry $timeEndFrame.dateEnd]
+            set timeEnd [timeentry $timeEndFrame.timeEnd -format military]
+            $dateEnd show [clock scan "now" -gmt true]
+            $timeEnd show [clock format [clock scan "now"] -gmt true -f "%T" ]
+            pack $dateEnd $timeEnd -side left
+        pack $timeStartFrame $timeEndFrame -side left -expand 1 -fill x
+
+    set reportFrame [frame $phbReport.rFrame]
+    set reportBox [disjointlistbox $reportFrame.reportBox -lhslabeltext "Select Report Elements"\
+	    -rhslabeltext "Selected Report Elements"]
+	$reportBox insertlhs $rList
+    set orderButton [buttonbox $reportFrame.oBox -orient vertical]
+      $orderButton add up -text "\u2191" -command "MoveReportUp $reportFrame"
+      $orderButton add down -text "\u2193" -command "MoveReportDown $reportFrame"
+    pack $reportBox $orderButton -side left -expand 1 -fill both
     
-    
-    #set textBox [scrolledtext $phbReport.textBox -textbackground white -vscrollmode dynamic \
-		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 80x10 -textfont ourFixedFont \
-		-labeltext "Report"]
     set buttonBox [buttonbox $phbReport.buttonBox]
-    $buttonBox add build  -text "Build Report" -command "set RETURN_FLAG 1"
-    $buttonBox add cancel -text "Cancel" -command "set RETURN_FLAG 0"
-    pack $sensorBox $textBox $buttonBox
+      $buttonBox add build  -text "Build Report" -command "set RETURN_FLAG 1"
+      $buttonBox add cancel -text "Cancel" -command "set RETURN_FLAG 0"
+    pack $sensorBox $timestampLabelFrame $timestampFrame $reportFrame $buttonBox -expand 1 -fill x
     tkwait variable RETURN_FLAG
-    if {$RETURN_FLAG = 1} {
-	set reports [$reportBox get]
+    if {$RETURN_FLAG == 1} {
+	set reports [$reportBox getrhs]
+	#this is pretty hinky, I am scanning one array to see what the index of the report
+	#we want is and then grabbing all of those indicies and sticking them in new arrays
+	set j 0
+	foreach reportdesc $reports {
+	    puts "desc is $reportdesc"
+	    for { set i 0 } { $i < $cIndex } {incr i} {
+		if { $reportdesc == $rDesc($i) } {
+		    set sName($j) $rName($i)
+		    set sDesc($j) $rDesc($i)
+		    set sSql($j) $rSQL($i)
+		    set sType($j) $rType($i)
+		    set sFields($j) $rFields($i)
+		    incr j
+		    break
+		}
+	    }
+	}
 	set sensors [$sensorBox get]
-	BuildPHBReport $sensors $reports
+	set datetimestart "[clock format [$dateStart get -clicks] -f "%Y-%m-%d"] [$timeStart get]"
+	set datetimeend "[clock format [$dateEnd get -clicks] -f "%Y-%m-%d"] [$timeEnd get]"
+	puts $datetimestart 
+	puts $datetimeend
+	destroy $phbReport
+	BuildPHBReport $sensors $datetimestart $datetimeend sName sDesc sType sSql sFields
     }
-    destroy $phbReport
     return
 }
 
-proc BuildPHBReport { sensors reports } {
+proc MoveReportUp { reportFrame } {
+
+    set reportBox $reportFrame.reportBox
+    if { [$reportBox rhs selecteditemcount] == 1 } {
+	set SelectedIndex [$reportBox rhs curselection]
+	if { $SelectedIndex == 0 } { return }
+	set SelectedName [$reportBox rhs get $SelectedIndex]
+	$reportBox rhs delete $SelectedIndex
+	$reportBox rhs insert [expr $SelectedIndex-1] $SelectedName
+	$reportBox rhs selection set [expr $SelectedIndex-1]
+    }
+}
+proc MoveReportDown { reportFrame } {
+
+    set reportBox $reportFrame.reportBox
+    if { [$reportBox rhs selecteditemcount] == 1 } {
+	set SelectedIndex [$reportBox rhs curselection]
+	set SelectedName [$reportBox rhs get $SelectedIndex]
+	$reportBox rhs delete $SelectedIndex
+	$reportBox rhs insert [expr $SelectedIndex+1] $SelectedName
+	$reportBox rhs selection set [expr $SelectedIndex+1]
+    }
+}
+proc BuildPHBReport { sensors datetimestart datetimeend sName sDesc sType sSql sFields } {
 
     global REPORT_DONE REPORT_RESULTS
-    
-
+    upvar 1 $sName Name
+    upvar 1 $sDesc Desc
+    upvar 1 $sType Type
+    upvar 1 $sSql Sql
+    upvar 1 $sFields Fields
+    set timelist [list $datetimestart $datetimeend]
+    set datalist [list $sensors $timelist]
+    # build the window for the output
+    set phbReportOut .phbReportOut
+    if { [winfo exists $phbReportOut] } {
+	wm withdraw $phbReportOut
+	wm deiconify $phbReportOut
+	return
+    }
+    toplevel $phbReportOut
+    wm geometry $phbReportOut +400+400
+    wm title $phbReportOut "Sensor Summary Report"
+    set reportText [text $phbReportOut.reportText]
+    set reportButtonBox [buttonbox $phbReportOut.reportButtonBox]
+    $reportButtonBox add reportCloseButton -text "Close" -command "destroy $phbReportOut; return"
+    $reportButtonBox add reportSaveButton -text "Save Report" -command "SavePHBReport $reportText"
+    pack $reportText $reportButtonBox
+    $reportText insert end "Sensor Summary Report\n"
+    $reportText insert end "---------------------\n"
+    $reportText insert end "\n"
+    $reportText insert end "Sensors:\n"
+    $reportText insert end "[join $sensors]\n"
+    $reportText insert end "\n"
     # Send the Report Request to the server
-    SendToSguild "ReportRequest CATCOUNT $sensor empty"
+    Working
+    set k [array size Name]
+    for {set i 0 } { $i < $k } {incr i} {
+	if { $Type($i) == "query" } {
+	    set REPORT_RESULT {}
+	    SendToSguild "ReportRequest BUILDER $Name($i) $datalist"
     
-    # wait for the response to fill in
-    tkwait variable REPORT_DONE
-    # Reset REPORT_DONE to 0 for the next report
-    set REPORT_DONE 0
-    
-    $reportWin.textBox insert end $REPORT_RESULTS
-    # clear REPORT_RESULTS 
-    set REPORT_RESULTS ""
+	    # wait for the response to fill in
+	    tkwait variable REPORT_DONE
+	    # Reset REPORT_DONE to 0 for the next report
+	    set REPORT_DONE 0
+	    set description $Desc($i)
+	    $reportText insert end "${description}\n"
+	    $reportText insert end "--------------------\n"
+	    foreach report $REPORT_RESULTS {
+		for { set j 0 } { $j < $Fields($i) } { incr j } {
+		    $reportText insert end [lindex $report $j]
+		    $reportText insert end "\t"
+		}
+		$reportText insert end "\n"
+	    }
+	    $reportText insert end "\n"
+	    #$reportText insert end "${REPORT_RESULTS}\n"
+	    #puts $REPORT_RESULTS
+	    # clear REPORT_RESULTS 
+	    set REPORT_RESULTS {}
+	} else {
+	    puts $Sql($i)
+	}
+    }
+    Idle
 }
+
+proc SavePHBReport { reporttextbox } {
+    global env
+    set filename [tk_getSaveFile -initialdir $env(HOME) -initialfile "report.txt"]
+    if { $filename == "" } { return }
+    if [catch {open $filename w} fileID] {
+	puts "Error: Could not create/open $filename: $fileID"
+	return
+    } else {
+	puts $fileID [$reporttextbox get 0.0 end]
+	close $fileID
+    }
+    tk_messageBox -type ok -icon info -parent [winfo parent $reporttextbox]\
+	    -message "File Saved as $filename"
+}
+
 proc HumanText { detail sanitize winname curselection } {
     global DEBUG REPORT_DONE REPORT_RESULTS
     set ReturnString ""

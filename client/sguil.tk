@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.134 2004/07/29 12:39:33 bamm Exp $ #
+# $Id: sguil.tk,v 1.135 2004/08/04 21:07:12 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -61,6 +61,9 @@ namespace import -force iwidgets::scrolledlistbox
 namespace import -force iwidgets::combobox
 namespace import -force iwidgets::radiobox
 namespace import -force iwidgets::dialogshell
+namespace import -force iwidgets::disjointlistbox
+namespace import -force iwidgets::timeentry
+namespace import -force iwidgets::dateentry
 
 set ACTIVE_EVENT 0
 set MULTI_SELECT 0
@@ -90,8 +93,7 @@ set SEARCHFRAME 1
 ######################## COMMUNICATION PROCS ########################
 
 proc ServerCommandRcvd { socketID } {
-  global DEBUG EMAIL_RESULTS CONNECTED GLOBAL_QRY_LIST
-    # REPORT_QRY_LIST
+  global DEBUG EMAIL_RESULTS CONNECTED GLOBAL_QRY_LIST REPORT_QRY_LIST
 
   if { [eof $socketID] || [catch {gets $socketID data} errorCheck] } {
     #Close the socket and exit
@@ -143,6 +145,7 @@ proc ServerCommandRcvd { socketID } {
       UserMessage { $serverCmd $index1 $data2 }
       PONG { if {$DEBUG} {puts "Comm test successful"} }
       GlobalQryList { set GLOBAL_QRY_LIST $data1 }
+      ReportQryList { set REPORT_QRY_LIST $data1 }
       ReportResponse { $serverCmd $index1 $data2 }
       InsertSancpFlags { $serverCmd $index1 $data2 }
       XscriptDebugMsg { $serverCmd $index1 $data2 }
@@ -242,7 +245,7 @@ proc ReconnectToSguild {} {
     SendToSguild "SendEscalatedEvents"
     SendToSguild "SendGlobalQryList"
     UpdateUserName "$USERNAME" $USERID
-    # SendToSguild "SendReportQryList"
+    SendToSguild "SendReportQryList"
   }
 }
 proc SendToSguild { data } {
@@ -1814,6 +1817,7 @@ set topFrame [frame .topFrame]
       set summaryMenu [menu $reportList.summary -tearoff 0]
       $summaryMenu add command -label "Normal" -command {EmailEvents 0 0}
       $summaryMenu add command -label "Sanitized" -command {EmailEvents 0 1}
+    $reportList add command -label "Sensor Reports" -command "PHBReport"
   set databaseList [menu $databaseMenu.menu -tearoff 0]
     $databaseList add command -label "Purge Session Data" -command "DeleteRequest sessions"
     $databaseList add command -label "Optimize Tables" -command "OptimizeTables"
@@ -2748,6 +2752,7 @@ while {$CONNECTED == 0} {
   update
   SendToSguild "SendEscalatedEvents"
   SendToSguild "SendGlobalQryList"
+  SendToSguild "SendReportQryList"
   UpdateUserName $USERNAME $USERID
   HeartBeat
-  # SendToSguild "SendReportQryList"
+  

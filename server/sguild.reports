@@ -1,0 +1,24 @@
+# This file contains the standard REPORT elements.
+# format is:
+# <name>||<description>||<type>||<sql statement>||<Number of fields>||
+# <name> is a short name for the report.
+# <description> is a full title for the report.  This is what will appear on the actual report.
+# <type> is one of "query" for SQL-based report elements or "text" for report text blocks
+# <sql statement> is the FULL sql statement to generate the data.  
+# <number of fields> is the number of fields the query returns
+#
+#SQL SYNTAX NOTE:  Use the macros %%SENSORS%%, %%STARTTIME%%, and %%ENDTIME%% to allow for specifying these
+# Criteria from the GUI.  If you use the %%SENSORS%% macro, make sure you properly join the sensor table.
+# The %%SENSORS%% macro will expand to ( sensor.sid = 'sensor1' OR sensor.sid = 'sensor2' ), if sensor1 and sensor2 
+# were selected from the GUI.
+# See the provided examples for proper use.
+#
+# IMPORTANT NOTE:  To support multiline text element make sure that ALL elements end with ||.  
+# New lines DO NOT signify the start of a new element
+
+CATCOUNT||Counts of Events by Category||query||SELECT status.description, COUNT(event.status) FROM sensor, status, event WHERE event.sid = sensor.sid and %%SENSORS%% and event.timestamp > %%STARTTIME%% and event.timestamp < %%ENDTIME%%  and event.status=status.status_id GROUP BY status.description||2||
+
+TOPTEN||Top Ten Events||query||SELECT event.signature, count(event.signature) as Count from event, sensor WHERE event.sid = sensor.sid and %%SENSORS%% and event.timestamp > %%STARTTIME%% and event.timestamp < %%ENDTIME%% GROUP BY event.signature ORDER BY Count desc LIMIT 10||2||
+
+SENSORLIST||Sensor Information||query||SELECT * from sensor where %%SENSORS%%||9||
+
