@@ -3,10 +3,10 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.2 2003/11/26 17:56:08 shalligan Exp $
+# $Id: extdata.tcl,v 1.3 2003/12/04 16:34:33 creining Exp $
 
 proc GetRuleInfo {} {
-  global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton MULTI_SELECT SSN_QUERY
+  global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT SSN_QUERY
   global CONNECTED eventArray
   ClearRuleText
   if {$ACTIVE_EVENT && $SHOWRULE && !$MULTI_SELECT && !$SSN_QUERY} {
@@ -21,6 +21,7 @@ proc GetRuleInfo {} {
     SendToSguild "RuleRequest $sensorName $message"
   } else {
     $referenceButton configure -state disabled
+    $icatButton configure -state disabled
   }
 }
 proc ClearRuleText {} {
@@ -29,8 +30,14 @@ proc ClearRuleText {} {
 }
 proc InsertRuleData { ruleData } {
   global ruleText referenceButton
+  global ruleText icatButton
   $ruleText component text insert end $ruleData
   $referenceButton configure -state normal
+  if [regexp {cve,([^;]*)} $ruleData] {
+    $icatButton configure -state normal
+  } else {
+    $icatButton configure -state disabled
+  }
 }
 proc GetDshieldIP { arg } {
   global DEBUG BROWSER_PATH currentSelectedPane ACTIVE_EVENT MULTI_SELECT
@@ -97,6 +104,22 @@ proc GetReference {} {
     }
   }
 }
+proc GetIcat {} {
+  global DEBUG ruleText BROWSER_PATH
+
+  set signature [$ruleText get 0.0 end]
+  # parse the sig for the cve
+  regexp {cve,([^;]*)} $signature match cve
+  if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
+        exec $BROWSER_PATH http://icat.nist.gov/icat.cfm?cvename=$cve &
+  if {$DEBUG} {puts "$BROWSER_PATH http://icat.nist.gov/icat.cfm?cvename=$cve launched."}
+  } else {
+    tk_messageBox -type ok -icon warning -message\
+    "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
+    to point your favorite browser."
+    puts "Error: $BROWSER_PATH does not exist or is not executable."                }
+}
+
 #
 # DnsButtonActy: Called when the reverse DNS button is released
 #

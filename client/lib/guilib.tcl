@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.2 2003/11/26 17:56:08 shalligan Exp $
+# $Id: guilib.tcl,v 1.3 2003/12/04 16:34:33 creining Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -457,12 +457,13 @@ proc InsertPayloadData { data } {
 # UnSelectPacketOptions:  Used when ESC is hit or on a multiple selection to turn off packet details, etc
 #
 proc UnSelectPacketOptions { } {
-  global displayPacketButton displayRuleButton referenceButton displayPSButton
+  global displayPacketButton displayRuleButton referenceButton icatButton displayPSButton
   $displayPacketButton deselect
   ClearPacketData
   $displayRuleButton deselect
   ClearRuleText
   $referenceButton configure -state disabled
+  $icatButton configure -state disabled
   ClearPSLists
   $displayPSButton deselect
 }

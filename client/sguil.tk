@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.97 2003/11/26 17:53:03 shalligan Exp $ #
+# $Id: sguil.tk,v 1.98 2003/12/04 16:34:30 creining Exp $ #
 
 ####################################################################
 # Snort GUI for Lamerz [sguil] - A tcl/tk interface to snort       #
@@ -2077,7 +2077,9 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
        -text "Show Rule" -variable SHOWRULE -command GetRuleInfo]
         set referenceButton [button $ruleButtonFrame.referenceButton\
          -text "www.snort.org" -command "GetReference" -state disabled]
-      pack $displayPacketButton $displayRuleButton $referenceButton -side left
+        set icatButton [button $ruleButtonFrame.icatButton\
+         -text "icat.nist.gov" -command "GetIcat" -state disabled]
+      pack $displayPacketButton $displayRuleButton $referenceButton $icatButton -side left
     set ruleText [scrolledtext $packetDataFrame.ruleText -hscrollmode static -visibleitems 10x1\
      -sbwidth 10 -vscrollmode none -wrap none]
   set packetFrame [frame $packetDataFrame.packetFrame -background black -borderwidth 1]
