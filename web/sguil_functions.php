@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.6 2004/04/01 15:35:01 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.7 2004/04/03 15:22:37 dlowless Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -40,7 +40,7 @@ function show_alerts( $where_query ) {
 	
 	DBOpen();
 
-	$alert_query = "SELECT event.status, event.priority, event.class,
+	$alert_query = "SELECT count(event.timestamp) as CNT,event.status, event.priority, event.class,
 			sensor.hostname, event.timestamp,
 			event.sid, event.cid, event.signature,
 			INET_NTOA(event.src_ip) as src_ip,
@@ -50,7 +50,7 @@ function show_alerts( $where_query ) {
 			FROM event, sensor";
 
 	if ( $where_query == "" ) {
-		$where_query = "WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp ASC LIMIT 50";
+		$where_query = "WHERE event.sid=sensor.sid AND event.status=0 GROUP BY src_ip,signature ORDER BY event.timestamp DESC LIMIT 50";
 	}
 
 	$sql = $alert_query . " " . $where_query;
@@ -82,7 +82,7 @@ function show_alerts( $where_query ) {
 	print("<table cellpadding=\"0\" cellspacing=\"0\" border=\"1\" width=\"100%\">\n");
 	print("<tr bgcolor=\"#000000\">\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;ST&nbsp;</strong></font></td>\n");
-	//print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;CNT&nbsp;</strong></font></td>\n");
+	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;CNT&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Sensor&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;sid.cid&nbsp;</strong></font></td>\n");
 	print("	<td><font color=\"#FFFFFF\"><strong>&nbsp;Date/Time&nbsp;</strong></font></td>\n");
@@ -104,15 +104,22 @@ function show_alerts( $where_query ) {
 			
 			print("<tr bgcolor=\"" . $colours[$i] . "\">\n");
 			print("	<td bgcolor=\"" . $status_colour[$row['status']] . "\">" . $status_desc[$row['status']] . "</td>\n");
-			//print("	<td>[cnt]</td>\n");
+			print("	<td>" . $row['CNT'] . "</td>\n");
 			print("	<td>" . $row['hostname'] . "</td>\n");
 			print("	<td><a href=\"$detail_url\" target=\"lookup_right\">" . $row['sid'] . "." . $row['cid'] . "</a></td>\n");
 			print("	<td>" . $row['timestamp'] . "</td>\n");
 			print("	<td><a href=\"$lookup_url\" target=\"lookup_left\">" . $row['src_ip'] . "</a></td>\n");
 			print("	<td>" . $row['src_port'] . "</td>\n");
 			print("	<td><a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a></td>\n");
-			print("	<td>" . $row['dst_port'] . "</td>\n");
-			print("	<td>" . $row['ip_proto'] . "</td>\n");
+			if ( getprotobynumber($row['ip_proto']) != 'udp' && getprotobynumber($row['ip_proto']) != 'tcp' )
+			{
+				print("	<td>" . $row['dst_port'] . "</td>\n");
+			}
+			else
+			{
+				print("	<td>" . $row['dst_port'] ." (" .getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto'])) . ")</td>\n");
+			}
+			print("	<td>" . $row['ip_proto'] ."&nbsp;(" . getprotobynumber($row['ip_proto']). ")" . "</td>\n");
 			print("	<td>" . $row['signature'] . "</td>\n");
 			print("</tr>\n");
 			
