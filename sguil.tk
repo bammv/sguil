@@ -302,7 +302,7 @@ proc SimpleQueryCmd { host port cmd} {
   fconfigure $tmpSocketID -buffering line
   puts $tmpSocketID $cmd
   # Index 0 is the returned cmd, index 1 is the data.
-  set data [lindex [gets $tmpSocketID] 1]
+  set data [lrange [gets $tmpSocketID] 1 end]
   close $tmpSocketID
   return $data
 }
