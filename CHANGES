@@ -19,6 +19,11 @@ Version 0.2
     * Gets DB table info on init in support of the "Show DB
       Tables" function added to sguil.tk.
 
+  op_sguil.c
+    * Added "nospin" option for those users who want barnyard
+      to continue processesing events if unable to connect to
+      sguild.
+
 Version 0.1
   sguil.tk
     * MulitiSelect functionality added by Steve Halligan (geek2)
