@@ -40,6 +40,7 @@ CREATE TABLE event
   INDEX icmp_type (icmp_type),
   INDEX icmp_code (icmp_code),
   INDEX timestamp (timestamp),
+  INDEX last_modified (last_modified),
   INDEX signature (signature),
   INDEX status (status),
   INDEX abuse_queue (abuse_queue),
