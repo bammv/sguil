@@ -1,22 +1,19 @@
-# $Id: SguildEvent.tcl,v 1.5 2004/11/24 16:50:20 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.6 2005/03/03 21:07:45 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
 #
-proc EventRcvd { socketID data } {
+proc EventRcvd { eventDataList } {
   global EMAIL_EVENTS EMAIL_CLASSES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS eventIDCountArray
   global acRules acCat correlatedEventArray eventIDList
-  set eventDataList [lrange [split $data |] 1 15]
+
   if { [lindex $eventDataList 2] == "system-info" } {
     InfoMessage "SYSTEM INFO: $eventDataList"
-    puts $socketID "CONFIRM system msg"
     set sensorName [lindex $eventDataList 3]
     set message [lindex $eventDataList 5]
     SendSystemInfoMsg $sensorName $message
   } else {
     InfoMessage "Alert Received: $eventDataList"
-    puts $socketID "CONFIRM [lindex $eventDataList 6]"
-    flush $socketID
     # Make sure we don't have a dupe. If so, report an error and return.
     set currentEventAID [join [lrange $eventDataList 4 5] .]
     if { [lsearch $eventIDList $currentEventAID] >= 0 } {

@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.5 2004/10/28 19:49:33 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.6 2005/03/03 21:07:45 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -22,6 +22,13 @@ proc GetSensorID { sensorName } {
   # For now we query the DB everytime we need the sid.
   set sid [FlatDBQuery "SELECT sid FROM sensor WHERE hostname='$sensorName'"]
   return $sid
+}
+
+proc GetMaxCid { sid } {
+
+    set cid [FlatDBQuery "SELECT MAX(cid) FROM event WHERE sid=$sid"]
+    return $cid
+
 }
 
 proc ExecDB { socketID query } {
@@ -145,9 +152,136 @@ proc UpdateDBStatus { eventID timestamp uid status } {
   mysqlclose $dbSocketID
 }
 
+proc SafeMysqlExec { query } {
 
+    global MAIN_DB_SOCKETID
 
+    if [catch { mysqlexec $MAIN_DB_SOCKETID $query } execResults ] {
+                                                                                                                       
+        LogMessage "DB Error during:\n$query\n: $execResults"
+        set ERROR 1
+                                                                                                                       
+    } else {
 
+        set ERROR 0
+                                                                                                                       
+    }
 
+    if { $ERROR } {
+        return -code error $execResults
+    } else {
+        return
+    }
 
+}
 
+proc InsertEventHdr { sid cid msg sig_gen sig_id sig_rev timestamp priority     \
+                      class_type status dec_sip dec_dip ip_proto ip_ver ip_hlen \
+                      ip_tos ip_len ip_id ip_flags ip_off ip_ttl ip_csum        \
+                      icmp_type icmp_code src_port dst_port } {
+
+    # Event columns we are INSERTing
+    set tmpTables \
+         "sid, cid, signature, signature_gen, signature_id, signature_rev,     \
+         timestamp, priority, class, status, src_ip, dst_ip, ip_proto,         \
+         ip_ver, ip_hlen, ip_tos, ip_len, ip_id, ip_flags, ip_off, ip_ttl,     \
+         ip_csum"
+                                                                                                                       
+    # And their corresponding values.
+    set tmpValues \
+         "$sid, $cid, '$msg', '$sig_gen', '$sig_id', '$sig_rev', '$timestamp', \
+         '$priority', '$class_type', '$status', '$dec_sip', '$dec_dip',        \
+         '$ip_proto', '$ip_ver', '$ip_hlen', '$ip_tos', '$ip_len', '$ip_id',   \
+         '$ip_flags', '$ip_off', '$ip_ttl', '$ip_csum'"
+                                                                                                                       
+    # ICMP, TCP, & UDP have extra columns
+    if { $ip_proto == "1" } {
+                                                                                                                       
+        # ICMP event
+        set tmpTables "${tmpTables}, icmp_type, icmp_code"
+        set tmpValues "${tmpValues}, '$icmp_type', '$icmp_code'"
+                                                                                                                       
+    } elseif { $ip_proto == "6" || $ip_proto == "17" } {
+                                                                                                                       
+        # TCP || UDP event
+        set tmpTables "${tmpTables}, src_port, dst_port"
+        set tmpValues "${tmpValues}, '$src_port', '$dst_port'"
+
+    }
+ 
+    # The final INSERT gets built
+    set tmpQuery "INSERT INTO event ($tmpTables) VALUES ($tmpValues)"
+
+    if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
+  
+        return -code error $tmpError
+
+    }
+
+}
+
+proc InsertUDPHdr { sid cid udp_len udp_csum } {
+
+    set tmpQuery "INSERT INTO udphdr (sid, cid, udp_len, udp_csum) \
+                  VALUES ($sid, $cid, $udp_len, $udp_csum)"
+
+    if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
+  
+        return -code error $tmpError
+
+    }
+}
+
+proc InsertTCPHdr { sid cid tcp_seq tcp_ack tcp_off tcp_res \
+                    tcp_flags tcp_win tcp_csum tcp_urp } {
+
+    set tmpQuery "INSERT INTO tcphdr (sid, cid, tcp_seq, tcp_ack, \
+                  tcp_off, tcp_res, tcp_flags, tcp_win, tcp_csum, tcp_urp) \
+                  VALUES ($sid, $cid, $tcp_seq, $tcp_ack, $tcp_off, \
+                  $tcp_res, $tcp_flags, $tcp_win, $tcp_csum, $tcp_urp)"
+                 
+    if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
+  
+        return -code error $tmpError
+
+    }
+
+}
+
+proc InsertICMPHdr { sid cid icmp_csum icmp_id icmp_seq } {
+
+    set tmpTables "sid, cid, icmp_csum"
+    set tmpValues "$sid, $cid, $icmp_csum"
+
+    if { $icmp_id != "" } {
+        set tmpTables "$tmpTables, icmp_id"
+        set tmpValues "$tmpValues, $icmp_id"
+    }
+
+    if { $icmp_seq != "" } {
+        set tmpTables "$tmpTables, icmp_seq"
+        set tmpValues "$tmpValues, $icmp_seq"
+    }
+
+    set tmpQuery "INSERT INTO icmphdr ($tmpTables)  VALUES ($tmpValues)"
+
+    if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
+  
+        return -code error $tmpError
+
+    }
+
+}
+
+proc InsertDataPayload { sid cid data_payload } {
+
+    set tmpQuery "INSERT INTO data (sid, cid, data_payload) \
+                  VALUES ($sid, $cid, '$data_payload')"
+
+    if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
+  
+        return -code error $tmpError
+
+    }
+
+}

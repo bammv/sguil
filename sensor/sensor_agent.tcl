@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.31 2005/02/09 22:02:53 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.32 2005/03/03 21:07:44 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -21,6 +21,62 @@ exec tclsh "$0" "$@"
 set CONNECTED 0
 set BUSY 0
 
+proc InitBYSocket { port } {
+
+    global DEBUG
+
+    if [catch {socket -server BYConnect -myaddr 127.0.0.1 $port} bySocketID] {
+        puts "Error opening socket for barnyard: $bySocketID"
+        exit
+    }
+    if {$DEBUG} { puts "Listening on port $port for barnyard connections." } 
+
+}
+
+proc BYConnect { socketID IPaddr port } {
+
+    global DEBUG
+
+    if { $DEBUG } { puts "barnyard connected: $socketID $IPaddr $port" }
+    fconfigure $socketID -buffering line -blocking 0 -translation lf
+    fileevent $socketID readable [list BYCmdRcvd $socketID]
+
+}
+
+proc BYCmdRcvd { socketID } {
+
+    global DEBUG
+
+    if { [eof $socketID] || [catch {gets $socketID data}] } {
+
+        catch { close $socketID } closeError
+        if { $DEBUG } { puts "Barnyard disconnected." }
+
+    } else {
+
+        set byCmd [lindex $data 0]
+
+        switch -exact -- $byCmd {
+            
+            RTEVENT       { BYEventRcvd $socketID [lrange $data 1 end] }
+            SidCidRequest { SidCidRequest $socketID }
+            default       { puts "Unknown barnyard data: $data" }
+
+        }
+    }
+
+}
+
+proc SendToBarnyard { socketID msg } {
+
+    if [catch { puts $socketID $msg } tmpError] {
+        catch { close $socketID }
+    } else {
+        catch { flush $socketID }
+    }
+
+}
+
 proc SendToSguild { data } {
   global sguildSocketID CONNECTED DEBUG
   if {!$CONNECTED} {
@@ -28,10 +84,54 @@ proc SendToSguild { data } {
      return 0
   } else {
     if {$DEBUG} {puts "Sending sguild ($sguildSocketID) $data"}
-    catch { puts $sguildSocketID $data } 
+    if [catch { puts $sguildSocketID $data } tmpError ] { puts "ERROR: $tmpError : $data" }
     catch { flush $sguildSocketID }
     return 1
   }
+}
+
+proc BYEventRcvd { socketID eventInfo } {
+
+    if { [llength $eventInfo] != 43 } { 
+        puts "Bad Event!"
+        puts $eventInfo
+        puts "len = [llength $eventInfo]"
+        exit 
+    }
+   
+    SendToSguild "BYEventRcvd $socketID $eventInfo"
+
+}
+
+proc SidCidRequest { socketID } {
+
+    global CONNECTED SENSOR_ID
+
+    if { $CONNECTED && [info exists SENSOR_ID] } {
+
+        SendToSguild [list AgentLastCidReq $socketID $SENSOR_ID]
+
+    }
+}
+
+proc SendBYLastCid { socketID maxCid } {
+
+    global SENSOR_ID
+
+    SendToBarnyard $socketID [list SidCidResponse $SENSOR_ID $maxCid]
+    # Add status updates?
+
+}
+proc SendBYConfirmMsg { socketID cid } {
+
+    SendToBarnyard $socketID [list Confirm $cid]
+
+}
+
+proc SendBYFailMsg { socketID cid msg} {
+
+    SendToBarnyard $socketID "Failed to insert $cid: $msg"
+
 }
 
 proc CopyDataToServer { fileName socketID } {
@@ -41,22 +141,6 @@ proc CopyDataToServer { fileName socketID } {
   puts "ACK === > CopyDataToServer $fileName $socketID"
   exit 
 
-}
-
-proc SendSsnDataToSvr { type fileName } {
-  global SERVER_HOST SERVER_PORT DEBUG HOSTNAME 
-  if [catch {socket $SERVER_HOST $SERVER_PORT} socketID ] {
-    if {$DEBUG} {puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT"}
-    if {$DEBUG} {puts "ERROR: $socketID"}
-    catch {close $socketID} closeError
-    # Buffers are probably full
-    set COPY_WAIT 1
-    after 10000 set COPY_WAIT 0
-  } else {
-    fconfigure $socketID -translation binary -buffering none
-    puts $socketID "SsnFile $type [file tail $fileName] $HOSTNAME $lines"
-    CopyDataToServer $fileName $socketID
-  }
 }
 
 proc CheckForPortscanFiles {} {
@@ -76,7 +160,6 @@ proc CheckForPortscanFiles {} {
             } else {
                 file delete $fileName
             }
-            update
 
         }
 
@@ -114,7 +197,6 @@ proc CheckForSsnFiles {} {
                 SendToSguild [list SsnFile [file tail $tmpFile] $tmpDate $fileBytes] 
                 BinCopyToSguild $tmpFile
                 file delete $tmpFile
-                update
 
             }
 
@@ -162,7 +244,6 @@ proc CheckForSancpFiles {} {
             file delete $fileName
 
         }
-        update
 
     }
     after $SSN_CHECK_DELAY_IN_MSECS CheckForSancpFiles
@@ -339,17 +420,19 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
 proc ConnectToSguilServer {} {
   global sguildSocketID HOSTNAME CONNECTED
   global SERVER_HOST SERVER_PORT DEBUG
-  while {[catch {set sguildSocketID [socket $SERVER_HOST $SERVER_PORT]}] > 0} {
+  if {[catch {set sguildSocketID [socket $SERVER_HOST $SERVER_PORT]}] > 0} {
+    set CONNECTED 0
     if {$DEBUG} {puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT."}
     if {$DEBUG} {puts "Trying again in 15 seconds"}
-    after 15000
+    after 15000 ConnectToSguilServer
+  } else {
+    fconfigure $sguildSocketID -buffering line
+    fileevent $sguildSocketID readable [list SguildCmdRcvd $sguildSocketID]
+    set CONNECTED 1
+    if {$DEBUG} {puts "Connected to $SERVER_HOST"}
+    puts $sguildSocketID "AgentInit $HOSTNAME"
+    flush $sguildSocketID
   }
-  fconfigure $sguildSocketID -buffering line
-  fileevent $sguildSocketID readable [list SguildCmdRcvd $sguildSocketID]
-  set CONNECTED 1
-  if {$DEBUG} {puts "Connected to $SERVER_HOST"}
-  puts $sguildSocketID "CONNECT $HOSTNAME"
-  flush $sguildSocketID
 }
 proc SguildCmdRcvd { socketID } {
   global DEBUG
@@ -366,8 +449,11 @@ proc SguildCmdRcvd { socketID } {
       PONG	{ if {$DEBUG} {puts "PONG recieved"} }
       PING      { SendToSguild "PONG" }
       RawDataRequest { eval $sguildCmd $socketID [lrange $data 1 end] }
-      SensorID  { SetSensorID [lindex $data 1] }
-      default   { if {$DEBUG} {puts "Sguil Cmd Unkown: $sguildCmd"} }
+      SensorID        { SetSensorID [lindex $data 1] }
+      LastCidResults  { SendBYLastCid [lindex $data 1] [lindex $data 2] }
+      Confirm         { SendBYConfirmMsg [lindex $data 1] [lindex $data 2] }
+      Failed          { SendBYFailMsg [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+      default         { if {$DEBUG} {puts "Sguil Cmd Unkown: $sguildCmd"} }
     }
   }
 }
@@ -437,10 +523,12 @@ foreach arg $argv {
         -- { set state flag }
         -D { set DAEMON_CONF_OVERRIDE 1 }
         -c { set state conf }
+        -b { set state byport } 
         default { DisplayUsage $argv0 }
       }
     }
-    conf { set CONF_FILE $arg; set state flag }
+    conf    { set CONF_FILE $arg; set state flag }
+    byport  { set BY_PORT $arg; set state flag }
     default { DisplayUsage $argv0 }
   }
 }
@@ -487,9 +575,10 @@ if {[info exists DAEMON_CONF_OVERRIDE] && $DAEMON_CONF_OVERRIDE} { set DAEMON 1}
 if {[info exists DAEMON] && $DAEMON} {Daemonize}
 
 ConnectToSguilServer
-CheckForPortscanFiles
-if { [info exists S4_KEEP_STATS] && $S4_KEEP_STATS } { CheckForSsnFiles }
-if { [info exists SANCP] && $SANCP } { CheckForSancpFiles }
-CheckDiskSpace
-if {$PING_DELAY != 0} { PingServer }
+InitBYSocket $BY_PORT
+#CheckForPortscanFiles
+#if { [info exists S4_KEEP_STATS] && $S4_KEEP_STATS } { CheckForSsnFiles }
+#if { [info exists SANCP] && $SANCP } { CheckForSancpFiles }
+#CheckDiskSpace
+#if {$PING_DELAY != 0} { PingServer }
 vwait FOREVER

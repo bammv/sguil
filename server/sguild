@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.140 2005/02/09 15:47:08 shalligan Exp $ #
+# $Id: sguild,v 1.141 2005/03/03 21:07:44 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -15,7 +15,7 @@ exec tclsh "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.5.3"
+set VERSION "SGUIL-0.6.0-BETA"
 # DB Version
 set DB_VERSION "0.10"
 # Counter for tracking xscript transactions
@@ -50,21 +50,45 @@ proc DisplayUsage { cmdName } {
   CleanExit
 }
 
-proc CleanExit {} {
-  global PID_FILE FORKD_PIDS
-  if { [info exists PID_FILE] && [file exists $PID_FILE] } {
-    if [catch {file delete -force $PID_FILE} delError] {
-      puts " SGUILD: ERROR: $delError"
+proc bgerror { errorMsg } {
+
+    global errorInfo
+
+    puts "Error: $errorMsg"
+    if { [info exists errorInfo] } {
+        puts $errorInfo
     }
-  }
-  if { [info exists FORKD_PIDS] } {
-    puts "SGUILD: killing child procs..."
-    foreach PID $FORKD_PIDS {
-      kill $PID
+    CleanExit 1
+
+}
+
+proc CleanExit { { error { 0} } } {
+  global PID_FILE FORKD_PIDS MAIN_DB_SOCKETID
+
+    catch {mysqlclose $MAIN_DB_SOCKETID}
+
+    if { [info exists PID_FILE] && [file exists $PID_FILE] } {
+        if [catch {file delete -force $PID_FILE} delError] {
+            puts " SGUILD: ERROR: $delError"
+        }
     }
-  }
-  puts "SGUILD: Exiting..."
-  exit
+
+    if { [info exists FORKD_PIDS] } {
+        puts "SGUILD: killing child procs..."
+
+        foreach PID $FORKD_PIDS {
+            kill $PID
+        }
+
+    }
+
+    puts "SGUILD: Exiting..."
+    if { $error } { 
+      exit 1
+    } else {
+      exit
+    }
+
 }
 
 #
@@ -408,17 +432,15 @@ fconfigure $mainReadPipe -buffering line
 # Get archived alerts from the DB
 if { $DBPASS == "" } {
   set connectCmd "-host $DBHOST -user $DBUSER -port $DBPORT"
-  #set dbSocketID [mysqlconnect -host $DBHOST -user $DBUSER -port $DBPORT]
 } else {
-  #set dbSocketID [mysqlconnect -host $DBHOST -user $DBUSER -port $DBPORT -password $DBPASS]
   set connectCmd "-host $DBHOST -user $DBUSER -port $DBPORT -password $DBPASS"
 }
-if [catch {eval mysqlconnect $connectCmd} dbSocketID] {
+if [catch {eval mysqlconnect $connectCmd} MAIN_DB_SOCKETID] {
   LogMessage "ERROR: Unable to connect to $DBHOST on $DBPORT: Make sure mysql is running."
-  ErrorMessage "$dbSocketID"
+  ErrorMessage "$MAIN_DB_SOCKETID"
 }
 # See if the DB we want to use exists
-if { [catch {mysqluse $dbSocketID $DBNAME} noDBError] } {
+if { [catch {mysqluse $MAIN_DB_SOCKETID $DBNAME} noDBError] } {
   LogMessage "Error: $noDBError"
   # Create the DB or die.
   if {![CreateDB $DBNAME]} { CleanExit }
@@ -455,7 +477,7 @@ InfoMessage  "SELECT event.status, event.priority, event.class, sensor.hostname,
     INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, \
     sensor WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp ASC"
 
-foreach row [mysqlsel $dbSocketID "SELECT event.status, \
+foreach row [mysqlsel $MAIN_DB_SOCKETID "SELECT event.status, \
     event.priority, event.class, sensor.hostname, event.timestamp, \
     event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), \
     INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, \
@@ -483,7 +505,7 @@ InfoMessage "SELECT event.status, event.priority, event.class, \
     event.ip_proto, event.src_port, event.dst_port FROM event, sensor \
     WHERE event.sid=sensor.sid AND event.status=2 ORDER BY event.timestamp ASC"
 
-foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, \
+foreach row [mysqlsel $MAIN_DB_SOCKETID "SELECT event.status, event.priority, \
     event.class, sensor.hostname, event.timestamp, event.sid, event.cid, \
     event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), \
     event.ip_proto, event.src_port, event.dst_port FROM event, sensor \
@@ -496,13 +518,13 @@ foreach row [mysqlsel $dbSocketID "SELECT event.status, event.priority, \
 }
 # Get DB info (table names and column info)
 LogMessage "Retrieving DB info..." 
-set tableNameList [mysqlinfo $dbSocketID tables]
+set tableNameList [mysqlinfo $MAIN_DB_SOCKETID tables]
 regsub -all {sancp_\S+\s} $tableNameList {} newList
 set tableNameList $newList
 foreach tableName $newList {
-  set tableArray($tableName) [mysqlcol $dbSocketID $tableName {name type length}]
+  set tableArray($tableName) [mysqlcol $MAIN_DB_SOCKETID $tableName {name type length}]
 }
-mysqlclose $dbSocketID
+
 set sensorQuery "SELECT hostname FROM sensor"
 set sensorList [FlatDBQuery $sensorQuery]
 

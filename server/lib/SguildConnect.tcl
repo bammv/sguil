@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.3 2005/01/27 19:25:25 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.4 2005/03/03 21:07:45 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -58,16 +58,20 @@ proc SensorConnect { socketID IPAddr port } {
   fileevent $socketID readable [list SensorCmdRcvd $socketID]
 }
 
-proc SensorAgentConnect { socketID sensorName } {
-  global connectedAgents agentSocket agentSensorName
-  lappend connectedAgents $sensorName
-  set agentSocket($sensorName) $socketID
-  set agentSensorName($socketID) $sensorName
-  set sensorID [GetSensorID $sensorName]
-  SendSystemInfoMsg $sensorName "Agent connected."
-  SendSensorAgent $socketID [list SensorID $sensorID]
-}
+proc SensorAgentInit { socketID sensorName } {
 
+    global connectedAgents agentSocket agentSensorName
+
+    lappend connectedAgents $sensorName
+    set agentSocket($sensorName) $socketID
+    set agentSensorName($socketID) $sensorName
+    set sensorID [GetSensorID $sensorName]
+
+    SendSystemInfoMsg $sensorName "Agent connected."
+
+    SendSensorAgent $socketID [list SensorID $sensorID]
+
+}
 
 proc CleanUpDisconnectedAgent { socketID } {
   global connectedAgents agentSocket agentSensorName

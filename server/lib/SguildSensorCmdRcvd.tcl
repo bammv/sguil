@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.8 2005/01/28 15:49:32 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.9 2005/03/03 21:07:45 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global connectedAgents agentSensorName
@@ -24,13 +24,15 @@ proc SensorCmdRcvd { socketID } {
       SsnFile         { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
       SancpFile       { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
       PSFile          { RcvPortscanFile $socketID [lindex $data 1] [lindex $data 2] }
-      CONNECT         { SensorAgentConnect $socketID [lindex $data 1] }
+      AgentInit       { SensorAgentInit $socketID [lindex $data 1] }
+      AgentLastCidReq { AgentLastCidReq $socketID [lindex $data 1] [lindex $data 2] }
+      BYEventRcvd     { eval BYEventRcvd $socketID [lrange $data 1 end] }
       DiskReport      { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
       PING            { puts $socketID "PONG"; flush $socketID }
       PONG            { SensorAgentPongRcvd $socketID }
       XscriptDebugMsg { $sensorCmd [lindex $data 1] [lindex $data 2] }
       RawDataFile     { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
-      default         { LogMessage "Sensor Cmd Unkown ($socketID): $sensorCmd" }
+      default         { if {$sensorCmd != ""} { LogMessage "Sensor Cmd Unkown ($socketID): $sensorCmd" } }
     }
   }
 }
@@ -91,10 +93,3 @@ proc DiskReport { socketID fileSystem percentage } {
   global agentSensorName
   SendSystemInfoMsg $agentSensorName($socketID) "$fileSystem $percentage"
 }
-
-
-
-
-
-
-
