@@ -765,9 +765,9 @@ proc RuleRequest { socketID sensor message } {
     set data "Could not find $ruleDir."
   }
   if {$RULEFOUND} { 
-    catch {SendSocket $socketID "InsertRuleData \{$data\}"} tmpError
+    catch {SendSocket $socketID "InsertRuleData $data"} tmpError
   } else {
-    catch {SendSocket $socketID "InsertRuleData \{Unable to find matching rule in $ruleDir.\}"} tmpError
+    catch {SendSocket $socketID "InsertRuleData Unable to find matching rule in $ruleDir."} tmpError
   }
 }
 proc GetPSData { socketID timestamp srcIP MAX_PS_ROWS } {
