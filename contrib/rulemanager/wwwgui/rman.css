@@ -1,0 +1,175 @@
+/* Stylesheet of RMAN */
+/* Pinched from Acid - Cheers Roman */
+
+BODY {
+   BACKGROUND-COLOR: #FFFFFF; 
+   FONT-FAMILY: verdana,arial,helvetica;
+   font-size: 10pt;
+}
+
+P, B, A, BODY, FORM, TD, INPUT, SELECT, OPTION, TR, OL, UL, MENU, BLOCKQUOTE, FONT, DIV, H4, H5, H6 {
+    FONT-FAMILY: verdana,arial,helvetica,sans-serif; 
+    font-size: 10pt;
+}
+
+H3 {
+    FONT-FAMILY: verdana,arial,helvetica,sans-serif;
+    font-size: 12pt;
+}
+
+H2 {
+    FONT-FAMILY: verdana,arial,helvetica,sans-serif;
+    font-size: 14pt;
+}
+
+H1 {
+    FONT-FAMILY: verdana,arial,helvetica,sans-serif;
+    font-size: 16pt;
+}
+
+code, PRE {
+    FONT-FAMILY: courier;
+    font-size: 10pt;
+}
+
+A {
+    font-weight: bold;
+    text-decoration: none;
+    color: #5869AA;
+}
+
+A.largemenuitem {
+    font-weight: bold;
+    text-decoration: none;
+    color: #FFFF66;
+    font-size: 12pt;
+}
+
+A.menuitem {
+    font-weight: bold;
+    text-decoration: none;
+    color: #FFFF66;
+    font-size: 10pt;
+}
+
+table {
+}
+
+td.mainheader {
+   FONT-FAMILY: verdana,arial,helvetica;
+   COLOR: black;
+   BACKGROUND-COLOR: #2299BB;
+}
+
+
+td.mainheadertitle {
+   FONT-FAMILY: verdana,arial,helvetica;
+   COLOR: white;
+   BACKGROUND-COLOR: #2299BB;
+   font-size: 26pt;
+}
+
+tr.editable {
+   FONT-FAMILY: verdana,arial,helvetica;
+   COLOR: black;
+   BACKGROUND-COLOR: #2299BB;
+}
+
+td.editable {
+   FONT-FAMILY: verdana,arial,helvetica;
+   COLOR: black;
+   BACKGROUND-COLOR: #AAAAAA;
+}
+
+td.tabletitle {
+   FONT-FAMILY: verdana,arial,helvetica;
+   COLOR: black;
+   BACKGROUND-COLOR: #FFFFFF;
+   font-size: 14pt;
+   font-weight: bold;
+}
+
+td.rulesrcdst {
+   FONT-FAMILY: verdana,arial,helvetica;
+   COLOR: black;
+   BACKGROUND-COLOR: #BBBBBB;
+}
+
+table.srchcriteria {
+   border-width: medium;
+   border-color: black;
+   border-style: solid;
+}
+
+td.plfieldhdr {
+   FONT-FAMILY: verdana,arial,helvetica;
+   COLOR:  #FFFF66;
+   BACKGROUND-COLOR: black;
+   font-size: 12pt;
+   font-weight: bold;
+   text-align: center;
+}
+
+td.plfieldhdrleft {
+   FONT-FAMILY: verdana,arial,helvetica;
+   COLOR:  #FFFF66;
+   BACKGROUND-COLOR: black;
+   font-size: 12pt;
+   font-weight: bold;
+   text-align: left;
+}
+
+td.plfield {
+   FONT-FAMILY: verdana,arial,helvetica;
+   COLOR: black;
+   BACKGROUND-COLOR: white;
+   font-size: 10pt;
+   text-align: center;
+}
+
+td.metatitle {
+   FONT-FAMILY: verdana,arial,helvetica;
+   font-weight: bold;
+   COLOR: white;
+   BACKGROUND-COLOR: #AA0000;
+   font-size: 12pt;
+}
+
+td.iptitle {
+   FONT-FAMILY: verdana,arial,helvetica;
+   font-weight: bold;
+   COLOR: white;
+   BACKGROUND-COLOR: #333399;
+   font-size: 12pt;
+}
+
+td.layer4title {
+   FONT-FAMILY: verdana,arial,helvetica;
+   font-weight: bold;
+   COLOR: white;
+   BACKGROUND-COLOR: #009966;
+   font-size: 12pt;
+}
+
+td.payloadtitle {
+   FONT-FAMILY: verdana,arial,helvetica;
+   font-weight: bold;
+   COLOR: white;
+   BACKGROUND-COLOR: #660099;
+   font-size: 12pt;
+}
+
+td.sectiontitle {
+   FONT-FAMILY: verdana,arial,helvetica;
+   font-weight: bold;
+   COLOR: white;
+   BACKGROUND-COLOR: #669999;
+   font-size: 12pt;
+}
+
+
+div.scroller {
+   overflow: auto;
+   min-height: 30px;
+   max-height: 400px;
+}
