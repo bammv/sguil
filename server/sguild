@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.70 2003/11/26 20:13:42 bamm Exp $ #
+# $Id: sguild,v 1.71 2003/12/07 15:48:36 bamm Exp $ #
 
 # Copyright (C) 2002 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -255,8 +255,6 @@ proc AddUser { userName USERS_FILE } {
     puts "$USERS_FILE NOT updated."
     return
   }
-  # reset the random
-  random seed
   set salt [format "%c%c" [GetRandAlphaNumInt] [GetRandAlphaNumInt] ]
   # make a hashed passwd
   set hashPasswd [::sha1::sha1 "${passwd1}${salt}"]
@@ -1340,6 +1338,8 @@ if [catch {package require sha1} sha1Version] {
   puts "The sha1 package is part of the tcllib extension. A port/package is available for most linux and BSD systems."
   exit
 }
+# reset the random
+random seed
 
 # GetOpts
 set state flag
