@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.16 2005/01/05 23:45:51 bamm Exp $
+# $Id: extdata.tcl,v 1.17 2005/01/06 14:25:18 bamm Exp $
 
 proc GetRuleInfo {} {
   global currentSelectedPane ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT SSN_QUERY
@@ -289,7 +289,7 @@ proc XscriptMainMsg { winName data } {
      DONE   { unset SESSION_STATE($winName)
               unset XSCRIPTDATARCVD($winName)
               InsertXscriptData $winName DEBUG "Finished."
-              $winName configure -cursor left_ptr
+              $winName.sText configure -cursor left_ptr
             }
      ERROR { set SESSION_STATE($winName) ERROR }
      default { InsertXscriptData $winName $SESSION_STATE($winName) $data }
@@ -399,7 +399,7 @@ proc GetXscript { type force } {
     set SESSION_STATE($xscriptWinName) HDR
     XscriptDebugMsg $xscriptWinName\
      "Your request has been sent to the server.\nPlease be patient as this can take some time."
-    $xscriptWinName configure -cursor watch
+    $xscriptWinName.sText configure -cursor watch
     set XSCRIPTDATARCVD($xscriptWinName) 0
     SendToSguild "XscriptRequest $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
     if {$DEBUG} {
