@@ -2917,6 +2917,7 @@ source $SGUILLIB/dkffont.tcl
 source $SGUILLIB/email17.tcl
 source $SGUILLIB/stdquery.tcl
 source $SGUILLIB/report.tcl
+source $SGUILLIB/qrybuild.tcl
 if { $WHOIS_PATH == "SimpleWhois" } {
   source $SGUILLIB/whois.tcl
 }
@@ -2948,6 +2949,7 @@ namespace import -force iwidgets::entryfield
 namespace import -force iwidgets::checkbox
 namespace import -force iwidgets::messagedialog
 namespace import -force iwidgets::scrolledlistbox
+namespace import -force iwidgets::combobox
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
   label $winFrame.label -text "$labelText" -foreground black -background $bgColor -anchor s -height $height
@@ -2983,6 +2985,7 @@ set topFrame [frame .topFrame]
     $queryList add command -label "Query Event Table" -command "QueryRequest event empty"
     $queryList add command -label "Query Sessions Table" -command "QueryRequest sessions empty"
     $queryList add command -label "Standard Queries" -command "GetStdQuery"
+    $queryList add command -label "Query Builder" -command "QryBuild"
     $queryList add cascade -label "Query by Category" -menu $queryList.category
     set categoryMenu [menu $queryList.category -tearoff 0]
       $categoryMenu add command -label "Cat I: Unauthorized Root Access"\
