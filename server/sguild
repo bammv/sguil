@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.130 2004/11/04 17:02:58 bamm Exp $ #
+# $Id: sguild,v 1.131 2004/11/12 21:41:31 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -19,7 +19,7 @@ set VERSION "SGUIL-0.5.3"
 # DB Version
 set DB_VERSION "0.10"
 # Counter for tracking xscript transactions
-set TRANS_ID 0
+set NEXT_TRANS_ID 0
 
 # Config options moved to sguild.conf
 

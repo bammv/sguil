@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.5 2004/11/12 20:40:34 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.6 2004/11/12 21:41:33 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -264,9 +264,4 @@ proc TcpFlowFormat { srcIP srcPort dstIP dstPort } {
   set tmpData [eval format "%03i.%03i.%03i.%03i.%05i-%03i.%03i.%03i.%03i.%05i" $tmpSrcIP $srcPort $tmpDstIP $dstPort]
   return $tmpData
 }
-
-
-
-
-
 
