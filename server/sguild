@@ -794,7 +794,7 @@ proc GetPSData { socketID timestamp srcIP MAX_PS_ROWS } {
 proc ExecDB { socketID query } {
   global DBNAME DBUSER DBPASS DBPORT DBHOST DEBUG
     if { [lindex $query 0] == "OPTIMIZE" } {
-	SendSystemInfoMsg sguild "Table Optimization begging, please stand by"
+	SendSystemInfoMsg sguild "Table Optimization beginning, please stand by"
     }
   if {$DEBUG} {puts "Sending DB Query: $query"}
   if { $DBPASS == "" } {
