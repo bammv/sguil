@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.27 2004/12/02 15:56:47 shalligan Exp $ #
+# $Id: report.tcl,v 1.28 2004/12/02 16:37:13 shalligan Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -278,20 +278,25 @@ proc PHBReport {} {
     lappend sbList $currentBox
     foreach sensorName $abMonitorList {
 	if { $i < 5 } {
-	    $currentBox add $sensorName -text [string totitle $sensorName] -selectcolor darkred -activebackground lightblue -width 12
+	    $currentBox add $sensorName -text [string totitle $sensorName] -selectcolor darkred \
+		    -activebackground lightblue -width 12 \
+		    -command "$phbReport.buttonBox buttonconfigure 0 -state normal"
 	    incr i
 	} else {
 	    pack $currentBox -side top  -anchor w -pady 0
 	    incr boxNumber
 	    set currentBox [checkbox $sensorFrame.subBox$boxNumber -orient horizontal -borderwidth 0 -background lightblue]
 	    lappend sbList $currentBox
-	    $currentBox add $sensorName -text [string totitle $sensorName] -selectcolor darkred -activebackground lightblue -width 12
+	    $currentBox add $sensorName -text [string totitle $sensorName] -selectcolor darkred \
+		    -activebackground lightblue -width 12 \
+		    -command "$phbReport.buttonBox buttonconfigure 0 -state normal"
 	    set i 1
 	}
 	
     }
     pack $currentBox -side top -anchor w -pady 0 
-    set selectAll [button $sensorFrame.selectAll -text "Select All" -command "ReportSelectAll"]
+    set selectAll [button $sensorFrame.selectAll -text "Select All" \
+	    -command "$phbReport.buttonBox buttonconfigure 0 -state normal; ReportSelectAll"]
     pack $selectAll -side top -fill x -pady 0
     set timestampLabelFrame [frame $phbReport.timestampLabelFrame]
         set timeStartLabel [label $timestampLabelFrame.timeStartLabel -text "Start Date/Time"]
@@ -324,7 +329,7 @@ proc PHBReport {} {
     pack $reportBox $orderButton -side left -expand 1 -fill both
     
     set buttonBox [buttonbox $phbReport.buttonBox]
-      $buttonBox add build  -text "Build Report" -command "set RETURN_FLAG 1"
+      $buttonBox add build  -state disabled -text "Build Report" -command "set RETURN_FLAG 1"
       $buttonBox add cancel -text "Cancel" -command "set RETURN_FLAG 0"
     pack $sensorFrame $timestampLabelFrame $timestampFrame $reportFrame $buttonBox -expand 1 -fill x
     tkwait variable RETURN_FLAG
@@ -356,10 +361,13 @@ proc PHBReport {} {
 		}
 	    }
 	}
+	if {$sensors == ""} {
+	    ErrorMessage "Error.  You need to select at least one sensor"
+	    return
+	}
 	set datetimestart "[clock format [$dateStart get -clicks] -f "%Y-%m-%d"] [$timeStart get]"
 	set datetimeend "[clock format [$dateEnd get -clicks] -f "%Y-%m-%d"] [$timeEnd get]"
-#	puts $datetimestart 
-#	puts $datetimeend
+
 	destroy $phbReport
 	BuildPHBReport $sensors $datetimestart $datetimeend sName sDesc sType sSql sFields
     } else {
