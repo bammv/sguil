@@ -95,10 +95,15 @@ proc ClientCmdRcvd { socketID } {
     if {$DEBUG} {puts "Clent Command Recieved: $data"}
     set clientCmd [lindex $data 0]
     # Check to make the client validated itself
-    if { ($clientCmd != "ValidateUser" && [lsearch -exact $validSockets $socketID] < 0) } {
-      SendSocket $socketID\
-       "InfoMessage {Client does not appear to be logged in. Please exit and log back in.}"
+    if { $clientCmd != "ValidateUser" && $clientCmd != "GetIcmpData" &&\
+         $clientCmd != "GetIPData" && $clientCmd != "GetPayloadData" &&\
+         $clientCmd != "GetPSData" && $clientCmd != "GetTcpData" &&\
+         $clientCmd != "GetUdpData" } {
+      if { [lsearch -exact $validSockets $socketID] < 0 } {
+        SendSocket $socketID\
+         "InfoMessage {Client does not appear to be logged in. Please exit and log back in.}"
       return
+      }
     }
     switch -exact $clientCmd {
       DeleteEventID { $clientCmd $socketID [lindex $data 1] [lindex $data 2]}
