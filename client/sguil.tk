@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.141 2004/08/12 17:55:30 bamm Exp $ #
+# $Id: sguil.tk,v 1.142 2004/09/29 21:15:08 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2677,11 +2677,13 @@ bind . <Key-Escape> {
   UnSelectHostLookups
 }
 
-bind . <MouseWheel> {
-    if { $currentSelectedPane != 0 } {
-	WheelScroll %D $currentSelectedPane "MouseWheel"
-    }
-}
+# Should be depreciated
+#bind . <MouseWheel> {
+#    if { $currentSelectedPane != 0 } {
+#       puts "DEBUG #### %W"
+#	WheelScroll %D $currentSelectedPane "MouseWheel"
+#    }
+#}
 # Toggle SOUND when off/on is clicked
 bind $soundStatus <Button-1> {
   if {$SOUND} {
