@@ -2952,24 +2952,38 @@ $statusMenu add command -label "Expire Event (F8)" -command "ValidateEvent 1"
 $statusMenu add cascade -label "Query" -menu $statusMenu.incidentMenu
 set incidentMenu [menu $statusMenu.incidentMenu -background blue -foreground white\
  -activeforeground blue -activebackground white -tearoff 0 ]
-$incidentMenu add command -label "Cat I events" -command "QueryRequest category 11"
-$incidentMenu add command -label "Cat II events" -command "QueryRequest category 12"
-$incidentMenu add command -label "Cat III events" -command "QueryRequest category 13"
-$incidentMenu add command -label "Cat IV events" -command "QueryRequest category 14"
-$incidentMenu add command -label "Cat V events" -command "QueryRequest category 15"
-$incidentMenu add command -label "Cat VI events" -command "QueryRequest category 16"
-$incidentMenu add command -label "Cat VII events" -command "QueryRequest category 17"
+$incidentMenu add command -label "Cat I: Unauthorized Root Access"\
+  -command "QueryRequest category 11"
+$incidentMenu add command -label "Cat II: Unauthorized User Access"\
+  -command "QueryRequest category 12"
+$incidentMenu add command -label "Cat III: Attempted Unauthorized Access"\
+  -command "QueryRequest category 13"
+$incidentMenu add command -label "Cat IV: Successful Denial of Service Attack"\
+  -command "QueryRequest category 14"
+$incidentMenu add command -label "Cat V: Poor Security Practice or Policy Violation"\
+  -command "QueryRequest category 15"
+$incidentMenu add command -label "Cat VI: Reconnaissance/Probes/Scans"\
+  -command "QueryRequest category 16"
+$incidentMenu add command -label "Cat VII: Virus Infection"\
+  -command "QueryRequest category 17"
 $statusMenu add cascade -label "Update Event Status" -menu $statusMenu.validateMenu
 set validateMenu [menu $statusMenu.validateMenu -background blue -foreground white\
  -activeforeground blue -activebackground white -tearoff 0 ]
 $validateMenu add command -label "Escalate (F9)" -command "ValidateEvent 2"
-$validateMenu add command -label "Cat I (F1)" -command "ValidateEvent 11"
-$validateMenu add command -label "Cat II (F2)" -command "ValidateEvent 12"
-$validateMenu add command -label "Cat III (F3)" -command "ValidateEvent 13"
-$validateMenu add command -label "Cat IV (F4)" -command "ValidateEvent 14"
-$validateMenu add command -label "Cat V (F5)" -command "ValidateEvent 15"
-$validateMenu add command -label "Cat VI (F6)" -command "ValidateEvent 16"
-$validateMenu add command -label "Cat VII (F7)" -command "ValidateEvent 17"
+$validateMenu add command -label "Cat I: Unauthorized Root Access (F1)"\
+  -command "ValidateEvent 11"
+$validateMenu add command -label "Cat II: Unauthorized User Access (F2)"\
+  -command "ValidateEvent 12"
+$validateMenu add command -label "Cat III: Attempted Unauthorized Access (F3)"\
+  -command "ValidateEvent 13"
+$validateMenu add command -label "Cat IV: Successful Denial of Service Attack (F4)"\
+  -command "ValidateEvent 14"
+$validateMenu add command -label "Cat V: Poor Security Practice or Policy Violation (F5)"\
+  -command "ValidateEvent 15"
+$validateMenu add command -label "Cat VI: Reconnaissance/Probes/Scans (F6)"\
+  -command "ValidateEvent 16"
+$validateMenu add command -label "Cat VII: Virus Infection(F7)"\
+  -command "ValidateEvent 17"
 
 
 update
