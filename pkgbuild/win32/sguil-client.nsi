@@ -2,7 +2,7 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "SGUIL Client"
-!define PRODUCT_VERSION "0.5.2"
+!define PRODUCT_VERSION "0.5.3"
 !define PRODUCT_PUBLISHER "BOSECO Internet Security Solutions"
 !define PRODUCT_WEB_SITE "http://www.sguil.net"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
@@ -57,6 +57,7 @@ Section "MainSection" SEC01
   File "..\..\client\lib\sound.tcl"
   File "..\..\client\lib\stdquery.tcl"
   File "..\..\client\lib\whois.tcl"
+  File "..\..\client\lib\nessusheader.html"
   SetOutPath "$INSTDIR"
   File "..\..\client\sguil.conf"
   ; Make sure that sguil gui can be started w/o any problems
@@ -141,6 +142,7 @@ Section Uninstall
   Delete "$INSTDIR\client\lib\extdata.tcl"
   Delete "$INSTDIR\client\lib\email17.tcl"
   Delete "$INSTDIR\client\lib\dkffont.tcl"
+  Delete "$INSTDIR\client\lib\nessusheader.html"
 
   Delete "$SMPROGRAMS\SGUIL Client\Uninstall.lnk"
   Delete "$SMPROGRAMS\SGUIL Client\Website.lnk"
