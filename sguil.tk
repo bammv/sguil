@@ -1022,7 +1022,7 @@ proc DeleteEventID { eventID } {
   foreach arrayName [array names rtPaneArray] {
     set eventIDList [$rtPaneArray($arrayName).eventIDFrame.list get 0 end]
     set eventIDIndex [lsearch -exact $eventIDList $eventID]
-    if { $eventIDIndex >= 1 } { DeleteLine $rtPaneArray($arrayName) $eventIDIndex }
+    if { $eventIDIndex >= 0 } { DeleteLine $rtPaneArray($arrayName) $eventIDIndex }
   }
   set escalatedIDList [$escalateFrame.eventIDFrame.list get 0 end]
   set escalatedIDIndex [lsearch -exact $escalatedIDList $eventID]
