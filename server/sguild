@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.99 2004/06/24 21:20:06 bamm Exp $ #
+# $Id: sguild,v 1.100 2004/06/28 20:33:44 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -602,6 +602,7 @@ proc RawDataFile { socketID fileName TRANS_ID } {
   fconfigure $socketID -translation binary
   set outfile [lindex $transInfoArray($TRANS_ID) 2]/$fileName
   set fileID [open $outfile w]
+  fconfigure $fileID -translation binary
   # Copy the file from the binary socket
   fcopy $socketID $fileID
   catch {close $fileID}
@@ -651,7 +652,12 @@ proc GenerateXscript { fileName clientSocketID winName } {
   # Depreciated with hdrTag in sguil.tk
   #SendSocket $clientSocketID "XscriptMainMsg $winName ================================================================================="
   SendSocket $clientSocketID "XscriptMainMsg $winName \n"
-  set tcpflowID [open "| $TCPFLOW -c -r $fileName"]
+  if  [catch {open "| $TCPFLOW -c -r $fileName"} tcpflowID] {
+    if {$DEBUG} {puts "ERROR: tcpflow: $tcpflowID"}
+    SendSocket $clientSocketID "XscriptDebugMsg $winName ERROR: tcpflow: $tcpflowID"
+    catch {close $tcpflowID} 
+    return
+  }
   set state SRC
   while { [gets $tcpflowID data] >= 0 } {
     set NODATAFLAG 0
@@ -663,7 +669,9 @@ proc GenerateXscript { fileName clientSocketID winName } {
     SendSocket $clientSocketID "XscriptMainMsg $winName $state"
     SendSocket $clientSocketID "XscriptMainMsg $winName $data"
   }
-  close $tcpflowID
+  if [catch {close $tcpflowID} closeError] {
+    SendSocket $clientSocketID "XscriptDebugMsg $winName ERROR: tcpflow: $closeError"
+  }
   if {$NODATAFLAG} {
     SendSocket $clientSocketID "XscriptMainMsg $winName No Data Sent."
   }
