@@ -63,7 +63,7 @@ proc QryBuild {tableSelected whereTmp } {
 		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 60x10 -textfont ourFixedFont \
 		-labeltext "Edit Where Clause"]
       
-      if { ![string match -nocase limit $whereTmp] } { set whereTmp "$whereTmp  LIMIT 500" }
+      if { ![string match -nocase *limit* $whereTmp] } { set whereTmp "$whereTmp  LIMIT 500" }
       $editBox insert end $whereTmp
       $editBox mark set insert "end -11 c"
       set bb [buttonbox $mainFrame.bb]
