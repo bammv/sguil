@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.164 2005/02/07 19:03:17 bamm Exp $ #
+# $Id: sguil.tk,v 1.165 2005/02/28 21:55:51 shalligan Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2517,31 +2517,36 @@ bind . <Control-Key-Left> {
 # Space selects the active event.  Used when navigating using ctrl-arrow
 # Globally grabbing the space bar is bad :)  Bammkkkk
 bind . <Control-Key-space> {
-    if {!$SSN_QUERY && !$SANCP_QUERY} { 
+    puts "CHECK"
+    if {$CUR_SEL_PANE(type) == "EVENT"} { 
       set activeIndex [$CUR_SEL_PANE(name).eventIDFrame.list index active]
-      CtrlSelect $CUR_SEL_PANE(name).sensorFrame.list $activeIndex
+      puts $activeIndex
+      CtrlSelect $CUR_SEL_PANE(name).eventIDFrame.list $activeIndex
     }
 }
 # ctrl-up moves active event without changing selection
 bind . <Control-Key-Up> {
-    set activeIndex [$CUR_SEL_PANE(name).sensorFrame.list index active]
-    $CUR_SEL_PANE(name).sensorFrame.list activate [expr $activeIndex-1]
+    set activeIndex [$CUR_SEL_PANE(name).eventIDFrame.list index active]
+    if { $activeIndex == 0 } {return}
+    $CUR_SEL_PANE(name).eventIDFrame.list activate [expr $activeIndex - 1]
     foreach childWin [winfo children $CUR_SEL_PANE(name)] {
         if { [winfo name $childWin] != "scroll" } {
           $childWin.list itemconfigure $activeIndex -foreground black
 	    $childWin.list itemconfigure [expr $activeIndex - 1] -foreground red
-	    $childWin.list see [expr $activeIndex-1]
+	    $childWin.list see [expr $activeIndex - 1]
 	}
     }
 }
 bind . <Control-Key-Down> {
-    set activeIndex [$CUR_SEL_PANE(name).sensorFrame.list index active]
-    $CUR_SEL_PANE(name).sensorFrame.list activate [expr $activeIndex+1]
+    set activeIndex [$CUR_SEL_PANE(name).eventIDFrame.list index active]
+    set listSize [$CUR_SEL_PANE(name).eventIDFrame.list size]
+    if { $activeIndex == [expr $listSize - 1] } { return }
+    $CUR_SEL_PANE(name).eventIDFrame.list activate [expr $activeIndex + 1]
     foreach childWin [winfo children $CUR_SEL_PANE(name)] {
         if { [winfo name $childWin] != "scroll" } {
           $childWin.list itemconfigure $activeIndex -foreground black
 	    $childWin.list itemconfigure [expr $activeIndex + 1] -foreground red
-	    $childWin.list see [expr $activeIndex+1]
+	    $childWin.list see [expr $activeIndex + 1]
 	}
     }
 }
