@@ -39,6 +39,8 @@ CVS-HEAD
 
     * Added OpenSSL for client <> server comms.
 
+    * Added version checking for connecting clients.
+
 
 Version 0.2
   sguil.tk

@@ -160,8 +160,11 @@ A. Begin by installing snort -
     Bamm@syn# ls /etc/snort/
     gen-msg.map snort.conf classification.config reference.config sid-msg.map
   Start snort:
-    Bamm@syn# snort -l /snort_data -c /etc/snort/snort.conf -D
+    Bamm@syn# snort -l /snort_data -c /etc/snort/snort.conf -D -U
   *NOTE: I use a seperate partition /snort_data to do all my logging.
+         The -U is to keep all times in GMT (if you don't do this then
+         your session data and realtime/pcap data can have different
+         times, basically b0rking things.)
 
 B. Next install and start the sensor_agent.tcl from the ./sensor directory.
 Make sure to point the script to the correct interpreter

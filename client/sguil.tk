@@ -19,7 +19,7 @@ package require Tclx
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.2.3"
+set VERSION "SGUIL-0.2.4"
 
 set ACTIVE_EVENT 0
 set MULTI_SELECT 0
@@ -2299,7 +2299,7 @@ proc XscriptServerCmdRcvd { socketID } {
 proc GetXscript { type force } {
   global ACTIVE_EVENT SERVERHOST XSCRIPT_SERVER_PORT DEBUG currentSelectedPane XSCRIPTDATARCVD
   global socketWinName SESSION_STATE SSN_QUERY
-  global OPENSSL
+  global OPENSSL VERSION
   if {!$ACTIVE_EVENT} {return}
   set winName $currentSelectedPane.sensorFrame.list
   set eventIndex [$winName curselection]
@@ -2327,6 +2327,21 @@ proc GetXscript { type force } {
   if [catch {set socketID [socket $SERVERHOST $XSCRIPT_SERVER_PORT]}] {
     if {$DEBUG} {puts "Unable to connect to xscript server $SERVERHOST on port $XSCRIPT_SERVER_PORT."}
   } else {
+    # Version check
+    if {$OPENSSL} {
+      set tmpVERSION "$VERSION OPENSSL ENABLED"
+    } else {
+      set tmpVERSION "$VERSION OPENSSL DISABLED"
+    }     
+    if [catch {gets $socketID} serverVersion] {
+      puts "ERROR: $serverVersion"
+      return -code error "$serverVersion"
+    }
+    if { $serverVersion != $tmpVERSION } {
+      ErrorMessage "Mismatched versions with xscriptd.\nSERVER: ($serverVersion)\nCLIENT: ($tmpVERSION)"
+      return
+    }
+    puts $socketID $tmpVERSION
     if {$OPENSSL} {
       tls::import $socketID
     }

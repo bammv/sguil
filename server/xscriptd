@@ -33,7 +33,16 @@ set P0F 1
 # add any others you may need here.
 set P0F_PATH "/usr/sbin/p0f"
 
+
+################################################
+##### Stop editing here
+################################################
+
+
+set VERSION "SGUIL-0.2.4"
+
 #################### PROCS ######################
+
 
 proc GetRawDataFromLocal { timestamp srcIP srcPort dstIP dstPort proto sensorDir rawDataFileName {socketID {NONE} } } {
   global LOCAL_LOG_DIR REMOTE_LOG_DIR DEBUG TCPDUMP
@@ -310,10 +319,29 @@ proc XscriptRequest { socketID sensor eventID timestamp srcIP srcPort dstIP dstP
   close $socketID
 }
 proc ClientConnect { socketID IPAddr port } {
-  global DEBUG
+  global DEBUG VERSION
   global OPENSSL KEY PEM
   if {$DEBUG} { puts "Client Connect: $IPAddr $port $socketID" }
   fconfigure $socketID -buffering line
+  # Do version checks
+  if [catch {puts $socketID "$VERSION"} sendError ] {
+    catch {close $socketID} closeError
+    if {$DEBUG} { puts "ERROR: Socket $socketID ($IPAddr:$port) closed. $sendError" }
+    return
+  }
+  if [catch {gets $socketID} clientVersion] {
+    if {$DEBUG} {puts "$ERROR: $clientVersion : Socket $socketID ($IPAddr:$port) closed."}
+    catch {close $socketID} closeError
+    return
+  }
+  if { $clientVersion != $VERSION } {
+    catch {close $socketID} tmpError
+    if {$DEBUG} {puts "ERROR: Client connect denied - mismatched versions" }
+    if {$DEBUG} {puts "CLIENT VERSION: $clientVersion" }
+    if {$DEBUG} {puts "SERVER VERSION: $VERSION" }
+    catch {close $socketID} closeError
+    return
+  }
   if {$OPENSSL} {
     tls::import $socketID -server true -keyfile $KEY -certfile $PEM
     fileevent $socketID readable [list HandShake $socketID ClientCmdRcvd]
@@ -370,9 +398,12 @@ proc Daemonize {} {
   signal trap {QUIT TERM} CleanExit
 }
 proc DisplayUsage { cmdName } {
-  puts "Usage: $cmdName \[-D\] \[-P <filename>\]"
+  puts "Usage: $cmdName \[-D\] \[-o\] \[-O <filename>\] \[-P <filename>\]"
   puts "  -P <filename>: Name of file to write the PID to."
   puts "                 Default is /var/run/xscriptd.pid"
+  puts "  -o Enable OpenSSL"
+  puts "  -O <filename>: Enable OpenSSL using PATH to tls (tcl openssl) lib (libtls1.4.so)"
+  puts "  -C <directory>: Directory that contains sguild.pem and sguild.key"
   puts "  -D Runs xscriptd in daemon mode."
   exit 1 
 }
@@ -403,6 +434,7 @@ foreach arg $argv {
         -D { set DAEMON 1 }
         -P { set state pid_file }
         -O { set state openssl }
+        -o { set OPENSSL 1 }
         -C { set state certs }
         default { DisplayUsage $argv0 }
       }
@@ -415,14 +447,13 @@ foreach arg $argv {
 }
 # Check openssl requirements if enabled
 if { [info exists OPENSSL] && $OPENSSL } {
+  set VERSION "$VERSION OPENSSL ENABLED"
   # Need a path to the tls libs
-  if { ![info exists TLS_PATH] } {
-    puts "ERROR: A path to the tls libs is required"
-    DisplayUsage $argv0
-  }
-  if [catch {load $TLS_PATH} tlsError] {
-    puts "ERROR: Unable to load tls libs ($TLS_PATH): $tlsError"
-    DisplayUsage $argv0
+  if { [info exists TLS_PATH] } {
+    if [catch {load $TLS_PATH} tlsError] {
+      puts "ERROR: Unable to load tls libs ($TLS_PATH): $tlsError"
+      DisplayUsage $argv0
+    }
   }
   package require tls
   # Check for certs
@@ -446,11 +477,12 @@ if { [info exists OPENSSL] && $OPENSSL } {
   }
   # If we get this far we should be good.
 } else {
+  set VERSION "$VERSION OPENSSL DISABLED"
   set OPENSSL 0
 }
 if {[info exists DAEMON] && $DAEMON} { Daemonize }
 
 set serverSocket [socket -server ClientConnect $SERVERPORT]
-puts "Xscriptd Initialized."
+puts "Xscriptd Version $VERSION Initialized."
 vwait FOREVERBABY
 
