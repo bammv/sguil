@@ -1,4 +1,4 @@
--- $Id: create_sguildb.sql,v 1.8 2003/11/19 18:18:14 bamm Exp $
+-- $Id: create_sguildb.sql,v 1.9 2004/03/15 14:48:43 mboman Exp $
 -- Users may want to use a different DB name.
 -- CREATE DATABASE IF NOT EXISTS sguildb;
 -- USE sguildb;
@@ -8,6 +8,7 @@ CREATE TABLE event
   sid		INT UNSIGNED	NOT NULL,
   cid		INT UNSIGNED	NOT NULL,
   signature 	VARCHAR(255)	NOT NULL,
+  signature_gen	INT UNSIGNED	NOT NULL,
   signature_id	INT UNSIGNED	NOT NULL,
   signature_rev	INT UNSIGNED	NOT NULL,
   timestamp	DATETIME	NOT NULL,
