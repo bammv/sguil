@@ -9,10 +9,10 @@ PATH_TO_BARNYARD=$1
 PATH_TO_SGUIL=$2
 
 (
-	cp $PATH_TO_SGUIL/barnyard_mods/op_sguil.* $PATH_TO_BARNYARD/src/output-plugins/
+	cp $PATH_TO_SGUIL/sensor/barnyard_mods/op_sguil.* $PATH_TO_BARNYARD/src/output-plugins/
 	cd $PATH_TO_BARNYARD
 	pwd
-	patch -p0 < $PATH_TO_SGUIL/barnyard_mods/barnyard.patch
+	patch -p0 < $PATH_TO_SGUIL/sensor/barnyard_mods/barnyard.patch
 ) && (
 	aclocal; autoconf; automake
 	echo "Barnyard successfully patched" 
