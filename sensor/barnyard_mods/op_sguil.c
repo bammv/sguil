@@ -1162,7 +1162,7 @@ int SguilSendEvent(SguilOpData *op_data, char *eventMsg)
      char line[100];
      
 
-     if((schars = send(op_data->sguild_sock, eventMsg, strlen(eventMsg) + 1, 0)) < 0)
+     if((schars = send(op_data->sguild_sock, eventMsg, strlen(eventMsg), 0)) < 0)
      {
              LogMessage("ERROR! Couldn't send msg.\n");
 
