@@ -4,7 +4,7 @@ CREATE TABLE nessus_data
   port          VARCHAR(40),
   nessus_id     INT UNSIGNED,
   level	        VARCHAR(20),
-  desc		TEXT,
+  description		TEXT,
   INDEX rid (rid));
 CREATE TABLE nessus
 (
