@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.28 2004/04/05 17:05:30 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/sguil_functions.php,v 1.29 2004/04/06 10:40:40 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -37,7 +37,7 @@ function DBClose($result) {
 
 
 function show_alerts( $where_query, $aggregate_result ) {
-	global $colours, $status_desc, $status_colour, $max_sig_length;
+	global $colours, $status_desc, $status_colour, $max_sig_length, $dshield_port_url, $dshield_host_url, $snort_sig_url;
 
 	$timeparts = explode(" ",microtime());
         $starttime = $timeparts[1].substr($timeparts[0],1);
@@ -130,33 +130,105 @@ function show_alerts( $where_query, $aggregate_result ) {
 			$detail_url="alert_detail.php?sid=" . $row['sid'] . "&cid=" . $row['cid'];
 			
 			print("<tr bgcolor=\"" . $colours[$i] . "\">\n");
-			print("	<td bgcolor=\"" . $status_colour[$row['status']] . "\">&nbsp;" . $status_desc[$row['status']] . "&nbsp;</td>\n");
+			print("	<td bgcolor=\"" . $status_colour[$row['status']] . "\">&nbsp;" . 
+			"<a href=\"javascript:void(0);\" onclick=\"return overlib('".
+				"Expire Event<br>" .
+				"Query<br>" .
+				"&nbsp;&nbsp;Cat I<br>" .
+				"&nbsp;&nbsp;Cat II<br>" .
+				"&nbsp;&nbsp;Cat III<br>" .
+				"&nbsp;&nbsp;Cat IV<br>" .
+				"&nbsp;&nbsp;Cat V<br>" .
+				"&nbsp;&nbsp;Cat VI<br>" .
+				"&nbsp;&nbsp;Cat VII<br>" .
+				"Update Event Status<br>" .
+				"&nbsp;&nbsp;Escalade<br>" .
+				"&nbsp;&nbsp;Cat I<br>" .
+				"&nbsp;&nbsp;Cat II<br>" .
+				"&nbsp;&nbsp;Cat III<br>" .
+				"&nbsp;&nbsp;Cat IV<br>" .
+				"&nbsp;&nbsp;Cat V<br>" .
+				"&nbsp;&nbsp;Cat VI<br>" .
+				"&nbsp;&nbsp;Cat VII<br>" .
+				"', STICKY, CAPTION, 'Actions', CENTER);\" onmouseout=\"nd();\">" . $status_desc[$row['status']] . "</a>&nbsp;</td>\n");
 			print("	<td>&nbsp;<a href=alerts.php?aggregate=0&src_ip=" . $row['src_ip']."&signature_id=" . $row['signature_id'] . ">" . $row['CNT'] . "</a>&nbsp;</td>\n");
 			print("	<td>&nbsp;" . $row['hostname'] . "&nbsp;</td>\n");
-			print("	<td>&nbsp;<a href=\"$detail_url\" target=\"lookup_right\">" . $row['sid'] . "." . $row['cid'] . "</a>&nbsp;</td>\n");
+
+			print("	<td>&nbsp;" .
+				"<a href=\"javascript:void(0);\" onclick=\"return overlib('" .
+				"<a href=\\'" . $detail_url . "\\' target=\\'lookup_right\\'>Event Details</a><br>" .
+				"Event History<br>" .
+				"Transcript<br>" .
+				"Transcript (force new)<br>" .
+				"Download<br>" .
+				"Download (force new)<br>" .
+				"', STICKY, CAPTION, 'Actions', CENTER);\" onmouseout=\"nd();\">"	 . $row['sid'] . "." . $row['cid'] . "</a>&nbsp;</td>\n");
+
 			print("	<td>&nbsp;" . str_replace(" ", "&nbsp;", $row['timestamp']) . "&nbsp;</td>\n");
 
-
-			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['src_ip'] . "</a>&nbsp;</td>");
-			print("  <td>&nbsp;" . getcountrycodebyaddr($row['src_ip']) . "&nbsp;</td>\n");
+			print("	<td>&nbsp;" .
+				"<a href=\"javascript:void(0);\" onclick=\"return overlib('" .
+				"<a href=\\'" . $lookup_url . "\\' target=\\'lookup_left\\'>Lookup hosts</a><br>" .
+				"Query Event Table<br>" .
+				"&nbsp;&nbsp;Query Src IP<br>" .
+				"&nbsp;&nbsp;Query Dst IP<br>" .
+				"&nbsp;&nbsp;Query Src to Dst<br>" .
+				"Query Session Table<br>" .
+				"&nbsp;&nbsp;Query Src IP<br>" .
+				"&nbsp;&nbsp;Query Dst IP<br>" .
+				"&nbsp;&nbsp;Query Src to Dst<br>" .
+				"DShield Lookup<br>" .
+				"&nbsp;&nbsp;<a href=\\'" . $dshield_host_url . $row['src_ip'] . "\\' target=\\'dshield\\'>Src IP</a><br>" .
+				"&nbsp;&nbsp;<a href=\\'" . $dshield_host_url . $row['dst_ip'] . "\\' target=\\'dshield\\'>Dst IP</a><br>" .
+				"', STICKY, CAPTION, 'Actions', CENTER);\" onmouseout=\"nd();\">" . $row['src_ip'] . "</a>&nbsp;</td>");
 			
+			print("  <td title=\"" . getcountrynamebyaddr($row['src_ip']) . "\">&nbsp;" . getcountrycodebyaddr($row['src_ip']) . "&nbsp;</td>\n");
+			
+
+			print("	<td>&nbsp;" .
+				"<a href=\"javascript:void(0);\" onclick=\"return overlib('" .
+				"DShield Lookup<br>" .
+				"&nbsp;&nbsp;<a href=\\'" . $dshield_port_url . $row['src_port'] . "\\' target=\\'dshield\\'>Src Port</a><br>" .
+				"&nbsp;&nbsp;<a href=\\'" . $dshield_port_url . $row['dst_port'] . "\\' target=\\'dshield\\'>Dst Port</a><br>" .
+				"', STICKY, CAPTION, 'Actions', CENTER);\" onmouseout=\"nd();\">" . $row['src_port'] . "</a>&nbsp;</td>");
+
 			if ( ( getservbyport( $row['src_port'] ,getprotobynumber($row['ip_proto']))=="") || ( getprotobynumber($row['ip_proto']) != 'udp' && getprotobynumber($row['ip_proto']) != 'tcp' )) {
-				print("	<td>&nbsp;" . $row['src_port'] . "&nbsp;</td>");
 				print("  <td>&nbsp;--&nbsp;</td>\n");
 			} else {
-				print("	<td>&nbsp;" . $row['src_port'] ."&nbsp;</td>");
 				print("  <td>&nbsp;" .getservbyport ( $row['src_port'] , getprotobynumber($row['ip_proto'])) . "&nbsp;</td>\n");
 			}
-			print("	<td>&nbsp;<a href=\"$lookup_url\" target=\"lookup_left\">" . $row['dst_ip'] . "</a>&nbsp;</td>");
-			print("  <td>&nbsp;" . getcountrycodebyaddr($row['dst_ip']) . "&nbsp;</td>\n");
+
+			print("	<td>&nbsp;" .
+				"<a href=\"javascript:void(0);\" onclick=\"return overlib('" .
+				"<a href=\\'" . $lookup_url . "\\' target=\\'lookup_left\\'>Lookup hosts</a><br>" .
+				"Query Event Table<br>" .
+				"&nbsp;&nbsp;Query Src IP<br>" .
+				"&nbsp;&nbsp;Query Dst IP<br>" .
+				"&nbsp;&nbsp;Query Src to Dst<br>" .
+				"Query Session Table<br>" .
+				"&nbsp;&nbsp;Query Src IP<br>" .
+				"&nbsp;&nbsp;Query Dst IP<br>" .
+				"&nbsp;&nbsp;Query Src to Dst<br>" .
+				"DShield Lookup<br>" .
+				"&nbsp;&nbsp;<a href=\\'" . $dshield_host_url . $row['src_ip'] . "\\' target=\\'dshield\\'>Src IP</a><br>" .
+				"&nbsp;&nbsp;<a href=\\'" . $dshield_host_url . $row['dst_ip'] . "\\' target=\\'dshield\\'>Dst IP</a><br>" .
+				"', STICKY, CAPTION, 'Actions', CENTER);\" onmouseout=\"nd();\">" . $row['dst_ip'] . "</a>&nbsp;</td>");
+
+			print("  <td title=\"" . getcountrynamebyaddr($row['dst_ip']) . "\">&nbsp;" . getcountrycodebyaddr($row['dst_ip']) . "&nbsp;</td>\n");
+
+			print("	<td>&nbsp;" .
+				"<a href=\"javascript:void(0);\" onclick=\"return overlib('" .
+				"DShield Lookup<br>" .
+				"&nbsp;&nbsp;<a href=\\'" . $dshield_port_url . $row['src_port'] . "\\' target=\\'dshield\\'>Src Port</a><br>" .
+				"&nbsp;&nbsp;<a href=\\'" . $dshield_port_url . $row['dst_port'] . "\\' target=\\'dshield\\'>Dst Port</a><br>" .
+				"', STICKY, CAPTION, 'Actions', CENTER);\" onmouseout=\"nd();\">" . $row['dst_port'] . "</a>&nbsp;</td>");
 
 			if ( (getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto']))=="") || ( getprotobynumber($row['ip_proto']) != 'udp' && getprotobynumber($row['ip_proto']) != 'tcp' )) {
-				print("	<td>&nbsp;<a href=http://www.dshield.org/port_report.php?port=" .$row['dst_port']. "&days=70 target=dshield>" . $row['dst_port'] . "</a>&nbsp;</td>");
 				print("  <td>&nbsp;--&nbsp;</td>\n");
 			} else {
-				print("	<td>&nbsp;<a href=http://www.dshield.org/port_report.php?port=" .$row['dst_port']. " target=dshield>" . $row['dst_port'] ."&nbsp;</td>");
 				print("  <td>&nbsp;" .getservbyport ( $row['dst_port'] , getprotobynumber($row['ip_proto'])) . "</a>&nbsp;</td>\n");
 			}
+
 			print("	<td>&nbsp;" . $row['ip_proto'] ."&nbsp;(" . getprotobynumber($row['ip_proto']). ")" . "&nbsp;</td>\n");
 		
 			if ( strlen ( $row['signature'] ) > $max_sig_length)
@@ -166,9 +238,9 @@ function show_alerts( $where_query, $aggregate_result ) {
 
 			print("	<td title=\"" . $row['signature'] . "\">" .
 				"&nbsp;<a href=\"javascript:void(0);\" " .
-				"onclick=\"return overlib('" .
-				"<a href=http://www.snort.org/snort-db/sid.html?sid=" . $row['signature_id'] . " target=_new>Look up signature</a><br>" .
-				"<a href=http://www.snort.org/snort-db/sid.html?sid=" . $row['signature_id'] . " target=_new>Query event</a>" .
+				"onclick=\"return overlib('".
+				"<a href=" . $snort_sig_url . $row['signature_id'] . " target=snort>Look up signature</a><br>" .
+				"Query event" .
 				"', STICKY, CAPTION, 'Actions', CENTER);\" onmouseout=\"nd();\">" . $signature . "</a>&nbsp;</td>\n");
 			
 			print("</tr>\n");

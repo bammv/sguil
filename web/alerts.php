@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/alerts.php,v 1.10 2004/04/05 14:29:30 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/alerts.php,v 1.11 2004/04/06 10:40:40 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -31,12 +31,14 @@
 			printf("	<meta http-equiv=\"refresh\" content=\"" . $_REQUEST['autorefresh_interval'] . "; URL=" . $url ."\">\n");
 	}
 	
+	jscript_overlib_head();
 	include('css.php');
 	jscript_topmenu_head();
-	jscript_overlib_head();
 ?>
+
 </head>
 <body>
+
 <?php
 	jscript_overlib_body();
 	navbar();

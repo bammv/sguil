@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (C) 2004 Michael Boman <mboman@users.sourceforge.net>
- * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/config.php,v 1.6 2004/04/04 21:46:52 mboman Exp $
+ * $Header: /usr/local/src/sguil_bak/sguil/sguil/web/config.php,v 1.7 2004/04/06 10:40:40 mboman Exp $
  *
  * This program is distributed under the terms of version 1.0 of the
  * Q Public License.  See LICENSE.QPL for further details.
@@ -20,6 +20,10 @@ $use_sancp = 0;
 
 $whois_command="/usr/bin/jwhois";
 $max_sig_length = 50;
+
+$snort_sig_url="http://www.snort.org/snort-db/sid.html?sid=";
+$dshield_port_url="http://www.dshield.org/port_report.php?days=70&port=";
+$dshield_host_url="http://www.dshield.org/ipinfo.php?ip=";
 
 $colours = array("#A8A8A8","#FFFFFF","#D2D2D2");
 	

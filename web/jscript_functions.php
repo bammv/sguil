@@ -1,4 +1,5 @@
 <?php
+
 function jscript_newwindow() {
 	print("<SCRIPT LANGUAGE=\"JavaScript\">\n");
 	print("	<!-- Begin\n");
@@ -18,8 +19,9 @@ function jscript_overlib_head() {
 }
 
 function jscript_overlib_body() {
-	print("<div id=\"overDiv\" style=\"position:absolute; visibility:hidden; z-index:1000;\"></div>\n");
+	print("<div id=\"overDiv\" style=\"position:absolute; visibility:hidden; z-index:1000; background-color: white; border: solid; border-color: black; border-width: 1pt; \"></div>\n");
 }
+
 function jscript_topmenu_head() {
 	print("<script language=\"javascript\" src=\"config.js\"></script>\n");
 	print("<script language=\"javascript\" src=\"menu.js\"></script>\n");
@@ -71,3 +73,5 @@ function jscript_topmenu_body() {
 	print("   --> \n");
 	print("</SCRIPT>\n");
 }
+
+?>
