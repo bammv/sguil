@@ -1,4 +1,4 @@
-# $Id: SguilUtil.tcl,v 1.12 2005/02/01 18:18:29 shalligan Exp $
+# $Id: SguilUtil.tcl,v 1.13 2005/02/01 18:23:25 shalligan Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
@@ -259,7 +259,8 @@ proc GpgText { winName sign encrypt text recips sender } {
 	    }
 	} else {
 	    set DONE 1
-	    puts "DEBUG#### DONE!! and gpg didn't give us any nice text
+	    puts "DEBUG#### DONE!! and gpg didn't give us any nice text"
+
 	}
     }
     set tempInFID [open $tempInFile r]
