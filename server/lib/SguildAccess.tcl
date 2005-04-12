@@ -1,4 +1,4 @@
-# $Id: SguildAccess.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $ #
+# $Id: SguildAccess.tcl,v 1.3 2005/04/12 16:57:30 bamm Exp $ #
 
 # Load up the access lists.
 proc LoadAccessFile { filename } {
@@ -128,6 +128,13 @@ proc AddUser { userName USERS_FILE } {
     puts "ERROR: Username must be alpha-numeric"
     return
   }
+
+  # Usernames cannot be longer the 16 chars
+  if { [string length $userName] > 16 } {
+    puts "ERROR: Username cannot be longer than 16 characters."
+    return
+  }
+
   # Make sure we aren't adding a dupe.
   set fileID [open $USERS_FILE r]
   for_file line $USERS_FILE {
