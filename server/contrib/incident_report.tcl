@@ -403,7 +403,7 @@ foreach status "11 12 13 14 15 16 17" {
         set cnt [lindex $tmpRow 0]
         set sig_id [lindex $tmpRow 1] 
         set sig [lindex $tmpRow 2]
-        set sigRef [::html::minorMenu [list $sig "http://www.snort.org/snort-db/sid.html?sid=${sig_id}"]]
+        set sigRef [::html::minorMenu [list $sig "http://www.snort.org/pub-bin/sigs.cgi?sid=${sig_id}"]]
         puts $outFileID [::html::paramRow [list $cnt $sigRef] "" "class=default"]
 
     }
@@ -452,7 +452,7 @@ foreach status "11 12 13 14 15 16 17" {
             set cnt [lindex $tmpRow 0]
             set sig_id [lindex $tmpRow 1]
             set sig [lindex $tmpRow 2]
-            set sigRef [::html::minorMenu [list $sig "http://www.snort.org/snort-db/sid.html?sid=${sig_id}"]]
+            set sigRef [::html::minorMenu [list $sig "http://www.snort.org/pub-bin/sigs.cgi?sid=${sig_id}"]]
             puts $outFileID [::html::paramRow [list $cnt $sigRef] "" "class=default"]
             # Keep a list of these sigs.
             lappend LARGE_SIGS $sig
@@ -510,7 +510,7 @@ foreach status "11 12 13 14 15 16 17" {
             set sip [lindex $tmpRow 1]
             set sig_id [lindex $tmpRow 2]
             set sig [lindex $tmpRow 3]
-            set sigRef [::html::minorMenu [list $sig "http://www.snort.org/snort-db/sid.html?sid=${sig_id}"]]
+            set sigRef [::html::minorMenu [list $sig "http://www.snort.org/pub-bin/sigs.cgi?sid=${sig_id}"]]
             set whoRef [::html::minorMenu [list $sip "http://www.dnsstuff.com/tools/whois.ch?ip=${sip}"]]
 
             if { $RESOLVE_DNS } {
@@ -559,7 +559,7 @@ foreach status "11 12 13 14 15 16 17" {
                 set sip [lindex $tmpRow 1]
                 set sig_id [lindex $tmpRow 2]
                 set sig [lindex $tmpRow 3]
-                set sigRef [::html::minorMenu [list $sig "http://www.snort.org/snort-db/sid.html?sid=${sig_id}"]]
+                set sigRef [::html::minorMenu [list $sig "http://www.snort.org/pub-bin/sigs.cgi?sid=${sig_id}"]]
                 set whoRef [::html::minorMenu [list $sip "http://www.dnsstuff.com/tools/whois.ch?ip=${sip}"]]
 
                 if { $RESOLVE_DNS } {
