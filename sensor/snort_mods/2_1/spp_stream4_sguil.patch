@@ -78,7 +78,7 @@
   
 + typedef struct _DbStats
 + {
-+     u_int64_t xid;
++     UINT64 xid;
 +     char start_time[20];
 +     char end_time[20];
 +     u_int32_t sip;
@@ -103,7 +103,7 @@
   u_int32_t stream4_memory_usage;
   u_int32_t ps_memory_usage;
 + DbStats *dbsPtr = NULL;
-+ u_int64_t LastFlushTime;
++ UINT64 LastFlushTime;
 + char DBLOGDIR[STD_BUF];
 + 
   
@@ -124,10 +124,10 @@
   
   */
      
-+ u_int64_t TimeMilliseconds()
++ UINT64 TimeMilliseconds()
 + {
 +     struct timeval  tm;
-+     u_int64_t secs;
++     UINT64 secs;
 +     long ms;
 + 
 +     gettimeofday(&tm, NULL);
@@ -135,7 +135,7 @@
 +     ms = tm.tv_usec;
 +     secs = time(NULL);
 + 
-+     return (u_int64_t ) (secs * 1000000 + ms);
++     return (UINT64) (secs * 1000000 + ms);
 + }
 + 
 + 
@@ -295,7 +295,7 @@
       struct tm *lt;
       struct tm *et;
       Session *killme;
-+     u_int64_t currentTime;
++     UINT64 currentTime;
   
       RemoveStreamSession(&sfPerf.sfBase);
       
