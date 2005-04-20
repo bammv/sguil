@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.34 2005/04/20 13:46:25 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.35 2005/04/20 14:46:21 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -152,6 +152,7 @@ proc CheckForPortscanFiles {} {
 
         if {$DEBUG} {puts "Checking for PS files in $PORTSCAN_DIR."}
 
+        set i 0
         foreach fileName [glob -nocomplain $PORTSCAN_DIR/portscan_log.*] {
 
             if { [file size $fileName] > 0 } {
@@ -159,6 +160,8 @@ proc CheckForPortscanFiles {} {
                 BinCopyToSguild $fileName
                 file delete $fileName
                 update
+                if { $i == 9 } { break }
+                incr i
             } else {
                 file delete $fileName
                 update
@@ -185,6 +188,7 @@ proc CheckForSsnFiles {} {
 
     if {$DEBUG} {puts "Checking for Session files in $SSN_DIR."}
 
+    set i 0
     foreach fileName [glob -nocomplain $SSN_DIR/ssn_log.*] {
 
         if { [file size $fileName] > 0 } {
@@ -201,6 +205,8 @@ proc CheckForSsnFiles {} {
                 BinCopyToSguild $tmpFile
                 file delete $tmpFile
                 update
+                if { $i == 9 } { break }
+                incr i
 
             }
 
@@ -230,6 +236,7 @@ proc CheckForSancpFiles {} {
 
     if {$DEBUG} {puts "Checking for sancp stats files in $SANCP_DIR."}
 
+    set i 0
     foreach fileName [glob -nocomplain $SANCP_DIR/stats.*.*] {
 
         if { [file size $fileName] > 0 } {
@@ -244,6 +251,8 @@ proc CheckForSancpFiles {} {
                 file delete $tmpFile
                 update
             }
+            if { $i == 9 } { break } 
+            incr i
 
         } else {
 
