@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.13 2005/01/28 20:12:26 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.14 2005/04/20 13:38:58 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -213,7 +213,6 @@ proc LoadSancpFile { sensor filename date } {
         CreateNewSancpTable $tableName
     }
 
-    # Not doing anything with the date yet
     LoadFile $filename $tableName 
 
 }

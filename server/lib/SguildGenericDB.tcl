@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.8 2005/03/08 20:35:03 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.9 2005/04/20 13:38:58 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -109,50 +109,37 @@ proc MysqlSelect { query { type {list} } } {
 }
 
 proc DBCommand { query } {
-  global DBNAME DBUSER DBPORT DBHOST DBPASS
+
+    global MAIN_DB_SOCKETID
                                                                                                      
-  if { $DBPASS == "" } {
-    set dbCmd [list mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
-  } else {
-    set dbCmd [list mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
-  }
-                                                                                                     
-  # Connect to the DB
-  if { [ catch {eval $dbCmd} dbSocketID ] } {
-    ErrorMessage "ERROR Connecting to the DB: $dbSocketID"
-  }
-                                                                                                     
-  if [catch {mysqlexec $dbSocketID $query} tmpError] {
-      ErrorMessage "ERROR Execing DB cmd: $query Error: $tmpError"
-  }
-  catch {mysqlclose $dbSocketID}
-  return
+    if [catch {mysqlexec $MAIN_DB_SOCKETID $query} tmpError] {
+        ErrorMessage "ERROR Execing DB cmd: $query Error: $tmpError"
+    }
+    return
+
 }
+
 proc UpdateDBStatusList { whereTmp timestamp uid status } {
-  global DBNAME DBUSER DBPORT DBHOST DBPASS
-  set updateString "UPDATE event SET status=$status, last_modified='$timestamp', last_uid='$uid' WHERE $whereTmp"
-  if { $DBPASS == "" } {
-    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
-  } else {
-    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
-  }
-  set execResults [mysqlexec $dbSocketID $updateString]
-  mysqlclose $dbSocketID
-  return $execResults
+
+    global MAIN_DB_SOCKETID
+
+    set updateString "UPDATE event SET status=$status, last_modified='$timestamp', last_uid='$uid' WHERE $whereTmp"
+
+    set execResults [mysqlexec $MAIN_DB_SOCKETID $updateString]
+    return $execResults
+
 }
+
 proc UpdateDBStatus { eventID timestamp uid status } {
-  global DBNAME DBUSER DBPORT DBHOST DBPASS
-  set sid [lindex [split $eventID .] 0]
-  set cid [lindex [split $eventID .] 1]
-  set updateString\
-   "UPDATE event SET status=$status, last_modified='$timestamp', last_uid='$uid' WHERE sid=$sid AND cid=$cid"
-  if { $DBPASS == "" } {
-    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
-  } else {
-    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
-  }
-  set execResults [mysqlexec $dbSocketID $updateString]
-  mysqlclose $dbSocketID
+
+    global MAIN_DB_SOCKETID
+
+    set sid [lindex [split $eventID .] 0]
+    set cid [lindex [split $eventID .] 1]
+    set updateString\
+     "UPDATE event SET status=$status, last_modified='$timestamp', last_uid='$uid' WHERE sid=$sid AND cid=$cid"
+    set execResults [mysqlexec $MAIN_DB_SOCKETID $updateString]
+
 }
 
 proc SafeMysqlExec { query } {
@@ -242,8 +229,8 @@ proc InsertTCPHdr { sid cid tcp_seq tcp_ack tcp_off tcp_res \
 
     set tmpQuery "INSERT INTO tcphdr (sid, cid, tcp_seq, tcp_ack, \
                   tcp_off, tcp_res, tcp_flags, tcp_win, tcp_csum, tcp_urp) \
-                  VALUES ($sid, $cid, $tcp_seq, $tcp_ack, $tcp_off, \
-                  $tcp_res, $tcp_flags, $tcp_win, $tcp_csum, $tcp_urp)"
+                  VALUES ('$sid', '$cid', '$tcp_seq', '$tcp_ack', '$tcp_off', \
+                  '$tcp_res', '$tcp_flags', '$tcp_win', '$tcp_csum', '$tcp_urp')"
                  
     if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
   
