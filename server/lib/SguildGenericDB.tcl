@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.9 2005/04/20 13:38:58 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.10 2005/04/20 13:50:53 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -180,7 +180,7 @@ proc InsertEventHdr { sid cid u_event_id u_event_ref u_ref_time msg sig_gen \
                                                                                                                        
     # And their corresponding values.
     set tmpValues \
-         "$sid, $cid, $u_event_id, $u_event_ref, '$u_ref_time', '$msg',  \
+         "'$sid', '$cid', '$u_event_id', '$u_event_ref', '$u_ref_time', '$msg',  \
          '$sig_gen', '$sig_id', '$sig_rev', '$timestamp', '$priority',   \
          '$class_type', '$status', '$dec_sip', '$dec_dip', '$ip_proto',  \
          '$ip_ver', '$ip_hlen', '$ip_tos', '$ip_len', '$ip_id',          \
@@ -215,7 +215,7 @@ proc InsertEventHdr { sid cid u_event_id u_event_ref u_ref_time msg sig_gen \
 proc InsertUDPHdr { sid cid udp_len udp_csum } {
 
     set tmpQuery "INSERT INTO udphdr (sid, cid, udp_len, udp_csum) \
-                  VALUES ($sid, $cid, $udp_len, $udp_csum)"
+                  VALUES ('$sid', '$cid', '$udp_len', '$udp_csum')"
 
     if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
   
@@ -268,7 +268,7 @@ proc InsertICMPHdr { sid cid icmp_csum icmp_id icmp_seq } {
 proc InsertDataPayload { sid cid data_payload } {
 
     set tmpQuery "INSERT INTO data (sid, cid, data_payload) \
-                  VALUES ($sid, $cid, '$data_payload')"
+                  VALUES ('$sid', '$cid', '$data_payload')"
 
     if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
   
