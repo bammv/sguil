@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "I am broken."
+exit
+
 if [ -z "$1" -o -z "$2" ]; then
 	echo "Usage: $0 /path/to/barnyard /path/to/sguil"
 	exit 1
