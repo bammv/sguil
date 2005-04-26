@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.10 2005/04/20 13:50:53 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.11 2005/04/26 13:12:44 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -35,17 +35,12 @@ proc GetMaxCid { sid } {
 }
 
 proc ExecDB { socketID query } {
-  global DBNAME DBUSER DBPASS DBPORT DBHOST
+  global MAIN_DB_SOCKETID
     if { [lindex $query 0] == "OPTIMIZE" } {
         SendSystemInfoMsg sguild "Table Optimization beginning, please stand by"
     }
   InfoMessage "Sending DB Query: $query"
-  if { $DBPASS == "" } {
-      set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
-  } else {
-      set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
-  }
-  if [catch {mysqlexec $dbSocketID $query} execResults] {
+  if [catch {mysqlexec $MAIN_DB_SOCKETID $query} execResults] {
         catch {SendSocket $socketID "InfoMessage \{ERROR running query, perhaps you don't have permission. Error:$execResults\}"} tmpError
   } else {
       if { [lindex $query 0] == "DELETE" } {
@@ -57,7 +52,6 @@ proc ExecDB { socketID query } {
           catch {SendSocket $socketID "InfoMessge Database Command Completed."} tmpError
       }
   }
-  mysqlclose $dbSocketID
 }
 
 proc QueryDB { socketID clientWinName query } {
@@ -74,36 +68,25 @@ proc QueryDB { socketID clientWinName query } {
   flush $mainWritePipe
 }
 proc FlatDBQuery { query } {
-  global DBNAME DBUSER DBPORT DBHOST DBPASS
+
+    global MAIN_DB_SOCKETID
                                                                                                      
-  if { $DBPASS == "" } {
-    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
-  } else {
-    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
-  }
-  set queryResults [mysqlsel $dbSocketID $query -flatlist]
-  mysqlclose $dbSocketID
-  return $queryResults
+    set queryResults [mysqlsel $MAIN_DB_SOCKETID $query -flatlist]
+    return $queryResults
+
 }
 # type can be list or flatlist.
 # list returns { 1 foo } { 2 bar } { 3 fu }
 # flatlist returns { 1 foo 2 bar 3 fu } 
 proc MysqlSelect { query { type {list} } } {
 
-    global DBNAME DBUSER DBPORT DBHOST DBPASS
-
-    if { $DBPASS == "" } {
-        set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
-    } else {
-        set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
-    }
+    global MAIN_DB_SOCKETID
 
     if { $type == "flatlist" } {
-        set queryResults [mysqlsel $dbSocketID $query -flatlist]
+        set queryResults [mysqlsel $MAIN_DB_SOCKETID $query -flatlist]
     } else {
-         set queryResults [mysqlsel $dbSocketID $query -list]
+         set queryResults [mysqlsel $MAIN_DB_SOCKETID $query -list]
     }
-    mysqlclose $dbSocketID
     return $queryResults
 
 }
