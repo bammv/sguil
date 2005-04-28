@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.12 2005/04/28 21:22:19 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.13 2005/04/28 21:30:20 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global connectedAgents agentSensorName
@@ -16,9 +16,9 @@ proc SensorCmdRcvd { socketID } {
     # the index when looking at $data, I wrote $data to $tmpData
     # before using ctoken.  Probably should drop this and fix the
     # procs, but that can happen later
-    set tmpData $data
-    set sensorCmd [ctoken tmpData " "]
-    # set sensorCmd [lindex $data 0]
+    #set tmpData $data
+    #set sensorCmd [ctoken tmpData " "]
+    set sensorCmd [lindex $data 0]
     switch -exact -- $sensorCmd {
       SsnFile         { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
       SancpFile       { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
