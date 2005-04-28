@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: log_packets.sh,v 1.22 2005/03/03 21:07:44 bamm Exp $ #
+# $Id: log_packets.sh,v 1.23 2005/04/28 13:21:55 bamm Exp $ #
 
 ################################################
 #                                              #
@@ -58,6 +58,17 @@ GREP="/usr/bin/grep"
 TZ=GMT
 export TZ
 
+# Make sure our default logging dir is there.
+if [ ! -d $LOG_DIR/$HOSTNAME ]; then
+  mkdir $LOG_DIR/$HOSTNAME
+  chmod 777 $LOG_DIR/$HOSTNAME
+fi
+if [ ! -d $LOG_DIR/$HOSTNAME/dailylogs ]; then
+  mkdir $LOG_DIR/$HOSTNAME/dailylogs
+  chmod 777 $LOG_DIR/$HOSTNAME/dailylogs
+fi
+LOG_DIR="$LOG_DIR/$HOSTNAME/dailylogs"
+
 start() {
  if [ ! -f $PIDFILE ]; then 
   if [ -x $SNORT_PATH ]; then
@@ -65,15 +76,6 @@ start() {
       mkdir $LOG_DIR
       chmod 777 $LOG_DIR
     fi
-    if [ ! -d $LOG_DIR/$HOSTNAME ]; then
-      mkdir $LOG_DIR/$HOSTNAME
-      chmod 777 $LOG_DIR/$HOSTNAME
-    fi
-    if [ ! -d $LOG_DIR/$HOSTNAME/dailylogs ]; then
-      mkdir $LOG_DIR/$HOSTNAME/dailylogs
-      chmod 777 $LOG_DIR/$HOSTNAME/dailylogs
-    fi
-    LOG_DIR="$LOG_DIR/$HOSTNAME/dailylogs"
 
     today=`date '+%Y-%m-%d'`
     if [ ! -d $LOG_DIR/$today ]; then
