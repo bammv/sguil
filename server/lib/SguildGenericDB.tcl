@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.11 2005/04/26 13:12:44 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.12 2005/04/28 21:20:42 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -226,16 +226,16 @@ proc InsertTCPHdr { sid cid tcp_seq tcp_ack tcp_off tcp_res \
 proc InsertICMPHdr { sid cid icmp_csum icmp_id icmp_seq } {
 
     set tmpTables "sid, cid, icmp_csum"
-    set tmpValues "$sid, $cid, $icmp_csum"
+    set tmpValues "'$sid', '$cid', '$icmp_csum'"
 
     if { $icmp_id != "" } {
         set tmpTables "$tmpTables, icmp_id"
-        set tmpValues "$tmpValues, $icmp_id"
+        set tmpValues "'$tmpValues', '$icmp_id'"
     }
 
     if { $icmp_seq != "" } {
         set tmpTables "$tmpTables, icmp_seq"
-        set tmpValues "$tmpValues, $icmp_seq"
+        set tmpValues "'$tmpValues', '$icmp_seq'"
     }
 
     set tmpQuery "INSERT INTO icmphdr ($tmpTables)  VALUES ($tmpValues)"
