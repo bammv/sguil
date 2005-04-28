@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.12 2005/04/28 21:20:42 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.13 2005/04/28 22:14:48 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -163,7 +163,7 @@ proc InsertEventHdr { sid cid u_event_id u_event_ref u_ref_time msg sig_gen \
                                                                                                                        
     # And their corresponding values.
     set tmpValues \
-         "'$sid', '$cid', '$u_event_id', '$u_event_ref', '$u_ref_time', '$msg',  \
+         "'$sid', '$cid', '$u_event_id', '$u_event_ref', '$u_ref_time', '[mysqlescape $msg]',  \
          '$sig_gen', '$sig_id', '$sig_rev', '$timestamp', '$priority',   \
          '$class_type', '$status', '$dec_sip', '$dec_dip', '$ip_proto',  \
          '$ip_ver', '$ip_hlen', '$ip_tos', '$ip_len', '$ip_id',          \
