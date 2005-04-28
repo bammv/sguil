@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.13 2005/04/28 22:14:48 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.14 2005/04/28 22:50:55 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -14,7 +14,8 @@ proc InsertHistory { sid cid uid timestamp status comment} {
   if {$comment == "none"} {
     DBCommand "INSERT INTO history (sid, cid, uid, timestamp, status) VALUES ( $sid, $cid, $uid, '$timestamp', $status)"
   } else {
-    DBCommand "INSERT INTO history (sid, cid, uid, timestamp, status, comment) VALUES ( $sid, $cid, $uid, '$timestamp', $status, '$comment')"
+    DBCommand "INSERT INTO history (sid, cid, uid, timestamp, status, comment) \
+               VALUES ( $sid, $cid, $uid, '$timestamp', $status, '[mysqlescape $comment]')"
   }
 }
                                                                                                      
