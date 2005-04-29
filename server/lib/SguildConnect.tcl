@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.5 2005/03/04 22:19:02 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.6 2005/04/29 21:01:44 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -24,7 +24,7 @@ proc ClientConnect { socketID IPAddr port } {
     return
   }
   if [catch {gets $socketID} clientVersion] {
-    LogMessage "$ERROR: $clientVersion"
+    LogMessage "ERROR: $clientVersion"
     return
   }
   if { $clientVersion != $VERSION } {
