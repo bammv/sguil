@@ -1,4 +1,4 @@
-# $Id: SguildUtils.tcl,v 1.6 2005/02/03 14:25:58 bamm Exp $ #
+# $Id: SguildUtils.tcl,v 1.7 2005/05/19 16:27:20 bamm Exp $ #
 
 proc Daemonize {} {
     global PID_FILE env LOGGER
@@ -203,7 +203,7 @@ proc ErrorMessage { msg } {
     } else {
 	puts $msg
     }
-    CleanExit
+    CleanExit 1
 }
 
 #  Puts a message to std_out or to syslog if in daemon
