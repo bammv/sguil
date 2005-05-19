@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.147 2005/04/26 13:12:43 bamm Exp $ #
+# $Id: sguild,v 1.148 2005/05/19 16:27:55 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -297,6 +297,7 @@ set sourceLibs {
     SguildSensorCmdRcvd.tcl    \
     SguildTranscript.tcl       \
     SguildUtils.tcl            \
+    SguildMysqlMerge.tcl       \
 }
 
 # Override config file if -l was specified on cmd line
@@ -441,7 +442,21 @@ if { [lsearch $DB_VERSION $currentDBVer] < 0 } {
     the src that came with sguild for scripts to help you upgrade"
 }
 
-#mysqlclose $MAIN_DB_SOCKETID
+# Make sure the new style (merge) tables are being used
+foreach tableName [list event tcphdr udphdr icmphdr data] {
+
+    set tmpQry "SHOW TABLE STATUS LIKE '$tableName'"
+    set tableStatus [mysqlsel $LOADERD_DB_ID $tmpQry -flatlist]
+    if { $tableStatus != "" && [lindex $tableStatus 1] != "MRG_MyISAM" } {
+        # Non MERGE table found.
+        ErrorMessage "ERROR: You appear to be using an old version of the\n\
+                      sguil database schema that does not support the MERGE tables\n\
+                      Please see the CHANGES document for more information\n\n.\
+                      Table $tableName returned status => $tableStatus"
+    }
+
+}
+
 # End DB checks
 
 # Fork a child to load PS/SSN info
@@ -475,13 +490,13 @@ set AUTOID [GetUserID auto]
 set eventIDList ""
 
 # Open the main connection the the DB back up.
-if [catch {eval mysqlconnect $connectCmd} MAIN_DB_SOCKETID] {
-  LogMessage "ERROR: Unable to connect to $DBHOST on $DBPORT: Make sure mysql is running."
-  ErrorMessage "$MAIN_DB_SOCKETID"
-}
-if { [catch {mysqluse $MAIN_DB_SOCKETID $DBNAME} noDBError] } {
-  ErrorMessage "Error: $noDBError"
-}
+#if [catch {eval mysqlconnect $connectCmd} MAIN_DB_SOCKETID] {
+#  LogMessage "ERROR: Unable to connect to $DBHOST on $DBPORT: Make sure mysql is running."
+#  ErrorMessage "$MAIN_DB_SOCKETID"
+#}
+#if { [catch {mysqluse $MAIN_DB_SOCKETID $DBNAME} noDBError] } {
+#  ErrorMessage "Error: $noDBError"
+#}
 
 # Get the archived alerts
 LogMessage "Querying DB for archived events..."
@@ -534,9 +549,14 @@ foreach row [mysqlsel $MAIN_DB_SOCKETID "SELECT event.status, event.priority, \
 # Get DB info (table names and column info)
 LogMessage "Retrieving DB info..." 
 set tableNameList [mysqlinfo $MAIN_DB_SOCKETID tables]
-regsub -all {sancp_\S+\s} $tableNameList {} newList
-set tableNameList $newList
-foreach tableName $newList {
+# Clean up the PiMPDB tables
+regsub -all {event_\S+\s} $tableNameList {} tableNameList
+regsub -all {tcphdr_\S+\s} $tableNameList {} tableNameList
+regsub -all {udphdr_\S+\s} $tableNameList {} tableNameList
+regsub -all {icmphdr_\S+\s} $tableNameList {} tableNameList
+regsub -all {data_\S+\s} $tableNameList {} tableNameList
+regsub -all {sancp_\S+\s} $tableNameList {} tableNameList
+foreach tableName $tableNameList {
   set tableArray($tableName) [mysqlcol $MAIN_DB_SOCKETID $tableName {name type length}]
 }
 
@@ -572,6 +592,3 @@ after 10000 SensorAgentsHealthCheck
 
 # Infinite wait
 vwait FOREVER
-
-
-

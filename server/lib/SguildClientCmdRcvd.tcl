@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.11 2005/03/10 15:47:10 shalligan Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.12 2005/05/19 16:27:56 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -370,7 +370,7 @@ proc SendCurrentEvents { socketID } {
 }
 
 proc LoadNessusReports { socketID filename table bytes} {
-    global TMPDATADIR DBHOST DBPORT DBNAME DBUSER DBPASS loaderWritePipe userIDArray
+    global TMPDATADIR loaderWritePipe userIDArray
     InfoMessage "Recieving nessus file $filename."
     set NESSUS_OUTFILE $TMPDATADIR/$filename
     set outFileID [open $NESSUS_OUTFILE w]
@@ -394,30 +394,18 @@ proc LoadNessusReports { socketID filename table bytes} {
 	file delete $NESSUS_OUTFILE
 	file copy -force $NESSUS_OUTFILE2 $NESSUS_OUTFILE
 	
-	if {$DBPASS != "" } {
-	    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
-		    -e \"LOAD DATA LOCAL INFILE '$NESSUS_OUTFILE' INTO TABLE nessus FIELDS TERMINATED\
-		    BY '|' LINES TERMINATED BY '||' STARTING BY '||'\""
-	} else {
-	    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
-		    -e \"LOAD DATA LOCAL INFILE '$NESSUS_OUTFILE' INTO TABLE nessus FIELDS TERMINATED\
-		    BY '|' LINES TERMINATED BY '||' STARTING BY '||'\""
-	}
+        set cmd "LOAD DATA LOCAL INFILE '$NESSUS_OUTFILE' INTO TABLE nessus FIELDS TERMINATED\
+                BY '|' LINES TERMINATED BY '||' STARTING BY '||'"
     } else {
-	if {$DBPASS != "" } {
-	    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER --password=$DBPASS\
-		    -e \"LOAD DATA LOCAL INFILE '$NESSUS_OUTFILE' INTO TABLE nessus_data FIELDS TERMINATED\
-		    BY '|' LINES TERMINATED BY '||'STARTING BY '||' \""
-	} else {
-	    set cmd "mysql --local-infile -D $DBNAME -h $DBHOST -P $DBPORT -u $DBUSER\
-		    -e \"LOAD DATA LOCAL INFILE '$NESSUS_OUTFILE' INTO TABLE nessus_data FIELDS TERMINATED\
-		    BY '|' LINES TERMINATED BY '||' STARTING BY '||'\""
-	}
+        set cmd "LOAD DATA LOCAL INFILE '$NESSUS_OUTFILE' INTO TABLE nessus_data FIELDS TERMINATED\
+                 BY '|' LINES TERMINATED BY '||'STARTING BY '||'"
     }
+
     # The loader child proc does the LOAD for us.
-    puts $loaderWritePipe [list $NESSUS_OUTFILE $cmd]
+    puts $loaderWritePipe [list LoadNessusData $NESSUS_OUTFILE $cmd]
     flush $loaderWritePipe
     puts $socketID "InfoMessage Nessus Data sent to loader.  Check server debug for any loading errors."
+
 }
 
 

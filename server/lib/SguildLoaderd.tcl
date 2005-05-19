@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.14 2005/04/20 13:38:58 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.15 2005/05/19 16:27:56 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -35,6 +35,7 @@ proc ForkLoader {} {
                     LoadPSFile { LoadFile [lindex $data 1] portscan }
                     LoadSsnFile { LoadSsnFile [lindex $data 1] [lindex $data 2] }
                     LoadSancpFile { LoadSancpFile [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+                    LoadNessusData { LoadNessusData [lindex $data 1] [lindex $data 2] }
                     default    { LogMessage "Unknown command recieved from sguild: $cmd" }
 
                 }
@@ -164,7 +165,7 @@ proc InitLoaderd {} {
             CreateSancpMergeTable
         }
     } else {
-        # Make sure its a MERGE table and not the old monser
+        # Make sure its a MERGE table and not the old monster
         set tableStatus [mysqlsel $LOADERD_DB_ID {SHOW TABLE STATUS LIKE 'sancp'} -flatlist]
         if { [lindex $tableStatus 1] != "MRG_MyISAM" } {
             ErrorMessage "ERROR: loaderd: You appear to be using an old version of the\n\
@@ -195,6 +196,23 @@ proc LoadFile { fileName table } {
     InfoMessage "loaderd: Loaded $fileName into the table $table."
 
 }
+
+proc LoadNessusData { fileName loadCmd } {
+
+    global  LOADERD_DB_ID
+
+    if [catch {mysqlexec $LOADERD_DB_ID $loadCmd} execResults] {
+        ErrorMessage "ERROR: loaderd: $execResults"
+    }
+                                                                                                                                   
+    # Delete the tmpfile
+    if [catch {file delete $fileName} tmpError] {
+        ErrorMessage "ERROR: loaderd: $tmpError"
+    }
+                                                                                                                                   
+    InfoMessage "loaderd: Loaded $fileName into the table $table."
+
+}            
 
 proc LoadSsnFile { filename date } {
 
