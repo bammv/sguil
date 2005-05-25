@@ -71,7 +71,12 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
     }
 
     # Insert Payload
-    if { $data_payload != "" } { InsertDataPayload $sid $cid $data_payload }
+    if { $data_payload != "" } { 
+        if [catch { InsertDataPayload $sid $cid $data_payload } tmpError] {
+            SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
+            return
+        }
+    }
 
     # Send RT Event
     # RTEvent|st|priority|class_type|hostname|timestamp|sid|cid|msg|srcip|dstip|ipproto|srcport|dstport|sig_id|rev|u_event_id|u_event_ref
