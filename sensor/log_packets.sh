@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: log_packets.sh,v 1.23 2005/04/28 13:21:55 bamm Exp $ #
+# $Id: log_packets.sh,v 1.24 2005/05/27 20:45:04 bamm Exp $ #
 
 ################################################
 #                                              #
@@ -154,7 +154,7 @@ restart() {
 cleandisk() {
   echo "Checking disk space (limited to ${MAX_DISK_USE}%)..."
   # grep, awk, tr...woohoo!
-  CUR_USE=`df $LOG_DIR | grep -v -i filesystem | awk '{print $5}' | tr -d %`
+  CUR_USE=`df -P $LOG_DIR | grep -v -i filesystem | awk '{print $5}' | tr -d %`
   echo "  Current Disk Use: ${CUR_USE}%"
   if [ $CUR_USE -gt $MAX_DISK_USE ]; then
     # If we are here then we passed our disk limit
