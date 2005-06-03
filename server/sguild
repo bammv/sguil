@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.149 2005/05/19 16:40:28 bamm Exp $ #
+# $Id: sguild,v 1.150 2005/06/03 22:35:36 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -453,6 +453,7 @@ lappend FORKD_PIDS $childPid
 set childPid [ForkQueryd]
 if { $childPid == 0 } { vwait QUERYD }
 lappend FORKD_PIDS $childPid
+
 fileevent $mainReadPipe readable [list QuerydCmdRcvd $mainReadPipe]
 fconfigure $mainReadPipe -buffering line
 

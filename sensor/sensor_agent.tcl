@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.35 2005/04/20 14:46:21 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.36 2005/06/03 22:35:35 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -19,7 +19,9 @@ exec tclsh "$0" "$@"
 
 # Don't touch these
 set CONNECTED 0
-set BUSY 0
+set SANCPFILEWAIT 0
+set SSNFILEWAIT 0
+set PORTSCANFILEWAIT 0
 
 proc InitBYSocket { port } {
 
@@ -136,7 +138,7 @@ proc SendBYFailMsg { socketID cid msg} {
 }
 
 proc CopyDataToServer { fileName socketID } {
-  global DEBUG SERVER_HOST BUSY
+  global DEBUG SERVER_HOST
 
   # We no do this any more
   puts "ACK === > CopyDataToServer $fileName $socketID"
@@ -147,25 +149,40 @@ proc CopyDataToServer { fileName socketID } {
 proc CheckForPortscanFiles {} {
 
     global PORTSCAN_DIR PS_CHECK_DELAY_IN_MSECS DEBUG CONNECTED
+    global PORTSCANFILEWAIT HOSTNAME
 
     if {$CONNECTED} {
 
         if {$DEBUG} {puts "Checking for PS files in $PORTSCAN_DIR."}
 
-        set i 0
         foreach fileName [glob -nocomplain $PORTSCAN_DIR/portscan_log.*] {
 
             if { [file size $fileName] > 0 } {
-                SendToSguild [list PSFile [file tail $fileName] [file size $fileName]]
-                BinCopyToSguild $fileName
-                file delete $fileName
-                update
-                if { $i == 9 } { break }
-                incr i
+
+                if { $CONNECTED } {
+
+                    set PORTSCANFILEWAIT $fileName
+                    SendToSguild [list PSFile $HOSTNAME [file tail $fileName] [file size $fileName]]
+                    BinCopyToSguild $fileName
+                    # Wait 5 secs and make sure the file was confirmed
+                    after 5000 CheckPortscanConfirmation $fileName
+                    vwait PORTSCANFILEWAIT
+
+                } else {
+
+                    # Lost our cnx
+                    break
+
+                }
+
             } else {
+
                 file delete $fileName
-                update
+
             }
+
+            # Break out if we lost our connection.
+            if { !$CONNECTED } { break }
 
         }
 
@@ -178,9 +195,10 @@ proc CheckForPortscanFiles {} {
 proc CheckForSsnFiles {} {
 
     global SSN_DIR SSN_CHECK_DELAY_IN_MSECS DEBUG CONNECTED
-    global SENSOR_ID
+    global SENSOR_ID SSNFILEWAIT HOSTNAME
 
-    if { !$CONNECTED || ![info exists SENSOR_ID] } {
+    # Have to have a sensor ID before we can send a ssn file
+    if { ![info exists SENSOR_ID] || !$CONNECTED } {
         # Try again later
         after $SSN_CHECK_DELAY_IN_MSECS CheckForSsnFiles
         return
@@ -188,7 +206,6 @@ proc CheckForSsnFiles {} {
 
     if {$DEBUG} {puts "Checking for Session files in $SSN_DIR."}
 
-    set i 0
     foreach fileName [glob -nocomplain $SSN_DIR/ssn_log.*] {
 
         if { [file size $fileName] > 0 } {
@@ -200,13 +217,23 @@ proc CheckForSsnFiles {} {
                 set tmpFile [lindex $fdPair 0]
                 set tmpDate [lindex $fdPair 1]
                 set fileBytes [file size $tmpFile]
-                # Tell sguild it has a file coming
-                SendToSguild [list SsnFile [file tail $tmpFile] $tmpDate $fileBytes] 
-                BinCopyToSguild $tmpFile
-                file delete $tmpFile
-                update
-                if { $i == 9 } { break }
-                incr i
+                set SSNFILEWAIT $tmpFile
+
+                if { $CONNECTED } {
+
+                    # Tell sguild it has a file coming
+                    SendToSguild [list SsnFile $HOSTNAME [file tail $tmpFile] $tmpDate $fileBytes] 
+                    BinCopyToSguild $tmpFile
+                    # Check to see that that file was confirmed after 10 secs
+                    after 5000 CheckSsnConfirmation $tmpFile
+                    vwait SSNFILEWAIT
+
+                } else {
+
+                    # Lost our cnx
+                    break
+
+                }
 
             }
 
@@ -214,11 +241,14 @@ proc CheckForSsnFiles {} {
 
             # Delete files with no data
             file delete $fileName
-            update
 
         }
+
+        # break if we lost our cnx to sguild
+        if { !$CONNECTED } { break }
   
     }
+
     after $SSN_CHECK_DELAY_IN_MSECS CheckForSsnFiles
 
 }
@@ -226,9 +256,10 @@ proc CheckForSsnFiles {} {
 proc CheckForSancpFiles {} {
 
     global DEBUG SANCP_DIR SENSOR_ID CONNECTED SSN_CHECK_DELAY_IN_MSECS
-    global HOSTNAME
+    global HOSTNAME SANCPFILEWAIT
 
-    if { !$CONNECTED || ![info exists SENSOR_ID] } {
+    # Have to have a sensor ID before we can send a sancp file.
+    if { ![info exists SENSOR_ID] || !$CONNECTED } {
         # Try again later
         after $SSN_CHECK_DELAY_IN_MSECS CheckForSancpFiles
         return
@@ -236,35 +267,146 @@ proc CheckForSancpFiles {} {
 
     if {$DEBUG} {puts "Checking for sancp stats files in $SANCP_DIR."}
 
-    set i 0
     foreach fileName [glob -nocomplain $SANCP_DIR/stats.*.*] {
 
         if { [file size $fileName] > 0 } {
 
+
             foreach fdPair [ParseSsnSancpFiles $fileName] {
+
                 set tmpFile [lindex $fdPair 0]
                 set tmpDate [lindex $fdPair 1]
                 set fileBytes [file size $tmpFile]
-                # Tell sguild it has a file coming
-                SendToSguild [list SancpFile $HOSTNAME [file tail $tmpFile] $tmpDate $fileBytes] 
-                BinCopyToSguild $tmpFile
-                file delete $tmpFile
-                update
+                set SANCPFILEWAIT $tmpFile
+
+                if { $CONNECTED } {
+
+                    # Tell sguild it has a file coming
+                    SendToSguild [list SancpFile $HOSTNAME [file tail $tmpFile] $tmpDate $fileBytes] 
+                    BinCopyToSguild $tmpFile
+                    # Check to see that that file was confirmed after 10 secs
+                    after 5000 CheckSancpConfirmation $tmpFile
+                    vwait SANCPFILEWAIT
+
+                } else {
+
+                    # Lost our cnx
+                    break
+                }
+
             }
-            if { $i == 9 } { break } 
-            incr i
 
         } else {
 
             file delete $fileName
-            update
+
+        }
+
+        # break if we lost our cnx to sguild
+        if { !$CONNECTED } { break }
+
+    }
+
+    after $SSN_CHECK_DELAY_IN_MSECS CheckForSancpFiles
+
+}
+
+proc CheckSancpConfirmation { tmpFile } {
+
+     global SANCPFILEWAIT DEBUG
+
+     if { $SANCPFILEWAIT == $tmpFile } {
+
+         # Something got held up. Release the vwait
+         if { $DEBUG } { puts "No confirmation on $tmpFile" }
+         set SANCPFILEWAIT 0
+         
+     }
+
+}
+
+proc CheckSsnConfirmation { tmpFile } {
+
+     global SSNFILEWAIT DEBUG
+
+     if { $SSNFILEWAIT == $tmpFile } {
+
+         # Something got held up. Release the vwait
+         if { $DEBUG } { puts "No confirmation on $tmpFile" }
+         set SSNFILEWAIT 0
+         
+     }
+
+}
+
+proc CheckPortscanConfirmation { fileName } {
+
+    global PORTSCANFILEWAIT DEBUG
+
+     if { $PORTSCANFILEWAIT == $fileName } {
+                                                                                                                                                                
+         # Something got held up. Release the vwait
+         if { $DEBUG } { puts "No confirmation on $fileName" }
+         set PORTSCANFILEWAIT 0
+                                                                                                                                                                
+     }
+
+}
+
+proc ConfirmSancpFile { fileName } {
+
+    global DEBUG SANCP_DIR SANCPFILEWAIT
+
+    if { [file exists $SANCP_DIR/$fileName] } {
+
+        if [catch [file delete $SANCP_DIR/$fileName] tmpError] {
+
+            puts "ERROR: Deleting  $SANCP_DIR/$fileName: $tmpError"
 
         }
 
     }
-    after $SSN_CHECK_DELAY_IN_MSECS CheckForSancpFiles
+
+    set SANCPFILEWAIT 0
 
 }
+
+proc ConfirmSsnFile { fileName } {
+
+    global DEBUG SSN_DIR SSNFILEWAIT
+
+    if { [file exists $SSN_DIR/$fileName] } {
+
+        if [catch [file delete $SSN_DIR/$fileName] tmpError] {
+
+            puts "ERROR: Deleting  $SSN_DIR/$fileName: $tmpError"
+
+        }
+
+    }
+
+    set SSNFILEWAIT 0
+
+}
+
+proc ConfirmPortscanFile { fileName } {
+                                                                                                                                                                
+    global DEBUG PORTSCAN_DIR PORTSCANFILEWAIT
+                                                                                                                                                                
+    if { [file exists $PORTSCAN_DIR/$fileName] } {
+                                                                                                                                                                
+        if [catch [file delete $PORTSCAN_DIR/$fileName] tmpError] {
+                                                                                                                                                                
+            puts "ERROR: Deleting  $PORTSCAN_DIR/$fileName: $tmpError"
+                                                                                                                                                                
+        }
+ 
+    }
+                                                                                                                                                                
+    set PORTSCANFILEWAIT 0
+                                                                                                                                                                
+}
+
 
 proc BinCopyToSguild { fileName } {
 
@@ -450,35 +592,53 @@ proc ConnectToSguilServer {} {
     flush $sguildSocketID
   }
 }
+
 proc SguildCmdRcvd { socketID } {
-  global DEBUG
-  if { [eof $socketID] || [catch {gets $socketID data}] } {
-    # Socket closed
-    close $socketID
-    if {$DEBUG} { puts "Socket $socketID closed" }
-    if {$DEBUG} { puts "Attempting to reconnect." }
-    ConnectToSguilServer
-  } else {
-    if {$DEBUG} { puts "Sensor Data Rcvd: $data" }
-    set sguildCmd [lindex $data 0]
-    switch -exact -- $sguildCmd {
-      PONG	{ if {$DEBUG} {puts "PONG recieved"} }
-      PING      { SendToSguild "PONG" }
-      RawDataRequest { eval $sguildCmd $socketID [lrange $data 1 end] }
-      SensorID        { SetSensorID [lindex $data 1] }
-      LastCidResults  { SendBYLastCid [lindex $data 1] [lindex $data 2] }
-      Confirm         { SendBYConfirmMsg [lindex $data 1] [lindex $data 2] }
-      Failed          { SendBYFailMsg [lindex $data 1] [lindex $data 2] [lindex $data 3] }
-      default         { if {$DEBUG} {puts "Sguil Cmd Unkown: $sguildCmd"} }
+
+    global DEBUG SANCPFILEWAIT
+
+    if { [eof $socketID] || [catch {gets $socketID data}] } {
+
+        # Socket closed
+        close $socketID
+
+        if {$DEBUG} { puts "Socket $socketID closed" }
+        if {$DEBUG} { puts "Attempting to reconnect." }
+
+        ConnectToSguilServer
+
+    } else {
+        if {$DEBUG} { puts "Sensor Data Rcvd: $data" }
+
+        set sguildCmd [lindex $data 0]
+
+        switch -exact -- $sguildCmd {
+
+            PONG                  { if {$DEBUG} {puts "PONG recieved"} }
+            PING                  { SendToSguild "PONG" }
+            RawDataRequest        { eval $sguildCmd $socketID [lrange $data 1 end] }
+            SensorID              { SetSensorID [lindex $data 1] }
+            LastCidResults        { SendBYLastCid [lindex $data 1] [lindex $data 2] }
+            Confirm               { SendBYConfirmMsg [lindex $data 1] [lindex $data 2] }
+            ConfirmSancpFile      { ConfirmSancpFile [lindex $data 1] }
+            ConfirmSsnFile        { ConfirmSsnFile [lindex $data 1] }
+            ConfirmPortscanFile   { ConfirmPortscanFile [lindex $data 1] }
+            Failed                { SendBYFailMsg [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+            default               { if {$DEBUG} {puts "Sguil Cmd Unkown: $sguildCmd"} }
+
+        }
+
     }
-  }
+
 }
+
 proc DisplayUsage { cmdName } {
   puts "Usage: $cmdName \[-D\] \[-c\] <filename>"
   puts "  -c <filename>: PATH to config (sensor_agent.conf) file."
   puts "  -D Runs sensor_agent in daemon mode."
   exit
 }
+
 proc Daemonize {} {
   global PID_FILE DEBUG
   # We need extended tcl to run in the background

@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.6 2005/04/29 21:01:44 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.7 2005/06/03 22:35:43 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -60,18 +60,18 @@ proc SensorConnect { socketID IPAddr port } {
 
 proc SensorAgentInit { socketID sensorName } {
 
-    global connectedAgents agentSocket agentSensorName
+    global connectedAgents agentSocketArray agentSensorNameArray
 
     lappend connectedAgents $sensorName
-    set agentSocket($sensorName) $socketID
-    set agentSensorName($socketID) $sensorName
+    set agentSocketArray($sensorName) $socketID
+    set agentSensorNameArray($socketID) $sensorName
     set sensorID [GetSensorID $sensorName]
 
     if { $sensorID == "" } {
 
         LogMessage "New sensor. Adding sensor $sensorName to the DB."
         # We have a new sensor
-        set sensorName $agentSensorName($socketID)
+        set sensorName $agentSensorNameArray($socketID)
 
         set tmpQuery "INSERT INTO sensor (hostname) VALUES ('$sensorName')"
 
@@ -92,12 +92,13 @@ proc SensorAgentInit { socketID sensorName } {
 }
 
 proc CleanUpDisconnectedAgent { socketID } {
-  global connectedAgents agentSocket agentSensorName
+  global connectedAgents agentSocketArray agentSensorNameArray
                                                                                                                                    
-  set connectedAgents [ldelete $connectedAgents $agentSensorName($socketID)]
-  set sensorName $agentSensorName($socketID)
-  unset agentSocket($sensorName)
-  unset agentSensorName($socketID)
+  set connectedAgents [ldelete $connectedAgents $agentSensorNameArray($socketID)]
+  set sensorName $agentSensorNameArray($socketID)
+  unset agentSocketArray($sensorName)
+  unset agentSensorNameArray($socketID)
+
 }
 
 proc HandShake { socketID cmd } {

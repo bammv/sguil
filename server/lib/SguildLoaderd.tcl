@@ -1,22 +1,28 @@
-# $Id: SguildLoaderd.tcl,v 1.15 2005/05/19 16:27:56 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.16 2005/06/03 22:35:43 bamm Exp $ #
 
 proc ForkLoader {} {
 
-    global loaderWritePipe DBNAME DBUSER DBPASS DBPORT DBHOST LOADERD_DB_ID
+    global sguildReadPipe sguildWritePipe
+    global loaderdReadPipe loaderdWritePipe 
 
     # Prep things for the fork
     InitLoaderd
 
     # First create some pipes to communicate thru
-    pipe loaderReadPipe loaderWritePipe
+    pipe loaderdReadPipe sguildWritePipe
+    pipe sguildReadPipe loaderdWritePipe
 
     # Fork the child
     if {[set childPid [fork]] == 0 } {
 
-        # We are the child now.
+        # We are the child now (loaderd).
+
+        # Close the unneeded pipe fileIDs
+        catch {close $sguildWritePipe}
+        catch {close $sguildReadPipe}
 
         # Cmd recieved via pipe
-        proc ParentCmdRcvd { pipeID } {
+        proc SguildCmdRcvd { pipeID } {
 
             fconfigure $pipeID -buffering line
             # Set up our comms cmds here
@@ -32,11 +38,11 @@ proc ForkLoader {} {
                 # Here the cmds the loaderd knows
                 switch -exact -- $cmd {
   
-                    LoadPSFile { LoadFile [lindex $data 1] portscan }
-                    LoadSsnFile { LoadSsnFile [lindex $data 1] [lindex $data 2] }
-                    LoadSancpFile { LoadSancpFile [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+                    LoadPSFile     { LoadPSFile [lindex $data 1] [lindex $data 2] }
+                    LoadSsnFile    { LoadSsnFile [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+                    LoadSancpFile  { LoadSancpFile [lindex $data 1] [lindex $data 2] [lindex $data 3] }
                     LoadNessusData { LoadNessusData [lindex $data 1] [lindex $data 2] }
-                    default    { LogMessage "Unknown command recieved from sguild: $cmd" }
+                    default        { LogMessage "Unknown command recieved from sguild: $cmd" }
 
                 }
   
@@ -44,9 +50,51 @@ proc ForkLoader {} {
 
         }
 
-        fileevent $loaderReadPipe readable [list ParentCmdRcvd $loaderReadPipe]
-        LogMessage "Loader Forked"
+        fileevent $loaderdReadPipe readable [list SguildCmdRcvd $loaderdReadPipe]
+        LogMessage "Loaderd Forked"
+
+    } else {
+
+        # We are the parent (sguild)
+
+        # Close the unneeded pipe fileIDs
+        catch {close $loaderdWritePipe}
+        catch {close $loaderdReadPipe}
+
+        # Proc to read msgs from loaderd.
+        proc LoaderdCmdRcvd { pipeID } {
+
+            fconfigure $pipeID -buffering line
+            # Set up our comms cmds here
+            if { [eof $pipeID] || [catch {gets $pipeID data}] } {
+  
+                # Pipe died
+                catch {close $pipeID}
+                # For now we just die.
+                ErrorMessage "Lost communications with loaderd."
+
+            } else {
+
+                InfoMessage "sguild: Recieved from loaderd: $data"
+                set cmd [lindex $data 0]
+                # Here the cmds the loaderd knows
+                switch -exact -- $cmd {
+  
+                    ConfirmSancpFile    { ConfirmSancpFile [lindex $data 1] [lindex $data 2] }
+                    ConfirmSsnFile      { ConfirmSsnFile [lindex $data 1] [lindex $data 2] }
+                    ConfirmPortscanFile { ConfirmPortscanFile [lindex $data 1] [lindex $data 2] }
+                    default             { LogMessage "Unknown command recieved from loaderd: $cmd" }
+
+                }
+
+            }
+        }
+
+        # Call LoaderdCmdRcvd when we get a msg from loaderd
+        fileevent $sguildReadPipe readable [list LoaderdCmdRcvd $sguildReadPipe]
+
     }
+
     return $childPid
 }
 
@@ -214,16 +262,41 @@ proc LoadNessusData { fileName loadCmd } {
 
 }            
 
-proc LoadSsnFile { filename date } {
+proc LoadPSFile { sensor filename } {
+
+    global loaderdWritePipe
+
+    # Not doing anything with the date yet
+    LoadFile $filename portscan
+
+    if [catch { puts $loaderdWritePipe [list ConfirmPortscanFile $sensor [file tail $filename]] } tmpError] {
+        puts "ERROR: $tmpError"
+    }
+    if [catch {flush $loaderdWritePipe} tmpError] {
+        puts "ERROR: $tmpError"
+    }
+
+}
+
+proc LoadSsnFile { sensor filename date } {
+
+    global loaderdWritePipe
 
     # Not doing anything with the date yet
     LoadFile $filename sessions
+
+    if [catch { puts $loaderdWritePipe [list ConfirmSsnFile $sensor [file tail $filename]] } tmpError] {
+        puts "ERROR: $tmpError"
+    }
+    if [catch {flush $loaderdWritePipe} tmpError] {
+        puts "ERROR: $tmpError"
+    }
 
 }
 
 proc LoadSancpFile { sensor filename date } {
 
-    global SANCP_TBL_LIST
+    global SANCP_TBL_LIST loaderdWritePipe
 
     set tableName "sancp_${sensor}_${date}"
     # Make sure our table exists
@@ -232,5 +305,12 @@ proc LoadSancpFile { sensor filename date } {
     }
 
     LoadFile $filename $tableName 
+
+    if [catch { puts $loaderdWritePipe [list ConfirmSancpFile $sensor [file tail $filename]] } tmpError] {
+        puts "ERROR: $tmpError"
+    }
+    if [catch {flush $loaderdWritePipe} tmpError] {
+        puts "ERROR: $tmpError"
+    }
 
 }

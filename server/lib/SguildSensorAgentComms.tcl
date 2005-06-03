@@ -1,14 +1,21 @@
 proc SendSensorAgent { socketID msg } {
+
+    global agentSocketArray agentSensorNameArray
     
     set RFLAG 1
     if { [catch { puts $socketID $msg } sendError] } {
         catch { close $socketID } tmpError
         CleanUpDisconnectedAgent $socketID
         set RFLAG 0
+    } else {
+
+        InfoMessage "Sent $socketID: $msg"
+
     }
 
     return $RFLAG
 }
+
 proc AgentLastCidReq { socketID req_socketID sid } {
 
     set maxCid [GetMaxCid $sid]
@@ -38,6 +45,10 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
                 $ip_len $ip_id $ip_flags $ip_off $ip_ttl $ip_csum $icmp_type \
                 $icmp_code $src_port $dst_port } tmpError] {
 
+        # DEBUG Foo
+        puts "ERROR: While inserting event info: $tmpError"
+        #exit
+
         SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
         return
 
@@ -48,6 +59,11 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
 
         17  {    if [catch { InsertUDPHdr $sid $cid $udp_len $udp_csum } tmpError] {
                      SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
+
+                     # DEBUG Foo
+                     puts "ERROR: While inserting UDP header: $tmpError"
+                     #exit
+
                      return
                  }
          }
@@ -55,6 +71,11 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
          6  {    if [catch { InsertTCPHdr $sid $cid $tcp_seq $tcp_ack $tcp_off $tcp_res \
                              $tcp_flags $tcp_win $tcp_csum $tcp_urp } tmpError] {
                      SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
+
+                     # DEBUG Foo
+                     puts "ERROR: While inserting TCP header: $tmpError"
+                     #exit
+
                      return
                  }
          }
@@ -64,6 +85,11 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
                      if [catch { InsertICMPHdr $sid $cid $icmp_csum $icmp_id $icmp_seq } \
                          tmpError] {
                          SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
+  
+                         # DEBUG Foo
+                         puts "ERROR: While inserting ICMP header: $tmpError"
+                         #exit
+
                          return
                      }
         
@@ -74,6 +100,11 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
     if { $data_payload != "" } { 
         if [catch { InsertDataPayload $sid $cid $data_payload } tmpError] {
             SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
+  
+            # DEBUG Foo
+            puts "ERROR: While inserting data payload: $tmpError"
+            #exit
+
             return
         }
     }
@@ -86,5 +117,53 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
 
     # Send by/op_sguil confirmation
     SendSensorAgent $socketID [list Confirm $req_socketID $cid] 
+
+}
+
+proc ConfirmSancpFile { sensorName fileName } {
+
+    global agentSocketArray agentSensorNameArray
+
+    if { [array exists agentSocketArray] && [info exists agentSocketArray($sensorName)]} {
+    
+        SendSensorAgent $agentSocketArray($sensorName) [list ConfirmSancpFile $fileName]
+    
+    } else { 
+    
+        after 5000 ConfirmSancpFile $sensorName $fileName
+    
+    }
+
+}
+
+proc ConfirmSsnFile { sensorName fileName } {
+
+    global agentSocketArray agentSensorNameArray
+
+    if { [array exists agentSocketArray] && [info exists agentSocketArray($sensorName)]} {
+    
+        SendSensorAgent $agentSocketArray($sensorName) [list ConfirmSsnFile $fileName]
+    
+    } else { 
+    
+        after 5000 ConfirmSsnFile $sensorName $fileName
+    
+    }
+
+}
+
+proc ConfirmPortscanFile { sensorName fileName } {
+
+    global agentSocketArray agentSensorNameArray
+
+    if { [array exists agentSocketArray] && [info exists agentSocketArray($sensorName)]} {
+    
+        SendSensorAgent $agentSocketArray($sensorName) [list ConfirmPortscanFile $fileName]
+    
+    } else { 
+    
+        after 5000 ConfirmPortscanFile $sensorName $fileName
+    
+    }
 
 }

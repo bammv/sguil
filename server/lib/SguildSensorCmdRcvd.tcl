@@ -1,12 +1,12 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.13 2005/04/28 21:30:20 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.14 2005/06/03 22:35:43 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
-  global connectedAgents agentSensorName
+  global connectedAgents agentSensorNameArray
   if { [eof $socketID] || [catch {gets $socketID data}] } {
     # Socket closed
     catch { close $socketID } closeError
     InfoMessage "Socket $socketID closed"
-    if { [info exists connectedAgents] && [info exists agentSensorName($socketID)] } {
+    if { [info exists connectedAgents] && [info exists agentSensorNameArray($socketID)] } {
       CleanUpDisconnectedAgent $socketID
     }
   } else {
@@ -20,9 +20,9 @@ proc SensorCmdRcvd { socketID } {
     #set sensorCmd [ctoken tmpData " "]
     set sensorCmd [lindex $data 0]
     switch -exact -- $sensorCmd {
-      SsnFile         { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+      SsnFile         { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
       SancpFile       { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
-      PSFile          { RcvPortscanFile $socketID [lindex $data 1] [lindex $data 2] }
+      PSFile          { RcvPortscanFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
       AgentInit       { SensorAgentInit $socketID [lindex $data 1] }
       AgentLastCidReq { AgentLastCidReq $socketID [lindex $data 1] [lindex $data 2] }
       BYEventRcvd     { eval BYEventRcvd $socketID [lrange $data 1 end] }
@@ -47,22 +47,22 @@ proc RcvBinCopy { socketID outFile bytes } {
 
 }
 
-proc RcvSsnFile { socketID fileName date bytes } {
+proc RcvSsnFile { socketID sensorName fileName date bytes } {
 
-    global TMPDATADIR loaderWritePipe
+    global TMPDATADIR sguildWritePipe
 
     set ssnFile $TMPDATADIR/$fileName
     RcvBinCopy $socketID $ssnFile $bytes
     
     # The loader child proc does the LOAD for us.
-    puts $loaderWritePipe [list LoadSsnFile $ssnFile $date]
-    flush $loaderWritePipe
+    puts $sguildWritePipe [list LoadSsnFile $sensorName $ssnFile $date]
+    flush $sguildWritePipe
 
 }
 
 proc RcvSancpFile { socketID sensorName fileName date bytes } {
 
-    global TMPDATADIR loaderWritePipe
+    global TMPDATADIR sguildWritePipe
 
     set sancpFile $TMPDATADIR/$fileName
     RcvBinCopy $socketID $sancpFile $bytes
@@ -70,14 +70,14 @@ proc RcvSancpFile { socketID sensorName fileName date bytes } {
     update
     
     # The loader child proc does the LOAD for us.
-    puts $loaderWritePipe [list LoadSancpFile $sensorName $sancpFile $date]
-    flush $loaderWritePipe
+    puts $sguildWritePipe [list LoadSancpFile $sensorName $sancpFile $date]
+    flush $sguildWritePipe
 
 }
 
-proc RcvPortscanFile { socketID fileName bytes } {
+proc RcvPortscanFile { socketID sensorName fileName bytes } {
 
-    global TMPDATADIR loaderWritePipe
+    global TMPDATADIR sguildWritePipe
 
     InfoMessage "Recieving portscan file $fileName."
     set PS_OUTFILE $TMPDATADIR/$fileName
@@ -85,12 +85,12 @@ proc RcvPortscanFile { socketID fileName bytes } {
     RcvBinCopy $socketID $PS_OUTFILE $bytes
 
     # The loader child proc does the LOAD for us.
-    puts $loaderWritePipe [list LoadPSFile $PS_OUTFILE]
-    flush $loaderWritePipe
+    puts $sguildWritePipe [list LoadPSFile $sensorName $PS_OUTFILE]
+    flush $sguildWritePipe
 
 }
 
 proc DiskReport { socketID fileSystem percentage } {
-  global agentSensorName
-  SendSystemInfoMsg $agentSensorName($socketID) "$fileSystem $percentage"
+  global agentSensorNameArray
+  SendSystemInfoMsg $agentSensorNameArray($socketID) "$fileSystem $percentage"
 }

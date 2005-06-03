@@ -1,14 +1,24 @@
-# $Id: SguildQueryd.tcl,v 1.2 2004/10/18 15:28:20 shalligan Exp $ #
+# $Id: SguildQueryd.tcl,v 1.3 2005/06/03 22:35:43 bamm Exp $ #
 
 proc ForkQueryd {} {
+
   global mainWritePipe mainReadPipe
+  global sguildReadPipe sguildWritePipe
+  global loaderdReadPipe loaderdWritePipe
+
   # This pipe sends to queryd
   pipe queryReadPipe mainWritePipe
   # THis pipe lets queryd send back.
   pipe mainReadPipe queryWritePipe
   # Fork the child
   if {[set childPid [fork]] == 0 } {
+
     # We are the child now.
+
+    # Make sure queryd doesn't try to read the loaderd pipes
+    catch {close $sguildWritePipe}
+    catch {close $sguildReadPipe}
+
     proc mainCmdRcvd { inPipeID outPipeID } {
       fconfigure $inPipeID -buffering line
       if { [eof $inPipeID] || [catch {gets $inPipeID data}] } {

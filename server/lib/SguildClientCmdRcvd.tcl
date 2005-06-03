@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.12 2005/05/19 16:27:56 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.13 2005/06/03 22:35:43 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -370,7 +370,7 @@ proc SendCurrentEvents { socketID } {
 }
 
 proc LoadNessusReports { socketID filename table bytes} {
-    global TMPDATADIR loaderWritePipe userIDArray
+    global TMPDATADIR sguildWritePipe userIDArray
     InfoMessage "Recieving nessus file $filename."
     set NESSUS_OUTFILE $TMPDATADIR/$filename
     set outFileID [open $NESSUS_OUTFILE w]
@@ -402,8 +402,8 @@ proc LoadNessusReports { socketID filename table bytes} {
     }
 
     # The loader child proc does the LOAD for us.
-    puts $loaderWritePipe [list LoadNessusData $NESSUS_OUTFILE $cmd]
-    flush $loaderWritePipe
+    puts $sguildWritePipe [list LoadNessusData $NESSUS_OUTFILE $cmd]
+    flush $sguildWritePipe
     puts $socketID "InfoMessage Nessus Data sent to loader.  Check server debug for any loading errors."
 
 }

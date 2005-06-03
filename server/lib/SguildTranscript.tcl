@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.10 2005/01/27 19:25:26 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.11 2005/06/03 22:35:43 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -147,10 +147,10 @@ proc XscriptRequest { socketID sensor winID timestamp srcIP srcPort dstIP dstPor
 }
 
 proc GetRawDataFromSensor { TRANS_ID sensor timestamp srcIP srcPort dstIP dstPort proto filename type } {
-  global agentSocket connectedAgents transInfoArray
+  global agentSocketArray connectedAgents transInfoArray
   set RFLAG 1
-  if { [array exists agentSocket] && [info exists agentSocket($sensor)]} {
-      set sensorSocketID $agentSocket($sensor)
+  if { [array exists agentSocketArray] && [info exists agentSocketArray($sensor)]} {
+      set sensorSocketID $agentSocketArray($sensor)
       InfoMessage "Sending $sensor: RawDataRequest $TRANS_ID $sensor $timestamp $srcIP $dstIP $dstPort $proto $filename $type"
 
       if { [catch { puts $sensorSocketID\
