@@ -1,4 +1,4 @@
-/* $Id: op_sguil.c,v 1.14 2005/03/16 14:56:09 bamm Exp $ */
+/* $Id: op_sguil.c,v 1.15 2005/06/06 14:06:29 bamm Exp $ */
 
 /*
 ** Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@sguil.net> 
@@ -226,6 +226,7 @@ int OpSguil_Log(void *context, void *ul_data)
     sid = GetSid(record->log.event.sig_generator, record->log.event.sig_id);
     if(sid == NULL)
         sid = FakeSid(record->log.event.sig_generator, record->log.event.sig_id);
+    sid->rev = record->log.event.sig_rev;
 
     class_type = GetClassType(record->log.event.classification);
     
