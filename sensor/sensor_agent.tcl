@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.36 2005/06/03 22:35:35 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.37 2005/06/17 15:29:03 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -22,6 +22,19 @@ set CONNECTED 0
 set SANCPFILEWAIT 0
 set SSNFILEWAIT 0
 set PORTSCANFILEWAIT 0
+
+proc bgerror { errorMsg } {
+                                                                                                                           
+    global errorInfo
+                                                                                                                           
+    puts "Error: $errorMsg"
+    if { [info exists errorInfo] } {
+        puts $errorInfo
+    }
+
+    exit
+                                                                                                                           
+}
 
 proc InitBYSocket { port } {
 
@@ -163,10 +176,20 @@ proc CheckForPortscanFiles {} {
 
                     set PORTSCANFILEWAIT $fileName
                     SendToSguild [list PSFile $HOSTNAME [file tail $fileName] [file size $fileName]]
-                    BinCopyToSguild $fileName
-                    # Wait 5 secs and make sure the file was confirmed
-                    after 5000 CheckPortscanConfirmation $fileName
-                    vwait PORTSCANFILEWAIT
+                    
+                    # Binary copy here
+                    if { [BinCopyToSguild $fileName] } {
+
+                        # Wait 5 secs and make sure the file was confirmed
+                        after 5000 CheckPortscanConfirmation $fileName
+                        vwait PORTSCANFILEWAIT
+
+                    } else {
+
+                        if {$DEBUG} { puts "Error copying $fileName to sguild."}
+
+                    }
+
 
                 } else {
 
@@ -223,10 +246,17 @@ proc CheckForSsnFiles {} {
 
                     # Tell sguild it has a file coming
                     SendToSguild [list SsnFile $HOSTNAME [file tail $tmpFile] $tmpDate $fileBytes] 
-                    BinCopyToSguild $tmpFile
-                    # Check to see that that file was confirmed after 10 secs
-                    after 5000 CheckSsnConfirmation $tmpFile
-                    vwait SSNFILEWAIT
+                    if { [BinCopyToSguild $tmpFile] } {
+
+                        # Check to see that that file was confirmed after 10 secs
+                        after 5000 CheckSsnConfirmation $tmpFile
+                        vwait SSNFILEWAIT
+
+                    } else {
+
+                        if {$DEBUG} { puts "Error copying $tmpFile to sguild." }
+
+                    }
 
                 } else {
 
@@ -283,10 +313,17 @@ proc CheckForSancpFiles {} {
 
                     # Tell sguild it has a file coming
                     SendToSguild [list SancpFile $HOSTNAME [file tail $tmpFile] $tmpDate $fileBytes] 
-                    BinCopyToSguild $tmpFile
-                    # Check to see that that file was confirmed after 10 secs
-                    after 5000 CheckSancpConfirmation $tmpFile
-                    vwait SANCPFILEWAIT
+                    if { [BinCopyToSguild $tmpFile] } {
+
+                        # Check to see that that file was confirmed after 10 secs
+                        after 5000 CheckSancpConfirmation $tmpFile
+                        vwait SANCPFILEWAIT
+                   
+                    } else {
+
+                        if { $DEBUG } { puts "Error copying $tmpFile to sguild." }
+
+                    }
 
                 } else {
 
@@ -413,11 +450,28 @@ proc BinCopyToSguild { fileName } {
     global sguildSocketID
 
     set rFileID [open $fileName r]
+
     fconfigure $rFileID -translation binary
     fconfigure $sguildSocketID -translation binary
-    fcopy $rFileID $sguildSocketID
-    fconfigure $sguildSocketID -encoding utf-8 -translation {auto crlf}
+
+    set RETURN 1
+    if [ catch {fcopy $rFileID $sguildSocketID} tmpError ] {
+
+        # fcopy failed.
+        set RETURN 0
+        set CONNECTED 0
+        catch { close $sguildSocketID } tmpError
+        ConnectToSguilServer
+
+    } else {
+
+        fconfigure $sguildSocketID -encoding utf-8 -translation {auto crlf}
+
+    }
+
     catch {close $rFileID} tmpError
+
+    return $RETURN
 
 }
 
@@ -497,7 +551,14 @@ proc RawDataRequest { socketID TRANS_ID sensor timestamp srcIP dstIP srcPort dst
 
         # Copy the file up to sguild.
         SendToSguild [list RawDataFile $rawDataFileName $TRANS_ID [file size $tmpRawDataFile]]
-        BinCopyToSguild $tmpRawDataFile
+
+        if { ![BinCopyToSguild $tmpRawDataFile] } {
+        
+            # Copy failed
+            if {$DEBUG} { puts "Error sending $tmpRawDataFile to sguild" }
+
+        }
+
         file delete $tmpRawDataFile
 
     } else {
@@ -509,6 +570,7 @@ proc RawDataRequest { socketID TRANS_ID sensor timestamp srcIP dstIP srcPort dst
         }
 
     }
+
 }
 
 proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto rawDataFileName type } {
@@ -595,12 +657,13 @@ proc ConnectToSguilServer {} {
 
 proc SguildCmdRcvd { socketID } {
 
-    global DEBUG SANCPFILEWAIT
+    global DEBUG SANCPFILEWAIT CONNECTED
 
     if { [eof $socketID] || [catch {gets $socketID data}] } {
 
         # Socket closed
         close $socketID
+        set CONNECTED 0
 
         if {$DEBUG} { puts "Socket $socketID closed" }
         if {$DEBUG} { puts "Attempting to reconnect." }
@@ -614,7 +677,7 @@ proc SguildCmdRcvd { socketID } {
 
         switch -exact -- $sguildCmd {
 
-            PONG                  { if {$DEBUG} {puts "PONG recieved"} }
+            PONG                  { if {$DEBUG} {puts "PONG received"} }
             PING                  { SendToSguild "PONG" }
             RawDataRequest        { eval $sguildCmd $socketID [lrange $data 1 end] }
             SensorID              { SetSensorID [lindex $data 1] }
