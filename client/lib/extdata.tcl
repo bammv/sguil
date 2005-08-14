@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.19 2005/03/11 15:38:37 shalligan Exp $
+# $Id: extdata.tcl,v 1.20 2005/08/14 04:49:58 bamm Exp $
 
 proc GetRuleInfo {} {
   global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
@@ -25,12 +25,18 @@ proc GetRuleInfo {} {
   }
 }
 proc ClearRuleText {} {
-  global ruleText
-  $ruleText clear
+ 
+    global ruleText
+
+    $ruleText component text configure -state normal
+    $ruleText clear
+    $ruleText component text configure -state disabled
+
 }
 proc InsertRuleData { ruleData } {
   global ruleText referenceButton
   global ruleText icatButton
+  $ruleText component text configure -state normal
   $ruleText component text insert end $ruleData
   $referenceButton configure -state normal
   if [regexp {cve,([^;]*)} $ruleData] {
@@ -38,6 +44,7 @@ proc InsertRuleData { ruleData } {
   } else {
     $icatButton configure -state disabled
   }
+  $ruleText component text configure -state disabled
 }
 proc GetDshieldIP { arg } {
   global DEBUG BROWSER_PATH CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT
@@ -139,30 +146,52 @@ proc ResolveHosts {} {
   }
 }
 proc GetWhoisData {} {
-  global ACTIVE_EVENT CUR_SEL_PANE WHOISLIST whoisText WHOIS_PATH MULTI_SELECT
-  ClearWhoisData
-  if {$ACTIVE_EVENT && $WHOISLIST != "none" && !$MULTI_SELECT} {
-    Working
-    update
-    set selectedIndex [$CUR_SEL_PANE(name).$WHOISLIST.list curselection]
-    set ip [$CUR_SEL_PANE(name).$WHOISLIST.list get $selectedIndex]
-    if { $WHOIS_PATH == "SimpleWhois" } {
-      foreach line [SimpleWhois $ip] {
-        $whoisText insert end "$line\n"
-      }
-    } else {
-      $whoisText insert end "Attempting whois query on $ip\n"
-      update
-      set whoisCommandID [open "| $WHOIS_PATH $ip" r]
-      while { [gets $whoisCommandID data] >= 0 } {
-        $whoisText insert end "$data\n"
-      }
-      catch {close $whoisCommandID} closeError
-      $whoisText insert end $closeError
+
+    global ACTIVE_EVENT CUR_SEL_PANE WHOISLIST whoisText WHOIS_PATH MULTI_SELECT
+
+    ClearWhoisData
+
+    $whoisText configure -state normal
+
+    if {$ACTIVE_EVENT && $WHOISLIST != "none" && !$MULTI_SELECT} {
+
+        Working
+        update
+        set selectedIndex [$CUR_SEL_PANE(name).$WHOISLIST.list curselection]
+        set ip [$CUR_SEL_PANE(name).$WHOISLIST.list get $selectedIndex]
+
+        if { $WHOIS_PATH == "SimpleWhois" } {
+
+            foreach line [SimpleWhois $ip] {
+
+                $whoisText insert end "$line\n"
+            }
+
+        } else {
+
+            $whoisText insert end "Attempting whois query on $ip\n"
+            update
+            set whoisCommandID [open "| $WHOIS_PATH $ip" r]
+
+            while { [gets $whoisCommandID data] >= 0 } {
+
+                $whoisText insert end "$data\n"
+
+            }
+
+            catch {close $whoisCommandID} closeError
+            $whoisText insert end $closeError
+
+        }
+
+        Idle
+
     }
-    Idle
-  }
+
+    $whoisText configure -state disabled
+
 }
+
 #
 # GetHostbyAddr: uses extended tcl (wishx) to get an ips hostname
 #                May move to a server func in the future
@@ -177,23 +206,50 @@ proc GetHostbyAddr { ip } {
 # ClearDNSText: Clears the src/dst dns results
 #
 proc ClearDNSText {} {
-  global srcDnsDataEntryTextFrame dstDnsDataEntryTextFrame
-  foreach i "nameText ipText" {
-    $srcDnsDataEntryTextFrame.$i delete 0.0 end
-    $dstDnsDataEntryTextFrame.$i delete 0.0 end
-  }
+    global srcDnsDataEntryTextFrame dstDnsDataEntryTextFrame
+
+    foreach i "nameText ipText" {
+
+      $srcDnsDataEntryTextFrame.$i configure -state normal
+      $dstDnsDataEntryTextFrame.$i configure -state normal
+      $srcDnsDataEntryTextFrame.$i delete 0.0 end
+      $dstDnsDataEntryTextFrame.$i delete 0.0 end
+      $srcDnsDataEntryTextFrame.$i configure -state disabled
+      $dstDnsDataEntryTextFrame.$i configure -state disabled
+
+    }
+
 } 
+
 proc InsertDNSData { srcIP srcName dstIP dstName} {
-  global srcDnsDataEntryTextFrame dstDnsDataEntryTextFrame
-  $srcDnsDataEntryTextFrame.ipText insert 0.0 $srcIP
-  $srcDnsDataEntryTextFrame.nameText insert 0.0 $srcName
-  $dstDnsDataEntryTextFrame.ipText insert 0.0 $dstIP
-  $dstDnsDataEntryTextFrame.nameText insert 0.0 $dstName
+
+    global srcDnsDataEntryTextFrame dstDnsDataEntryTextFrame
+
+    $srcDnsDataEntryTextFrame.ipText configure -state normal
+    $srcDnsDataEntryTextFrame.nameText configure -state normal
+    $dstDnsDataEntryTextFrame.ipText configure -state normal
+    $dstDnsDataEntryTextFrame.nameText configure -state normal
+
+    $srcDnsDataEntryTextFrame.ipText insert 0.0 $srcIP
+    $srcDnsDataEntryTextFrame.nameText insert 0.0 $srcName
+    $dstDnsDataEntryTextFrame.ipText insert 0.0 $dstIP
+    $dstDnsDataEntryTextFrame.nameText insert 0.0 $dstName
+
+    $srcDnsDataEntryTextFrame.ipText configure -state disabled
+    $srcDnsDataEntryTextFrame.nameText configure -state disabled
+    $dstDnsDataEntryTextFrame.ipText configure -state disabled
+    $dstDnsDataEntryTextFrame.nameText configure -state disabled
+
 }
 proc ClearWhoisData {} {
-  global whoisText
-  $whoisText delete 0.0 end
+    global whoisText
+
+    $whoisText configure -state normal
+    $whoisText delete 0.0 end
+    $whoisText configure -state disabled
+
 }
+
 proc CreateXscriptWin { winName } {
     toplevel $winName
     menubutton $winName.menubutton -underline 0 -text File -menu $winName.menubutton.menu

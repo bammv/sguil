@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.172 2005/03/09 22:16:33 shalligan Exp $ #
+# $Id: sguil.tk,v 1.173 2005/08/14 04:49:58 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -292,19 +292,35 @@ proc SendUserMsg {} {
 
 
 proc UserMessage { user userMsg } {
-  global userMsgText messageTabs MESSAGE_TAB USER_MSG_SCROLL
 
-  set userMsg [lindex $userMsg 0]
+    global userMsgText detailTabs MESSAGE_TAB USER_MSG_SCROLL
 
-  if { [$messageTabs view] != 1 } {
-    # BOING!
-    #bell
-    $messageTabs pageconfigure 1 -foreground red 
-  } else {
-    $messageTabs pageconfigure 1 -foreground
-  }
-  [$userMsgText component text] insert end "\n\[[lindex [GetCurrentTimeStamp] 1]\] <$user> $userMsg"
-  if { $USER_MSG_SCROLL } { [$userMsgText component text] see end }
+    set userMsg [lindex $userMsg 0]
+
+    # Make the text box editable
+    $userMsgText component text configure -state normal
+
+    if { [$detailTabs view] != 4 } {
+
+      # BOING!
+      #bell
+      $detailTabs pageconfigure 4 -foreground red 
+
+    } else {
+
+      $detailTabs pageconfigure 4 -foreground
+
+    }
+
+    # Insert msg into text box
+    [$userMsgText component text] insert end "\n\[[lindex [GetCurrentTimeStamp] 1]\] <$user> $userMsg"
+
+    # If scrollbar hasn't been moved then make sure we can see the bottom
+    if { $USER_MSG_SCROLL } { [$userMsgText component text] see end }
+
+    # Don't let the user edit the textbox.
+    $userMsgText component text configure -state disabled
+
 }
 
 proc GetComment {} {
@@ -379,15 +395,29 @@ proc ValidateEvent { status {c_flag {0}} } {
 # By using the syslog facility a whole multitude of sensor status info could
 # be scripted and then logged here.
 proc InsertSystemInfoMsg { sensorName msg } {
-  global systemInfoText messageTabs
-  if { [$messageTabs view] != 0 } {
-    $messageTabs pageconfigure 0 -foreground red 
-  } else {
-    $messageTabs pageconfigure 0 -foreground
-  }
-  set timestamp [GetCurrentTimeStamp]
-  $systemInfoText insert end "\n\[$timestamp\] $sensorName: $msg"
-  $systemInfoText component text see end
+
+    global systemInfoText detailTabs
+
+    # Change state of textbox to add data
+    $systemInfoText component text configure -state normal
+
+    # Change label to red if we add data when it's not being viewed
+    if { [$detailTabs view] != 3 } {
+
+      $detailTabs pageconfigure 3 -foreground red 
+
+    } else {
+
+      $detailTabs pageconfigure 3 -foreground
+
+    }
+
+    set timestamp [GetCurrentTimeStamp]
+    $systemInfoText insert end "\n\[$timestamp\] $sensorName: $msg"
+    $systemInfoText component text see end
+    # Done so change the state back to locked
+    $systemInfoText component text configure -state disabled
+
 }
 
 #
@@ -1885,25 +1915,50 @@ while { $i < $RTPANES } {
 }
 pack $realtimeEventPanes -fill both -expand true -padx 0 -pady 0
 
-set detailPane [panedwindow [$eventPane childsite 1].detailPane -orient vertical]
-$detailPane add ipdata -margin 0
-$detailPane add packetData -margin 7
-pack $detailPane -expand true -fill both -padx 0 -pady 0
+set detailTabs [tabnotebook [$eventPane childsite 1].detailTabs\
+ -angle 0 -bevelamount 4 -tabpos n -tabbackground darkgrey]
+pack $detailTabs -side left -expand true -fill both -padx 0 -pady 0
 
-set ipDataPane [panedwindow [$detailPane childsite 0].ipDataPane]
-$ipDataPane add resolvers -margin 5
-$ipDataPane add systeminfo -margin 5
-pack $ipDataPane -expand true -fill both
-set ipDataFrame [frame [$ipDataPane childsite 0].ipDataFrame]
-  set dnsDataFrame [frame $ipDataFrame.dnsDataFrame]
+$detailTabs add -label "Packet Data"
+$detailTabs add -label "IP Resolution"
+$detailTabs add -label "Rule Info"
+$detailTabs add -label "System Messages"\
+ -command "$detailTabs pageconfigure 3 -foreground black"
+$detailTabs add -label "User Messages"\
+ -command "$detailTabs pageconfigure 4 -foreground black"
+$detailTabs select 0
+
+# Rule Info
+set ruleButtonFrame [frame [$detailTabs childsite 2].ruleButtonFrame]
+  set displayRuleButton [checkbutton $ruleButtonFrame.displayRuleButton\
+   -text "Show Rule" -variable SHOWRULE -command GetRuleInfo]
+    set referenceButton [button $ruleButtonFrame.referenceButton\
+ -text "www.snort.org" -command "GetReference" -state disabled]
+    set icatButton [button $ruleButtonFrame.icatButton\
+     -text "icat.nist.gov" -command "GetIcat" -state disabled]
+  pack $displayRuleButton $referenceButton $icatButton -side left
+set ruleText [scrolledtext [$detailTabs childsite 2].ruleText -hscrollmode none -visibleitems 10x10\
+ -sbwidth 10 -vscrollmode dynamic -wrap word]
+$ruleText component text configure -state disabled
+pack $ruleButtonFrame -side top -fill x
+pack $ruleText -side top -fill both -expand true
+
+set ipDataPane [panedwindow [$detailTabs childsite 1].ipDataPane -orient vertical]
+$ipDataPane add dns -margin 5
+$ipDataPane add whois -margin 5
+pack $ipDataPane -expand true -fill both -padx 0 -pady 0
+
+  set dnsDataFrame [frame [$ipDataPane childsite 0].dnsDataFrame]
+    set dnsButton [checkbutton $dnsDataFrame.dnsButton -text "Reverse DNS" -variable REVERSE_DNS\
+     -command ResolveHosts -foreground navy -anchor n]
     set srcDnsDataFrame [frame $dnsDataFrame.srcDnsDataFrame -borderwidth 1 -background black]
       set srcDnsDataLabelFrame [frame $srcDnsDataFrame.srcDnsDataLabelFrame]
         label $srcDnsDataLabelFrame.ipLabel -text "Src IP:" -anchor w -width 9 -background lightblue
         label $srcDnsDataLabelFrame.nameLabel -text "Src Name:" -anchor w -width 9 -background lightblue
         pack $srcDnsDataLabelFrame.ipLabel $srcDnsDataLabelFrame.nameLabel -side top -fill y
       set srcDnsDataEntryTextFrame [frame $srcDnsDataFrame.srcDnsDataTextFrame]
-        text $srcDnsDataEntryTextFrame.ipText -height 1 -width 20 -background white
-        text $srcDnsDataEntryTextFrame.nameText -height 1 -width 20 -background white
+        text $srcDnsDataEntryTextFrame.ipText -height 1 -width 20 -background white -state disabled
+        text $srcDnsDataEntryTextFrame.nameText -height 1 -width 20 -background white -state disabled
         pack $srcDnsDataEntryTextFrame.ipText $srcDnsDataEntryTextFrame.nameText -side top -fill x -expand true
       pack $srcDnsDataLabelFrame -side left -fill y
       pack $srcDnsDataEntryTextFrame -side right -fill x -expand true
@@ -1913,16 +1968,16 @@ set ipDataFrame [frame [$ipDataPane childsite 0].ipDataFrame]
         label $dstDnsDataLabelFrame.nameLabel -text "Dst Name:" -anchor w -width 9 -background lightblue
         pack $dstDnsDataLabelFrame.ipLabel $dstDnsDataLabelFrame.nameLabel -side top -fill y
       set dstDnsDataEntryTextFrame [frame $dstDnsDataFrame.dstDnsDataTextFrame]
-        text $dstDnsDataEntryTextFrame.ipText -height 1 -width 20 -background white
-        text $dstDnsDataEntryTextFrame.nameText -height 1 -width 20 -background white
+        text $dstDnsDataEntryTextFrame.ipText -height 1 -width 20 -background white -state disabled
+        text $dstDnsDataEntryTextFrame.nameText -height 1 -width 20 -background white -state disabled
         pack $dstDnsDataEntryTextFrame.ipText $dstDnsDataEntryTextFrame.nameText -side top -fill x -expand true
       pack $dstDnsDataLabelFrame -side left
       pack $dstDnsDataEntryTextFrame -side left -fill x -expand true
-    pack $srcDnsDataFrame $dstDnsDataFrame -side top -fill x -expand true
-  set whoisDataFrame [frame $ipDataFrame.whoisDataFrame]
+    pack $dnsButton $srcDnsDataFrame $dstDnsDataFrame -side top -fill x -expand true
+    pack $dnsDataFrame -side top -fill x
+
+  set whoisDataFrame [frame [$ipDataPane childsite 1].whoisDataFrame]
     set whoisDataButtonsFrame [frame $whoisDataFrame.whoisDataButtonsFrame]
-      set dnsButton [checkbutton $whoisDataButtonsFrame.dnsButton -text "Reverse DNS" -variable REVERSE_DNS\
-       -command ResolveHosts -foreground navy -anchor w]
       set whoisLabel [label $whoisDataButtonsFrame.whoisLabel -text "Whois Query:" -foreground navy]
       set whoisNoneButton [radiobutton $whoisDataButtonsFrame.whoisNoneButton -variable WHOISLIST -value none\
        -text "None" -command ClearWhoisData]
@@ -1930,45 +1985,38 @@ set ipDataFrame [frame [$ipDataPane childsite 0].ipDataFrame]
        -text "Src IP" -command GetWhoisData]
       set whoisDstButton [radiobutton $whoisDataButtonsFrame.whoisDstButton -variable WHOISLIST -value dstIPFrame\
        -text "Dst IP" -command GetWhoisData]
-      pack $dnsButton -side left -anchor e
-      pack $whoisDstButton $whoisSrcButton $whoisNoneButton $whoisLabel -side right -anchor w
+      pack $whoisLabel $whoisNoneButton $whoisSrcButton $whoisDstButton  -side left -anchor e
     set whoisDataTextFrame [frame $whoisDataFrame.whoisDataTextFrame]
       set whoisText [text $whoisDataTextFrame.whoisText -width 20 -height 8\
-       -yscrollcommand "$whoisDataTextFrame.whoisScroll set" -background white]
+       -yscrollcommand "$whoisDataTextFrame.whoisScroll set" -background white -state disabled]
       set whoisScroll [scrollbar $whoisDataTextFrame.whoisScroll -command "$whoisText yview" -width 10]
       pack $whoisScroll -side right -fill y
       pack $whoisText -side left -fill both -expand true
     pack $whoisDataButtonsFrame -side top -fill x
     pack $whoisDataTextFrame -side bottom -fill both -expand true
-  pack $dnsDataFrame -side top -fill x
-  pack $whoisDataFrame -side bottom -fill both -expand true
-pack $ipDataFrame -fill both -expand true -padx 0 -pady 0
-$whoisNoneButton invoke
 
-set messageTabs [tabnotebook [$ipDataPane childsite 1].messageTabs\
- -angle 0 -bevelamount 4 -tabpos n -tabbackground darkgrey]
-pack $messageTabs -side left -expand true -fill both -padx 0 -pady 0
-$messageTabs add -label "System Messages"\
- -command "$messageTabs pageconfigure 0 -foreground black"
-$messageTabs add -label "User Messages"\
- -command "$messageTabs pageconfigure 1 -foreground black"
-set systemInfoFrame [frame [$messageTabs childsite 0].systemInfoFrame]
+  pack $whoisDataFrame -side bottom -fill both -expand true
+
+
+$whoisNoneButton invoke
+$ipDataPane fraction 30 70
+
+set systemInfoFrame [frame [$detailTabs childsite 3].systemInfoFrame]
 set systemInfoText [scrolledtext $systemInfoFrame.systemInfoText -vscrollmode static -hscrollmode dynamic\
  -wrap word -visibleitems 20x4 -sbwidth 10]
-  $systemInfoText component text configure -font ourFixedFont
+  $systemInfoText component text configure -font ourFixedFont -state disabled
 pack $systemInfoText -side top -fill both -expand true
 pack $systemInfoFrame -fill both -expand true
-set userMsgsFrame [frame [$messageTabs childsite 1].userMsgsFrame]
+set userMsgsFrame [frame [$detailTabs childsite 4].userMsgsFrame]
   set userMsgText [scrolledtext $userMsgsFrame.userMsgText -vscrollmode static -hscrollmode dynamic\
    -wrap word -visibleitems 20x3 -sbwidth 10]
-  $userMsgText component text configure -font ourFixedFont
+  $userMsgText component text configure -font ourFixedFont -state disabled
   set userMsgEntry [entryfield $userMsgsFrame.userMsgEntry -textvariable USERMSG\
    -labeltext "MSG: " -labelpos w -width 20]
   pack $userMsgText -side top -fill both -expand true
   pack $userMsgEntry -side top -fill x
   bind [$userMsgEntry component entry] <Return> { SendUserMsg }
 pack $userMsgsFrame -side top -fill both -expand true
-$messageTabs select 0
 bind [$userMsgText component vertsb] <ButtonRelease-1> {
   set scrollbarPosition [lindex [%W get] 1]
   if {$scrollbarPosition == 1.0} {set USER_MSG_SCROLL 1} else { set USER_MSG_SCROLL 0 }
@@ -1976,7 +2024,7 @@ bind [$userMsgText component vertsb] <ButtonRelease-1> {
 set USER_MSG_SCROLL 1
 
 
-set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
+set detailDataFrame [frame [$detailTabs childsite 0].packetDataFrame]
     #
     # Portscan Detail
     #
@@ -2119,18 +2167,8 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
     # Event/Packet Detail
     #
     set packetDataFrame [frame $detailDataFrame.packetDataFrame]
-    set ruleButtonFrame [frame $packetDataFrame.ruleButtonFrame]
-      set displayPacketButton [checkbutton $ruleButtonFrame.displayPacketButton\
-       -text "Show Packet Data" -variable PACKETINFO -command GetPacketInfo]
-      set displayRuleButton [checkbutton $ruleButtonFrame.displayRuleButton\
-       -text "Show Rule" -variable SHOWRULE -command GetRuleInfo]
-        set referenceButton [button $ruleButtonFrame.referenceButton\
-         -text "www.snort.org" -command "GetReference" -state disabled]
-        set icatButton [button $ruleButtonFrame.icatButton\
-         -text "icat.nist.gov" -command "GetIcat" -state disabled]
-      pack $displayPacketButton $displayRuleButton $referenceButton $icatButton -side left
-    set ruleText [scrolledtext $packetDataFrame.ruleText -hscrollmode static -visibleitems 10x1\
-     -sbwidth 10 -vscrollmode none -wrap none]
+    set displayPacketButton [checkbutton $packetDataFrame.displayPacketButton\
+     -text "Show Packet Data" -variable PACKETINFO -command GetPacketInfo]
     set packetFrame [frame $packetDataFrame.packetFrame -background black -borderwidth 1]
     ################ IP HEADER #############################
     set ipHdrFrame [frame $packetFrame.ipHdrFrame -background black -borderwidth 1]
@@ -2329,14 +2367,12 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
     pack $ipHdrFrame $tcpHdrFrame -fill x -side top
     pack $dataFrame -fill both -expand true -side top
     set DISPLAYEDHDR $tcpHdrFrame
-     pack $ruleButtonFrame $ruleText -side top -fill x
+     pack $displayPacketButton -side top -anchor w
   pack $packetFrame -side bottom -fill both -expand true
 pack $packetDataFrame -fill both -expand true
 set DISPLAYEDDETAIL $packetDataFrame
 pack $detailDataFrame -fill both -expand true
-$ipDataPane fraction 60 40
 $eventPane fraction 55 45
-$detailPane fraction 40 60
 
 # Xscript Menu
 set eventIDMenut [ menu .eventIDMenut -background blue -foreground white -activeforeground blue\
