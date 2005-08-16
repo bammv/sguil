@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.175 2005/08/16 14:08:03 bamm Exp $ #
+# $Id: sguil.tk,v 1.176 2005/08/16 16:03:49 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1915,41 +1915,28 @@ while { $i < $RTPANES } {
 }
 pack $realtimeEventPanes -fill both -expand true -padx 0 -pady 0
 
-set detailTabs [tabnotebook [$eventPane childsite 1].detailTabs\
+set detailPane [panedwindow [$eventPane childsite 1].detailPane -orient vertical]
+$detailPane add infoTabs -margin 7
+$detailPane add alertData -margin 7
+pack $detailPane -expand true -fill both -padx 0 -pady 0
+
+set detailTabs [tabnotebook [$detailPane childsite 0].detailTabs\
  -angle 0 -bevelamount 4 -tabpos n -tabbackground darkgrey]
 pack $detailTabs -side left -expand true -fill both -padx 0 -pady 0
 
-$detailTabs add -label "Packet Data"
 $detailTabs add -label "IP Resolution"
-$detailTabs add -label "System Messages"\
+$detailTabs add -label "Sensor Status"
+$detailTabs add -label "System Msgs"\
  -command "$detailTabs pageconfigure 2 -foreground black"
-$detailTabs add -label "User Messages"\
+$detailTabs add -label "User Msgs"\
  -command "$detailTabs pageconfigure 3 -foreground black"
 $detailTabs select 0
 
-# Rule Info
-#set ruleButtonFrame [frame [$detailTabs childsite 2].ruleButtonFrame]
-#  set displayRuleButton [checkbutton $ruleButtonFrame.displayRuleButton\
-#   -text "Show Rule" -variable SHOWRULE -command GetRuleInfo]
-#    set referenceButton [button $ruleButtonFrame.referenceButton\
-# -text "www.snort.org" -command "GetReference" -state disabled]
-#    set icatButton [button $ruleButtonFrame.icatButton\
-#     -text "icat.nist.gov" -command "GetIcat" -state disabled]
-#  pack $displayRuleButton $referenceButton $icatButton -side left
-#set ruleText [scrolledtext [$detailTabs childsite 2].ruleText -hscrollmode none -visibleitems 10x10\
-# -sbwidth 10 -vscrollmode dynamic -wrap word]
-#$ruleText component text configure -state disabled
-#pack $ruleButtonFrame -side top -fill x
-#pack $ruleText -side top -fill both -expand true
+set ipDataFrame [frame [$detailTabs childsite 0].ipDataFrame]
 
-set ipDataPane [panedwindow [$detailTabs childsite 1].ipDataPane -orient vertical]
-$ipDataPane add dns -margin 5
-$ipDataPane add whois -margin 5
-pack $ipDataPane -expand true -fill both -padx 0 -pady 0
-
-  set dnsDataFrame [frame [$ipDataPane childsite 0].dnsDataFrame]
+  set dnsDataFrame [frame $ipDataFrame.dnsDataFrame]
     set dnsButton [checkbutton $dnsDataFrame.dnsButton -text "Reverse DNS" -variable REVERSE_DNS\
-     -command ResolveHosts -foreground navy -anchor n]
+     -command ResolveHosts -foreground navy -anchor w]
     set srcDnsDataFrame [frame $dnsDataFrame.srcDnsDataFrame -borderwidth 1 -background black]
       set srcDnsDataLabelFrame [frame $srcDnsDataFrame.srcDnsDataLabelFrame]
         label $srcDnsDataLabelFrame.ipLabel -text "Src IP:" -anchor w -width 9 -background lightblue
@@ -1975,7 +1962,7 @@ pack $ipDataPane -expand true -fill both -padx 0 -pady 0
     pack $dnsButton $srcDnsDataFrame $dstDnsDataFrame -side top -fill x -expand true
     pack $dnsDataFrame -side top -fill x
 
-  set whoisDataFrame [frame [$ipDataPane childsite 1].whoisDataFrame]
+  set whoisDataFrame [frame $ipDataFrame.whoisDataFrame]
     set whoisDataButtonsFrame [frame $whoisDataFrame.whoisDataButtonsFrame]
       set whoisLabel [label $whoisDataButtonsFrame.whoisLabel -text "Whois Query:" -foreground navy]
       set whoisNoneButton [radiobutton $whoisDataButtonsFrame.whoisNoneButton -variable WHOISLIST -value none\
@@ -1984,7 +1971,7 @@ pack $ipDataPane -expand true -fill both -padx 0 -pady 0
        -text "Src IP" -command GetWhoisData]
       set whoisDstButton [radiobutton $whoisDataButtonsFrame.whoisDstButton -variable WHOISLIST -value dstIPFrame\
        -text "Dst IP" -command GetWhoisData]
-      pack $whoisLabel $whoisNoneButton $whoisSrcButton $whoisDstButton  -side left -anchor e
+      pack $whoisLabel $whoisNoneButton $whoisSrcButton $whoisDstButton -side left
     set whoisDataTextFrame [frame $whoisDataFrame.whoisDataTextFrame]
       set whoisText [text $whoisDataTextFrame.whoisText -width 20 -height 8\
        -yscrollcommand "$whoisDataTextFrame.whoisScroll set" -background white -state disabled]
@@ -1996,9 +1983,9 @@ pack $ipDataPane -expand true -fill both -padx 0 -pady 0
 
   pack $whoisDataFrame -side bottom -fill both -expand true
 
+pack $ipDataFrame -expand true -fill both -padx 0 -pady 0
 
 $whoisNoneButton invoke
-$ipDataPane fraction 30 70
 
 set systemInfoFrame [frame [$detailTabs childsite 2].systemInfoFrame]
 set systemInfoText [scrolledtext $systemInfoFrame.systemInfoText -vscrollmode static -hscrollmode dynamic\
@@ -2023,7 +2010,7 @@ bind [$userMsgText component vertsb] <ButtonRelease-1> {
 set USER_MSG_SCROLL 1
 
 
-set detailDataFrame [frame [$detailTabs childsite 0].packetDataFrame]
+set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
     #
     # Portscan Detail
     #
@@ -2388,6 +2375,7 @@ pack $packetDataFrame -fill both -expand true
 set DISPLAYEDDETAIL $packetDataFrame
 pack $detailDataFrame -fill both -expand true
 $eventPane fraction 55 45
+$detailPane fraction 40 60
 
 # Xscript Menu
 set eventIDMenut [ menu .eventIDMenut -background blue -foreground white -activeforeground blue\
