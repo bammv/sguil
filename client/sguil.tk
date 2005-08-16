@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.174 2005/08/15 17:15:05 bamm Exp $ #
+# $Id: sguil.tk,v 1.175 2005/08/16 14:08:03 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -300,15 +300,15 @@ proc UserMessage { user userMsg } {
     # Make the text box editable
     $userMsgText component text configure -state normal
 
-    if { [$detailTabs view] != 4 } {
+    if { [$detailTabs view] != 3 } {
 
       # BOING!
       #bell
-      $detailTabs pageconfigure 4 -foreground red 
+      $detailTabs pageconfigure 3 -foreground red 
 
     } else {
 
-      $detailTabs pageconfigure 4 -foreground
+      $detailTabs pageconfigure 3 -foreground
 
     }
 
@@ -402,13 +402,13 @@ proc InsertSystemInfoMsg { sensorName msg } {
     $systemInfoText component text configure -state normal
 
     # Change label to red if we add data when it's not being viewed
-    if { [$detailTabs view] != 3 } {
+    if { [$detailTabs view] != 2 } {
 
-      $detailTabs pageconfigure 3 -foreground red 
+      $detailTabs pageconfigure 2 -foreground red 
 
     } else {
 
-      $detailTabs pageconfigure 3 -foreground
+      $detailTabs pageconfigure 2 -foreground
 
     }
 
@@ -1921,27 +1921,26 @@ pack $detailTabs -side left -expand true -fill both -padx 0 -pady 0
 
 $detailTabs add -label "Packet Data"
 $detailTabs add -label "IP Resolution"
-$detailTabs add -label "Rule Info"
 $detailTabs add -label "System Messages"\
- -command "$detailTabs pageconfigure 3 -foreground black"
+ -command "$detailTabs pageconfigure 2 -foreground black"
 $detailTabs add -label "User Messages"\
- -command "$detailTabs pageconfigure 4 -foreground black"
+ -command "$detailTabs pageconfigure 3 -foreground black"
 $detailTabs select 0
 
 # Rule Info
-set ruleButtonFrame [frame [$detailTabs childsite 2].ruleButtonFrame]
-  set displayRuleButton [checkbutton $ruleButtonFrame.displayRuleButton\
-   -text "Show Rule" -variable SHOWRULE -command GetRuleInfo]
-    set referenceButton [button $ruleButtonFrame.referenceButton\
- -text "www.snort.org" -command "GetReference" -state disabled]
-    set icatButton [button $ruleButtonFrame.icatButton\
-     -text "icat.nist.gov" -command "GetIcat" -state disabled]
-  pack $displayRuleButton $referenceButton $icatButton -side left
-set ruleText [scrolledtext [$detailTabs childsite 2].ruleText -hscrollmode none -visibleitems 10x10\
- -sbwidth 10 -vscrollmode dynamic -wrap word]
-$ruleText component text configure -state disabled
-pack $ruleButtonFrame -side top -fill x
-pack $ruleText -side top -fill both -expand true
+#set ruleButtonFrame [frame [$detailTabs childsite 2].ruleButtonFrame]
+#  set displayRuleButton [checkbutton $ruleButtonFrame.displayRuleButton\
+#   -text "Show Rule" -variable SHOWRULE -command GetRuleInfo]
+#    set referenceButton [button $ruleButtonFrame.referenceButton\
+# -text "www.snort.org" -command "GetReference" -state disabled]
+#    set icatButton [button $ruleButtonFrame.icatButton\
+#     -text "icat.nist.gov" -command "GetIcat" -state disabled]
+#  pack $displayRuleButton $referenceButton $icatButton -side left
+#set ruleText [scrolledtext [$detailTabs childsite 2].ruleText -hscrollmode none -visibleitems 10x10\
+# -sbwidth 10 -vscrollmode dynamic -wrap word]
+#$ruleText component text configure -state disabled
+#pack $ruleButtonFrame -side top -fill x
+#pack $ruleText -side top -fill both -expand true
 
 set ipDataPane [panedwindow [$detailTabs childsite 1].ipDataPane -orient vertical]
 $ipDataPane add dns -margin 5
@@ -2001,13 +2000,13 @@ pack $ipDataPane -expand true -fill both -padx 0 -pady 0
 $whoisNoneButton invoke
 $ipDataPane fraction 30 70
 
-set systemInfoFrame [frame [$detailTabs childsite 3].systemInfoFrame]
+set systemInfoFrame [frame [$detailTabs childsite 2].systemInfoFrame]
 set systemInfoText [scrolledtext $systemInfoFrame.systemInfoText -vscrollmode static -hscrollmode dynamic\
  -wrap word -visibleitems 20x4 -sbwidth 10]
   $systemInfoText component text configure -font ourFixedFont -state disabled
 pack $systemInfoText -side top -fill both -expand true
 pack $systemInfoFrame -fill both -expand true
-set userMsgsFrame [frame [$detailTabs childsite 4].userMsgsFrame]
+set userMsgsFrame [frame [$detailTabs childsite 3].userMsgsFrame]
   set userMsgText [scrolledtext $userMsgsFrame.userMsgText -vscrollmode static -hscrollmode dynamic\
    -wrap word -visibleitems 20x3 -sbwidth 10]
   $userMsgText component text configure -font ourFixedFont -state disabled
@@ -2167,8 +2166,24 @@ set detailDataFrame [frame [$detailTabs childsite 0].packetDataFrame]
     # Event/Packet Detail
     #
     set packetDataFrame [frame $detailDataFrame.packetDataFrame]
-    set displayPacketButton [checkbutton $packetDataFrame.displayPacketButton\
-     -text "Show Packet Data" -variable PACKETINFO -command GetPacketInfo]
+
+    # Rule Info
+    set ruleButtonFrame [frame $packetDataFrame.ruleButtonFrame]
+      set displayPacketButton [checkbutton $ruleButtonFrame.displayPacketButton\
+       -text "Show Packet Data" -variable PACKETINFO -command GetPacketInfo]
+      set displayRuleButton [checkbutton $ruleButtonFrame.displayRuleButton\
+       -text "Show Rule" -variable SHOWRULE -command GetRuleInfo]
+        set referenceButton [button $ruleButtonFrame.referenceButton\
+     -text "www.snort.org" -command "GetReference" -state disabled]
+        set icatButton [button $ruleButtonFrame.icatButton\
+         -text "icat.nist.gov" -command "GetIcat" -state disabled]
+      pack $displayPacketButton $displayRuleButton $referenceButton $icatButton -side left
+    set ruleText [scrolledtext $packetDataFrame.ruleText -hscrollmode none -visibleitems 10x2\
+     -sbwidth 10 -vscrollmode dynamic -wrap word]
+    $ruleText component text configure -state disabled
+    pack $ruleButtonFrame -side top -fill x
+    pack $ruleText -side top -fill both -expand true
+    
     set packetFrame [frame $packetDataFrame.packetFrame -background black -borderwidth 1]
     ################ IP HEADER #############################
     set ipHdrFrame [frame $packetFrame.ipHdrFrame -background black -borderwidth 1]
@@ -2367,7 +2382,7 @@ set detailDataFrame [frame [$detailTabs childsite 0].packetDataFrame]
     pack $ipHdrFrame $tcpHdrFrame -fill x -side top
     pack $dataFrame -fill both -expand true -side top
     set DISPLAYEDHDR $tcpHdrFrame
-     pack $displayPacketButton -side top -anchor w
+     #pack $displayPacketButton -side top -anchor w
   pack $packetFrame -side bottom -fill both -expand true
 pack $packetDataFrame -fill both -expand true
 set DISPLAYEDDETAIL $packetDataFrame
