@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.20 2005/08/14 04:49:58 bamm Exp $
+# $Id: extdata.tcl,v 1.21 2005/08/16 16:18:06 bamm Exp $
 
 proc GetRuleInfo {} {
   global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
@@ -37,7 +37,7 @@ proc InsertRuleData { ruleData } {
   global ruleText referenceButton
   global ruleText icatButton
   $ruleText component text configure -state normal
-  $ruleText component text insert end $ruleData
+  $ruleText component text insert end "$ruleData\n"
   $referenceButton configure -state normal
   if [regexp {cve,([^;]*)} $ruleData] {
     $icatButton configure -state normal
