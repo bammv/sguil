@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.13 2005/06/03 22:35:43 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.14 2005/08/16 16:17:24 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -157,7 +157,9 @@ proc RuleRequest { socketID sensor message } {
     foreach ruleFile [glob -nocomplain $ruleDir/*.rules] {
       InfoMessage "Checking $ruleFile..."
       set ruleFileID [open $ruleFile r]
+      set line 0
       while { [gets $ruleFileID data] >= 0 } {
+        incr  line
         if { [string match "*$message*" $data] } {
           set RULEFOUND 1
           InfoMessage "Matching rule found in $ruleFile."
@@ -172,6 +174,7 @@ proc RuleRequest { socketID sensor message } {
   }
   if {$RULEFOUND} {
     catch {SendSocket $socketID "InsertRuleData $data"} tmpError
+    catch {SendSocket $socketID "InsertRuleData $ruleFile: Line $line"} tmpError
   } else {
     catch {SendSocket $socketID "InsertRuleData Unable to find matching rule in $ruleDir."} tmpError
   }
