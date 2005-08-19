@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.16 2005/03/10 16:00:23 shalligan Exp $
+# $Id: guilib.tcl,v 1.17 2005/08/19 20:23:20 bamm Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -574,12 +574,17 @@ proc WheelDataScroll { delta winName source } {
     }
 }
 proc InfoMessage { message } {
-    puts $message
+    
+    global DEBUG
+
+    if $DEBUG} { puts $message }
     tk_messageBox -type ok -icon info -message "$message"
+
 }
 proc ErrorMessage { message } {
-    puts $message
+
     tk_messageBox -type ok -icon warning -message "$message"
+
 }
 proc SearchData {} {
     global dataSearchText dataTextFrame dataSearchType dataSearchCase
