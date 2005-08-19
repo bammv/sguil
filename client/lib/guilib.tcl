@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.17 2005/08/19 20:23:20 bamm Exp $
+# $Id: guilib.tcl,v 1.18 2005/08/19 20:29:14 bamm Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -577,7 +577,7 @@ proc InfoMessage { message } {
     
     global DEBUG
 
-    if $DEBUG} { puts $message }
+    if {$DEBUG} { puts $message }
     tk_messageBox -type ok -icon info -message "$message"
 
 }
