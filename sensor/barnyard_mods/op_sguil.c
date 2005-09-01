@@ -1,7 +1,7 @@
-/* $Id: op_sguil.c,v 1.15 2005/06/06 14:06:29 bamm Exp $ */
+/* $Id: op_sguil.c,v 1.16 2005/09/01 15:17:56 bamm Exp $ */
 
 /*
-** Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@sguil.net> 
+** Copyright (C) 2002-2005 Robert (Bamm) Visscher <bamm@sguil.net> 
 **
 ** This program is distributed under the terms of version 1.0 of the
 ** Q Public License.  See LICENSE.QPL for further details.
@@ -618,42 +618,55 @@ int OpSguil_AppendICMPData(Tcl_DString *list, Packet *p)
 
     bzero(buffer, STD_BUFFER);
 
-    /* ICMP type */
-    sprintf(buffer, "%u", p->icmph->icmp_type);
-    Tcl_DStringAppendElement(list, buffer);
-
-    /* ICMP code */
-    sprintf(buffer, "%u", p->icmph->icmp_code);
-    Tcl_DStringAppendElement(list, buffer);
-    
-    /* ICMP CSUM */
-    sprintf(buffer, "%u", ntohs(p->icmph->icmp_csum));
-    Tcl_DStringAppendElement(list, buffer);
-
-    /* Append other ICMP data if we have it */
-    if(p->icmph->icmp_type == ICMP_ECHOREPLY || 
-       p->icmph->icmp_type == ICMP_ECHO ||
-       p->icmph->icmp_type == ICMP_TIMESTAMP ||
-       p->icmph->icmp_type == ICMP_TIMESTAMPREPLY ||
-       p->icmph->icmp_type == ICMP_INFO_REQUEST || 
-       p->icmph->icmp_type == ICMP_INFO_REPLY)
+    if(!p->icmph)
     {
 
-        /* ICMP ID */
-        sprintf(buffer, "%u", htons(p->icmph->icmp_hun.ih_idseq.icd_id));
-        Tcl_DStringAppendElement(list, buffer);
-
-        /* ICMP Seq */
-        sprintf(buffer, "%u", htons(p->icmph->icmp_hun.ih_idseq.icd_seq));
-        Tcl_DStringAppendElement(list, buffer);
+        /* Null out ICMP fields */
+        for(i=0; i < 5; i++)
+            Tcl_DStringAppendElement(list, "");
 
     }
     else
     {
 
-        /* Add two empty elements */
-        for(i=0; i < 2; i++)
-            Tcl_DStringAppendElement(list, "");
+        /* ICMP type */
+        sprintf(buffer, "%u", p->icmph->icmp_type);
+        Tcl_DStringAppendElement(list, buffer);
+
+        /* ICMP code */
+        sprintf(buffer, "%u", p->icmph->icmp_code);
+        Tcl_DStringAppendElement(list, buffer);
+    
+        /* ICMP CSUM */
+        sprintf(buffer, "%u", ntohs(p->icmph->icmp_csum));
+        Tcl_DStringAppendElement(list, buffer);
+
+        /* Append other ICMP data if we have it */
+        if(p->icmph->icmp_type == ICMP_ECHOREPLY || 
+           p->icmph->icmp_type == ICMP_ECHO ||
+           p->icmph->icmp_type == ICMP_TIMESTAMP ||
+           p->icmph->icmp_type == ICMP_TIMESTAMPREPLY ||
+           p->icmph->icmp_type == ICMP_INFO_REQUEST || 
+           p->icmph->icmp_type == ICMP_INFO_REPLY)
+        {
+
+            /* ICMP ID */
+            sprintf(buffer, "%u", htons(p->icmph->icmp_hun.ih_idseq.icd_id));
+            Tcl_DStringAppendElement(list, buffer);
+
+            /* ICMP Seq */
+            sprintf(buffer, "%u", htons(p->icmph->icmp_hun.ih_idseq.icd_seq));
+            Tcl_DStringAppendElement(list, buffer);
+
+        }
+        else
+        {
+
+            /* Add two empty elements */
+            for(i=0; i < 2; i++)
+                Tcl_DStringAppendElement(list, "");
+    
+        }
 
     }
 
@@ -683,35 +696,48 @@ int OpSguil_AppendTCPData(Tcl_DString *list, Packet *p)
     for(i=0; i < 5; i++)
         Tcl_DStringAppendElement(list, "");
 
-    sprintf(buffer, "%u", p->sp);
-    Tcl_DStringAppendElement(list, buffer);
+    if(!p->tcph)
+    {
 
-    sprintf(buffer, "%u", p->dp);
-    Tcl_DStringAppendElement(list, buffer);
+        /* Null out TCP fields */
+        for(i=0; i < 10; i++)
+            Tcl_DStringAppendElement(list, "");
 
-    sprintf(buffer, "%u", ntohl(p->tcph->th_seq));
-    Tcl_DStringAppendElement(list, buffer);
+    }
+    else
+    {
 
-    sprintf(buffer, "%u", ntohl(p->tcph->th_ack));
-    Tcl_DStringAppendElement(list, buffer);
+        sprintf(buffer, "%u", p->sp);
+        Tcl_DStringAppendElement(list, buffer);
 
-    sprintf(buffer, "%u", TCP_OFFSET(p->tcph));
-    Tcl_DStringAppendElement(list, buffer);
+        sprintf(buffer, "%u", p->dp);
+        Tcl_DStringAppendElement(list, buffer);
 
-    sprintf(buffer, "%u", TCP_X2(p->tcph));
-    Tcl_DStringAppendElement(list, buffer);
+        sprintf(buffer, "%u", ntohl(p->tcph->th_seq));
+        Tcl_DStringAppendElement(list, buffer);
 
-    sprintf(buffer, "%u", p->tcph->th_flags);
-    Tcl_DStringAppendElement(list, buffer);
+        sprintf(buffer, "%u", ntohl(p->tcph->th_ack));
+        Tcl_DStringAppendElement(list, buffer);
 
-    sprintf(buffer, "%u", ntohs(p->tcph->th_win));
-    Tcl_DStringAppendElement(list, buffer);
+        sprintf(buffer, "%u", TCP_OFFSET(p->tcph));
+        Tcl_DStringAppendElement(list, buffer);
 
-    sprintf(buffer, "%u", ntohs(p->tcph->th_sum));
-    Tcl_DStringAppendElement(list, buffer);
+        sprintf(buffer, "%u", TCP_X2(p->tcph));
+        Tcl_DStringAppendElement(list, buffer);
 
-    sprintf(buffer, "%u", ntohs(p->tcph->th_urp));
-    Tcl_DStringAppendElement(list, buffer);
+        sprintf(buffer, "%u", p->tcph->th_flags);
+        Tcl_DStringAppendElement(list, buffer);
+
+        sprintf(buffer, "%u", ntohs(p->tcph->th_win));
+        Tcl_DStringAppendElement(list, buffer);
+
+        sprintf(buffer, "%u", ntohs(p->tcph->th_sum));
+        Tcl_DStringAppendElement(list, buffer);
+
+        sprintf(buffer, "%u", ntohs(p->tcph->th_urp));
+        Tcl_DStringAppendElement(list, buffer);
+
+    }
 
     /* empty elements for UDP data */
     for(i=0; i < 2; i++)
@@ -733,22 +759,48 @@ int OpSguil_AppendUDPData(Tcl_DString *list, Packet *p)
     for(i=0; i < 5; i++)
         Tcl_DStringAppendElement(list, "");
 
-    /* source and dst port */
-    sprintf(buffer, "%u", p->sp);
-    Tcl_DStringAppendElement(list, buffer);
+    if(!p->udph)
+    {
+        
+        /* Null out port info */
+        for(i=0; i < 2; i++)
+            Tcl_DStringAppendElement(list, "");
 
-    sprintf(buffer, "%u", p->dp);
-    Tcl_DStringAppendElement(list, buffer);
+    }
+    else
+    {
+
+        /* source and dst port */
+        sprintf(buffer, "%u", p->sp);
+        Tcl_DStringAppendElement(list, buffer);
+
+        sprintf(buffer, "%u", p->dp);
+        Tcl_DStringAppendElement(list, buffer);
+
+    }
 
     /* empty elements for tcp data */
     for(i=0; i < 8; i++)
         Tcl_DStringAppendElement(list, "");
 
-    sprintf(buffer, "%u", ntohs(p->udph->uh_len));
-    Tcl_DStringAppendElement(list, buffer);
+    if(!p->udph)
+    {
+        
+        /* Null out UDP info */
+        for(i=0; i < 2; i++)
+            Tcl_DStringAppendElement(list, "");
 
-    sprintf(buffer, "%u", ntohs(p->udph->uh_chk));
-    Tcl_DStringAppendElement(list, buffer);
+    }
+    else
+    {
+
+        sprintf(buffer, "%u", ntohs(p->udph->uh_len));
+        Tcl_DStringAppendElement(list, buffer);
+
+        sprintf(buffer, "%u", ntohs(p->udph->uh_chk));
+        Tcl_DStringAppendElement(list, buffer);
+
+    }
 
     return 0;
 
