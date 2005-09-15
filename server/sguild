@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.150 2005/06/03 22:35:36 bamm Exp $ #
+# $Id: sguild,v 1.151 2005/09/15 20:05:44 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -500,6 +500,7 @@ foreach row [mysqlsel $MAIN_DB_SOCKETID "SELECT event.status, \
     AND event.status=0 ORDER BY event.timestamp ASC" -list] {
   
     InfoMessage "Archived Alert: $row"
+    set LAST_EVENT_ID([lindex $row 3]) "[lindex $row 5].[lindex $row 6]"
     if { ![array exists acRules] || ![AutoCat $row] } {
 	set matchAID [CorrelateEvent [lindex $row 5] [lindex $row 8] [lindex $row 7] [lindex $row 15] [lindex $row 16]]
 	if { $matchAID == 0 } {

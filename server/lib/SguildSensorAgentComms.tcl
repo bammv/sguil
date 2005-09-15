@@ -9,6 +9,7 @@ proc SendSensorAgent { socketID msg } {
         set RFLAG 0
     } else {
 
+        flush $socketID
         InfoMessage "Sent $socketID: $msg"
 
     }
@@ -37,7 +38,22 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
                    dst_port tcp_seq tcp_ack tcp_off tcp_res tcp_flags tcp_win tcp_csum \
                    tcp_urp udp_len udp_csum data_payload } {
 
+    global LAST_EVENT_ID
 
+    # Check for a potential dupe. Can happen if we get busy and the confirmation
+    # doesn't make it back to BY quick enough.
+    set eventID "${sid}.{$cid}"
+    if { [array exists LAST_EVENT_ID] \
+      && [info exists LAST_EVENT_ID($sensorName)] \
+      && $LAST_EVENT_ID($sensorName) == $eventID } {
+
+        InfoMessage "Non-fatal Error: recieved a duplicate alert from $sensorName. : $currentEventAID"
+        return
+
+    }
+
+
+    
     # Insert Event Hdr
     if [catch { InsertEventHdr $sid $cid $u_event_id $u_event_ref $u_ref_time \
                 $msg $sig_gen $sig_id $sig_rev $timestamp $priority $class_type \
@@ -117,6 +133,9 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
 
     # Send by/op_sguil confirmation
     SendSensorAgent $socketID [list Confirm $req_socketID $cid] 
+
+    # Update last event
+    set LAST_EVENT_ID(sensorName) $eventID
 
 }
 

@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.9 2005/03/15 16:48:36 shalligan Exp $ #
+# $Id: SguildEvent.tcl,v 1.10 2005/09/15 20:05:44 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -14,14 +14,7 @@ proc EventRcvd { eventDataList } {
     SendSystemInfoMsg $sensorName $message
   } else {
     InfoMessage "Alert Received: $eventDataList"
-    # Make sure we don't have a dupe. If so, report an error and return.
-    set currentEventAID [join [lrange $eventDataList 4 5] .]
-    if { [lsearch $eventIDList $currentEventAID] >= 0 } {
-      # Have a dupe. Could be b/c we just initialized and a sensor
-      # was waiting to send us an alert that we pulled from the DB.
-      InfoMessage "Non-fatal Error: recieved a duplicate alert. : $currentEventAID"
-      return
-    }
+
     # If we don't have any auto-cat rules, or we don't match on
     # the autocat, then we send off the rule
     if { ![array exists acRules] || ![AutoCat $eventDataList] } {
