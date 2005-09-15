@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.14 2005/06/03 22:35:43 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.15 2005/09/15 20:23:21 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global connectedAgents agentSensorNameArray
@@ -11,13 +11,6 @@ proc SensorCmdRcvd { socketID } {
     }
   } else {
     InfoMessage "Sensor Data Rcvd: $data"
-    # note that ctoken changes the string that it is operating on
-    # so instead of re-writing all of the proc to move up one in
-    # the index when looking at $data, I wrote $data to $tmpData
-    # before using ctoken.  Probably should drop this and fix the
-    # procs, but that can happen later
-    #set tmpData $data
-    #set sensorCmd [ctoken tmpData " "]
     set sensorCmd [lindex $data 0]
     switch -exact -- $sensorCmd {
       SsnFile         { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
@@ -31,6 +24,7 @@ proc SensorCmdRcvd { socketID } {
       PONG            { SensorAgentPongRcvd $socketID }
       XscriptDebugMsg { $sensorCmd [lindex $data 1] [lindex $data 2] }
       RawDataFile     { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+      SystemMessage   { SystemMsgRcvd $socketID [lindex $data 1] }
       default         { if {$sensorCmd != ""} { LogMessage "Sensor Cmd Unkown ($socketID): $sensorCmd" } }
     }
   }
@@ -91,6 +85,18 @@ proc RcvPortscanFile { socketID sensorName fileName bytes } {
 }
 
 proc DiskReport { socketID fileSystem percentage } {
-  global agentSensorNameArray
-  SendSystemInfoMsg $agentSensorNameArray($socketID) "$fileSystem $percentage"
+
+    global agentSensorNameArray
+
+    SendSystemInfoMsg $agentSensorNameArray($socketID) "$fileSystem $percentage"
+
 }
+
+proc SystemMsgRcvd { socketID msg } {
+
+    global agentSensorNameArray
+
+    SendSystemInfoMsg $agentSensorNameArray($socketID) $msg
+
+}
+

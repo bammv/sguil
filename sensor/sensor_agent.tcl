@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.37 2005/06/17 15:29:03 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.38 2005/09/15 20:23:21 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -22,6 +22,7 @@ set CONNECTED 0
 set SANCPFILEWAIT 0
 set SSNFILEWAIT 0
 set PORTSCANFILEWAIT 0
+set BYCONNECTED 0
 
 proc bgerror { errorMsg } {
                                                                                                                            
@@ -50,22 +51,27 @@ proc InitBYSocket { port } {
 
 proc BYConnect { socketID IPaddr port } {
 
-    global DEBUG
+    global DEBUG BYCONNECT
 
     if { $DEBUG } { puts "barnyard connected: $socketID $IPaddr $port" }
     fconfigure $socketID -buffering line -blocking 0 -translation lf
     fileevent $socketID readable [list BYCmdRcvd $socketID]
 
+    SendToSguild [list SystemMessage "Barnyard connected via sensor localhost."]
+    set BYCONNECT [clock format [clock seconds] -gmt true -f "%m-%d-%Y %T"]
+
 }
 
 proc BYCmdRcvd { socketID } {
 
-    global DEBUG
+    global DEBUG BYCONNECT
 
     if { [eof $socketID] || [catch {gets $socketID data}] } {
 
         catch { close $socketID } closeError
         if { $DEBUG } { puts "Barnyard disconnected." }
+        SendToSguild [list SystemMessage "Barnyard disconnected."]
+        set BYCONNECT 0
 
     } else {
 
@@ -84,8 +90,13 @@ proc BYCmdRcvd { socketID } {
 
 proc SendToBarnyard { socketID msg } {
 
+    global BYCONNECT DEBUG
+
     if [catch { puts $socketID $msg } tmpError] {
         catch { close $socketID }
+        if { $DEBUG } { puts "Barnyard disconnected." }
+        SendToSguild [list SystemMessage "Barnyard disconnected."]
+        set BYCONNECT 0
     } else {
         catch { flush $socketID }
     }
@@ -100,7 +111,7 @@ proc SendToSguild { data } {
   } else {
     if {$DEBUG} {puts "Sending sguild ($sguildSocketID) $data"}
     if [catch { puts $sguildSocketID $data } tmpError ] { puts "ERROR: $tmpError : $data" }
-    catch { flush $sguildSocketID }
+    flush $sguildSocketID
     return 1
   }
 }
@@ -147,15 +158,6 @@ proc SendBYConfirmMsg { socketID cid } {
 proc SendBYFailMsg { socketID cid msg} {
 
     SendToBarnyard $socketID "Failed to insert $cid: $msg"
-
-}
-
-proc CopyDataToServer { fileName socketID } {
-  global DEBUG SERVER_HOST
-
-  # We no do this any more
-  puts "ACK === > CopyDataToServer $fileName $socketID"
-  exit 
 
 }
 
@@ -298,6 +300,7 @@ proc CheckForSancpFiles {} {
     if {$DEBUG} {puts "Checking for sancp stats files in $SANCP_DIR."}
 
     foreach fileName [glob -nocomplain $SANCP_DIR/stats.*.*] {
+
 
         if { [file size $fileName] > 0 } {
 
@@ -492,24 +495,30 @@ proc ParseSsnSancpFiles { fileName } {
 
         # Strips out the date
         if { ![regexp {^\d+\|(\d{4}-\d{2}-\d{2})\s.*\|.*$} $line foo date] } {
+
             # Corrupt line in file
             if { $DEBUG } {
                  puts "ERROR: Bad line in file: $fileName"   
                  puts "$line"
             }
+
         } else {
+
             set fDate [clock format [clock scan $date] -gmt true -f "%Y%m%d"]
+
             # Files can contain data from different start days
             if { ![info exists outFileID($fDate)] } {
                 set outFile($fDate) "[file dirname $fileName]/parsed.$HOSTNAME.[file tail $fileName].$fDate"
                 set outFileID($fDate) [open $outFile($fDate) w]
             } 
+
             # Prepend sensorID
             puts $outFileID($fDate) "${SENSOR_ID}|$line"  
+
         }
-        
+
     }
- 
+
     close $inFileID
     file delete $fileName
 
@@ -672,6 +681,7 @@ proc SguildCmdRcvd { socketID } {
 
     } else {
         if {$DEBUG} { puts "Sensor Data Rcvd: $data" }
+        update
 
         set sguildCmd [lindex $data 0]
 
