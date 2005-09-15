@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.16 2005/06/03 22:35:43 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.17 2005/09/15 20:21:36 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -77,7 +77,7 @@ proc ForkLoader {} {
 
                 InfoMessage "sguild: Recieved from loaderd: $data"
                 set cmd [lindex $data 0]
-                # Here the cmds the loaderd knows
+                # Here the cmds the sguild gets from loaderd
                 switch -exact -- $cmd {
   
                     ConfirmSancpFile    { ConfirmSancpFile [lindex $data 1] [lindex $data 2] }
@@ -265,6 +265,8 @@ proc LoadNessusData { fileName loadCmd } {
 proc LoadPSFile { sensor filename } {
 
     global loaderdWritePipe
+
+    if { ![file exists $filename] } { return }
 
     # Not doing anything with the date yet
     LoadFile $filename portscan
