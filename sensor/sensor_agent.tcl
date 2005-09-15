@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.38 2005/09/15 20:23:21 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.39 2005/09/15 21:06:26 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -452,7 +452,15 @@ proc BinCopyToSguild { fileName } {
 
     global sguildSocketID
 
-    set rFileID [open $fileName r]
+    if [ catch {open $fileName r} rFileID ] {
+
+        # Error opening file
+      
+        puts "ERROR: Opening $fileName: $rFileID"
+        catch {close $rFileID} tmpError
+        return 0
+
+    }
 
     fconfigure $rFileID -translation binary
     fconfigure $sguildSocketID -translation binary
@@ -572,11 +580,18 @@ proc RawDataRequest { socketID TRANS_ID sensor timestamp srcIP dstIP srcPort dst
 
     } else {
 
-        if {$DEBUG} { puts "Error creating raw data file: $rawDataFileName" }
+        set tmpMsg "Error creating raw data file: $rawDataFileName"
+
+        if {$DEBUG} { puts $tmpMsg }
 
         if { $type == "xscript" } {
-            SendToSguild [list XscriptDebugMsg $TRANS_ID "Error creating raw file on sensor."]
+            SendToSguild [list XscriptDebugMsg $TRANS_ID $tmpMsg]
+        } else {
+
+            SendToSguild [list SystemMessage $tmpMsg]
+
         }
+
 
     }
 
@@ -589,24 +604,34 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
     if { $type == "xscript" } {
       SendToSguild [list XscriptDebugMsg $TRANS_ID "Making a list of local log files."]
       SendToSguild [list XscriptDebugMsg $TRANS_ID "Looking in $RAW_LOG_DIR/$date."]
+    } else {
+      SendToSguild [list SystemMessage "Making a list of local log files."]
+      SendToSguild [list SystemMessage "Looking in $RAW_LOG_DIR/$date."]
     }
   } else {
     if { $type == "xscript" } {
       SendToSguild [list XscriptDebugMsg $TRANS_ID "$RAW_LOG_DIR/$date does not exist. Make sure log_packets.sh is configured correctly."]
+    } else {
+      SendToSguild [list SystemMessage "$RAW_LOG_DIR/$date does not exist. Make sure log_packets.sh is configured correctly."]
     }
-    if {$DEBUG} {puts "No matching log files."}
+    if {$DEBUG} {puts "$RAW_LOG_DIR/$date does not exist. Make sure log_packets.sh is configured correctly."}
     return error
   }
   cd $RAW_LOG_DIR/$date
   if { $type == "xscript" } {
     SendToSguild [list XscriptDebugMsg $TRANS_ID "Making a list of local log files in $RAW_LOG_DIR/$date."]
+  } else {
+    SendToSguild [list SystemMessage "Making a list of local log files in $RAW_LOG_DIR/$date."]
   }
+
   foreach logFile [glob -nocomplain snort.log.*] {
     lappend logFileTimes [lindex [split $logFile .] 2]
   }
   if { ! [info exists logFileTimes] } {
     if { $type == "xscript" } {
       SendToSguild [list XscriptDebugMsg $TRANS_ID "No matching log files."]
+    } else {
+      SendToSguild [list SystemMessage "No matching log files."]
     }
     return error
   }
@@ -615,6 +640,9 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
   if { $type == "xscript" } {
     SendToSguild [list XscriptDebugMsg $TRANS_ID "Available log files:"]
     SendToSguild [list XscriptDebugMsg $TRANS_ID "$sLogFileTimes"]
+  } else {
+    SendToSguild [list SystemMessage "Available log files:"]
+    SendToSguild [list SystemMessage "$sLogFileTimes"]
   }
   set eventTime [clock scan $timestamp -gmt true]
   # The first file we find with a time >= to ours should have our packets.
@@ -631,19 +659,32 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
       if { $type == "xscript" } {
         SendToSguild [list XscriptDebugMsg $TRANS_ID "ERROR: Unable to find the matching pcap file based on the time."]
         SendToSguild [list XscriptDebugMsg $TRANS_ID "The requested event time is: $eventTime"]
+      } else {
+        SendToSguild [list SystemMessage "ERROR: Unable to find the matching pcap file based on the time."]
+        SendToSguild [list SystemMessage "The requested event time is: $eventTime"]
       }
     }
     return error
   }
   if { $type == "xscript" } {
-    SendToSguild [list XscriptDebugMsg $TRANS_ID "Creating unique data file."]
+    SendToSguild [list XscriptDebugMsg $TRANS_ID "Creating unique data file from $logFileName."]
+  } else {
+    SendToSguild [list SystemMessage "Creating unique data file from $logFileName."]
   }
   if {$proto == "1"} {
     set tcpdumpFilter "host $srcIP and host $dstIP and proto $proto"
   } else {
     set tcpdumpFilter "host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto"
   }
-  catch {exec $TCPDUMP -r $RAW_LOG_DIR/$date/$logFileName -w $TMP_DIR/$rawDataFileName $tcpdumpFilter >& /dev/null} tcpdumpError
+  if [catch {exec $TCPDUMP -r $RAW_LOG_DIR/$date/$logFileName -w $TMP_DIR/$rawDataFileName $tcpdumpFilter >& /dev/null} tcpdumpError] {
+      set tmpMsg "Error running $TCPDUMP: $tcpdumpError"
+      if { $type == "xscript" } {
+          SendToSguild [list XscriptDebugMsg $TRANS_ID $tmpMsg]
+      } else { 
+          SendToSguild [list SystemMessage $tmpMsg]
+      }
+  }
+      
   return $TMP_DIR/$rawDataFileName
 }
 proc ConnectToSguilServer {} {
