@@ -48,7 +48,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
       && [info exists LAST_EVENT_ID($sensorName)] \
       && $LAST_EVENT_ID($sensorName) == $eventID } {
 
-        InfoMessage "Non-fatal Error: recieved a duplicate alert from $sensorName. : $currentEventAID"
+        InfoMessage "Non-fatal Error: recieved a duplicate alert from $sensorName. : $eventID"
         return
 
     }
