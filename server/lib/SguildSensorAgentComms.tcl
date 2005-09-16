@@ -42,7 +42,8 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
 
     # Check for a potential dupe. Can happen if we get busy and the confirmation
     # doesn't make it back to BY quick enough.
-    set eventID "${sid}.{$cid}"
+    set eventID "${sid}.${cid}"
+
     if { [array exists LAST_EVENT_ID] \
       && [info exists LAST_EVENT_ID($sensorName)] \
       && $LAST_EVENT_ID($sensorName) == $eventID } {
@@ -51,8 +52,6 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
         return
 
     }
-
-
     
     # Insert Event Hdr
     if [catch { InsertEventHdr $sid $cid $u_event_id $u_event_ref $u_ref_time \
@@ -135,7 +134,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
     SendSensorAgent $socketID [list Confirm $req_socketID $cid] 
 
     # Update last event
-    set LAST_EVENT_ID(sensorName) $eventID
+    set LAST_EVENT_ID($sensorName) $eventID
 
 }
 
