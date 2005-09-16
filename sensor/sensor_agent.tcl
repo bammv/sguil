@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.39 2005/09/15 21:06:26 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.40 2005/09/16 18:03:52 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -666,18 +666,19 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
     }
     return error
   }
-  if { $type == "xscript" } {
-    SendToSguild [list XscriptDebugMsg $TRANS_ID "Creating unique data file from $logFileName."]
-  } else {
-    SendToSguild [list SystemMessage "Creating unique data file from $logFileName."]
-  }
   if {$proto == "1"} {
     set tcpdumpFilter "host $srcIP and host $dstIP and proto $proto"
   } else {
     set tcpdumpFilter "host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto"
   }
-  if [catch {exec $TCPDUMP -r $RAW_LOG_DIR/$date/$logFileName -w $TMP_DIR/$rawDataFileName $tcpdumpFilter >& /dev/null} tcpdumpError] {
-      set tmpMsg "Error running $TCPDUMP: $tcpdumpError"
+  set tcpdumpCmd "$TCPDUMP -r $RAW_LOG_DIR/$date/$logFileName -w $TMP_DIR/$rawDataFileName $tcpdumpFilter"
+  if { $type == "xscript" } {
+    SendToSguild [list XscriptDebugMsg $TRANS_ID "Creating unique data file: $tcpdumpCmd"]
+  } else {
+    SendToSguild [list SystemMessage "Creating unique data file: $tcpdumpCmd"]
+  }
+  if [catch { eval exec $tcpdumpCmd } tcpdumpError] {
+      set tmpMsg "Error running $tcpdumpCmd: $tcpdumpError"
       if { $type == "xscript" } {
           SendToSguild [list XscriptDebugMsg $TRANS_ID $tmpMsg]
       } else { 
@@ -685,7 +686,16 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
       }
   }
       
-  return $TMP_DIR/$rawDataFileName
+  if { [file exists $TMP_DIR/$rawDataFileName] } {
+
+      return $TMP_DIR/$rawDataFileName
+
+  } else {
+
+      return error
+
+  }
+
 }
 proc ConnectToSguilServer {} {
   global sguildSocketID HOSTNAME CONNECTED
