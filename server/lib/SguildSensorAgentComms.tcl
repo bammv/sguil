@@ -1,3 +1,5 @@
+# $Id: SguildSensorAgentComms.tcl,v 1.12 2005/09/21 14:05:25 bamm Exp $ #
+
 proc SendSensorAgent { socketID msg } {
 
     global agentSocketArray agentSensorNameArray
