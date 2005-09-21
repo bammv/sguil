@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.40 2005/09/16 18:03:52 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.41 2005/09/21 14:26:35 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -172,7 +172,7 @@ proc CheckForPortscanFiles {} {
 
         foreach fileName [glob -nocomplain $PORTSCAN_DIR/portscan_log.*] {
 
-            if { [file size $fileName] > 0 } {
+            if { [file exists $fileName] && [file size $fileName] > 0 } {
 
                 if { $CONNECTED } {
 
@@ -202,7 +202,7 @@ proc CheckForPortscanFiles {} {
 
             } else {
 
-                file delete $fileName
+                catch {file delete $fileName}
 
             }
 
@@ -233,7 +233,7 @@ proc CheckForSsnFiles {} {
 
     foreach fileName [glob -nocomplain $SSN_DIR/ssn_log.*] {
 
-        if { [file size $fileName] > 0 } {
+        if { [file exists $fileName] && [file size $fileName] > 0 } {
 
             # Parse the file for rows with different dates.
             # The parse proc returns a list of filenames and dates.
@@ -302,7 +302,7 @@ proc CheckForSancpFiles {} {
     foreach fileName [glob -nocomplain $SANCP_DIR/stats.*.*] {
 
 
-        if { [file size $fileName] > 0 } {
+        if { [file exists $fileName] && [file size $fileName] > 0 } {
 
 
             foreach fdPair [ParseSsnSancpFiles $fileName] {
@@ -384,11 +384,11 @@ proc CheckPortscanConfirmation { fileName } {
     global PORTSCANFILEWAIT DEBUG
 
      if { $PORTSCANFILEWAIT == $fileName } {
-                                                                                                                                                                
+
          # Something got held up. Release the vwait
          if { $DEBUG } { puts "No confirmation on $fileName" }
          set PORTSCANFILEWAIT 0
-                                                                                                                                                                
+
      }
 
 }
@@ -430,21 +430,21 @@ proc ConfirmSsnFile { fileName } {
 }
 
 proc ConfirmPortscanFile { fileName } {
-                                                                                                                                                                
+
     global DEBUG PORTSCAN_DIR PORTSCANFILEWAIT
-                                                                                                                                                                
+
     if { [file exists $PORTSCAN_DIR/$fileName] } {
-                                                                                                                                                                
+
         if [catch [file delete $PORTSCAN_DIR/$fileName] tmpError] {
-                                                                                                                                                                
+
             puts "ERROR: Deleting  $PORTSCAN_DIR/$fileName: $tmpError"
-                                                                                                                                                                
+
         }
  
     }
-                                                                                                                                                                
+
     set PORTSCANFILEWAIT 0
-                                                                                                                                                                
+
 }
 
 
