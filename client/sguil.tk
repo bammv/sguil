@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.176 2005/08/16 16:03:49 bamm Exp $ #
+# $Id: sguil.tk,v 1.177 2005/09/26 16:31:59 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1607,12 +1607,12 @@ if { [info exists CONF_FILE] } {
       if { [CheckLineFormat $line] } {
         if { [catch {eval $line} evalError] } {
           puts "Error at line $i in $CONF_FILE: $line"
-          ErrorMessage "Error at line $i in $CONF_FILE: $line"
+          #ErrorMessage "Error at line $i in $CONF_FILE: $line"
           CleanExit
         }
       } else {
         puts "Error at line $i in $CONF_FILE: $line"
-        ErrorMessage "Error at line $i in $CONF_FILE: $line"
+        #ErrorMessage "Error at line $i in $CONF_FILE: $line"
         CleanExit
       }
     }
@@ -2163,7 +2163,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
         set referenceButton [button $ruleButtonFrame.referenceButton\
      -text "www.snort.org" -command "GetReference" -state disabled]
         set icatButton [button $ruleButtonFrame.icatButton\
-         -text "icat.nist.gov" -command "GetIcat" -state disabled]
+         -text "nvd.nist.gov" -command "GetIcat" -state disabled]
       pack $displayPacketButton $displayRuleButton $referenceButton $icatButton -side left
     set ruleText [scrolledtext $packetDataFrame.ruleText -hscrollmode none -visibleitems 10x2\
      -sbwidth 10 -vscrollmode dynamic -wrap word]

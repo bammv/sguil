@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.21 2005/08/16 16:18:06 bamm Exp $
+# $Id: extdata.tcl,v 1.22 2005/09/26 16:31:59 bamm Exp $
 
 proc GetRuleInfo {} {
   global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
@@ -34,17 +34,37 @@ proc ClearRuleText {} {
 
 }
 proc InsertRuleData { ruleData } {
-  global ruleText referenceButton
-  global ruleText icatButton
-  $ruleText component text configure -state normal
-  $ruleText component text insert end "$ruleData\n"
-  $referenceButton configure -state normal
-  if [regexp {cve,([^;]*)} $ruleData] {
-    $icatButton configure -state normal
-  } else {
-    $icatButton configure -state disabled
-  }
-  $ruleText component text configure -state disabled
+
+    global ruleText referenceButton icatButton
+
+    $ruleText component text configure -state normal
+
+    # Check for line # match
+    if [regexp {^/.*: Line [0-9]} $ruleData] {
+
+        # Just a msg noting what rule and line # matched
+        $ruleText component text insert end "$ruleData"
+
+    } else {
+
+        # This is the actual rule
+        $ruleText component text insert end "$ruleData\n"
+        $referenceButton configure -state normal
+
+        if [regexp {cve,([^;]*)} $ruleData] {
+
+            $icatButton configure -state normal
+
+        } else {
+
+            $icatButton configure -state disabled
+
+        }
+
+    }
+
+    $ruleText component text configure -state disabled
+
 }
 proc GetDshieldIP { arg } {
   global DEBUG BROWSER_PATH CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT
@@ -112,19 +132,29 @@ proc GetReference {} {
   }
 }
 proc GetIcat {} {
-  global DEBUG ruleText BROWSER_PATH
 
-  set signature [$ruleText get 0.0 end]
-  # parse the sig for the cve
-  regexp {cve,([^;]*)} $signature match cve
-  if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
-        exec $BROWSER_PATH http://icat.nist.gov/icat.cfm?cvename=CAN-$cve &
-  if {$DEBUG} {puts "$BROWSER_PATH http://icat.nist.gov/icat.cfm?cvename=CAN-$cve launched."}
-  } else {
-    tk_messageBox -type ok -icon warning -message\
-    "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
-    to point your favorite browser."
-    puts "Error: $BROWSER_PATH does not exist or is not executable."                }
+    global DEBUG ruleText BROWSER_PATH
+
+    set signature [$ruleText get 0.0 end]
+
+    # parse the sig for the cve
+    regexp {cve,([^;]*)} $signature match cve
+
+    if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
+
+        exec $BROWSER_PATH http://nvd.nist.gov/nvd.cfm?cvename=CAN-$cve &
+        if {$DEBUG} {puts "$BROWSER_PATH http://nvd.nist.gov/nvd.cfm?cvename=CAN-$cve launched."}
+
+    } else {
+
+        tk_messageBox -type ok -icon warning -message\
+         "$BROWSER_PATH does not exist or is not executable.\
+          Please update the BROWSER_PATH variable\
+          to point your favorite browser."
+        puts "Error: $BROWSER_PATH does not exist or is not executable."
+
+    }
+
 }
 
 #
