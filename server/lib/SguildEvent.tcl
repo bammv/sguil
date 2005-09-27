@@ -1,11 +1,11 @@
-# $Id: SguildEvent.tcl,v 1.10 2005/09/15 20:05:44 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.11 2005/09/27 18:15:12 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
 #
 proc EventRcvd { eventDataList } {
-  global EMAIL_EVENTS EMAIL_CLASSES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS eventIDCountArray
-  global acRules acCat correlatedEventArray eventIDList correlatedEventIDArray
+  global EMAIL_EVENTS EMAIL_CLASSES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS EMAIL_PRIORITIES
+  global eventIDCountArray acRules acCat correlatedEventArray eventIDList correlatedEventIDArray
 
   if { [lindex $eventDataList 2] == "system-info" } {
     InfoMessage "SYSTEM INFO: $eventDataList"
@@ -29,8 +29,11 @@ proc EventRcvd { eventDataList } {
           #Ug-ly. Things will get better when the rules are in the DB.
           set sid [lindex $eventDataList 13]
           set class [lindex $eventDataList 2]
+          set priority [lindex $eventDataList 1]
           if { ([lsearch -exact $EMAIL_CLASSES $class] >= 0\
-               && [lsearch -exact $EMAIL_DISABLE_SIDS $sid] < 0)
+               && [lsearch -exact $EMAIL_DISABLE_SIDS $sid] < 0)\
+               || ([lsearch -exact $EMAIL_PRIORITIES $priority] >= 0\
+               && [lsearch -exact $EMAIL_DISABLE_SIDS $sid] < 0)\
                || [lsearch -exact $EMAIL_ENABLE_SIDS $sid] >= 0 } {
             EmailEvent $eventDataList
           }

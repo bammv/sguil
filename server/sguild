@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.151 2005/09/15 20:05:44 bamm Exp $ #
+# $Id: sguild,v 1.152 2005/09/27 18:15:12 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -462,9 +462,10 @@ if { [info exists EMAIL_EVENTS] && $EMAIL_EVENTS } {
     package require mime
     package require smtp
     # Make sure our vars are initialized
-    if { ![info exists EMAIL_CLASSES] } { set EMAIL_CLASSES "" }
-    if { ![info exists EMAIL_DISABLE_SIDS] } { set EMAIL_DISABLE_SIDS "" }
-    if { ![info exists EMAIL_ENABLE_SIDS] } { set EMAIL_ENABLE_SIDS "" }
+    if { ![info exists EMAIL_CLASSES] } { set EMAIL_CLASSES "0" }
+    if { ![info exists EMAIL_PRIORITIES] } { set EMAIL_PRIORITIES "0" }
+    if { ![info exists EMAIL_DISABLE_SIDS] } { set EMAIL_DISABLE_SIDS "0" }
+    if { ![info exists EMAIL_ENABLE_SIDS] } { set EMAIL_ENABLE_SIDS "0" }
 } else {
     # Just in case the var doesn't get set in sguild.conf
     set EMAIL_EVENTS 0
