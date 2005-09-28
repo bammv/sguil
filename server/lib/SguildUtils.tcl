@@ -1,4 +1,4 @@
-# $Id: SguildUtils.tcl,v 1.9 2005/09/28 15:45:49 bamm Exp $ #
+# $Id: SguildUtils.tcl,v 1.10 2005/09/28 18:40:22 bamm Exp $ #
 
 proc Daemonize {} {
     global PID_FILE env LOGGER
@@ -182,6 +182,7 @@ proc LoadEmailConfig { fileName } {
 
     global EMAIL_EVENTS SMTP_SERVER EMAIL_RCPT_TO
     global EMAIL_FROM EMAIL_SUBJECT EMAIL_MSG
+    global EMAIL_CLASSES EMAIL_PRIORITIES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS
 
     set i 0
 
@@ -201,11 +202,31 @@ proc LoadEmailConfig { fileName } {
 
                     ErrorMessage "Error parsing line $i in $fileName: $line\n\t$evalError"
 
-                }
+                } 
 
             }
 
         } 
+
+    }
+
+    LogMessage "Email Configuration:"
+    LogMessage "  Config file: $fileName"
+
+    if {!$EMAIL_EVENTS} {
+
+        LogMessage "  Enabled: No"
+
+    } else {
+
+        LogMessage "  Enabled: Yes"
+        LogMessage "  Server: $SMTP_SERVER"
+        LogMessage "  Rcpt To: $EMAIL_RCPT_TO"
+        LogMessage "  From: $EMAIL_FROM"
+        LogMessage "  Classes: $EMAIL_CLASSES"
+        LogMessage "  Priorities: $EMAIL_PRIORITIES"
+        LogMessage "  Disabled Sig IDs: $EMAIL_DISABLE_SIDS"
+        LogMessage "  Enabled Sig IDs: $EMAIL_ENABLE_SIDS"
 
     }
 

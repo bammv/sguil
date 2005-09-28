@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.17 2005/09/15 20:21:36 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.18 2005/09/28 18:40:21 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -199,7 +199,7 @@ proc InitLoaderd {} {
     # Get a list of current sancp tables
     set SANCP_TBL_LIST [mysqlsel $LOADERD_DB_ID {SHOW TABLES LIKE 'sancp_%'} -list]
     
-    LogMessage "loaderd: sancp tables: $SANCP_TBL_LIST"
+    #LogMessage "loaderd: sancp tables: $SANCP_TBL_LIST"
     #set todaysDate [clock format [clock scan today] -gmt true -format "%Y%m%d"]
     # Check to see if we have a sancp table for today
     #if { [lsearch -exact $SANCP_TBL_LIST "sancp_$todaysDate"] < 0 } {
