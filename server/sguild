@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.152 2005/09/27 18:15:12 bamm Exp $ #
+# $Id: sguild,v 1.153 2005/09/28 15:45:49 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -354,7 +354,7 @@ if { [info exists ADDUSER] && $ADDUSER } {
   AddUser $userName $USERS_FILE
   CleanExit
 }
-# Called in to delte a user only
+# Called in to delete a user only
 if { [info exists DELUSER] && $DELUSER} {
   DelUser $userName $USERS_FILE
   CleanExit
@@ -385,6 +385,19 @@ if { ![info exists AUTOCAT_FILE] } {
 }
 if { [file exists $AUTOCAT_FILE] } {
   LoadAutoCatFile $AUTOCAT_FILE
+}
+# Load email config file
+if { ![info exists EMAIL_FILE] } {
+  if { [file exists /etc/sguild/sguild.email] } {
+    set EMAIL_FILE "/etc/sguild/sguild.email"
+  } else {
+    set EMAIL_FILE "./sguild.email"
+  }
+}
+if { [file exists $EMAIL_FILE] } {
+  LoadEmailConfig $EMAIL_FILE  
+} else {
+  set EMAIL_EVENTS 0
 }
 # Load global queries.
 if { ![info exists GLOBAL_QRY_FILE] } {

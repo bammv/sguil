@@ -1,4 +1,4 @@
-# $Id: SguildUtils.tcl,v 1.8 2005/09/15 20:22:34 bamm Exp $ #
+# $Id: SguildUtils.tcl,v 1.9 2005/09/28 15:45:49 bamm Exp $ #
 
 proc Daemonize {} {
     global PID_FILE env LOGGER
@@ -21,7 +21,7 @@ proc Daemonize {} {
 
 proc HupTrapped {} {
   global AUTOCAT_FILE GLOBAL_QRY_FILE GLOBAL_QRY_LIST clientList REPORT_QRY_FILE REPORT_QRY_LIST
-  global acRules acCat ACCESS_FILE
+  global acRules acCat ACCESS_FILE EMAIL_FILE
   LogMessage "HUP signal caught."
   # Reload auto cat rules
   InfoMessage "Reloading AutoCat rules: $AUTOCAT_FILE"
@@ -30,6 +30,10 @@ proc HupTrapped {} {
   if [info exists acCat] { unset acCat }
   if { [ file exists $AUTOCAT_FILE] } {
     LoadAutoCatFile $AUTOCAT_FILE
+  }
+  if { [file exists $EMAIL_FILE] } {
+    LoadEmailConfig $EMAIL_FILE
+    InfoMessage "Email config loaded: $EMAIL_FILE"
   }
   # reload global queries.
   InfoMessage "Reloaded Global Queries: $GLOBAL_QRY_FILE"
@@ -171,6 +175,40 @@ proc ldelete { list value } {
   } else {
     return $list
   }
+}
+
+#Reads file and sets email options
+proc LoadEmailConfig { fileName } {
+
+    global EMAIL_EVENTS SMTP_SERVER EMAIL_RCPT_TO
+    global EMAIL_FROM EMAIL_SUBJECT EMAIL_MSG
+
+    set i 0
+
+    for_file line $fileName {
+
+        incr i
+
+        if { ![regexp {^#} $line] && ![regexp {^$} $line] && ![regexp {^\s+$} $line] } {
+
+            if { [llength $line] != 3 || [lindex $line 0] != "set" } { 
+
+                ErrorMessage "Error at line $i in $fileName: $line"
+
+            } else {
+
+                if { [catch {eval $line} evalError] } {
+
+                    ErrorMessage "Error parsing line $i in $fileName: $line\n\t$evalError"
+
+                }
+
+            }
+
+        } 
+
+    }
+
 }
 
 # Reads file and adds queries to GLOBAL_QRY_LIST
