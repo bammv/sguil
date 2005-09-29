@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.7 2005/06/03 22:35:43 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.8 2005/09/29 13:58:58 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -92,12 +92,18 @@ proc SensorAgentInit { socketID sensorName } {
 }
 
 proc CleanUpDisconnectedAgent { socketID } {
-  global connectedAgents agentSocketArray agentSensorNameArray
+
+    global connectedAgents agentSocketArray agentSensorNameArray
+ 
                                                                                                                                    
-  set connectedAgents [ldelete $connectedAgents $agentSensorNameArray($socketID)]
-  set sensorName $agentSensorNameArray($socketID)
-  unset agentSocketArray($sensorName)
-  unset agentSensorNameArray($socketID)
+    set connectedAgents [ldelete $connectedAgents $agentSensorNameArray($socketID)]
+    if [info exists agentSensorNameArray($socketID)] { 
+
+        set sensorName $agentSensorNameArray($socketID)
+        unset agentSocketArray($sensorName)
+        unset agentSensorNameArray($socketID)
+
+    } 
 
 }
 
