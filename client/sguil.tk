@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.177 2005/09/26 16:31:59 bamm Exp $ #
+# $Id: sguil.tk,v 1.178 2005/10/07 16:18:32 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1986,6 +1986,77 @@ set ipDataFrame [frame [$detailTabs childsite 0].ipDataFrame]
 pack $ipDataFrame -expand true -fill both -padx 0 -pady 0
 
 $whoisNoneButton invoke
+
+#
+# Sensor Status Tab
+#
+set sensorStatusFrame [frame [$detailTabs childsite 1].sensorStatusFrame]
+
+    set statusSensorNameFrame [frame $sensorStatusFrame.statusSensorNameFrame]
+        set statusSensorNameLabel [label $statusSensorNameFrame.label \
+            -text "Sensor" -background black -foreground white]
+        set statusSensorNameList [listbox $statusSensorNameFrame.list -width 10 -height 5 -borderwidth 0\
+            -background white -yscrollcommand "$sensorStatusFrame.scroll set"]
+        pack $statusSensorNameLabel -side top -fill x
+        pack $statusSensorNameList -side bottom -fill both -expand true
+	#BindSelectionToAllPSLists $psSensorList
+
+    set statusSensorSidFrame [frame $sensorStatusFrame.statusSensorSidFrame]
+        set statusSensorSidLabel [label $statusSensorSidFrame.label \
+            -text "SID" -background black -foreground white]
+        set statusSensorSidList [listbox $statusSensorSidFrame.list -width 4 -height 5 -borderwidth 0\
+            -background white -yscrollcommand "$sensorStatusFrame.scroll set"]
+        pack $statusSensorSidLabel -side top -fill x
+        pack $statusSensorSidList -side bottom -fill both -expand true
+	#BindSelectionToAllPSLists $psSensorList
+
+    set statusSensorIPFrame [frame $sensorStatusFrame.statusSensorIPFrame]
+        set statusSensorIPLabel [label $statusSensorIPFrame.label \
+            -text "IP Addr" -background black -foreground white]
+        set statusSensorIPList [listbox $statusSensorIPFrame.list -width 15 -height 5 -borderwidth 0\
+            -background white -yscrollcommand "$sensorStatusFrame.scroll set"]
+        pack $statusSensorIPLabel -side top -fill x
+        pack $statusSensorIPList -side bottom -fill both -expand true
+	#BindSelectionToAllPSLists $psSensorList
+
+    set statusSensorConnectFrame [frame $sensorStatusFrame.statusSensorConnectFrame]
+        set statusSensorConnectLabel [label $statusSensorConnectFrame.label \
+            -text "Connected" -background black -foreground white]
+        set statusSensorConnectList [listbox $statusSensorConnectFrame.list -width 15 -height 5 -borderwidth 0\
+            -background white -yscrollcommand "$sensorStatusFrame.scroll set"]
+        pack $statusSensorConnectLabel -side top -fill x
+        pack $statusSensorConnectList -side bottom -fill both -expand true
+	#BindSelectionToAllPSLists $psSensorList
+
+    set statusSensorBarnyardFrame [frame $sensorStatusFrame.statusSensorBarnyardFrame]
+        set statusSensorBarnyardLabel [label $statusSensorBarnyardFrame.label \
+            -text "Barnyard" -background black -foreground white]
+        set statusSensorBarnyardList [listbox $statusSensorBarnyardFrame.list -width 15 -height 5 -borderwidth 0\
+            -background white -yscrollcommand "$sensorStatusFrame.scroll set"]
+        pack $statusSensorBarnyardLabel -side top -fill x
+        pack $statusSensorBarnyardList -side bottom -fill both -expand true
+	#BindSelectionToAllPSLists $psSensorList
+
+    set statusSensorLastAlertFrame [frame $sensorStatusFrame.statusSensorLastAlertFrame]
+        set statusSensorLastAlertLabel [label $statusSensorLastAlertFrame.label -text "Last Alert" -background black -foreground white]
+        set statusSensorLastAlertList [listbox $statusSensorLastAlertFrame.list -width 15 -height 5 -borderwidth 0\
+            -background white -yscrollcommand "$sensorStatusFrame.scroll set"]
+        pack $statusSensorLastAlertLabel -side top -fill x
+        pack $statusSensorLastAlertList -side bottom -fill both -expand true
+	#BindSelectionToAllPSLists $psSensorList
+
+    set statusScroll [scrollbar $sensorStatusFrame.scroll\
+        -command \
+        "MultiScrollBar \
+          \"$statusSensorNameList $statusSensorSidList $statusSensorIPList \
+            $statusSensorConnectList $statusSensorBarnyardList $statusSensorLastAlertList\""\
+        -width 10]
+
+    pack $statusScroll -side right -fill y
+    pack $statusSensorNameFrame $statusSensorSidFrame $statusSensorIPFrame $statusSensorConnectFrame \
+         $statusSensorBarnyardFrame $statusSensorLastAlertFrame -side left -fill both -expand true
+
+pack $sensorStatusFrame -side top -fill both -expand true
 
 set systemInfoFrame [frame [$detailTabs childsite 2].systemInfoFrame]
 set systemInfoText [scrolledtext $systemInfoFrame.systemInfoText -vscrollmode static -hscrollmode dynamic\
