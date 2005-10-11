@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.41 2005/09/21 14:26:35 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.42 2005/10/11 21:20:49 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -22,7 +22,7 @@ set CONNECTED 0
 set SANCPFILEWAIT 0
 set SSNFILEWAIT 0
 set PORTSCANFILEWAIT 0
-set BYCONNECTED 0
+set BYCONNECT 0
 
 proc bgerror { errorMsg } {
                                                                                                                            
@@ -58,7 +58,8 @@ proc BYConnect { socketID IPaddr port } {
     fileevent $socketID readable [list BYCmdRcvd $socketID]
 
     SendToSguild [list SystemMessage "Barnyard connected via sensor localhost."]
-    set BYCONNECT [clock format [clock seconds] -gmt true -f "%m-%d-%Y %T"]
+    set BYCONNECT 1
+    SendToSguild [list BarnyardConnect $BYCONNECT]
 
 }
 
@@ -71,6 +72,7 @@ proc BYCmdRcvd { socketID } {
         catch { close $socketID } closeError
         if { $DEBUG } { puts "Barnyard disconnected." }
         SendToSguild [list SystemMessage "Barnyard disconnected."]
+        SendToSguild [list BarnyardDisConnect [GetCurrentTimeStamp]]
         set BYCONNECT 0
 
     } else {
@@ -97,6 +99,7 @@ proc SendToBarnyard { socketID msg } {
         if { $DEBUG } { puts "Barnyard disconnected." }
         SendToSguild [list SystemMessage "Barnyard disconnected."]
         set BYCONNECT 0
+        SendToSguild [list BarnyardDisConnect 0]
     } else {
         catch { flush $socketID }
     }
@@ -332,6 +335,7 @@ proc CheckForSancpFiles {} {
 
                     # Lost our cnx
                     break
+
                 }
 
             }
@@ -699,7 +703,7 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
 }
 proc ConnectToSguilServer {} {
   global sguildSocketID HOSTNAME CONNECTED
-  global SERVER_HOST SERVER_PORT DEBUG
+  global SERVER_HOST SERVER_PORT DEBUG BYCONNECT
   if {[catch {set sguildSocketID [socket $SERVER_HOST $SERVER_PORT]}] > 0} {
     set CONNECTED 0
     if {$DEBUG} {puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT."}
@@ -710,7 +714,7 @@ proc ConnectToSguilServer {} {
     fileevent $sguildSocketID readable [list SguildCmdRcvd $sguildSocketID]
     set CONNECTED 1
     if {$DEBUG} {puts "Connected to $SERVER_HOST"}
-    puts $sguildSocketID "AgentInit $HOSTNAME"
+    puts $sguildSocketID "AgentInit $HOSTNAME $BYCONNECT"
     flush $sguildSocketID
   }
 }
@@ -810,6 +814,11 @@ proc SetSensorID { sensorID } {
 
     set SENSOR_ID $sensorID
 
+}
+
+proc GetCurrentTimeStamp {} {
+  set timestamp [clock format [clock seconds] -gmt true -f "%Y-%m-%d %T"]
+  return $timestamp
 }
 
 ################### MAIN ###########################
