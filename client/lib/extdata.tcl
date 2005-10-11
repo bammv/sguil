@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.22 2005/09/26 16:31:59 bamm Exp $
+# $Id: extdata.tcl,v 1.23 2005/10/11 21:19:03 bamm Exp $
 
 proc GetRuleInfo {} {
   global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
@@ -759,11 +759,84 @@ proc NessusLoad { } {
     file delete $nessusOutFile
 
 }
-    
 
-    
-    
-    
-    
-    
-	
+proc SensorStatusUpdate { statusList } {
+
+    global sensorStatusArray
+    global statusSensorNameList statusSensorSidList statusSensorIPList statusSensorConnectList
+    global statusSensorBarnyardList statusSensorLastAlertList
+    global COLOR1 COLOR2 COLOR3
+
+    array set sensorStatusArray [lindex $statusList 0]
+
+    DeleteCurrentStatusList
+    set bColor $COLOR1
+    foreach sensorName [lsort [array names sensorStatusArray]] {
+
+        # Sensor Name
+        $statusSensorNameList insert end $sensorName
+        $statusSensorNameList itemconfigure end -background $bColor
+
+        # Sensor Sid
+        $statusSensorSidList insert end [lindex $sensorStatusArray($sensorName) 0]
+        $statusSensorSidList itemconfigure end -background $bColor
+
+        # Sensor IP Addr
+        $statusSensorIPList insert end [lindex $sensorStatusArray($sensorName) 1]
+        $statusSensorIPList itemconfigure end -background $bColor
+
+        # Sensor Agent Connected/Disconnected
+        if { [lindex $sensorStatusArray($sensorName) 2] } {
+
+            $statusSensorConnectList insert end Connected
+            $statusSensorConnectList itemconfigure end -background darkgreen
+
+        } else {
+
+            $statusSensorConnectList insert end Disconnected
+            $statusSensorConnectList itemconfigure end -background darkred
+
+        }
+
+        # Barnyard Connected/Disconnected
+        if { [lindex $sensorStatusArray($sensorName) 3] } {
+
+            $statusSensorBarnyardList insert end Connected
+            $statusSensorBarnyardList itemconfigure end -background darkgreen
+
+        } else {
+
+            $statusSensorBarnyardList insert end Disconnected
+            $statusSensorBarnyardList itemconfigure end -background darkred
+
+        }
+
+        # Sensor Last Alert 
+        $statusSensorLastAlertList insert end [lindex $sensorStatusArray($sensorName) 4]
+        $statusSensorLastAlertList itemconfigure end -background $bColor
+
+        if { $bColor == $COLOR1 } {
+            set bColor $COLOR2 
+        } elseif { $bColor == $COLOR2 } {
+            set bColor $COLOR3
+        } else {
+            set bColor $COLOR1
+        }
+
+    }
+
+}
+
+proc DeleteCurrentStatusList {} {
+
+    global statusSensorNameList statusSensorSidList statusSensorIPList statusSensorConnectList
+    global statusSensorBarnyardList statusSensorLastAlertList
+
+    foreach tmpList [list $statusSensorNameList $statusSensorSidList $statusSensorIPList \
+                    $statusSensorConnectList $statusSensorBarnyardList $statusSensorLastAlertList] {
+
+        $tmpList delete 0 end
+
+    }
+
+}
