@@ -1,9 +1,9 @@
-# $Id: SguildAccess.tcl,v 1.3 2005/04/12 16:57:30 bamm Exp $ #
+# $Id: SguildAccess.tcl,v 1.4 2005/10/11 21:15:44 bamm Exp $ #
 
 # Load up the access lists.
 proc LoadAccessFile { filename } {
   global CLIENT_ACCESS_LIST SENSOR_ACCESS_LIST
-  LogMessage "Loading access list: $filename " 
+  LogMessage "Loading access list: $filename" 
   set CANYFLAG 0
   set SANYFLAG 0
   for_file line $filename {
@@ -14,9 +14,9 @@ proc LoadAccessFile { filename } {
         if { $ipaddr == "ANY" || $ipaddr == "any" } {
           set CANYFLAG 1
           set CLIENT_ACCESS_LIST ANY
-          InfoMessage "Client access list set to ALLOW ANY." 
+          LogMessage "Client access list set to ALLOW ANY." 
         } else {
-          InfoMessage "Adding client to access list: $ipaddr"
+          LogMessage "Adding client to access list: $ipaddr"
           lappend CLIENT_ACCESS_LIST $ipaddr
         }
       } elseif { [regexp {^\s*sensor} $line] && $SANYFLAG != "1" } {
@@ -24,13 +24,13 @@ proc LoadAccessFile { filename } {
         if { $ipaddr == "ANY" || $ipaddr == "any" } {
           set SANYFLAG 1
           set SENSOR_ACCESS_LIST ANY
-          InfoMessage "Sensor access list set to ALLOW ANY." 
+          LogMessage "Sensor access list set to ALLOW ANY." 
         } else {
-          InfoMessage "Adding sensor to access list: $ipaddr"
+          LogMessage "Adding sensor to access list: $ipaddr"
           lappend SENSOR_ACCESS_LIST $ipaddr
         }
       } else {
-        LogMessage "ERROR: Parsing $filename: Format error: $line"
+        ErrorMessage "ERROR: Parsing $filename: Format error: $line"
       }
     }
   }
@@ -41,7 +41,6 @@ proc LoadAccessFile { filename } {
     ErrorMessage "ERROR: No sensor access lists found in $filename."
   }
                                                                                                                                                        
-  LogMessage ": Done "
 }
 
 proc ValidateSensorAccess { ipaddr } {
