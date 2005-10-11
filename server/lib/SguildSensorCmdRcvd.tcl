@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.15 2005/09/15 20:23:21 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.16 2005/10/11 21:17:11 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global connectedAgents agentSensorNameArray
@@ -13,19 +13,21 @@ proc SensorCmdRcvd { socketID } {
     InfoMessage "Sensor Data Rcvd: $data"
     set sensorCmd [lindex $data 0]
     switch -exact -- $sensorCmd {
-      SsnFile         { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
-      SancpFile       { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
-      PSFile          { RcvPortscanFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
-      AgentInit       { SensorAgentInit $socketID [lindex $data 1] }
-      AgentLastCidReq { AgentLastCidReq $socketID [lindex $data 1] [lindex $data 2] }
-      BYEventRcvd     { eval BYEventRcvd $socketID [lrange $data 1 end] }
-      DiskReport      { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
-      PING            { puts $socketID "PONG"; flush $socketID }
-      PONG            { SensorAgentPongRcvd $socketID }
-      XscriptDebugMsg { $sensorCmd [lindex $data 1] [lindex $data 2] }
-      RawDataFile     { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
-      SystemMessage   { SystemMsgRcvd $socketID [lindex $data 1] }
-      default         { if {$sensorCmd != ""} { LogMessage "Sensor Cmd Unkown ($socketID): $sensorCmd" } }
+      SsnFile            { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
+      SancpFile          { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
+      PSFile             { RcvPortscanFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+      AgentInit          { SensorAgentInit $socketID [lindex $data 1] [lindex $data 2] }
+      AgentLastCidReq    { AgentLastCidReq $socketID [lindex $data 1] [lindex $data 2] }
+      BYEventRcvd        { eval BYEventRcvd $socketID [lrange $data 1 end] }
+      DiskReport         { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
+      PING               { puts $socketID "PONG"; flush $socketID }
+      PONG               { SensorAgentPongRcvd $socketID }
+      XscriptDebugMsg    { $sensorCmd [lindex $data 1] [lindex $data 2] }
+      RawDataFile        { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+      SystemMessage      { SystemMsgRcvd $socketID [lindex $data 1] }
+      BarnyardConnect    { BarnyardConnect $socketID [lindex $data 1] }
+      BarnyardDisConnect { BarnyardDisConnect $socketID [lindex $data 1] }
+      default            { if {$sensorCmd != ""} { LogMessage "Sensor Cmd Unkown ($socketID): $sensorCmd" } }
     }
   }
 }

@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.153 2005/09/28 15:45:49 bamm Exp $ #
+# $Id: sguild,v 1.154 2005/10/11 21:17:11 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -20,6 +20,8 @@ set VERSION "SGUIL-0.6.0-BETA"
 set DB_VERSION "0.11"
 # Counter for tracking xscript transactions
 set NEXT_TRANS_ID 0
+
+if { ![info exists STATUS_DELAY] } { set STATUS_DELAY 15000 }
 
 # Config options moved to sguild.conf
 
@@ -498,6 +500,38 @@ if { [catch {mysqluse $MAIN_DB_SOCKETID $DBNAME} noDBError] } {
   ErrorMessage "Error: $noDBError"
 }
 
+LogMessage "Retrieving DB info..." 
+set tableNameList [mysqlinfo $MAIN_DB_SOCKETID tables]
+regsub -all {sancp_\S+\s} $tableNameList {} newList
+set tableNameList $newList
+foreach tableName $newList {
+  set tableArray($tableName) [mysqlcol $MAIN_DB_SOCKETID $tableName {name type length}]
+}
+
+set sensorQuery "SELECT hostname FROM sensor ORDER BY hostname ASC"
+set sensorList [FlatDBQuery $sensorQuery]
+
+# Build the sensor status array
+foreach sensorName $sensorList {
+
+    set tmpQuery "SELECT sid FROM sensor WHERE hostname='$sensorName'"
+    set sensorSid [FlatDBQuery $tmpQuery]
+
+    set tmpQuery "SELECT ip FROM sensor WHERE hostname='$sensorName'"
+    set sensorIP [lindex [FlatDBQuery $tmpQuery] 0]
+    if { $sensorIP == "" } { set sensorIP "Unknown" }
+
+    set tmpQuery "SELECT MAX(timestamp) FROM event WHERE sid=$sensorSid"
+    set lastAlert [lindex [FlatDBQuery $tmpQuery] 0]
+    if { $lastAlert == "" } { set lastAlert None }
+
+    # Format sid ip agent barnyard lastAlert
+    # agent/by == time of connect or 0 if disconnected.
+    set sensorStatusArray($sensorName) [list $sensorSid $sensorIP 0 0 $lastAlert]
+
+    puts "DEBUG #### $sensorName :: $sensorStatusArray($sensorName)"
+}
+
 # Get the archived alerts
 LogMessage "Querying DB for archived events..."
 InfoMessage  "SELECT event.status, event.priority, event.class, sensor.hostname, \
@@ -547,19 +581,6 @@ foreach row [mysqlsel $MAIN_DB_SOCKETID "SELECT event.status, event.priority, \
     lappend escalateIDList $escalatedEventID
     set escalateArray($escalatedEventID) $row
 }
-# Get DB info (table names and column info)
-LogMessage "Retrieving DB info..." 
-set tableNameList [mysqlinfo $MAIN_DB_SOCKETID tables]
-regsub -all {sancp_\S+\s} $tableNameList {} newList
-set tableNameList $newList
-foreach tableName $newList {
-  set tableArray($tableName) [mysqlcol $MAIN_DB_SOCKETID $tableName {name type length}]
-}
-
-set sensorQuery "SELECT hostname FROM sensor"
-set sensorList [FlatDBQuery $sensorQuery]
-
-
 # Open a socket for clients to connect to
 if { [info exists BIND_CLIENT_IP_ADDR] && $BIND_CLIENT_IP_ADDR != "" } {
   set clientSocketCmd "socket -server ClientConnect -myaddr $BIND_CLIENT_IP_ADDR $SERVERPORT"
@@ -586,8 +607,8 @@ signal trap {QUIT TERM} CleanExit
 # Start the health check for sensoragents
 after 10000 SensorAgentsHealthCheck
 
+# Start Sensor status refreshes
+after $STATUS_DELAY SendAllSensorStatusInfo
+
 # Infinite wait
 vwait FOREVER
-
-
-

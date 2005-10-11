@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.8 2005/09/29 13:58:58 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.9 2005/10/11 21:17:11 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -58,9 +58,10 @@ proc SensorConnect { socketID IPAddr port } {
   fileevent $socketID readable [list SensorCmdRcvd $socketID]
 }
 
-proc SensorAgentInit { socketID sensorName } {
+proc SensorAgentInit { socketID sensorName barnyardStatus} {
 
     global connectedAgents agentSocketArray agentSensorNameArray
+    global sensorStatusArray
 
     lappend connectedAgents $sensorName
     set agentSocketArray($sensorName) $socketID
@@ -89,13 +90,29 @@ proc SensorAgentInit { socketID sensorName } {
     SendSystemInfoMsg $sensorName "Agent connected."
     SendSensorAgent $socketID [list SensorID $sensorID]
 
+    if { [info exists sensorStatusArray($sensorName)] } {
+
+        #set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 2 3 [GetCurrentTimeStamp] $barnyardStatus]
+        set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 2 3 1 $barnyardStatus]
+
+    } else { 
+
+        # TEMPORARY
+        #set sensorStatusArray($sensorName) [list $sensorID Unknown [GetCurrentTimeStamp] $barnyardStatus None]
+        set sensorStatusArray($sensorName) [list $sensorID Unknown 1 $barnyardStatus None]
+
+    }
+
+
+    SendAllSensorStatusInfo
+
 }
 
 proc CleanUpDisconnectedAgent { socketID } {
 
     global connectedAgents agentSocketArray agentSensorNameArray
+    global sensorStatusArray
  
-                                                                                                                                   
     set connectedAgents [ldelete $connectedAgents $agentSensorNameArray($socketID)]
     if [info exists agentSensorNameArray($socketID)] { 
 
@@ -103,7 +120,15 @@ proc CleanUpDisconnectedAgent { socketID } {
         unset agentSocketArray($sensorName)
         unset agentSensorNameArray($socketID)
 
+        if [info exists sensorStatusArray($sensorName)] {
+
+            set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 2 3 0 0]
+ 
+        }
+
     } 
+
+    SendAllSensorStatusInfo
 
 }
 

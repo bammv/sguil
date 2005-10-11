@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.14 2005/08/16 16:17:24 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.15 2005/10/11 21:17:11 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -63,6 +63,7 @@ proc ClientCmdRcvd { socketID } {
       AbortXscript { $clientCmd $socketID $index1 }
       LoadNessusReports { $clientCmd $socketID $index1 $index2 $data3 }
       GetOpenPorts { $clientCmd $socketID $index1 $index2 }	
+      SendClientSensorStatusInfo { $clientCmd $socketID }
       default { InfoMessage "Unrecognized command from $socketID: $origData" }
     }
   }

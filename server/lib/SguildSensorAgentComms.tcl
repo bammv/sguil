@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.13 2005/09/21 21:42:32 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.14 2005/10/11 21:17:11 bamm Exp $ #
 
 proc SendSensorAgent { socketID msg } {
 
@@ -40,7 +40,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
                    dst_port tcp_seq tcp_ack tcp_off tcp_res tcp_flags tcp_win tcp_csum \
                    tcp_urp udp_len udp_csum data_payload } {
 
-    global LAST_EVENT_ID
+    global LAST_EVENT_ID sensorStatusArray
 
     # Check for a potential dupe. Can happen if we get busy and the confirmation
     # doesn't make it back to BY quick enough.
@@ -142,6 +142,13 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
     # Update last event
     set LAST_EVENT_ID($sensorName) $eventID
 
+    # Update last event rcvd time
+    if [info exists sensorStatusArray($sensorName)] {
+
+        set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 4 4 $timestamp]
+
+    }
+
 }
 
 proc ConfirmSancpFile { sensorName fileName } {
@@ -189,5 +196,45 @@ proc ConfirmPortscanFile { sensorName fileName } {
         after 5000 ConfirmPortscanFile $sensorName $fileName
     
     }
+
+}
+
+proc BarnyardConnect { socketID dateTime } {
+
+    global sensorStatusArray agentSensorNameArray
+
+    if [info exists agentSensorNameArray($socketID)] {
+
+        set sensorName $agentSensorNameArray($socketID)
+
+        if [info exists sensorStatusArray($sensorName)] {
+
+            set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 3 3 $dateTime]
+
+        }
+
+    }
+
+    SendAllSensorStatusInfo
+
+}
+
+proc BarnyardDisConnect { socketID dateTime } {
+
+    global sensorStatusArray agentSensorNameArray
+
+    if [info exists agentSensorNameArray($socketID)] {
+
+        set sensorName $agentSensorNameArray($socketID)
+
+        if [info exists sensorStatusArray($sensorName)] {
+
+            set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 3 3 0]
+
+        }
+
+    }
+
+    SendAllSensorStatusInfo
 
 }
