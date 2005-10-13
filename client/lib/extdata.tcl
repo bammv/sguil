@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.23 2005/10/11 21:19:03 bamm Exp $
+# $Id: extdata.tcl,v 1.24 2005/10/13 16:28:28 bamm Exp $
 
 proc GetRuleInfo {} {
   global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
@@ -757,6 +757,20 @@ proc NessusLoad { } {
     fconfigure $socketID -encoding utf-8 -translation {auto crlf}
     close $rFileID
     file delete $nessusOutFile
+
+}
+proc SensorStatusRequest {} {
+
+    global STATUS_UPDATE
+
+    if { ![info exists STATUS_UPDATE]} {
+
+        set STATUS_UPDATE 15
+
+    }
+
+    SendToSguild "SendClientSensorStatusInfo"
+    after [expr $STATUS_UPDATE * 1000] SensorStatusRequest
 
 }
 

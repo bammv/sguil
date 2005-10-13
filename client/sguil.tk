@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.179 2005/10/11 21:19:03 bamm Exp $ #
+# $Id: sguil.tk,v 1.180 2005/10/13 16:28:28 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2868,7 +2868,7 @@ while {$CONNECTED == 0} {
   SendToSguild "SendEscalatedEvents"
   SendToSguild "SendGlobalQryList"
   SendToSguild "SendReportQryList"
-  SendToSguild "SendClientSensorStatusInfo"
   UpdateUserName $USERNAME $USERID
+  SensorStatusRequest
   HeartBeat
   
