@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.180 2005/10/13 16:28:28 bamm Exp $ #
+# $Id: sguil.tk,v 1.181 2005/10/13 18:35:47 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1650,6 +1650,7 @@ source $SGUILLIB/guilib.tcl
 source $SGUILLIB/extdata.tcl
 source $SGUILLIB/sancp.tcl
 source $SGUILLIB/sound.tcl
+source $SGUILLIB/SguilToolTip.tcl
 source $SGUILLIB/SguilUtil.tcl
 
 if { $WHOIS_PATH == "SimpleWhois" } {
@@ -2012,14 +2013,15 @@ set sensorStatusFrame [frame [$detailTabs childsite 1].sensorStatusFrame]
         pack $statusSensorSidList -side bottom -fill y -expand true
 	bind $statusSensorSidList <Button-1>  { break }
 
-    set statusSensorIPFrame [frame $sensorStatusFrame.statusSensorIPFrame]
-        set statusSensorIPLabel [label $statusSensorIPFrame.label \
-            -text "IP Addr" -background black -foreground white -anchor w]
-        set statusSensorIPList [listbox $statusSensorIPFrame.list -width 15 -height 5 -borderwidth 0\
-            -background white -exportselection false -yscrollcommand "$sensorStatusFrame.scroll set"]
-        pack $statusSensorIPLabel -side top -fill x
-        pack $statusSensorIPList -side bottom -fill y -expand true
-	bind $statusSensorIPList <Button-1> { break }
+# Gonna do something else with the IP for now.
+#    set statusSensorIPFrame [frame $sensorStatusFrame.statusSensorIPFrame]
+#        set statusSensorIPLabel [label $statusSensorIPFrame.label \
+#            -text "IP Addr" -background black -foreground white -anchor w]
+#        set statusSensorIPList [listbox $statusSensorIPFrame.list -width 15 -height 5 -borderwidth 0\
+#            -background white -exportselection false -yscrollcommand "$sensorStatusFrame.scroll set"]
+#        pack $statusSensorIPLabel -side top -fill x
+#        pack $statusSensorIPList -side bottom -fill y -expand true
+#	bind $statusSensorIPList <Button-1> { break }
 
     set statusSensorConnectFrame [frame $sensorStatusFrame.statusSensorConnectFrame]
         set statusSensorConnectLabel [label $statusSensorConnectFrame.label \
@@ -2051,13 +2053,13 @@ set sensorStatusFrame [frame [$detailTabs childsite 1].sensorStatusFrame]
     set statusScroll [scrollbar $sensorStatusFrame.scroll\
         -command \
         "MultiScrollBar \
-          \"$statusSensorNameList $statusSensorSidList $statusSensorIPList \
+          \"$statusSensorNameList $statusSensorSidList \
             $statusSensorConnectList $statusSensorBarnyardList $statusSensorLastAlertList\""\
         -width 10]
 
     pack $statusScroll -side right -fill y
     pack $statusSensorNameFrame -side left -fill both -expand true
-    pack $statusSensorSidFrame $statusSensorIPFrame $statusSensorLastAlertFrame\
+    pack $statusSensorSidFrame $statusSensorLastAlertFrame\
          $statusSensorConnectFrame $statusSensorBarnyardFrame -side left -fill y
 
 pack $sensorStatusFrame -side top -fill both -expand true

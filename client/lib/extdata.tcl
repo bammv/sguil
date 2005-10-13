@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.24 2005/10/13 16:28:28 bamm Exp $
+# $Id: extdata.tcl,v 1.25 2005/10/13 18:35:47 bamm Exp $
 
 proc GetRuleInfo {} {
   global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
@@ -796,8 +796,8 @@ proc SensorStatusUpdate { statusList } {
         $statusSensorSidList itemconfigure end -background $bColor
 
         # Sensor IP Addr
-        $statusSensorIPList insert end [lindex $sensorStatusArray($sensorName) 1]
-        $statusSensorIPList itemconfigure end -background $bColor
+        #$statusSensorIPList insert end [lindex $sensorStatusArray($sensorName) 1]
+        #$statusSensorIPList itemconfigure end -background $bColor
 
         # Sensor Agent Connected/Disconnected
         if { [lindex $sensorStatusArray($sensorName) 2] } {
@@ -846,11 +846,16 @@ proc DeleteCurrentStatusList {} {
     global statusSensorNameList statusSensorSidList statusSensorIPList statusSensorConnectList
     global statusSensorBarnyardList statusSensorLastAlertList
 
-    foreach tmpList [list $statusSensorNameList $statusSensorSidList $statusSensorIPList \
+    foreach tmpList [list $statusSensorNameList $statusSensorSidList \
                     $statusSensorConnectList $statusSensorBarnyardList $statusSensorLastAlertList] {
 
         $tmpList delete 0 end
 
     }
+
+}
+proc SensorStatusIPAddr {} {
+
+    return [GetCurrentTimeStamp]
 
 }
