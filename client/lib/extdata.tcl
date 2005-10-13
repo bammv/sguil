@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.25 2005/10/13 18:35:47 bamm Exp $
+# $Id: extdata.tcl,v 1.26 2005/10/13 19:37:28 bamm Exp $
 
 proc GetRuleInfo {} {
   global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
@@ -761,7 +761,7 @@ proc NessusLoad { } {
 }
 proc SensorStatusRequest {} {
 
-    global STATUS_UPDATE
+    global STATUS_UPDATE CONNECTED
 
     if { ![info exists STATUS_UPDATE]} {
 
@@ -769,7 +769,12 @@ proc SensorStatusRequest {} {
 
     }
 
-    SendToSguild "SendClientSensorStatusInfo"
+    if { $CONNECTED } {
+
+        SendToSguild "SendClientSensorStatusInfo"
+
+    }
+
     after [expr $STATUS_UPDATE * 1000] SensorStatusRequest
 
 }
