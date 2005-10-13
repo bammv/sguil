@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.42 2005/10/11 21:20:49 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.43 2005/10/13 15:51:56 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -670,7 +670,7 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
     }
     return error
   }
-  if {$proto == "1"} {
+  if {$proto != "6" && $proto != "17"} {
     set tcpdumpFilter "host $srcIP and host $dstIP and proto $proto"
   } else {
     set tcpdumpFilter "host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto"
