@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.44 2005/10/13 20:16:04 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.45 2005/10/13 20:18:24 bamm Exp $ #
 
 # Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -602,7 +602,7 @@ proc RawDataRequest { socketID TRANS_ID sensor timestamp srcIP dstIP srcPort dst
 }
 
 proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto rawDataFileName type } {
-  global RAW_LOG_DIR DEBUG TCPDUMP TMP_DIR
+  global RAW_LOG_DIR DEBUG TCPDUMP TMP_DIR VLAN
   set date [lindex $timestamp 0]
   if { [file exists $RAW_LOG_DIR/$date] && [file isdirectory $RAW_LOG_DIR/$date] } {
     if { $type == "xscript" } {
