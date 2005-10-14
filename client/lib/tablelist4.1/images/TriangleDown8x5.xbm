@@ -1,0 +1,4 @@
+#define TriangleDown8x5_width 8
+#define TriangleDown8x5_height 5
+static unsigned char TriangleDown8x5_bits[] = {
+   0xff, 0xff, 0x7e, 0x3c, 0x18};

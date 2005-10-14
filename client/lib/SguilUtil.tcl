@@ -1,4 +1,4 @@
-# $Id: SguilUtil.tcl,v 1.16 2005/03/09 22:16:35 shalligan Exp $
+# $Id: SguilUtil.tcl,v 1.17 2005/10/14 21:18:43 bamm Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
@@ -370,3 +370,16 @@ proc DecodeSFPPayload { payload } {
     }
     return $SFPList
 }
+
+#
+# ldelete: Delete item from a list
+#
+proc ldelete { list value } {
+  set ix [lsearch -exact $list $value]
+  if {$ix >= 0} {
+    return [lreplace $list $ix $ix]
+  } else {
+    return $list
+  }
+}
+

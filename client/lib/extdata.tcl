@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.26 2005/10/13 19:37:28 bamm Exp $
+# $Id: extdata.tcl,v 1.27 2005/10/14 21:18:43 bamm Exp $
 
 proc GetRuleInfo {} {
   global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
@@ -778,89 +778,65 @@ proc SensorStatusRequest {} {
     after [expr $STATUS_UPDATE * 1000] SensorStatusRequest
 
 }
-
+ 
 proc SensorStatusUpdate { statusList } {
 
-    global sensorStatusArray
-    global statusSensorNameList statusSensorSidList statusSensorIPList statusSensorConnectList
-    global statusSensorBarnyardList statusSensorLastAlertList
-    global COLOR1 COLOR2 COLOR3
+    global sensorStatusTable
+
+    # Get currently selected index
+    set sIndex [$sensorStatusTable curselection]
+    # Map it back to a sensor id (in case this is a sort that changes)
+    if { $sIndex != "" }  {
+
+        set tmpSid [$sensorStatusTable getcells [list ${sIndex},1]]
+
+    }
+
+
+    # And what our last sort was on
+    set sortColumn [$sensorStatusTable sortcolumn]
+    if { $sortColumn >= 0 } { set sortOrder [$sensorStatusTable sortorder] }
 
     array set sensorStatusArray [lindex $statusList 0]
 
-    DeleteCurrentStatusList
-    set bColor $COLOR1
+    # Clear the current list
+    $sensorStatusTable delete 0 end
+
     foreach sensorName [lsort [array names sensorStatusArray]] {
 
-        # Sensor Name
-        $statusSensorNameList insert end $sensorName
-        $statusSensorNameList itemconfigure end -background $bColor
+        # tmpList is sans IP addr
+        set tmpList [lrange $sensorStatusArray($sensorName) 0 3]
+        $sensorStatusTable insert end [lrange [linsert $tmpList 0 $sensorName] 0 2]
+        $sensorStatusTable cellconfigure end,3 -window "CreateStatusLabel [lindex $tmpList 2]"
+        $sensorStatusTable cellconfigure end,4 -window "CreateStatusLabel [lindex $tmpList 3]"
 
-        # Sensor Sid
-        $statusSensorSidList insert end [lindex $sensorStatusArray($sensorName) 0]
-        $statusSensorSidList itemconfigure end -background $bColor
+    }
 
-        # Sensor IP Addr
-        #$statusSensorIPList insert end [lindex $sensorStatusArray($sensorName) 1]
-        #$statusSensorIPList itemconfigure end -background $bColor
+    # Resort if needed
+    if { $sortColumn >= 0 } {
 
-        # Sensor Agent Connected/Disconnected
-        if { [lindex $sensorStatusArray($sensorName) 2] } {
+        $sensorStatusTable sortbycolumn $sortColumn -$sortOrder
 
-            $statusSensorConnectList insert end Connected
-            $statusSensorConnectList itemconfigure end -background darkgreen
+    }
+    # Reselect previous selected sensor.
+    if { $sIndex != "" } {
 
-        } else {
-
-            $statusSensorConnectList insert end Disconnected
-            $statusSensorConnectList itemconfigure end -background darkred
-
-        }
-
-        # Barnyard Connected/Disconnected
-        if { [lindex $sensorStatusArray($sensorName) 3] } {
-
-            $statusSensorBarnyardList insert end Connected
-            $statusSensorBarnyardList itemconfigure end -background darkgreen
-
-        } else {
-
-            $statusSensorBarnyardList insert end Disconnected
-            $statusSensorBarnyardList itemconfigure end -background darkred
-
-        }
-
-        # Sensor Last Alert 
-        $statusSensorLastAlertList insert end [lindex $sensorStatusArray($sensorName) 4]
-        $statusSensorLastAlertList itemconfigure end -background $bColor
-
-        if { $bColor == $COLOR1 } {
-            set bColor $COLOR2 
-        } elseif { $bColor == $COLOR2 } {
-            set bColor $COLOR3
-        } else {
-            set bColor $COLOR1
-        }
+        set newIndex [lsearch -exact [$sensorStatusTable getcolumns 1] $tmpSid]
+        if { $newIndex >= 0 } { $sensorStatusTable selection set $newIndex }
 
     }
 
 }
 
-proc DeleteCurrentStatusList {} {
+proc CreateStatusLabel { status tableName row col win } {
 
-    global statusSensorNameList statusSensorSidList statusSensorIPList statusSensorConnectList
-    global statusSensorBarnyardList statusSensorLastAlertList
+    if { $status == 1 } {
 
-    foreach tmpList [list $statusSensorNameList $statusSensorSidList \
-                    $statusSensorConnectList $statusSensorBarnyardList $statusSensorLastAlertList] {
+        label $win -text "UP" -background green -relief raised -width 5
 
-        $tmpList delete 0 end
+    } else {
+
+        label $win -text "DOWN" -background red -relief raised -width 5
 
     }
-
-}
-proc SensorStatusIPAddr {} {
-
-    return [GetCurrentTimeStamp]
-
 }
