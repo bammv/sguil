@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.14 2005/10/11 21:17:11 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.15 2005/10/14 21:21:04 bamm Exp $ #
 
 proc SendSensorAgent { socketID msg } {
 
@@ -145,7 +145,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
     # Update last event rcvd time
     if [info exists sensorStatusArray($sensorName)] {
 
-        set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 4 4 $timestamp]
+        set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 1 1 $timestamp]
 
     }
 

@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.11 2005/10/13 19:53:07 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.12 2005/10/14 21:21:04 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -92,13 +92,11 @@ proc SensorAgentInit { socketID sensorName barnyardStatus} {
 
     if { [info exists sensorStatusArray($sensorName)] } {
 
-        #set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 2 3 [GetCurrentTimeStamp] $barnyardStatus]
         set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 2 3 1 $barnyardStatus]
 
     } else { 
 
         # TEMPORARY
-        #set sensorStatusArray($sensorName) [list $sensorID Unknown [GetCurrentTimeStamp] $barnyardStatus None]
         set sensorStatusArray($sensorName) [list $sensorID Unknown 1 $barnyardStatus None]
 
     }

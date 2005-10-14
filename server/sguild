@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.155 2005/10/13 16:27:13 bamm Exp $ #
+# $Id: sguild,v 1.156 2005/10/14 21:21:04 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -525,7 +525,7 @@ foreach sensorName $sensorList {
 
     # Format sid ip agent barnyard lastAlert
     # agent/by == time of connect or 0 if disconnected.
-    set sensorStatusArray($sensorName) [list $sensorSid $sensorIP 0 0 $lastAlert]
+    set sensorStatusArray($sensorName) [list $sensorSid $lastAlert 0 0 $sensorIP]
 
 }
 
