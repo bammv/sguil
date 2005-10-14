@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.181 2005/10/13 18:35:47 bamm Exp $ #
+# $Id: sguil.tk,v 1.182 2005/10/14 21:19:42 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -263,7 +263,7 @@ proc ChangeSensors {} {
 proc SendToSguild { data } {
   global socketID CONNECTED
   if {!$CONNECTED} {
-     ErrorMessage "Not connected to sguild. Unable to process this request."
+     ErrorMessage "Not connected to sguild. Unable to process this request.\n\n$data"
   } else {
     if [catch {puts $socketID $data} errorCheck] {
       catch {close $socketID} tmpError
@@ -1653,6 +1653,10 @@ source $SGUILLIB/sound.tcl
 source $SGUILLIB/SguilToolTip.tcl
 source $SGUILLIB/SguilUtil.tcl
 
+# Load TableList
+source $SGUILLIB/tablelist4.1/tablelistPublic.tcl
+source $SGUILLIB/tablelist4.1/tablelist.tcl
+
 if { $WHOIS_PATH == "SimpleWhois" } {
   source $SGUILLIB/whois.tcl
 }
@@ -1666,6 +1670,16 @@ wm withdraw .
 option add *textBackground white
 option add *selectBackground $SELECTBACKGROUND
 option add *selectForeground $SELECTFOREGROUND
+option add *Tablelist.activeStyle       frame
+option add *Tablelist.background        gray98
+option add *Tablelist.stripeBackground  #e0e8f0
+option add *Tablelist.setGrid           yes
+option add *Tablelist.movableColumns    yes
+option add *Tablelist.showArrow         no
+option add *Tablelist.labelCommand      tablelist::sortByColumn
+option add *Tablelist.labelForeground   white
+option add *Tablelist.labelBackground   black
+
 
 set topFrame [frame .topFrame]
   set fileMenu [menubutton $topFrame.fileMenu -text File -underline 0 -menu $topFrame.fileMenu.menu]
@@ -1992,77 +2006,29 @@ $whoisNoneButton invoke
 #
 # Sensor Status Tab
 #
-set sensorStatusFrame [frame [$detailTabs childsite 1].sensorStatusFrame]
 
-    set statusSensorNameFrame [frame $sensorStatusFrame.statusSensorNameFrame]
-        set statusSensorNameLabel [label $statusSensorNameFrame.label \
-            -text "Sensor" -background black -foreground white -anchor w]
-        set statusSensorNameList [listbox $statusSensorNameFrame.list -width 10 -height 5 -borderwidth 0\
-            -background white -exportselection false -yscrollcommand "$sensorStatusFrame.scroll set"]
-        pack $statusSensorNameLabel -side top -fill x 
-        pack $statusSensorNameList -side bottom -fill both -expand true
-        # Disable item selecting
-	bind $statusSensorNameList <Button-1> { break }
+set sensorStatusTable [$detailTabs childsite 1].sensorStatusTable
+set sensorStatusScroll [$detailTabs childsite 1].sensorStatusScroll
 
-    set statusSensorSidFrame [frame $sensorStatusFrame.statusSensorSidFrame]
-        set statusSensorSidLabel [label $statusSensorSidFrame.label \
-            -text "SID" -background black -foreground white -anchor w]
-        set statusSensorSidList [listbox $statusSensorSidFrame.list -width 3 -height 5 -borderwidth 0\
-            -background white -exportselection false -yscrollcommand "$sensorStatusFrame.scroll set"]
-        pack $statusSensorSidLabel -side top -fill x
-        pack $statusSensorSidList -side bottom -fill y -expand true
-	bind $statusSensorSidList <Button-1>  { break }
+tablelist::tablelist $sensorStatusTable \
+    -columns {10 "Sensor"     left
+              3  "Sid"        center
+              20 "Last Alert" center
+              6  "Agent"      center
+              6  "BY"         center}   \
+    -stretch all                        \
+    -yscrollcommand [list $sensorStatusScroll set] -width 0
 
-# Gonna do something else with the IP for now.
-#    set statusSensorIPFrame [frame $sensorStatusFrame.statusSensorIPFrame]
-#        set statusSensorIPLabel [label $statusSensorIPFrame.label \
-#            -text "IP Addr" -background black -foreground white -anchor w]
-#        set statusSensorIPList [listbox $statusSensorIPFrame.list -width 15 -height 5 -borderwidth 0\
-#            -background white -exportselection false -yscrollcommand "$sensorStatusFrame.scroll set"]
-#        pack $statusSensorIPLabel -side top -fill x
-#        pack $statusSensorIPList -side bottom -fill y -expand true
-#	bind $statusSensorIPList <Button-1> { break }
+$sensorStatusTable columnconfigure 0 -name sensorName -sortmode ascii -resizable 1 -stretchable 1
+$sensorStatusTable columnconfigure 1 -name sensorSid -sortmode integer -resizable 0
+$sensorStatusTable columnconfigure 2 -name sensorLastAlert -sortmode ascii -resizable 0
+$sensorStatusTable columnconfigure 3 -name sensorAgent -resizable 0 -sortmode dictionary
+$sensorStatusTable columnconfigure 4 -name sensorBY -resizable 0 -sortmode dictionary
 
-    set statusSensorConnectFrame [frame $sensorStatusFrame.statusSensorConnectFrame]
-        set statusSensorConnectLabel [label $statusSensorConnectFrame.label \
-            -text "Agent" -background black -foreground white -anchor w]
-        set statusSensorConnectList [listbox $statusSensorConnectFrame.list -width 12 -height 5 -borderwidth 0\
-            -background white -exportselection false -yscrollcommand "$sensorStatusFrame.scroll set"]
-        pack $statusSensorConnectLabel -side top -fill x
-        pack $statusSensorConnectList -side bottom -fill y -expand true
-	bind $statusSensorConnectList <Button-1> { break }
+scrollbar $sensorStatusScroll -orient vertical -width 10 -command [list $sensorStatusTable yview]
 
-    set statusSensorBarnyardFrame [frame $sensorStatusFrame.statusSensorBarnyardFrame]
-        set statusSensorBarnyardLabel [label $statusSensorBarnyardFrame.label \
-            -text "Barnyard" -background black -foreground white -anchor w]
-        set statusSensorBarnyardList [listbox $statusSensorBarnyardFrame.list -width 12 -height 5 -borderwidth 0\
-            -background white -exportselection false -yscrollcommand "$sensorStatusFrame.scroll set"]
-        pack $statusSensorBarnyardLabel -side top -fill x
-        pack $statusSensorBarnyardList -side bottom -fill y -expand true
-	bind $statusSensorBarnyardList <Button-1> { break }
-
-    set statusSensorLastAlertFrame [frame $sensorStatusFrame.statusSensorLastAlertFrame]
-        set statusSensorLastAlertLabel [label $statusSensorLastAlertFrame.label -text "Last Alert"\
-            -background black -foreground white -anchor w]
-        set statusSensorLastAlertList [listbox $statusSensorLastAlertFrame.list -width 20 -height 5 -borderwidth 0\
-            -background white -exportselection false -yscrollcommand "$sensorStatusFrame.scroll set"]
-        pack $statusSensorLastAlertLabel -side top -fill x
-        pack $statusSensorLastAlertList -side bottom -fill y -expand true
-	bind $statusSensorLastAlertList <Button-1>  { break }
-
-    set statusScroll [scrollbar $sensorStatusFrame.scroll\
-        -command \
-        "MultiScrollBar \
-          \"$statusSensorNameList $statusSensorSidList \
-            $statusSensorConnectList $statusSensorBarnyardList $statusSensorLastAlertList\""\
-        -width 10]
-
-    pack $statusScroll -side right -fill y
-    pack $statusSensorNameFrame -side left -fill both -expand true
-    pack $statusSensorSidFrame $statusSensorLastAlertFrame\
-         $statusSensorConnectFrame $statusSensorBarnyardFrame -side left -fill y
-
-pack $sensorStatusFrame -side top -fill both -expand true
+pack $sensorStatusTable -side left -fill both -expand true
+pack $sensorStatusScroll -side right -fill y
 
 set systemInfoFrame [frame [$detailTabs childsite 2].systemInfoFrame]
 set systemInfoText [scrolledtext $systemInfoFrame.systemInfoText -vscrollmode static -hscrollmode dynamic\
