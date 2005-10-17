@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.28 2005/10/17 14:53:59 bamm Exp $
+# $Id: extdata.tcl,v 1.29 2005/10/17 18:12:54 bamm Exp $
 
 proc GetRuleInfo {} {
   global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
@@ -802,13 +802,24 @@ proc SensorStatusUpdate { statusList } {
     # Clear the current list
     $sensorStatusTable delete 0 end
 
+    set sensorNameIndex [$sensorStatusTable columnindex sensorName]
+    set sensorSidIndex [$sensorStatusTable columnindex sensorSid]
+    set sensorLastAlertIndex [$sensorStatusTable columnindex sensorLastAlert]
+    set sensorAgentIndex [$sensorStatusTable columnindex sensorAgent]
+    set sensorBYIndex [$sensorStatusTable columnindex sensorBY]
+
     foreach sensorName [lsort [array names sensorStatusArray]] {
 
-        # tmpList is sans IP addr
-        set tmpList [lrange $sensorStatusArray($sensorName) 0 3]
-        $sensorStatusTable insert end [linsert $tmpList 0 $sensorName]
-        $sensorStatusTable cellconfigure end,3 -window "CreateStatusLabel [lindex $tmpList 2]"
-        $sensorStatusTable cellconfigure end,4 -window "CreateStatusLabel [lindex $tmpList 3]"
+        set tmpList [list "" "" "" "" ""]
+        set tmpList [lreplace $tmpList $sensorNameIndex $sensorNameIndex $sensorName]
+        set tmpList [lreplace $tmpList $sensorSidIndex $sensorSidIndex [lindex $sensorStatusArray($sensorName) 0]]
+        set tmpList [lreplace $tmpList $sensorLastAlertIndex $sensorLastAlertIndex [lindex $sensorStatusArray($sensorName) 1]]
+        set tmpList [lreplace $tmpList $sensorAgentIndex $sensorAgentIndex [lindex $sensorStatusArray($sensorName) 2]]
+        set tmpList [lreplace $tmpList $sensorBYIndex $sensorBYIndex [lindex $sensorStatusArray($sensorName) 3]]
+
+        $sensorStatusTable insert end $tmpList
+        $sensorStatusTable cellconfigure end,sensorAgent -window "CreateStatusLabel [lindex $tmpList $sensorAgentIndex]"
+        $sensorStatusTable cellconfigure end,sensorBY -window "CreateStatusLabel [lindex $tmpList $sensorBYIndex]"
 
     }
 

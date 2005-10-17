@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.187 2005/10/17 17:07:56 bamm Exp $ #
+# $Id: sguil.tk,v 1.188 2005/10/17 18:12:54 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1674,7 +1674,7 @@ option add *Tablelist.activeStyle       frame
 option add *Tablelist.background        gray98
 option add *Tablelist.stripeBackground  #e0e8f0
 option add *Tablelist.setGrid           yes
-option add *Tablelist.movableColumns    no
+option add *Tablelist.movableColumns    yes
 option add *Tablelist.showArrow         no
 option add *Tablelist.labelCommand      tablelist::sortByColumn
 option add *Tablelist.labelForeground   white
