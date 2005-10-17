@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.185 2005/10/17 14:53:59 bamm Exp $ #
+# $Id: sguil.tk,v 1.186 2005/10/17 16:34:28 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2006,9 +2006,11 @@ $whoisNoneButton invoke
 #
 # Sensor Status Tab
 #
+set sensorStatusTableFrame [$detailTabs childsite 1].tableFrame
+frame $sensorStatusTableFrame
 
-set sensorStatusTable [$detailTabs childsite 1].sensorStatusTable
-set sensorStatusScroll [$detailTabs childsite 1].sensorStatusScroll
+set sensorStatusTable $sensorStatusTableFrame.sensorStatusTable
+set sensorStatusScroll $sensorStatusTableFrame.sensorStatusScroll
 
 tablelist::tablelist $sensorStatusTable \
     -columns {10 "Sensor"     left
@@ -2029,6 +2031,26 @@ scrollbar $sensorStatusScroll -orient vertical -width 10 -command [list $sensorS
 
 pack $sensorStatusTable -side left -fill both -expand true
 pack $sensorStatusScroll -side right -fill y
+
+set sensorStatusUpdateFrame [$detailTabs childsite 1].updateFrame
+frame $sensorStatusUpdateFrame
+set sensorStatusUpdateInterval $sensorStatusUpdateFrame.intervalComboBox
+set sensorStatusUpdateButton $sensorStatusUpdateFrame.updateButton
+
+combobox $sensorStatusUpdateInterval        \
+    -labeltext "Update Interval (secs): "\
+    -textvariable STATUS_UPDATE         \
+    -editable 1 -width 5
+
+$sensorStatusUpdateInterval insert list end 15 30 60 120 300
+
+button $sensorStatusUpdateButton -text NOW -command "SendToSguild SendClientSensorStatusInfo"
+pack $sensorStatusUpdateInterval $sensorStatusUpdateButton -side left
+
+pack $sensorStatusTableFrame -side top -fill both -expand true
+pack $sensorStatusUpdateFrame -side bottom -anchor e
+
+if { ![info exists STATUS_UPDATE] || $STATUS_UPDATE == "" } { set STATUS_UPDATE 15 } 
 
 set systemInfoFrame [frame [$detailTabs childsite 2].systemInfoFrame]
 set systemInfoText [scrolledtext $systemInfoFrame.systemInfoText -vscrollmode static -hscrollmode dynamic\
