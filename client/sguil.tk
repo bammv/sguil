@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.182 2005/10/14 21:19:42 bamm Exp $ #
+# $Id: sguil.tk,v 1.183 2005/10/17 14:07:15 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1650,7 +1650,7 @@ source $SGUILLIB/guilib.tcl
 source $SGUILLIB/extdata.tcl
 source $SGUILLIB/sancp.tcl
 source $SGUILLIB/sound.tcl
-source $SGUILLIB/SguilToolTip.tcl
+#source $SGUILLIB/SguilToolTip.tcl
 source $SGUILLIB/SguilUtil.tcl
 
 # Load TableList
