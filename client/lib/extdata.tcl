@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.27 2005/10/14 21:18:43 bamm Exp $
+# $Id: extdata.tcl,v 1.28 2005/10/17 14:53:59 bamm Exp $
 
 proc GetRuleInfo {} {
   global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
@@ -806,7 +806,7 @@ proc SensorStatusUpdate { statusList } {
 
         # tmpList is sans IP addr
         set tmpList [lrange $sensorStatusArray($sensorName) 0 3]
-        $sensorStatusTable insert end [lrange [linsert $tmpList 0 $sensorName] 0 2]
+        $sensorStatusTable insert end [linsert $tmpList 0 $sensorName]
         $sensorStatusTable cellconfigure end,3 -window "CreateStatusLabel [lindex $tmpList 2]"
         $sensorStatusTable cellconfigure end,4 -window "CreateStatusLabel [lindex $tmpList 3]"
 
@@ -840,3 +840,5 @@ proc CreateStatusLabel { status tableName row col win } {
 
     }
 }
+
+proc EmptyString val { return "" }
