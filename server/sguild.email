@@ -1,4 +1,4 @@
-# $Id: sguild.email,v 1.1 2005/09/28 15:45:49 bamm Exp $ #
+# $Id: sguild.email,v 1.2 2005/10/24 15:44:59 bamm Exp $ #
 
 #
 # Configuration details for emailing alerts goes here.
@@ -26,7 +26,7 @@ set EMAIL_SUBJECT "RT Event From %sn"
 # %sn=sensor name %msg=snort message %t=timestamp %sip=src ip %dip=dest ip
 # %sp=src port %dp=dst port %shost=src hostname %dhost=dst hostname
 # %eid=event id (sid.cid)
-set EMAIL_MSG "\[%t\] ALERT %eid from %sn: %msg. %sip(%shost):%sp -> %dip(%dhost):%dp"
+set EMAIL_MSG "\[%t\] ALERT %eid from %sn: %msg. %sip (%shost):%sp -> %dip (%dhost):%dp"
                                                                                                                               
 # EMAIL_CLASSES: Space delimited classifications from the snort classification.conf that
 # you want to be emailed (paged) when an event matching that category triggers.
