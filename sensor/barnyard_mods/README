@@ -1,19 +1,44 @@
-Quick guide on how to use the patch_barnyard.sh script.
+# $Id: README,v 1.2 2005/10/26 22:09:50 bamm Exp $ #
 
-This script assumes that you have installed the sguil tarball/cvs tree
-(the whole tree) on the machine you build barnyard on. You run it
-as:
+Barnyard again requires patching to work with the latest
+version of Sguil (0.6.0).
 
-./patch_barnyard.sh /path/where/you/have/the/barnyard/source/tree \
-/path/where/you/have/sguil/source/tree
+Here is the quick and dirty. Make sure you start with
+a clean barnyard-0.2.0 tree.
 
-Example:
+1) Copy configure.in to $PATH/barnyard-0.2.0
 
-./patch_barnyard.sh /usr/local/src/barnyard /usr/local/src/sguil
+2) Copy op_sguil.c, op_sguil.h, op_plugbase.c.patch
+   to $PATH/barnyard-0.2.0/src/output-plugins
 
-If you only copied the 'barnyard_mods' directory to your
-sensor you have to apply the patch by hand. 
+3) Execute `patch op_plugbase.c < op_plugbase.c.patch`
+   in the $PATH/barnyard-0.2.0/src/output-plugins dir.
 
-1) Copy op_sguil.* to barnyard/src/output-plugins/
-2) Change directory to the root directory of barnyard source
-3) Execute 'patch -p0 < /path/to/barnyard.patch'
+4) Run the 'autojunk.sh' script in $PATH/barnyard-0.2.0.
+
+5) Configure barnyard: ./configure --enable-tcl
+   NOTE: Watch the output from this command. If the
+   configure script cannot find tclConfig.sh, it will
+   complain. If it does, then locate the tclConfig.sh
+   yourself (find / -name tclConfig.sh -print) and
+   use the --with-tcl option along with --enable-tcl.
+   I.E. If tclConfig.sh is in /usr/local/lib/tcl8.4/tclConfig.sh
+  then use:
+  ./configure --enable-tcl --with-tcl=/usr/local/lib/tcl8.4
+
+6) Now build the barnyard binary. You should see the argument
+   -DENABLE_TCL being passed to your compiler. If not, barnyard
+   will complain about sguil not being a valid output plugin when
+   started.
+
+7) Finally, the sguil output plugin does not require any additional
+   arguments in the barnyard.conf. Enable it like so:
+   output sguil
+   NOTE: Do NOT append a colon.
+
+
+If you have any problems, contact me on the sguil-users mailing list
+or in #snort-gui on irc.freenode.net
+
+
+Bammkkkk
