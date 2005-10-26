@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.156 2005/10/14 21:21:04 bamm Exp $ #
+# $Id: sguild,v 1.157 2005/10/26 21:44:44 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -297,6 +297,7 @@ set sourceLibs {
     SguildSensorCmdRcvd.tcl    \
     SguildTranscript.tcl       \
     SguildUtils.tcl            \
+    SguildMysqlMerge.tcl       \
 }
 
 # Override config file if -l was specified on cmd line
@@ -454,7 +455,13 @@ if { [lsearch $DB_VERSION $currentDBVer] < 0 } {
     the src that came with sguild for scripts to help you upgrade"
 }
 
-#mysqlclose $MAIN_DB_SOCKETID
+# Init Mysql Merge tables
+if [ catch {InitializeMysqlMergeTables} tmpError ] {
+
+    ErrorMessage $tmpError
+
+}
+
 # End DB checks
 
 # Fork a child to load PS/SSN info
@@ -489,22 +496,7 @@ set AUTOID [GetUserID auto]
 # Initialize some vars
 set eventIDList ""
 
-# Open the main connection the the DB back up.
-if [catch {eval mysqlconnect $connectCmd} MAIN_DB_SOCKETID] {
-  LogMessage "ERROR: Unable to connect to $DBHOST on $DBPORT: Make sure mysql is running."
-  ErrorMessage "$MAIN_DB_SOCKETID"
-}
-if { [catch {mysqluse $MAIN_DB_SOCKETID $DBNAME} noDBError] } {
-  ErrorMessage "Error: $noDBError"
-}
-
 LogMessage "Retrieving DB info..." 
-set tableNameList [mysqlinfo $MAIN_DB_SOCKETID tables]
-regsub -all {sancp_\S+\s} $tableNameList {} newList
-set tableNameList $newList
-foreach tableName $newList {
-  set tableArray($tableName) [mysqlcol $MAIN_DB_SOCKETID $tableName {name type length}]
-}
 
 set sensorQuery "SELECT hostname FROM sensor ORDER BY hostname ASC"
 set sensorList [FlatDBQuery $sensorQuery]
@@ -519,9 +511,13 @@ foreach sensorName $sensorList {
     set sensorIP [lindex [FlatDBQuery $tmpQuery] 0]
     if { $sensorIP == "" } { set sensorIP "Unknown" }
 
-    set tmpQuery "SELECT MAX(timestamp) FROM event WHERE sid=$sensorSid"
-    set lastAlert [lindex [FlatDBQuery $tmpQuery] 0]
-    if { $lastAlert == "" } { set lastAlert None }
+    if { $mergeTableListArray(event) != "" } {
+        set tmpQuery "SELECT MAX(timestamp) FROM event WHERE sid=$sensorSid"
+        set lastAlert [lindex [FlatDBQuery $tmpQuery] 0]
+        if { $lastAlert == "" } { set lastAlert None }
+    } else {
+        set lastAlert None
+    }
 
     # Format sid ip agent barnyard lastAlert
     # agent/by == time of connect or 0 if disconnected.
@@ -529,55 +525,89 @@ foreach sensorName $sensorList {
 
 }
 
-# Get the archived alerts
-LogMessage "Querying DB for archived events..."
-InfoMessage  "SELECT event.status, event.priority, event.class, sensor.hostname, \
-    event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), \
-    INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, \
-    sensor WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp ASC"
+if { $mergeTableListArray(event) != "" } {
 
-foreach row [mysqlsel $MAIN_DB_SOCKETID "SELECT event.status, \
-    event.priority, event.class, sensor.hostname, event.timestamp, \
-    event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), \
-    INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, \
-    event.dst_port, event.signature_id, event.signature_rev, event.unified_event_id, unified_event_ref \
-    FROM event, sensor WHERE event.sid=sensor.sid \
-    AND event.status=0 ORDER BY event.timestamp ASC" -list] {
+    # Get the archived alerts
+    LogMessage "Querying DB for archived events..."
+    set tmpQry "SELECT event.status, event.priority, event.class, sensor.hostname,       \n\
+                event.timestamp, event.sid, event.cid, event.signature,                  \n\
+                INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto,        \n\
+                event.src_port, event.dst_port, event.signature_id, event.signature_rev, \n\
+                event.unified_event_id, unified_event_ref                                \n\
+                FROM event, sensor                                                       \n\
+                WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp ASC"
+
+    InfoMessage "$tmpQry"
+
+    foreach row [mysqlsel $MAIN_DB_SOCKETID $tmpQry -list] {
   
-    InfoMessage "Archived Alert: $row"
-    set LAST_EVENT_ID([lindex $row 3]) "[lindex $row 5].[lindex $row 6]"
-    if { ![array exists acRules] || ![AutoCat $row] } {
-	set matchAID [CorrelateEvent [lindex $row 5] [lindex $row 8] [lindex $row 7] [lindex $row 15] [lindex $row 16]]
-	if { $matchAID == 0 } {
-	    AddEventToEventArray $row
-	} else {
-	    # Add event to parents list
-	    lappend correlatedEventArray($matchAID) $row
-	    lappend correlatedEventIDArray($matchAID) [lindex $row 13]
-	    # Bump the parents count
-	    incr eventIDCountArray($matchAID)
-	}
+        InfoMessage "Archived Alert: $row"
+        set LAST_EVENT_ID([lindex $row 3]) "[lindex $row 5].[lindex $row 6]"
+
+        if { ![array exists acRules] || ![AutoCat $row] } {
+
+            set matchAID [CorrelateEvent [lindex $row 5] [lindex $row 8] [lindex $row 7] [lindex $row 15] [lindex $row 16]]
+
+            if { $matchAID == 0 } {
+
+                AddEventToEventArray $row
+
+            } else {
+
+                # Add event to parents list
+                lappend correlatedEventArray($matchAID) $row
+                lappend correlatedEventIDArray($matchAID) [lindex $row 13]
+                # Bump the parents count
+                incr eventIDCountArray($matchAID)
+
+            }
+
+        }
+
     }
-}
 
-LogMessage "Querying DB for escalated events..."
-InfoMessage "SELECT event.status, event.priority, event.class, \
-    sensor.hostname, event.timestamp, event.sid, event.cid, \
-    event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), \
-    event.ip_proto, event.src_port, event.dst_port FROM event, sensor \
-    WHERE event.sid=sensor.sid AND event.status=2 ORDER BY event.timestamp ASC"
+    LogMessage "Querying DB for escalated events..."
+    set tmpQry "SELECT event.status, event.priority, event.class, sensor.hostname,      \n\
+                event.timestamp, event.sid, event.cid, event.signature,                 \n\
+                INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto,       \n\
+                event.src_port, event.dst_port                                          \n\
+                FROM event, sensor                                                      \n\
+                WHERE event.sid=sensor.sid AND event.status=2 ORDER BY event.timestamp ASC"
 
-foreach row [mysqlsel $MAIN_DB_SOCKETID "SELECT event.status, event.priority, \
-    event.class, sensor.hostname, event.timestamp, event.sid, event.cid, \
-    event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), \
-    event.ip_proto, event.src_port, event.dst_port FROM event, sensor \
-    WHERE event.sid=sensor.sid AND event.status=2 ORDER BY event.timestamp ASC" -list] {
+    InfoMessage $tmpQry
+
+    foreach row [mysqlsel $MAIN_DB_SOCKETID $tmpQry -list] {
     
-    InfoMessage "Escalated Event: $row"
-    set escalatedEventID "[lindex $row 5].[lindex $row 6]"
-    lappend escalateIDList $escalatedEventID
-    set escalateArray($escalatedEventID) $row
+        InfoMessage "Escalated Event: $row"
+        set escalatedEventID "[lindex $row 5].[lindex $row 6]"
+        lappend escalateIDList $escalatedEventID
+        set escalateArray($escalatedEventID) $row
+    }
+
+} else {
+
+    LogMessage "Warning: Event table appears to be empty."
+    LogMessage "If this is a new DB, then you can safely ignore this warning."
+
 }
+
+# Get DB info (table names and column info)
+LogMessage "Retrieving DB info..." 
+set tableNameList [mysqlinfo $MAIN_DB_SOCKETID tables]
+# Clean up the PiMPDB tables
+regsub -all {event_\S+\s} $tableNameList {} tableNameList
+regsub -all {tcphdr_\S+\s} $tableNameList {} tableNameList
+regsub -all {udphdr_\S+\s} $tableNameList {} tableNameList
+regsub -all {icmphdr_\S+\s} $tableNameList {} tableNameList
+regsub -all {data_\S+\s} $tableNameList {} tableNameList
+regsub -all {sancp_\S+\s} $tableNameList {} tableNameList
+foreach tableName $tableNameList {
+  set tableArray($tableName) [mysqlcol $MAIN_DB_SOCKETID $tableName {name type length}]
+}
+
+set sensorQuery "SELECT hostname FROM sensor"
+set sensorList [FlatDBQuery $sensorQuery]
+
 # Open a socket for clients to connect to
 if { [info exists BIND_CLIENT_IP_ADDR] && $BIND_CLIENT_IP_ADDR != "" } {
   set clientSocketCmd "socket -server ClientConnect -myaddr $BIND_CLIENT_IP_ADDR $SERVERPORT"

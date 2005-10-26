@@ -1,4 +1,4 @@
-# $Id: SguildUtils.tcl,v 1.10 2005/09/28 18:40:22 bamm Exp $ #
+# $Id: SguildUtils.tcl,v 1.11 2005/10/26 21:44:44 bamm Exp $ #
 
 proc Daemonize {} {
     global PID_FILE env LOGGER
@@ -274,7 +274,7 @@ proc InfoMessage { msg } {
 	if { $DAEMON && [string length $LOGGER] > 0 } {
 	    Syslog $msg info
 	} else {
-	    puts "pid([pid]) $msg"
+	    puts "pid([pid])  $msg"
 	}
     }
 }
@@ -288,7 +288,7 @@ proc LogMessage { msg } {
 	if { $DAEMON && [string length $LOGGER] > 0 } {
 	    Syslog $msg notice
 	} else {
-	    puts $msg
+	    puts "pid([pid])  $msg"
 	}
     }
 }

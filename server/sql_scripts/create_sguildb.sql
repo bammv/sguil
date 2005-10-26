@@ -1,95 +1,96 @@
--- $Id: create_sguildb.sql,v 1.14 2005/03/08 20:35:04 bamm Exp $
+-- $Id: create_sguildb.sql,v 1.15 2005/10/26 21:44:44 bamm Exp $
 -- Users may want to use a different DB name.
 -- CREATE DATABASE IF NOT EXISTS sguildb;
 -- USE sguildb;
 
-CREATE TABLE event
-(
-  sid			INT UNSIGNED	NOT NULL,
-  cid			INT UNSIGNED	NOT NULL,
-  signature 		VARCHAR(255)	NOT NULL,
-  signature_gen		INT UNSIGNED	NOT NULL,
-  signature_id		INT UNSIGNED	NOT NULL,
-  signature_rev		INT UNSIGNED	NOT NULL,
-  timestamp		DATETIME	NOT NULL,
-  unified_event_id	INT UNSIGNED, 
-  unified_event_ref	INT UNSIGNED,
-  unified_ref_time	DATETIME,
-  priority		INT UNSIGNED,
-  class			VARCHAR(20),
-  status		SMALLINT UNSIGNED DEFAULT 0,
-  src_ip		INT UNSIGNED,
-  dst_ip		INT UNSIGNED,
-  src_port		INT UNSIGNED,
-  dst_port		INT UNSIGNED,
-  icmp_type		TINYINT UNSIGNED,
-  icmp_code		TINYINT UNSIGNED,
-  ip_proto		TINYINT UNSIGNED,
-  ip_ver		TINYINT UNSIGNED,
-  ip_hlen		TINYINT UNSIGNED,
-  ip_tos		TINYINT UNSIGNED,
-  ip_len		SMALLINT UNSIGNED,
-  ip_id 		SMALLINT UNSIGNED,
-  ip_flags		TINYINT UNSIGNED,
-  ip_off		SMALLINT UNSIGNED,
-  ip_ttl		TINYINT UNSIGNED,
-  ip_csum		SMALLINT UNSIGNED,
-  last_modified		DATETIME,
-  last_uid		INT UNSIGNED,
-  abuse_queue		enum('Y','N'),
-  abuse_sent		enum('Y','N'),
-  PRIMARY KEY (sid,cid),
-  INDEX src_ip (src_ip),
-  INDEX dst_ip (dst_ip),
-  INDEX dst_port (dst_port),
-  INDEX src_port (src_port),
-  INDEX icmp_type (icmp_type),
-  INDEX icmp_code (icmp_code),
-  INDEX timestamp (timestamp),
-  INDEX last_modified (last_modified),
-  INDEX signature (signature),
-  INDEX status (status),
-  INDEX abuse_queue (abuse_queue),
-  INDEX abuse_sent (abuse_sent)
-);
+-- Depreciated for MRG_MyISAM tables
+-- CREATE TABLE event
+-- (
+--   sid			INT UNSIGNED	NOT NULL,
+--   cid			INT UNSIGNED	NOT NULL,
+--   signature 		VARCHAR(255)	NOT NULL,
+--   signature_gen		INT UNSIGNED	NOT NULL,
+--   signature_id		INT UNSIGNED	NOT NULL,
+--   signature_rev		INT UNSIGNED	NOT NULL,
+--   timestamp		DATETIME	NOT NULL,
+--   unified_event_id	INT UNSIGNED, 
+--   unified_event_ref	INT UNSIGNED,
+--   unified_ref_time	DATETIME,
+--   priority		INT UNSIGNED,
+--   class			VARCHAR(20),
+--   status		SMALLINT UNSIGNED DEFAULT 0,
+--  src_ip		INT UNSIGNED,
+--  dst_ip		INT UNSIGNED,
+--  src_port		INT UNSIGNED,
+--  dst_port		INT UNSIGNED,
+--  icmp_type		TINYINT UNSIGNED,
+--  icmp_code		TINYINT UNSIGNED,
+--  ip_proto		TINYINT UNSIGNED,
+--  ip_ver		TINYINT UNSIGNED,
+--  ip_hlen		TINYINT UNSIGNED,
+--  ip_tos		TINYINT UNSIGNED,
+--  ip_len		SMALLINT UNSIGNED,
+--  ip_id 		SMALLINT UNSIGNED,
+--  ip_flags		TINYINT UNSIGNED,
+--  ip_off		SMALLINT UNSIGNED,
+--  ip_ttl		TINYINT UNSIGNED,
+--  ip_csum		SMALLINT UNSIGNED,
+--  last_modified		DATETIME,
+--  last_uid		INT UNSIGNED,
+--  abuse_queue		enum('Y','N'),
+--  abuse_sent		enum('Y','N'),
+--  PRIMARY KEY (sid,cid),
+--  INDEX src_ip (src_ip),
+--  INDEX dst_ip (dst_ip),
+--  INDEX dst_port (dst_port),
+--  INDEX src_port (src_port),
+--  INDEX icmp_type (icmp_type),
+--  INDEX icmp_code (icmp_code),
+--  INDEX timestamp (timestamp),
+--  INDEX last_modified (last_modified),
+--  INDEX signature (signature),
+--  INDEX status (status),
+--  INDEX abuse_queue (abuse_queue),
+--  INDEX abuse_sent (abuse_sent)
+--);
 
-CREATE TABLE tcphdr
-(
-  sid		INT UNSIGNED	NOT NULL,
-  cid		INT UNSIGNED	NOT NULL,
-  tcp_seq	INT UNSIGNED,
-  tcp_ack	INT UNSIGNED,
-  tcp_off	TINYINT UNSIGNED,
-  tcp_res	TINYINT UNSIGNED,
-  tcp_flags	TINYINT UNSIGNED,
-  tcp_win	SMALLINT UNSIGNED,
-  tcp_csum	SMALLINT UNSIGNED,
-  tcp_urp	SMALLINT UNSIGNED,
-  PRIMARY KEY (sid,cid));
-
-CREATE TABLE udphdr
-(
-  sid		INT UNSIGNED	NOT NULL,
-  cid		INT UNSIGNED	NOT NULL,
-  udp_len	SMALLINT UNSIGNED,
-  udp_csum	SMALLINT UNSIGNED,
-  PRIMARY KEY (sid,cid));
-
-CREATE TABLE icmphdr
-(
-  sid		INT UNSIGNED	NOT NULL,
-  cid		INT UNSIGNED	NOT NULL,
-  icmp_csum	SMALLINT UNSIGNED,
-  icmp_id	SMALLINT UNSIGNED,
-  icmp_seq	SMALLINT UNSIGNED,
-  PRIMARY KEY (sid,cid));
-
-CREATE TABLE data
-(
-  sid           INT UNSIGNED    NOT NULL,
-  cid           INT UNSIGNED    NOT NULL,
-  data_payload	TEXT,
-  PRIMARY KEY (sid,cid));
+--CREATE TABLE tcphdr
+--(
+--  sid		INT UNSIGNED	NOT NULL,
+--  cid		INT UNSIGNED	NOT NULL,
+--  tcp_seq	INT UNSIGNED,
+--  tcp_ack	INT UNSIGNED,
+--  tcp_off	TINYINT UNSIGNED,
+--  tcp_res	TINYINT UNSIGNED,
+--  tcp_flags	TINYINT UNSIGNED,
+--  tcp_win	SMALLINT UNSIGNED,
+--  tcp_csum	SMALLINT UNSIGNED,
+--  tcp_urp	SMALLINT UNSIGNED,
+--  PRIMARY KEY (sid,cid));
+--
+--CREATE TABLE udphdr
+--(
+--  sid		INT UNSIGNED	NOT NULL,
+--  cid		INT UNSIGNED	NOT NULL,
+--  udp_len	SMALLINT UNSIGNED,
+--  udp_csum	SMALLINT UNSIGNED,
+--  PRIMARY KEY (sid,cid));
+--
+--CREATE TABLE icmphdr
+--(
+--  sid		INT UNSIGNED	NOT NULL,
+--  cid		INT UNSIGNED	NOT NULL,
+--  icmp_csum	SMALLINT UNSIGNED,
+--  icmp_id	SMALLINT UNSIGNED,
+--  icmp_seq	SMALLINT UNSIGNED,
+--  PRIMARY KEY (sid,cid));
+--
+--CREATE TABLE data
+--(
+--  sid           INT UNSIGNED    NOT NULL,
+--  cid           INT UNSIGNED    NOT NULL,
+--  data_payload	TEXT,
+--  PRIMARY KEY (sid,cid));
 
 CREATE TABLE sensor
 (

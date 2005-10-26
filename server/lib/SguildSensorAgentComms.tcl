@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.15 2005/10/14 21:21:04 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.16 2005/10/26 21:44:44 bamm Exp $ #
 
 proc SendSensorAgent { socketID msg } {
 
@@ -58,9 +58,13 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
         return
 
     }
+
+    # Table Prefix
+    set tmpDate [clock format [clock scan $timestamp] -gmt true -format "%Y%m%d"]
+    set tablePrefix "${sensorName}_${tmpDate}"
     
     # Insert Event Hdr
-    if [catch { InsertEventHdr $sid $cid $u_event_id $u_event_ref $u_ref_time \
+    if [catch { InsertEventHdr $tablePrefix $sid $cid $u_event_id $u_event_ref $u_ref_time \
                 $msg $sig_gen $sig_id $sig_rev $timestamp $priority $class_type \
                 $status $dec_sip $dec_dip $ip_proto $ip_ver $ip_hlen $ip_tos \
                 $ip_len $ip_id $ip_flags $ip_off $ip_ttl $ip_csum $icmp_type \
@@ -78,7 +82,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
     # Insert ICMP, TCP, or UDP hdrs
     switch -exact -- $ip_proto {
 
-        17  {    if [catch { InsertUDPHdr $sid $cid $udp_len $udp_csum } tmpError] {
+        17  {    if [catch { InsertUDPHdr $tablePrefix $sid $cid $udp_len $udp_csum } tmpError] {
                      SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
 
                      # DEBUG Foo
@@ -89,7 +93,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
                  }
          }
         
-         6  {    if [catch { InsertTCPHdr $sid $cid $tcp_seq $tcp_ack $tcp_off $tcp_res \
+         6  {    if [catch { InsertTCPHdr $tablePrefix $sid $cid $tcp_seq $tcp_ack $tcp_off $tcp_res \
                              $tcp_flags $tcp_win $tcp_csum $tcp_urp } tmpError] {
                      SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
 
@@ -103,7 +107,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
 
          1  {    
                  
-                     if [catch { InsertICMPHdr $sid $cid $icmp_csum $icmp_id $icmp_seq } \
+                     if [catch { InsertICMPHdr $tablePrefix $sid $cid $icmp_csum $icmp_id $icmp_seq } \
                          tmpError] {
                          SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
   
@@ -119,7 +123,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
 
     # Insert Payload
     if { $data_payload != "" } { 
-        if [catch { InsertDataPayload $sid $cid $data_payload } tmpError] {
+        if [catch { InsertDataPayload $tablePrefix $sid $cid $data_payload } tmpError] {
             SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
   
             # DEBUG Foo
