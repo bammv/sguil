@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.189 2005/10/27 04:35:28 bamm Exp $ #
+# $Id: sguil.tk,v 1.190 2005/10/27 14:14:00 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1349,10 +1349,6 @@ proc GetUserName {} {
   focus -force $userName
   bind [$userPasswd component entry] <Return> { destroy .getUserNameWin }
   tkwait window $getUserNameWin
-  # Puts the last selected host at the beginning
-  set SERVERHOST [linsert [ldelete $SERVERHOST $SERVERHOSTSELECTED] 0 $SERVERHOSTSELECTED]
-  # This saves our last list of hosts to .sguilrc
-  SaveNewFonts
 }
 
 proc CreateSensorCheckButton { winName sensorName userList } {
@@ -2857,6 +2853,10 @@ while {$CONNECTED == 0} {
     break
   } 
 } 
+  # Puts the last selected host at the beginning
+  set SERVERHOST [linsert [ldelete $SERVERHOST $SERVERHOSTSELECTED] 0 $SERVERHOSTSELECTED]
+  # This saves our last list of hosts to .sguilrc
+  SaveNewFonts
   SendToSguild "ValidateUser $USERNAME"
   set saltNonce [gets $socketID]
   set tmpSalt [lindex $saltNonce 0]
