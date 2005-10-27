@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.16 2005/10/26 21:44:44 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.17 2005/10/27 17:09:09 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -211,7 +211,7 @@ proc InsertEventHdr { tablePostfix sid cid u_event_id u_event_ref u_ref_time msg
     }
  
     # The final INSERT gets built
-    set tmpQuery "INSERT INTO $tmpTableName ($tmpTables) VALUES ($tmpValues)"
+    set tmpQuery "INSERT INTO `$tmpTableName` ($tmpTables) VALUES ($tmpValues)"
 
     if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
   
@@ -225,7 +225,7 @@ proc InsertUDPHdr { tablePostfix sid cid udp_len udp_csum } {
 
     set tmpTableName udphdr_$tablePostfix
 
-    set tmpQuery "INSERT INTO $tmpTableName (sid, cid, udp_len, udp_csum) \
+    set tmpQuery "INSERT INTO `$tmpTableName` (sid, cid, udp_len, udp_csum) \
                   VALUES ('$sid', '$cid', '$udp_len', '$udp_csum')"
 
     if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
@@ -240,7 +240,7 @@ proc InsertTCPHdr { tablePostfix sid cid tcp_seq tcp_ack tcp_off tcp_res \
 
     set tmpTableName tcphdr_$tablePostfix
 
-    set tmpQuery "INSERT INTO $tmpTableName (sid, cid, tcp_seq, tcp_ack, \
+    set tmpQuery "INSERT INTO `$tmpTableName` (sid, cid, tcp_seq, tcp_ack, \
                   tcp_off, tcp_res, tcp_flags, tcp_win, tcp_csum, tcp_urp) \
                   VALUES ('$sid', '$cid', '$tcp_seq', '$tcp_ack', '$tcp_off', \
                   '$tcp_res', '$tcp_flags', '$tcp_win', '$tcp_csum', '$tcp_urp')"
@@ -270,7 +270,7 @@ proc InsertICMPHdr { tablePostfix sid cid icmp_csum icmp_id icmp_seq } {
         set tmpValues "$tmpValues, '$icmp_seq'"
     }
 
-    set tmpQuery "INSERT INTO $tmpTableName ($tmpTables)  VALUES ($tmpValues)"
+    set tmpQuery "INSERT INTO `$tmpTableName` ($tmpTables)  VALUES ($tmpValues)"
 
     if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
   
@@ -284,7 +284,7 @@ proc InsertDataPayload { tablePostfix sid cid data_payload } {
 
     set tmpTableName data_$tablePostfix
 
-    set tmpQuery "INSERT INTO $tmpTableName (sid, cid, data_payload) \
+    set tmpQuery "INSERT INTO `$tmpTableName` (sid, cid, data_payload) \
                   VALUES ('$sid', '$cid', '$data_payload')"
 
     if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
