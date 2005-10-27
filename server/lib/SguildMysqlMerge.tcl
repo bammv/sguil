@@ -119,8 +119,6 @@ proc CreateMysqlMainEventMergeTable {} {
         INDEX last_modified (last_modified),                    \
         INDEX signature (signature),                            \
         INDEX status (status),                                  \
-        INDEX abuse_queue (abuse_queue),                        \
-        INDEX abuse_sent (abuse_sent)                           \
         ) TYPE=MERGE UNION=([join $tmpTables ,])                \
         "
     mysqlexec $MAIN_DB_SOCKETID $createQuery
@@ -320,8 +318,6 @@ proc CreateEventTable { tableName } {
         INDEX last_modified (last_modified),                    \
         INDEX signature (signature),                            \
         INDEX status (status),                                  \
-        INDEX abuse_queue (abuse_queue),                        \
-        INDEX abuse_sent (abuse_sent)                           \
         )                                                       \
         "
     mysqlexec $MAIN_DB_SOCKETID $createQuery
