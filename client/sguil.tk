@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.190 2005/10/27 14:14:00 bamm Exp $ #
+# $Id: sguil.tk,v 1.191 2005/10/27 14:43:30 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2039,16 +2039,16 @@ set sensorStatusTable $sensorStatusTableFrame.sensorStatusTable
 set sensorStatusScroll $sensorStatusTableFrame.sensorStatusScroll
 
 tablelist::tablelist $sensorStatusTable \
-    -columns {10 "Sensor"     left
-              3  "Sid"        center
+    -columns {3  "Sid"        center
+              10 "Sensor"     left
               20 "Last Alert" center
               6  "Agent"      center
               6  "BY"         center}   \
     -stretch all                        \
     -yscrollcommand [list $sensorStatusScroll set] -width 20
 
-$sensorStatusTable columnconfigure 0 -name sensorName -sortmode ascii -resizable 1 -stretchable 1
-$sensorStatusTable columnconfigure 1 -name sensorSid -sortmode integer -resizable 0
+$sensorStatusTable columnconfigure 0 -name sensorSid -sortmode integer -resizable 0
+$sensorStatusTable columnconfigure 1 -name sensorName -sortmode ascii -resizable 1 -stretchable 1
 $sensorStatusTable columnconfigure 2 -name sensorLastAlert -sortmode ascii -resizable 0
 $sensorStatusTable columnconfigure 3 -name sensorAgent -resizable 0 -sortmode dictionary -formatcommand EmptyString
 $sensorStatusTable columnconfigure 4 -name sensorBY -resizable 0 -sortmode dictionary -formatcommand EmptyString
