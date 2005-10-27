@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.188 2005/10/17 18:12:54 bamm Exp $ #
+# $Id: sguil.tk,v 1.189 2005/10/27 04:35:28 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1349,6 +1349,10 @@ proc GetUserName {} {
   focus -force $userName
   bind [$userPasswd component entry] <Return> { destroy .getUserNameWin }
   tkwait window $getUserNameWin
+  # Puts the last selected host at the beginning
+  set SERVERHOST [linsert [ldelete $SERVERHOST $SERVERHOSTSELECTED] 0 $SERVERHOSTSELECTED]
+  # This saves our last list of hosts to .sguilrc
+  SaveNewFonts
 }
 
 proc CreateSensorCheckButton { winName sensorName userList } {
@@ -1629,12 +1633,38 @@ if { [info exists DEBUG_OVERRIDE] && [info exists DEBUG_LEVEL] } {
 
 # Load user fonts
 if { [file exists $FONTFILE] } {
-  for_file fontLine $FONTFILE {
-    eval font create [lindex $fontLine 0] [lrange $fontLine 1 end]
-  }
+
+    for_file fontLine $FONTFILE {
+
+        if { [lindex $fontLine 0] == "RecentServersList" } {
+
+            set tmpSERVERHOST [lrange $fontLine 1 end]
+
+            foreach serverHost $SERVERHOST {
+
+                if { [lsearch $tmpSERVERHOST $serverHost] < 0 } {
+
+                    lappend tmpSERVERHOST serverHost
+
+                }
+
+            }
+
+            set SERVERHOST $tmpSERVERHOST
+
+        } else {
+
+            eval font create [lindex $fontLine 0] [lrange $fontLine 1 end]
+
+        }
+
+    }
+
 } else {
-  font create ourStandardFont -family Helvetica -size 10 -weight bold
-  font create ourFixedFont -family fixed -size 12
+
+    font create ourStandardFont -family Helvetica -size 10 -weight bold
+    font create ourFixedFont -family fixed -size 12
+
 }
 option add *Font ourStandardFont
 

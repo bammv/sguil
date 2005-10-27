@@ -1,4 +1,4 @@
-# $Id: SguilUtil.tcl,v 1.17 2005/10/14 21:18:43 bamm Exp $
+# $Id: SguilUtil.tcl,v 1.18 2005/10/27 04:35:28 bamm Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
@@ -182,8 +182,11 @@ proc ChangeFont  { fontType } {
   SaveNewFonts
 }
 proc SaveNewFonts {} {
-  global FONTFILE
-  write_file $FONTFILE "ourStandardFont [font configure ourStandardFont]" "ourFixedFont [font configure ourFixedFont]"
+  global FONTFILE SERVERHOST
+  write_file $FONTFILE \
+    "ourStandardFont [font configure ourStandardFont]" \
+    "ourFixedFont [font configure ourFixedFont]"       \
+    "RecentServersList $SERVERHOST"
 }
 
 
