@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: migrate_event.tcl,v 1.1 2005/10/26 21:44:44 bamm Exp $ #
+# $Id: migrate_event.tcl,v 1.2 2005/10/27 03:39:04 bamm Exp $ #
 
 # Default vars
 set DBHOST localhost
@@ -27,7 +27,7 @@ proc CreateTcpHdrTable { tableName sid minCid maxCid } {
     set tmpQry "CREATE TABLE `$tableName`                              \n\
                 SELECT sid, cid, tcp_seq, tcp_ack, tcp_off, tcp_res,   \n\
                 tcp_flags, tcp_win, tcp_csum, tcp_urp                  \n\
-                FROM $tableName                                        \n\
+                FROM tcphdr                                            \n\
                 WHERE sid=$sid AND cid >= $minCid AND cid <= $maxCid"
     puts "\n$tmpQry\n"
     flush stdout
@@ -37,6 +37,17 @@ proc CreateTcpHdrTable { tableName sid minCid maxCid } {
         puts "Error creating $tableName: $tmpError"
         exit
     }
+
+    puts "Adding INDEXES to $tableName"
+    set tmpQry "ALTER TABLE `$tableName`  \n\
+                ADD PRIMARY KEY (sid,cid)"
+    puts "\n$tmpQry\n"
+    if [catch {mysqlexec $dbSocketID $tmpQry} tmpError] {
+        puts "Failed"
+        puts "Error creating $tableName: $tmpError"
+        exit
+    }
+                
     puts "Success."
 
 }
@@ -48,8 +59,8 @@ proc CreateUdpHdrTable { tableName sid minCid maxCid } {
     puts "Creating Table => $tableName"
     puts "\n Running query:"
     set tmpQry "CREATE TABLE `$tableName`                           \n\
-                SELECT sid, cid, udp_len, udp_csum,                 \n\
-                FROM $tableName                                     \n\
+                SELECT sid, cid, udp_len, udp_csum                  \n\
+                FROM udphdr                                         \n\
                 WHERE sid=$sid AND cid >= $minCid AND cid <= $maxCid"
     puts "\n$tmpQry\n"
     flush stdout
@@ -59,6 +70,16 @@ proc CreateUdpHdrTable { tableName sid minCid maxCid } {
         puts "Error creating $tableName: $tmpError"
         exit
     }
+    puts "Adding INDEXES to $tableName"
+    set tmpQry "ALTER TABLE `$tableName`  \n\
+                ADD PRIMARY KEY (sid,cid)"
+    puts "\n$tmpQry\n"
+    if [catch {mysqlexec $dbSocketID $tmpQry} tmpError] {
+        puts "Failed"
+        puts "Error creating $tableName: $tmpError"
+        exit
+    }
+                
     puts "Success."
 
 }
@@ -71,7 +92,7 @@ proc CreateIcmpHdrTable { tableName sid minCid maxCid } {
     puts "\n Running query:"
     set tmpQry "CREATE TABLE `$tableName`                           \n\
                 SELECT sid, cid, icmp_csum, icmp_id, icmp_seq       \n\
-                FROM $tableName                                     \n\
+                FROM icmphdr                                        \n\
                 WHERE sid=$sid AND cid >= $minCid AND cid <= $maxCid"
     puts "\n$tmpQry\n"
     flush stdout
@@ -81,11 +102,21 @@ proc CreateIcmpHdrTable { tableName sid minCid maxCid } {
         puts "Error creating $tableName: $tmpError"
         exit
     }
+    puts "Adding INDEXES to $tableName"
+    set tmpQry "ALTER TABLE `$tableName`  \n\
+                ADD PRIMARY KEY (sid,cid)"
+    puts "\n$tmpQry\n"
+    if [catch {mysqlexec $dbSocketID $tmpQry} tmpError] {
+        puts "Failed"
+        puts "Error creating $tableName: $tmpError"
+        exit
+    }
+                
     puts "Success."
 
 }
 
-proc CreateDataHdrTable { tableName sid minCid maxCid } {
+proc CreateDataTable { tableName sid minCid maxCid } {
 
     global dbSocketID
 
@@ -93,7 +124,7 @@ proc CreateDataHdrTable { tableName sid minCid maxCid } {
     puts "\n Running query:"
     set tmpQry "CREATE TABLE `$tableName`                           \n\
                 SELECT sid, cid, data_payload                       \n\
-                FROM $tableName                                     \n\
+                FROM data                                           \n\
                 WHERE sid=$sid AND cid >= $minCid AND cid <= $maxCid"
     puts "\n$tmpQry\n"
     flush stdout
@@ -103,6 +134,16 @@ proc CreateDataHdrTable { tableName sid minCid maxCid } {
         puts "Error creating $tableName: $tmpError"
         exit
     }
+    puts "Adding INDEXES to $tableName"
+    set tmpQry "ALTER TABLE `$tableName`  \n\
+                ADD PRIMARY KEY (sid,cid)"
+    puts "\n$tmpQry\n"
+    if [catch {mysqlexec $dbSocketID $tmpQry} tmpError] {
+        puts "Failed"
+        puts "Error creating $tableName: $tmpError"
+        exit
+    }
+                
     puts "Success."
 
 }
@@ -157,6 +198,8 @@ flush stdout
 exec stty -echo
 set DBPASS [gets stdin]
 exec stty echo
+
+puts ""
 
 if { $DBPASS == "" } {
     set dbConnectCmd "-host $DBHOST -user $DBUSER -port $DBPORT"
@@ -271,10 +314,12 @@ while { 1 } {
                      ADD INDEX dst_ip (dst_ip),               \n\
                      ADD INDEX dst_port (dst_port),           \n\
                      ADD INDEX src_port (src_port),           \n\
+                     ADD INDEX icmp_type (icmp_type),         \n\
+                     ADD INDEX icmp_code (icmp_code),         \n\
+                     ADD INDEX timestamp (timestamp),         \n\
                      ADD INDEX last_modified (last_modified), \n\
                      ADD INDEX signature (signature),         \n\
-                     ADD INDEX status (status),               \n\
-                     ADD INDEX timestamp (timestamp);"
+                     ADD INDEX status (status)"
         puts "\n$tmpQry\n"
 
         puts -nonewline "Adding indexes to $tableName..."
@@ -324,10 +369,10 @@ foreach eventTable $eventTableList {
     set sid [mysqlsel $dbSocketID $tmpQry -flatlist]
     puts "  sid => $sid"
 
-    set tmpQry "SELECT MIN(cid) FROM $eventTable WHERE sid=$sid"
+    set tmpQry "SELECT MIN(cid) FROM `$eventTable` WHERE sid=$sid"
     set minCid [mysqlsel $dbSocketID $tmpQry -flatlist]
     puts "    min cid => $minCid"
-    set tmpQry "SELECT MAX(cid) FROM $eventTable WHERE sid=$sid"
+    set tmpQry "SELECT MAX(cid) FROM `$eventTable` WHERE sid=$sid"
     set maxCid [mysqlsel $dbSocketID $tmpQry -flatlist]
     puts "    max cid => $maxCid"
 
