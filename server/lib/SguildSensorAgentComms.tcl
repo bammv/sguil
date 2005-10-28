@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.16 2005/10/26 21:44:44 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.17 2005/10/28 15:24:25 bamm Exp $ #
 
 proc SendSensorAgent { socketID msg } {
 
@@ -72,7 +72,6 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
 
         # DEBUG Foo
         puts "ERROR: While inserting event info: $tmpError"
-        #exit
 
         SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
         return

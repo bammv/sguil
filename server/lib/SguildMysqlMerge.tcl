@@ -271,7 +271,7 @@ proc CreateEventTable { tableName } {
     LogMessage "Creating event table $tableName."
 
     set createQuery "                                           \
-        CREATE TABLE IF NOT EXISTS $tableName                   \
+        CREATE TABLE IF NOT EXISTS `$tableName`                 \
         (                                                       \
         sid                   INT UNSIGNED    NOT NULL,         \
         cid                   INT UNSIGNED    NOT NULL,         \
@@ -333,7 +333,7 @@ proc CreateTcpHdrTable { tableName } {
 
     LogMessage "Creating tcphdr table $tableName."
     set createQuery "                                           \
-        CREATE TABLE IF NOT EXISTS $tableName                   \
+        CREATE TABLE IF NOT EXISTS `$tableName`                 \
         (                                                       \
         sid           INT UNSIGNED    NOT NULL,                 \
         cid           INT UNSIGNED    NOT NULL,                 \
@@ -362,7 +362,7 @@ proc CreateUdpHdrTable { tableName } {
 
     LogMessage "Creating udphdr table $tableName."
     set createQuery "                                           \
-        CREATE TABLE IF NOT EXISTS $tableName                   \
+        CREATE TABLE IF NOT EXISTS `$tableName`                 \
         (                                                       \
         sid           INT UNSIGNED    NOT NULL,                 \
         cid           INT UNSIGNED    NOT NULL,                 \
@@ -385,7 +385,7 @@ proc CreateIcmpHdrTable { tableName } {
 
     LogMessage "Creating icmphdr table $tableName."
     set createQuery "                                           \
-        CREATE TABLE IF NOT EXISTS $tableName                   \
+        CREATE TABLE IF NOT EXISTS `$tableName`                 \
         (                                                       \
         sid           INT UNSIGNED    NOT NULL,                 \
         cid           INT UNSIGNED    NOT NULL,                 \
@@ -409,7 +409,7 @@ proc CreateDataTable { tableName } {
 
     LogMessage "Creating data table $tableName."
     set createQuery "                                           \
-        CREATE TABLE IF NOT EXISTS $tableName                   \
+        CREATE TABLE IF NOT EXISTS `$tableName`                 \
         (                                                       \
         sid           INT UNSIGNED    NOT NULL,                 \
         cid           INT UNSIGNED    NOT NULL,                 \
