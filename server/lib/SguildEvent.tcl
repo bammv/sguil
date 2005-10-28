@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.11 2005/09/27 18:15:12 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.12 2005/10/28 22:40:07 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -81,35 +81,29 @@ proc DeleteEventIDList { socketID data } {
     catch {SendSocket $socket "DeleteEventIDList $eidList"} tmpError
   }
                                                                                                             
-  # First we need to split up the update based on uniques sids
-  # because doing a WHERE sid=foo and cid IN (bar, blah) is
-  # much faster than a bunch of ORs.
-                                                                                                            
   foreach eventID $eidList {
                                                                                                             
     set tmpSid [lindex [split $eventID .] 0]
     set tmpCid [lindex [split $eventID .] 1]
-    lappend tmpCidList($tmpSid) $tmpCid
                                                                                                             
     # Delete from the escalate list
     if { [info exists escalateIDList] } {set escalateIDList [ldelete $escalateIDList $eventID]}
                                                                                                             
     # tmp list of eids we are updating
-    lappend tmpEidList $eventID
+    lappend tmpEidList [list $tmpSid $tmpCid]
                                                                                                             
     # loop through the parents array and add all the sids/cids to the UPDATE
     if [info exists correlatedEventArray($eventID)] {
       foreach row $correlatedEventArray($eventID) {
         set tmpSid [lindex $row 5]
         set tmpCid [lindex $row 6]
-        lappend tmpCidList($tmpSid) $tmpCid
                                                                                                             
         if { [info exists escalateIDList] } {
           set escalateIDList [ldelete $escalateIDList "$tmpSid.$tmpCid"]
         }
                                                                                                             
         # Tmp list of eids
-        lappend tmpEidList "$tmpSid.$tmpCid"
+        lappend tmpEidList [list $tmpSid $tmpCid]
       }
     }
   }
@@ -122,38 +116,37 @@ proc DeleteEventIDList { socketID data } {
   # Now we have a complete list of event IDs. Loop thru them and update our current VARs
   # and send escalate notices if needed
   foreach tmpEid $tmpEidList {
+    set tmpAid [join $tmpEid .]
     # If status == 2 then escalate
     if {$status == 2} {
-      lappend escalateIDList $tmpEid
-      if [info exists eventIDArray($tmpEid)] {
-        set escalateArray($tmpEid) $eventIDArray($tmpEid)
+      lappend escalateIDList $tmpAid
+      if [info exists eventIDArray($tmpAid)] {
+        set escalateArray($tmpAid) $eventIDArray($tmpAid)
       } else {
-        set escalateArray($tmpEid) [FlatDBQuery\
-         "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.sid=[lindex [split $tmpEid .] 0] AND event.cid=[lindex [split $tmpEid .] 1]"]
+        set escalateArray($tmpAid) [FlatDBQuery\
+         "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.sid=[lindex $tmpEid 0] AND event.cid=[lindex $tmpEid 1]"]
       }
       foreach socket $clientList {
-        catch {SendSocket $socket "InsertEscalatedEvent $escalateArray($tmpEid)"} tmpError
+        catch {SendSocket $socket "InsertEscalatedEvent $escalateArray($tmpAid)"} tmpError
       }
     }
     # Cleanup
-    if { [info exists eventIDArray($tmpEid)] } { unset eventIDArray($tmpEid) }
-    if { [info exists correlatedEventArray($tmpEid)] } { unset correlatedEventArray($tmpEid) }
-    if { [info exists eventIDCountArray($tmpEid)] } { unset eventIDCountArray($tmpEid) }
+    if { [info exists eventIDArray($tmpAid)] } { unset eventIDArray($tmpAid) }
+    if { [info exists correlatedEventArray($tmpAid)] } { unset correlatedEventArray($tmpAid) }
+    if { [info exists eventIDCountArray($tmpAid)] } { unset eventIDCountArray($tmpAid) }
     if [info exists eventIDList] {
-      set eventIDList [ldelete $eventIDList $tmpEid]
+      set eventIDList [ldelete $eventIDList $tmpAid]
     }
   }
                                                                                                             
-  # Finally we update the event table.
-  # Do an UPDATE for each unique sid
   set totalUpdates 0
-  foreach uSid [array names tmpCidList] {
-    # Make sure there are no duplicates
-    set tmpCidList($uSid) [lsort -unique $tmpCidList($uSid)]
-    # Build our WHERE
-    set whereTmp "sid=$uSid AND cid IN ([join $tmpCidList($uSid) ,])"
+  foreach tmpEid $tmpEidList {
+    set tmpSid [lindex $tmpEid 0]
+    set tmpCid [lindex $tmpEid 1]
+    set whereTmp "sid=$tmpSid AND cid=$tmpCid"
     set tmpUpdated [UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $userIDArray($socketID) $status]
     set totalUpdates [expr $totalUpdates + $tmpUpdated]
+    InsertHistory $tmpSid $tmpCid $userIDArray($socketID) [GetCurrentTimeStamp] $status $comment
   }
   # See if the number of rows updated matched the number of events we
   # meant to update
@@ -164,12 +157,6 @@ proc DeleteEventIDList { socketID data } {
 	    Number of UPDATES: $totalUpdates Update List: $tmpEidList"
   } else {
     InfoMessage "Updated $totalUpdates event(s)."
-  }
-  # Update the history here
-  foreach tmpEid $tmpEidList {
-    set tmpSid [lindex [split $tmpEid .] 0]
-    set tmpCid [lindex [split $tmpEid .] 1]
-    InsertHistory $tmpSid $tmpCid $userIDArray($socketID) [GetCurrentTimeStamp] $status $comment
   }
 }
 
