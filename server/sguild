@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.157 2005/10/26 21:44:44 bamm Exp $ #
+# $Id: sguild,v 1.158 2005/11/02 20:09:59 bamm Exp $ #
 
 # Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
@@ -534,8 +534,10 @@ if { $mergeTableListArray(event) != "" } {
                 INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto,        \n\
                 event.src_port, event.dst_port, event.signature_id, event.signature_rev, \n\
                 event.unified_event_id, unified_event_ref                                \n\
-                FROM event, sensor                                                       \n\
-                WHERE event.sid=sensor.sid AND event.status=0 ORDER BY event.timestamp ASC"
+                FROM event                                                               \n\
+                FORCE INDEX (status)                                                     \n\
+                JOIN sensor ON event.sid=sensor.sid                                      \n\
+                WHERE event.status=0 ORDER BY event.timestamp ASC"
 
     InfoMessage "$tmpQry"
 
