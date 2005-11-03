@@ -1,4 +1,31 @@
-# $Id: CHANGES,v 1.46 2004/12/07 17:46:58 bamm Exp $ #
+# $Id: CHANGES,v 1.47 2005/11/03 03:28:42 bamm Exp $ #
+
+sguil-0.6.0-RC1 (02 Nov 2005)
+
+  sguil.tk
+    * Drop down lists for sguild hosts on login (new ones saved). -srh/bamm
+    * Tabs added to info display (IP resolution, system msgs, etc). -bamm
+    * Sensor status tab. -bamm
+    * Support for sfportscan. -srh
+    * Quick queries bypass the query builder. -srh
+    * GPG signatures. -srh
+    * Abort and cancel transcripts.  -bamm
+  
+  sguild
+    * MRG_MyISAM tables used. -bamm
+    * Email event config moved to sguild.email. -bamm
+
+  sensor_agent.tcl
+    * All comms tunneled through sensor_agent.tcl. -bamm
+    
+  op_sguil
+    * No longer talkes directly to the DB. Passes alerts to
+      sensor_agent via localhost.  -bamm
+    * Must be compiled with tcl support so it can generate
+      proper tcl lists. -bamm
+   
+  incident_report.tcl
+    * New script for creating PHB html reports. -bamm
 
 sguil-0.5.3 (07 Dec 2004)
 
