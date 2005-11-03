@@ -2,9 +2,9 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.45 2005/10/13 20:18:24 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.46 2005/11/03 03:32:30 bamm Exp $ #
 
-# Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
+# Copyright (C) 2002-2005 Robert (Bamm) Visscher <bamm@sguil.net>
 #
 # This program is distributed under the terms of version 1.0 of the
 # Q Public License.  See LICENSE.QPL for further details.
