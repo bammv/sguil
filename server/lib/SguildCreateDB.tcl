@@ -1,4 +1,4 @@
-# $Id: SguildCreateDB.tcl,v 1.3 2005/03/04 22:19:02 bamm Exp $
+# $Id: SguildCreateDB.tcl,v 1.4 2005/11/03 21:54:01 bamm Exp $
 
 proc CreateDB { DBNAME } {
   global MAIN_DB_SOCKETID
@@ -17,7 +17,7 @@ proc CreateDB { DBNAME } {
     return 0
   }
   puts -nonewline "Creating the DB $DBNAME..."
-  if [ catch {mysqlexec $MAIN_DB_SOCKETID "CREATE DATABASE $DBNAME"} createDBError] {
+  if [ catch {mysqlexec $MAIN_DB_SOCKETID "CREATE DATABASE `$DBNAME`"} createDBError] {
     puts $createDBError
     return 0
   }

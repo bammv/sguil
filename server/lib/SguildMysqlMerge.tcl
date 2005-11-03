@@ -261,6 +261,7 @@ proc CreateMysqlAlertTables { tablePostfix } {
     CreateMysqlMainTcpHdrMergeTable
     CreateMysqlMainUdpHdrMergeTable
     CreateMysqlMainIcmpHdrMergeTable
+    CreateMysqlMainDataMergeTable
 
 }
 
