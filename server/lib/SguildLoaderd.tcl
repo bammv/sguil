@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.18 2005/09/28 18:40:21 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.19 2005/11/07 14:50:01 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -188,13 +188,19 @@ proc CreateSancpMergeTable {} {
 proc InitLoaderd {} {
 
     global DBNAME DBUSER DBPASS DBPORT DBHOST LOADERD_DB_ID SANCP_TBL_LIST
+    global mysqltclVersion
 
     # Open a cnx to the DB
     if { $DBPASS == "" } {
-        set LOADERD_DB_ID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
+        set SWITCHES "-host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT"
     } else {
-        set LOADERD_DB_ID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
+        set SWITCHES "-host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS"
     }
+
+    if { $mysqltclVersion >= 3 } {
+        set SWITCHES "$SWITCHES -localfiles 1"
+    }
+    set LOADERD_DB_ID [eval mysqlconnect $SWITCHES]
 
     # Get a list of current sancp tables
     set SANCP_TBL_LIST [mysqlsel $LOADERD_DB_ID {SHOW TABLES LIKE 'sancp_%'} -list]
@@ -227,10 +233,15 @@ proc InitLoaderd {} {
 
 proc LoadFile { fileName table } {
 
-    global  LOADERD_DB_ID
+    global LOADERD_DB_ID DBHOST
 
-    set dbCmd "LOAD DATA CONCURRENT LOCAL INFILE '$fileName' INTO TABLE `$table`\
-               FIELDS TERMINATED BY '|'"
+    if { $DBHOST != "localhost" && $DBHOST != "127.0.0.1" } {
+        set dbCmd "LOAD DATA CONCURRENT LOCAL INFILE '$fileName' INTO TABLE `$table`\
+                   FIELDS TERMINATED BY '|'"
+    } else {
+        set dbCmd "LOAD DATA CONCURRENT INFILE '$fileName' INTO TABLE `$table`\
+                   FIELDS TERMINATED BY '|'"
+    }
 
     if [catch {mysqlexec $LOADERD_DB_ID $dbCmd} execResults] {
         ErrorMessage "ERROR: loaderd: $execResults"

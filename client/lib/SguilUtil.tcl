@@ -1,4 +1,4 @@
-# $Id: SguilUtil.tcl,v 1.18 2005/10/27 04:35:28 bamm Exp $
+# $Id: SguilUtil.tcl,v 1.19 2005/11/07 14:50:01 bamm Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
@@ -182,11 +182,19 @@ proc ChangeFont  { fontType } {
   SaveNewFonts
 }
 proc SaveNewFonts {} {
-  global FONTFILE SERVERHOST
-  write_file $FONTFILE \
-    "ourStandardFont [font configure ourStandardFont]" \
-    "ourFixedFont [font configure ourFixedFont]"       \
-    "RecentServersList $SERVERHOST"
+
+    global FONTFILE SERVERHOST
+
+
+    if [catch {write_file $FONTFILE \
+      "ourStandardFont [font configure ourStandardFont]" \
+      "ourFixedFont [font configure ourFixedFont]"       \
+      "RecentServersList $SERVERHOST"} writError] {
+
+        InfoMessage "Unable to write preferences to $FONTFILE"
+
+    }
+
 }
 
 
