@@ -1,4 +1,5 @@
-# $Id: SguilUtil.tcl,v 1.19 2005/11/07 14:50:01 bamm Exp $
+# $Id: SguilUtil.tcl,v 1.20 2005/11/09 18:35:49 bamm Exp $
+
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
