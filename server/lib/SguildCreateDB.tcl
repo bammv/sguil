@@ -1,4 +1,4 @@
-# $Id: SguildCreateDB.tcl,v 1.4 2005/11/03 21:54:01 bamm Exp $
+# $Id: SguildCreateDB.tcl,v 1.5 2005/11/09 19:02:56 bamm Exp $
 
 proc CreateDB { DBNAME } {
   global MAIN_DB_SOCKETID

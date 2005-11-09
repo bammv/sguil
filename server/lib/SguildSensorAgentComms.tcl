@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.17 2005/10/28 15:24:25 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.18 2005/11/09 19:02:56 bamm Exp $ #
 
 proc SendSensorAgent { socketID msg } {
 
@@ -71,7 +71,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
                 $icmp_code $src_port $dst_port } tmpError] {
 
         # DEBUG Foo
-        puts "ERROR: While inserting event info: $tmpError"
+        LogMessage "ERROR: While inserting event info: $tmpError"
 
         SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
         return
@@ -85,7 +85,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
                      SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
 
                      # DEBUG Foo
-                     puts "ERROR: While inserting UDP header: $tmpError"
+                     LogMessage "ERROR: While inserting UDP header: $tmpError"
                      #exit
 
                      return
@@ -97,7 +97,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
                      SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
 
                      # DEBUG Foo
-                     puts "ERROR: While inserting TCP header: $tmpError"
+                     LogMessage "ERROR: While inserting TCP header: $tmpError"
                      #exit
 
                      return
@@ -111,7 +111,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
                          SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
   
                          # DEBUG Foo
-                         puts "ERROR: While inserting ICMP header: $tmpError"
+                         LogMessage "ERROR: While inserting ICMP header: $tmpError"
                          #exit
 
                          return
@@ -126,7 +126,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
             SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
   
             # DEBUG Foo
-            puts "ERROR: While inserting data payload: $tmpError"
+            LogMessage "ERROR: While inserting data payload: $tmpError"
             #exit
 
             return

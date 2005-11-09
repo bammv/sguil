@@ -324,8 +324,6 @@ proc CreateEventTable { tableName } {
     mysqlexec $MAIN_DB_SOCKETID $createQuery
     lappend mergeTableListArray(event) $tableName 
 
-    puts "success"
-   
 }
 
 proc CreateTcpHdrTable { tableName } {
@@ -353,8 +351,6 @@ proc CreateTcpHdrTable { tableName } {
     mysqlexec $MAIN_DB_SOCKETID $createQuery
     lappend mergeTableListArray(tcphdr) $tableName 
 
-    puts "success"
-   
 }
 
 proc CreateUdpHdrTable { tableName } {
@@ -376,8 +372,6 @@ proc CreateUdpHdrTable { tableName } {
     mysqlexec $MAIN_DB_SOCKETID $createQuery
     lappend mergeTableListArray(udphdr) $tableName 
 
-    puts "success"
-   
 }
 
 proc CreateIcmpHdrTable { tableName } {
@@ -400,8 +394,6 @@ proc CreateIcmpHdrTable { tableName } {
     mysqlexec $MAIN_DB_SOCKETID $createQuery
     lappend mergeTableListArray(icmphdr) $tableName 
 
-   puts "success"
-
 }
 
 proc CreateDataTable { tableName } {
@@ -421,7 +413,5 @@ proc CreateDataTable { tableName } {
 
     mysqlexec $MAIN_DB_SOCKETID $createQuery
     lappend mergeTableListArray(data) $tableName 
-
-    puts "success"
 
 }

@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.19 2005/11/07 14:50:01 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.20 2005/11/09 19:02:56 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -283,10 +283,10 @@ proc LoadPSFile { sensor filename } {
     LoadFile $filename portscan
 
     if [catch { puts $loaderdWritePipe [list ConfirmPortscanFile $sensor [file tail $filename]] } tmpError] {
-        puts "ERROR: $tmpError"
+        LogMessage "ERROR: $tmpError"
     }
     if [catch {flush $loaderdWritePipe} tmpError] {
-        puts "ERROR: $tmpError"
+        LogMessage "ERROR: $tmpError"
     }
 
 }
@@ -299,10 +299,10 @@ proc LoadSsnFile { sensor filename date } {
     LoadFile $filename sessions
 
     if [catch { puts $loaderdWritePipe [list ConfirmSsnFile $sensor [file tail $filename]] } tmpError] {
-        puts "ERROR: $tmpError"
+        LogMessage "ERROR: $tmpError"
     }
     if [catch {flush $loaderdWritePipe} tmpError] {
-        puts "ERROR: $tmpError"
+        LogMessage "ERROR: $tmpError"
     }
 
 }
@@ -320,10 +320,10 @@ proc LoadSancpFile { sensor filename date } {
     LoadFile $filename $tableName 
 
     if [catch { puts $loaderdWritePipe [list ConfirmSancpFile $sensor [file tail $filename]] } tmpError] {
-        puts "ERROR: $tmpError"
+        LogMessage "ERROR: $tmpError"
     }
     if [catch {flush $loaderdWritePipe} tmpError] {
-        puts "ERROR: $tmpError"
+        LogMessage "ERROR: $tmpError"
     }
 
 }

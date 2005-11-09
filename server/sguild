@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.161 2005/11/07 14:50:01 bamm Exp $ #
+# $Id: sguild,v 1.162 2005/11/09 19:02:56 bamm Exp $ #
 
 # Copyright (C) 2002-2005 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -15,7 +15,7 @@ exec tclsh "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.6.0-RC2"
+set VERSION "SGUIL-0.6.0-RC3"
 # DB Version
 set DB_VERSION "0.11"
 # Counter for tracking xscript transactions
@@ -124,6 +124,7 @@ set LOGGER ""
 if { [info exists ::tcl_platform(threaded)] } {
     puts "ERROR: This version of tcl was compile with threading enabled.\
           Sguil is NOT compatible with threading."
+    CleanExit 1
 }
 
 # Check for the existance of logger 
@@ -134,25 +135,25 @@ foreach path [split $env(PATH) :] {
 if [catch {package require mysqltcl} mysqltclVersion] {
   puts "ERROR: The mysqltcl extension does NOT appear to be installed on this sysem."
   puts "Download it at http://www.xdobry.de/mysqltcl/"
-  CleanExit
+  CleanExit 1
 }
 # Load extended tcl
 if [catch {package require Tclx} tclxVersion] {
   puts "ERROR: The tclx extension does NOT appear to be installed on this sysem."
   puts "Extended tcl (tclx) is available as a port/package for most linux and BSD systems."
-  CleanExit
+  CleanExit 1
 }
 # Load sha1 from tcllib
 if [catch {package require sha1} sha1Version] {
   puts "ERROR: The sha1 package does NOT appear to be installed on this sysem."
   puts "The sha1 package is part of the tcllib extension. A port/package is available for most linux and BSD systems."
-  CleanExit
+  CleanExit 1
 }
 # Load base64 from tcllib
 if [catch {package require base64} base64Version] {
   puts "ERROR: The base64 package does NOT appear to be installed on this sysem."
   puts "The base64 package is part of the tcllib extension. A port/package is available for most linux and BSD systems."
-  CleanExit
+  CleanExit 1
 }
 # reset the random
 random seed
@@ -331,7 +332,7 @@ if { ![info exists USERS_FILE] } {
     set USERS_FILE "./sguild.users"
   } else {
     if { [info exists ADDUSER] && $ADDUSER } {
-      CreateUsersFile "/etc/sguild/sguil.users"
+      CreateUsersFile "/etc/sguild/sguild.users"
     } else {
       set DEBUG 2
       LogMessage "ERROR: Could not find a sguild.users file."
