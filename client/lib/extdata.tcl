@@ -3,27 +3,39 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.29 2005/10/17 18:12:54 bamm Exp $
+# $Id: extdata.tcl,v 1.30 2005/11/16 22:27:12 bamm Exp $
 
 proc GetRuleInfo {} {
-  global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
-  global CONNECTED eventArray
-  ClearRuleText
-  if {$ACTIVE_EVENT && $SHOWRULE && !$MULTI_SELECT && $CUR_SEL_PANE(type) == "EVENT"} {
-    if {!$CONNECTED} {
-      ErrorMessage "Not connected to sguild. Cannot make rule request."
-      return
+
+    global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
+    global CONNECTED eventArray
+
+    ClearRuleText
+
+    if {$ACTIVE_EVENT && $SHOWRULE && !$MULTI_SELECT && $CUR_SEL_PANE(type) == "EVENT"} {
+
+        if {!$CONNECTED} {
+            ErrorMessage "Not connected to sguild. Cannot make rule request."
+            return
+        }
+
+        set selectedIndex [$CUR_SEL_PANE(name) curselection]
+        set message [$CUR_SEL_PANE(name) getcells $selectedIndex,event]
+        set sensorName [$CUR_SEL_PANE(name) getcells $selectedIndex,sensor]
+
+        if {$DEBUG} {puts  "RuleRequest $sensorName $message"}
+
+        SendToSguild "RuleRequest $sensorName $message"
+
+    } else {
+
+        $referenceButton configure -state disabled
+        $icatButton configure -state disabled
+
     }
-    set selectedIndex [$CUR_SEL_PANE(name).msgFrame.list curselection]
-    set message [$CUR_SEL_PANE(name).msgFrame.list get $selectedIndex]
-    set sensorName [$CUR_SEL_PANE(name).sensorFrame.list get $selectedIndex]
-    if {$DEBUG} {puts  "RuleRequest $sensorName $message"}
-    SendToSguild "RuleRequest $sensorName $message"
-  } else {
-    $referenceButton configure -state disabled
-    $icatButton configure -state disabled
-  }
+
 }
+
 proc ClearRuleText {} {
  
     global ruleText
@@ -67,42 +79,66 @@ proc InsertRuleData { ruleData } {
 
 }
 proc GetDshieldIP { arg } {
-  global DEBUG BROWSER_PATH CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT
-  if { $ACTIVE_EVENT && !$MULTI_SELECT} {
-    set selectedIndex [$CUR_SEL_PANE(name).srcIPFrame.list curselection]
-    if { $arg == "srcip" } {
-      set ipAddr [$CUR_SEL_PANE(name).srcIPFrame.list get $selectedIndex]
-    } else {
-      set ipAddr [$CUR_SEL_PANE(name).dstIPFrame.list get $selectedIndex]
+
+    global DEBUG BROWSER_PATH CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT
+
+    if { $ACTIVE_EVENT && !$MULTI_SELECT} {
+
+        set selectedIndex [$CUR_SEL_PANE(name) curselection]
+
+        if { $arg == "srcip" } {
+            set ipAddr [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
+        } else {
+            set ipAddr [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
+        }
+
+        if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
+
+            # Launch browser
+	    exec $BROWSER_PATH http://www.dshield.org/ipinfo.php?ip=$ipAddr &
+
+        } else {
+
+            tk_messageBox -type ok -icon warning -message\
+             "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
+              to point your favorite browser."
+            puts "Error: $BROWSER_PATH does not exist or is not executable."
+
+        }
+
     }
-    if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
-	exec $BROWSER_PATH http://www.dshield.org/ipinfo.php?ip=$ipAddr &
-    } else {
-      tk_messageBox -type ok -icon warning -message\
-       "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
-        to point your favorite browser."
-      puts "Error: $BROWSER_PATH does not exist or is not executable."
-    }
-  }
+
 }
+
 proc GetDshieldPort { arg } {
-  global DEBUG BROWSER_PATH CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT
-  if { $ACTIVE_EVENT && !$MULTI_SELECT} {
-    set selectedIndex [$CUR_SEL_PANE(name).srcPortFrame.list curselection]
-    if { $arg == "srcport" } {
-      set ipPort [$CUR_SEL_PANE(name).srcPortFrame.list get $selectedIndex]
-    } else {
-      set ipPort [$CUR_SEL_PANE(name).dstPortFrame.list get $selectedIndex]
+
+    global DEBUG BROWSER_PATH CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT
+
+    if { $ACTIVE_EVENT && !$MULTI_SELECT} {
+ 
+        set selectedIndex [$CUR_SEL_PANE(name) curselection]
+
+        if { $arg == "srcport" } {
+            set ipPort [$CUR_SEL_PANE(name) getcells $selectedIndex,srcport]
+        } else {
+            set ipPort [$CUR_SEL_PANE(name) getcells $selectedIndex,dstport]
+        }
+
+        if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
+
+            # Launch browser
+	    exec $BROWSER_PATH http://www.dshield.org/port_report.php?port=$ipPort &
+
+        } else {
+
+            tk_messageBox -type ok -icon warning -message\
+             "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
+              to point your favorite browser."
+            puts "Error: $BROWSER_PATH does not exist or is not executable."
+        }
+
     }
-    if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
-	exec $BROWSER_PATH http://www.dshield.org/port_report.php?port=$ipPort &
-    } else {
-      tk_messageBox -type ok -icon warning -message\
-       "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
-        to point your favorite browser."
-      puts "Error: $BROWSER_PATH does not exist or is not executable."
-    }
-  }
+
 }
 proc GetReference {} {
   global DEBUG ruleText BROWSER_PATH
@@ -161,20 +197,29 @@ proc GetIcat {} {
 # DnsButtonActy: Called when the reverse DNS button is released
 #
 proc ResolveHosts {} {
-  global REVERSE_DNS CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT
-  ClearDNSText
-  if {$REVERSE_DNS && $ACTIVE_EVENT && !$MULTI_SELECT} {
-    Working
-    update
-    set selectedIndex [$CUR_SEL_PANE(name).srcIPFrame.list curselection]
-    set srcIP [$CUR_SEL_PANE(name).srcIPFrame.list get $selectedIndex]
-    set dstIP [$CUR_SEL_PANE(name).dstIPFrame.list get $selectedIndex]
-    set srcName [GetHostbyAddr $srcIP]
-    set dstName [GetHostbyAddr $dstIP]
-    InsertDNSData $srcIP $srcName $dstIP $dstName
-    Idle
-  }
+
+    global REVERSE_DNS CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT
+
+    ClearDNSText
+
+    if {$REVERSE_DNS && $ACTIVE_EVENT && !$MULTI_SELECT} {
+
+        Working
+        update
+
+        set selectedIndex [$CUR_SEL_PANE(name) curselection]
+        set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
+        set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
+        set srcName [GetHostbyAddr $srcIP]
+        set dstName [GetHostbyAddr $dstIP]
+
+        InsertDNSData $srcIP $srcName $dstIP $dstName
+        Idle
+
+    }
+
 }
+
 proc GetWhoisData {} {
 
     global ACTIVE_EVENT CUR_SEL_PANE WHOISLIST whoisText WHOIS_PATH MULTI_SELECT
@@ -187,8 +232,8 @@ proc GetWhoisData {} {
 
         Working
         update
-        set selectedIndex [$CUR_SEL_PANE(name).$WHOISLIST.list curselection]
-        set ip [$CUR_SEL_PANE(name).$WHOISLIST.list get $selectedIndex]
+        set selectedIndex [$CUR_SEL_PANE(name) curselection]
+        set ip [$CUR_SEL_PANE(name) getcells $selectedIndex,$WHOISLIST]
 
         if { $WHOIS_PATH == "SimpleWhois" } {
 
@@ -443,62 +488,85 @@ proc EtherealDataBase64 { fileName data } {
     }
   }
 }
+
 proc GetXscript { type force } {
-  global ACTIVE_EVENT SERVERHOST XSCRIPT_SERVER_PORT DEBUG CUR_SEL_PANE XSCRIPTDATARCVD
-  global socketWinName SESSION_STATE ETHEREAL_STORE_DIR
-  global OPENSSL VERSION USERNAME PASSWD
-  if {!$ACTIVE_EVENT} {return}
-  set winName $CUR_SEL_PANE(name).sensorFrame.list
-  set eventIndex [$winName curselection]
-  set winParents [winfo parent [winfo parent $winName]]
-  if { $CUR_SEL_PANE(format) == "SSN" } {
-    set cnxID [$winParents.xidFrame.list get $eventIndex]
-    set timestamp [$winParents.startTimeFrame.list get $eventIndex]
-    set proto [$winParents.ipProtoFrame.list get $eventIndex]
-  } else {
-    set proto [$winParents.protoFrame.list get $eventIndex]
-    set cnxID [lindex [split [$winParents.eventIDFrame.list get $eventIndex] .] 1]
-    set timestamp [$winParents.dateTimeFrame.list get $eventIndex]
-  }
-  if { $type == "xscript" && $proto != "6" } {
-    tk_messageBox -type ok -icon warning -message\
-     "Transcripts can only be generated for TCP traffic at this time."
-    return
-  }
-  set sensor [$winParents.sensorFrame.list get $eventIndex]
-  set srcIP [$winParents.srcIPFrame.list get $eventIndex]
-  set srcPort [$winParents.srcPortFrame.list get $eventIndex]
-  set dstIP [$winParents.dstIPFrame.list get $eventIndex]
-  set dstPort [$winParents.dstPortFrame.list get $eventIndex]
-  set xscriptWinName ".[string tolower ${sensor}]_${cnxID}"
-  if { $type == "xscript"} {
-    if { ![winfo exists $xscriptWinName] } {
-      CreateXscriptWin $xscriptWinName
+
+    global ACTIVE_EVENT SERVERHOST XSCRIPT_SERVER_PORT DEBUG CUR_SEL_PANE XSCRIPTDATARCVD
+    global socketWinName SESSION_STATE ETHEREAL_STORE_DIR
+
+    if {!$ACTIVE_EVENT} {return}
+
+    set selectedIndex [$CUR_SEL_PANE(name) curselection]
+
+    if { $CUR_SEL_PANE(format) == "SSN" } {
+
+        set cnxID [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID]
+        set timestamp [$CUR_SEL_PANE(name) getcells $selectedIndex,starttime]
+        set proto [$CUR_SEL_PANE(name) getcells $selectedIndex,ipproto]
+
     } else {
-      InfoMessage "This transcipt is already being displayed by you. Please close\
-       that window before you request a new one."
-      # Try and bring the window to the top in case it is hidden.
-      wm withdraw $xscriptWinName
-      wm deiconify $xscriptWinName
-      return  
+
+        set proto [$CUR_SEL_PANE(name) getcells $selectedIndex,ipproto]
+        set cnxID [lindex [split [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID] .] 1]
+        set timestamp [$CUR_SEL_PANE(name) getcells $selectedIndex,date]
+
     }
-    set SESSION_STATE($xscriptWinName) HDR
-    XscriptDebugMsg $xscriptWinName\
-     "Your request has been sent to the server.\nPlease be patient as this can take some time."
-    $xscriptWinName.sText configure -cursor watch
-    set XSCRIPTDATARCVD($xscriptWinName) 0
-    SendToSguild "XscriptRequest $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
-    if {$DEBUG} {
-      puts "Xscript Request sent: $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
+
+    if { $type == "xscript" && $proto != "6" } {
+
+        tk_messageBox -type ok -icon warning -message\
+         "Transcripts can only be generated for TCP traffic at this time."
+        return
+
     }
-    
-  } elseif { $type == "ethereal" } {
-    if {$DEBUG} {
-      puts "Ethereal Request sent: $sensor \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
+
+    set sensor [$CUR_SEL_PANE(name) getcells $selectedIndex,sensor]
+    set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
+    set srcPort [$CUR_SEL_PANE(name) getcells $selectedIndex,srcport]
+    set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
+    set dstPort [$CUR_SEL_PANE(name) getcells $selectedIndex,dstport]
+
+    set xscriptWinName ".[string tolower ${sensor}]_${cnxID}"
+
+    if { $type == "xscript"} {
+
+        if { ![winfo exists $xscriptWinName] } {
+
+            CreateXscriptWin $xscriptWinName
+
+        } else {
+
+            InfoMessage "This transcipt is already being displayed by you. Please close\
+             that window before you request a new one."
+            # Try and bring the window to the top in case it is hidden.
+            wm withdraw $xscriptWinName
+            wm deiconify $xscriptWinName
+            return
+        }
+
+        set SESSION_STATE($xscriptWinName) HDR
+        XscriptDebugMsg $xscriptWinName\
+         "Your request has been sent to the server.\nPlease be patient as this can take some time."
+        $xscriptWinName.sText configure -cursor watch
+        set XSCRIPTDATARCVD($xscriptWinName) 0
+        SendToSguild "XscriptRequest $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
+
+        if {$DEBUG} {
+            puts "Xscript Request sent: $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
+        }
+  
+    } elseif { $type == "ethereal" } {
+
+      if {$DEBUG} {
+          puts "Ethereal Request sent: $sensor \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
+      }
+
+      SendToSguild "EtherealRequest $sensor \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
+
     }
-    SendToSguild "EtherealRequest $sensor \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
-  }
+
 }
+
 proc CopyDone { socketID tmpFileID tmpFile bytes {error {}} } {
   global DEBUG ETHEREAL_PATH
   close $tmpFileID
@@ -532,12 +600,12 @@ proc NessusReport { arg } {
     global REPORTNUM REPORT_RESULTS REPORT_DONE RETURN_FLAG SGUILLIB env BROWSER_PATH
     global DEBUG BROWSER_PATH CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT
     if { $ACTIVE_EVENT && !$MULTI_SELECT} {
-	set selectedIndex [$CUR_SEL_PANE(name).srcIPFrame.list curselection]
-	if { $arg == "srcip" } {
-	    set ip [$CUR_SEL_PANE(name).srcIPFrame.list get $selectedIndex]
-	} else {
-	    set ip [$CUR_SEL_PANE(name).dstIPFrame.list get $selectedIndex]
-	}
+        set selectedIndex [$CUR_SEL_PANE(name) curselection]
+        if { $arg == "srcip" } {
+            set ipAddr [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
+        } else {
+            set ipAddr [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
+        }
 	random seed
 	incr REPORTNUM
 	set nessusWin .nessusWin_$REPORTNUM

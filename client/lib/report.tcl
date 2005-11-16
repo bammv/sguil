@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.33 2005/03/03 17:45:24 shalligan Exp $ #
+# $Id: report.tcl,v 1.34 2005/11/16 22:27:12 bamm Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -9,6 +9,11 @@ proc EmailEvents { detail sanitize } {
     global EMAIL_FROM EMAIL_CC EMAIL_HEAD EMAIL_TAIL EMAIL_SUBJECT DEBUG
     set RETURN_FLAG 0
     if {$ACTIVE_EVENT} {
+	# save the currentSelectPane in case someone clicks a new pane while the report is being built
+	set winname $CUR_SEL_PANE(name)
+	set curselection [$CUR_SEL_PANE(name) curselection]
+        puts "DEBUG winname ===> $winname"
+        puts "DEBUG curselection == > $curselection"
 	set editEmail .editEmail
 	if { [winfo exists $editEmail] } {
 	    wm withdraw $editEmail
@@ -41,9 +46,6 @@ proc EmailEvents { detail sanitize } {
 	pack $textBox -side top -fill both -expand true
 	pack $gpgBox $buttonBox -side top -fill none -expand 0 -pady 0
         iwidgets::Labeledwidget::alignlabels $fromBox $toBox $ccBox $bccBox $subjectBox
-	# save the currentSelectPane in case someone clicks a new pane while the report is being built
-	set winname $CUR_SEL_PANE(name)
-	set curselection [$CUR_SEL_PANE(name).eventIDFrame.list curselection]
 	set MessageText [HumanText $detail $sanitize $winname $curselection]
 	
 	# insert the String into the textbox
@@ -165,6 +167,11 @@ proc TextReport  { detail sanitize } {
     set RETURN_FLAG 0
     incr REPORTNUM
     if {$ACTIVE_EVENT} {
+	set winname $CUR_SEL_PANE(name)
+	set curselection [$CUR_SEL_PANE(name) curselection]
+        puts "DEBUG winname ===> $winname"
+        puts "DEBUG curselection == > $curselection"
+
 	set sepPromptWin [dialogshell .sepPromptWin_$REPORTNUM -title "Select a Text Report Type"\
 		-buttonboxpos s -width 150]
 	  $sepPromptWin add ok -text "Ok" -command "set RETURN_FLAG 1"
@@ -184,8 +191,6 @@ proc TextReport  { detail sanitize } {
 
 	set filename [tk_getSaveFile -initialdir $env(HOME)]
 	if {$filename == "" } {return}
-	set winname $CUR_SEL_PANE(name)
-	set curselection [$CUR_SEL_PANE(name).eventIDFrame.list curselection]
 	# Build the text we are going to output before we open the file
 	if { $SepChar == "HUMAN-READABLE" } {
 	    set OutputText [HumanText $detail $sanitize $winname $curselection]
@@ -527,16 +532,16 @@ proc HumanText { detail sanitize winname curselection } {
     $progressShell activate
     foreach selectedIndex $curselection {
 	if {$DEBUG} {puts "Reporting index: $selectedIndex"}
-	set eventID [split [$winname.eventIDFrame.list get $selectedIndex] .]
-	if {[lindex [$winname.msgFrame.list get $selectedIndex] 0] != "spp_portscan:"} {
+	set eventID [split [$winname getcells $selectedIndex,alertID] .]
+	if {[lindex [$winname getcells $selectedIndex,event] 0] != "spp_portscan:"} {
 	    set ReturnString "${ReturnString}------------------------------------------------------------------------\n"
-	    set ReturnString "${ReturnString}Count:[$winname.countFrame.list get $selectedIndex] "
-	    set ReturnString "${ReturnString}Event#[$winname.eventIDFrame.list get $selectedIndex] "
-	    set ReturnString "${ReturnString}[$winname.dateTimeFrame.list get $selectedIndex]\n"
-	    set ReturnString "${ReturnString}[$winname.msgFrame.list get $selectedIndex]\n"
+	    set ReturnString "${ReturnString}Count:[$winname getcells $selectedIndex,count] "
+	    set ReturnString "${ReturnString}Event#[$winname getcells $selectedIndex,alertID] "
+	    set ReturnString "${ReturnString}[$winname getcells $selectedIndex,date]\n"
+	    set ReturnString "${ReturnString}[$winname getcells $selectedIndex,event]\n"
 	    if { $sanitize == 0 } {
-		set ReturnString "${ReturnString}[$winname.srcIPFrame.list get $selectedIndex] -> "
-		set ReturnString "${ReturnString}[$winname.dstIPFrame.list get $selectedIndex]\n"
+		set ReturnString "${ReturnString}[$winname getcells $selectedIndex,srcip] -> "
+		set ReturnString "${ReturnString}[$winname getcells $selectedIndex,dstip]\n"
 	    } else {
 		set ReturnString "${ReturnString}a.b.c.d -> e.f.g.h\n"
 	    }
@@ -563,20 +568,20 @@ proc HumanText { detail sanitize winname curselection } {
 	    set ReturnString "${ReturnString}offset=[lindex $eventIpHdr 8] "
 	    set ReturnString "${ReturnString}ttl=[lindex $eventIpHdr 9] "
 	    set ReturnString "${ReturnString}chksum=[lindex $eventIpHdr 10]\n"
-	    set ReturnString "${ReturnString}Protocol: [$winname.protoFrame.list get $selectedIndex] "
+	    set ReturnString "${ReturnString}Protocol: [$winname getcells $selectedIndex,ipproto] "
 	    
 	    #
 	    # If it is TCP or UDP put in port numbers
 	    #
-	    if {[$winname.protoFrame.list get $selectedIndex] == "6" || \
-		    [$winname.protoFrame.list get $selectedIndex] == "17"} {
-		set ReturnString "${ReturnString}sport=[$winname.srcPortFrame.list get $selectedIndex] -> "
-		set ReturnString "${ReturnString}dport=[$winname.dstPortFrame.list get $selectedIndex]\n\n"
+	    if {[$winname getcells $selectedIndex,ipproto] == "6" || \
+		    [$winname getcells $selectedIndex,ipproto] == "17"} {
+		set ReturnString "${ReturnString}sport=[$winname getcells $selectedIndex,srcport] -> "
+		set ReturnString "${ReturnString}dport=[$winname getcells $selectedIndex,dstport]\n\n"
 		
 		#
 		# If TCP get the TCP hdr, parse it out and insert
 		#
-		if {[$winname.protoFrame.list get $selectedIndex] == "6"} {
+		if {[$winname getcells $selectedIndex,ipproto] == "6"} {
 		    # Send the Report Request to the server
 		    SendToSguild "ReportRequest TCP [lindex $eventID 0] [lindex $eventID 1]"
 		    
@@ -670,7 +675,7 @@ proc HumanText { detail sanitize winname curselection } {
 		#
 		# If UDP get the UDP hdr and Insert it
 		#
-		if {[$winname.protoFrame.list get $selectedIndex] == "17"} {
+		if {[$winname getcells $selectedIndex,ipproto] == "17"} {
 		    # Send the Report Request to the server
 		    SendToSguild "ReportRequest UDP [lindex $eventID 0] [lindex $eventID 1]"
 		    
@@ -692,7 +697,7 @@ proc HumanText { detail sanitize winname curselection } {
 	    # 
 	    # If ICMP get the ICMP hdr and payload, parse and insert
 	    #
-	    if {[$winname.protoFrame.list get $selectedIndex] == "1"} {
+	    if {[$winname getcells $selectedIndex,ipproto] == "1"} {
 		# Send the Report Request to the server
 		SendToSguild "ReportRequest ICMP [lindex $eventID 0] [lindex $eventID 1]"
 		
@@ -788,8 +793,8 @@ proc HumanText { detail sanitize winname curselection } {
 	    }
 	} else {
 	    # Send the Report Request to the server
-	    SendToSguild "ReportRequest PORTSCAN [lindex [$winname.dateTimeFrame.list get $selectedIndex] 0]\
-		    [$winname.srcIPFrame.list get $selectedIndex]"
+	    SendToSguild "ReportRequest PORTSCAN [lindex [$winname getcells $selectedIndex,date] 0]\
+		    [$winname getcells $selectedIndex,srcip]"
 	    
 	    # wait for the response to fill in
 	    tkwait variable REPORT_DONE
@@ -818,349 +823,349 @@ proc HumanText { detail sanitize winname curselection } {
 #  I have disabled use of this proc while I think about how the heck to use it.
 #  Not gonna delete it for now, but it is dead code 
 
-proc DelimitedText { detail sanitize winname curselection delimiter} {
-    global DEBUG REPORT_DONE REPORT_RESULTS
-    set ReturnString ""
-    if { $delimiter == "TAB"} {set delimiter "\t"}
-    foreach selectedIndex $curselection {
-	if {$DEBUG} {puts "Reporting index: $selectedIndex"}
-	set eventID [split [$winname.eventIDFrame.list get $selectedIndex] .]
-	if {[lindex [$winname.msgFrame.list get $selectedIndex] 0] != "spp_portscan:"} {
-	    set ReturnString "${ReturnString}[$winname.countFrame.list get $selectedIndex]${delimiter}"
-	    set ReturnString "${ReturnString}[$winname.eventIDFrame.list get $selectedIndex]${delimiter}"
-	    set ReturnString "${ReturnString}[$winname.dateTimeFrame.list get $selectedIndex]${delimiter}"
-	    set ReturnString "${ReturnString}[$winname.msgFrame.list get $selectedIndex]${delimiter}"
-	    if { $sanitize == 0 } {
-		set ReturnString "${ReturnString}[$winname.srcIPFrame.list get $selectedIndex]${delimiter}"
-		set ReturnString "${ReturnString}[$winname.dstIPFrame.list get $selectedIndex]${delimiter}"
-	    } else {
-		set ReturnString "${ReturnString}a.b.c.d${delimiter}e.f.g.h${delimiter}"
-	    }
-	    #
-	    # Get the IP hdr details
-	    #
-	    # Send the Report Request to the server
-	    SendToSguild "ReportRequest IP [lindex $eventID 0] [lindex $eventID 1]"
-	    
-	    # wait for the response to fill in
-	    tkwait variable REPORT_DONE
-	    # Reset REPORT_DONE to 0 for the next report
-	    set REPORT_DONE 0
-	    
-	    set eventIpHdr $REPORT_RESULTS
-	    # clear REPORT_RESULTS 
-	    set REPORT_RESULTS ""
-	    set ReturnString "${ReturnString}[lindex $eventIpHdr 2]${delimiter}"
-	    set ReturnString "${ReturnString}[lindex $eventIpHdr 3]${delimiter}"
-	    set ReturnString "${ReturnString}[lindex $eventIpHdr 4]${delimiter}"
-	    set ReturnString "${ReturnString}[lindex $eventIpHdr 5]${delimiter}"
-	    set ReturnString "${ReturnString}[lindex $eventIpHdr 6]${delimiter}"
-	    set ReturnString "${ReturnString}[lindex $eventIpHdr 7]${delimiter}"
-	    set ReturnString "${ReturnString}[lindex $eventIpHdr 8]${delimiter}"
-	    set ReturnString "${ReturnString}[lindex $eventIpHdr 9]${delimiter}"
-	    set ReturnString "${ReturnString}[lindex $eventIpHdr 10]${delimiter}"
-	    set ReturnString "${ReturnString}[$winname.protoFrame.list get $selectedIndex]${delimiter}"
-	    
-	    #
-	    # If it is TCP or UDP put in port numbers
-	    #
-	    if {[$winname.protoFrame.list get $selectedIndex] == "6" || \
-		    [$winname.protoFrame.list get $selectedIndex] == "17"} {
-		set ReturnString "${ReturnString}[$winname.srcPortFrame.list get $selectedIndex]${delimiter}"
-		set ReturnString "${ReturnString}[$winname.dstPortFrame.list get $selectedIndex]${delimiter}"
-		
-		#
-		# If TCP get the TCP hdr, parse it out and insert
-		#
-		if {[$winname.protoFrame.list get $selectedIndex] == "6"} {
-		    # Send the Report Request to the server
-		    SendToSguild "ReportRequest TCP [lindex $eventID 0] [lindex $eventID 1]"
-		    
-		    # wait for the response to fill in
-		    tkwait variable REPORT_DONE
-		    # Reset REPORT_DONE to 0 for the next report
-		    set REPORT_DONE 0
-		    
-		    set eventTcpHdr $REPORT_RESULTS
-		    set REPORT_RESULTS ""
-		    if { $eventTcpHdr == "error"} {
-			ErrorMessage "Error getting TCP Header Data."
-		    }
-		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 0]${delimiter}"
-		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 1]${delimiter}"
-		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 2]${delimiter}"
-		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 3]${delimiter}"
-		    # TCP Flags
-		    set ipFlags [lindex $eventTcpHdr 4]
-		    set r1Flag "."
-		    set r0Flag "."
-		    set urgFlag "."
-		    set ackFlag "."
-		    set pshFlag "."
-		    set rstFlag "."
-		    set synFlag "."
-		    set finFlag "."
-		    if { $ipFlags != "" } {
-			if { 128 & $ipFlags } {
-			    set r1Flag "1"
-			    set ipFlags [expr $ipFlags - 128]
-			} else {
-			    set r1Flag "*"
-			}
-			if { 64 & $ipFlags } {
-			    set r0Flag "0"
-			    set ipFlags [expr $ipFlags - 64]
-			} else {
-			    set r0Flag "*"
-			}
-			if { 32 & $ipFlags } {
-			    set urgFlag "U"
-			    set ipFlags [expr $ipFlags - 32]
-			} else {
-			    set urgFlag "*"
-			}
-			if { 16 & $ipFlags } {
-			    set ackFlag "A"
-			    set ipFlags [expr $ipFlags - 16]
-			} else {
-			    set ackFlag "*"
-			}
-			if { 8 & $ipFlags } {
-			    set pshFlag "P"
-			    set ipFlags [expr $ipFlags - 8]
-			} else {
-			    set pshFlag "*"
-			}
-			if { 4 & $ipFlags } {
-			    set rstFlag "R"
-			    set ipFlags [expr $ipFlags - 4]
-			} else {
-			    set rstFlag "*"
-			}
-			if { 2 & $ipFlags } {
-			    set synFlag "S"
-			    set ipFlags [expr $ipFlags - 2]
-			} else {
-			    set synFlag "*"
-			}
-			if { 1 & $ipFlags } {
-			    set finFlag "F"
-			} else {
-			    set finFlag "*"
-			}
-		    }
-		    set ReturnString "${ReturnString}$r1Flag"
-		    set ReturnString "${ReturnString}${r0Flag}"
-		    set ReturnString "${ReturnString}${urgFlag}"
-		    set ReturnString "${ReturnString}${ackFlag}"
-		    set ReturnString "${ReturnString}${pshFlag}"
-		    set ReturnString "${ReturnString}${rstFlag}"
-		    set ReturnString "${ReturnString}${synFlag}"
-		    set ReturnString "${ReturnString}${finFlag}${delimiter}"
-		    
-		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 5]${delimiter}"
-		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 6]${delimiter}"
-		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 7]${delimiter}"
-		}
-		
-		#
-		# If UDP get the UDP hdr and Insert it
-		#
-		if {[$winname.protoFrame.list get $selectedIndex] == "17"} {
-		    # Send the Report Request to the server
-		    SendToSguild "ReportRequest UDP [lindex $eventID 0] [lindex $eventID 1]"
-		    
-		    # wait for the response to fill in
-		    tkwait variable REPORT_DONE
-		    # Reset REPORT_DONE to 0 for the next report
-		    set REPORT_DONE 0
-		    
-		    set eventUDPHdr $REPORT_RESULTS
-		    set REPORT_RESULTS ""
-		    if { $eventUdpHdr == "error" } {
-			ErrorMessage "Error getting UDP Header Data."
-		    }
-		    set ReturnString "${ReturnString}[lindex $eventUdpHdr 0]${delimiter}"
-		    set ReturnString "${ReturnString}[lindex $eventUdpHdr 1]${delimiter}"
-		}
-	    }
-	    
-	    # 
-	    # If ICMP get the ICMP hdr and payload, parse and insert
-	    #
-	    if {[$winname.protoFrame.list get $selectedIndex] == "1"} {
-		# Send the Report Request to the server
-		SendToSguild "ReportRequest ICMP [lindex $eventID 0] [lindex $eventID 1]"
-		
-		# wait for the response to fill in
-		tkwait variable REPORT_DONE
-		# Reset REPORT_DONE to 0 for the next report
-		set REPORT_DONE 0
-		
-		set eventIcmpHdr $REPORT_RESULTS
-		set REPORT_RESULTS ""
-		set ReturnString "${ReturnString}[lindex $eventIcmpHdr 0]${delimiter}"
-		set ReturnString "${ReturnString}[lindex $eventIcmpHdr 1]${delimiter}"
-		set ReturnString "${ReturnString}[lindex $eventIcmpHdr 2]${delimiter}"
-		set ReturnString "${ReturnString}[lindex $eventIcmpHdr 3]${delimiter}"
-		set ReturnString "${ReturnString}[lindex $eventIcmpHdr 4]${delimiter}"
-		
-		# If the ICMP packet is a dest unreachable or a time exceeded,
-		# check to see if it is network, host, port unreachable or admin prohibited or filtered
-		# then show some other stuff
-		if {[lindex $eventIcmpHdr 0] == "3" || [lindex $eventIcmpHdr 0] == "11"} {
-		    if {[lindex $eventIcmpHdr 1] == "0" || [lindex $eventIcmpHdr 1] == "4"\
-			    || [lindex $eventIcmpHdr 1] == "9" || [lindex $eventIcmpHdr 1] == "13"\
-			    || [lindex $eventIcmpHdr 1] == "1" || [lindex $eventIcmpHdr 1] == "3"} {
-			
-			#  There may be 32-bits of NULL padding at the start of the payload
-			set offset 0
-			set pldata [lindex $eventIcmpHdr 5]
-			
-			if {[string range $pldata 0 7] == "00000000"} {
-			    set offset 8
-			}
-			# puts [string range $pldata [expr $offset+24] [expr $offset+25]]
-			
-			# Build the protocol
-			set protohex [string range $pldata [expr $offset+18] [expr $offset+19]]
-			set ReturnString "${ReturnString}Orig Protocol=[format "%i" 0x$protohex] "
-			
-			if { $sanitize == 0 } {
-			    # Build the src address 
-			    set srchex1 [string range $pldata [expr $offset+24] [expr $offset+25]]
-			    set srchex2 [string range $pldata [expr $offset+26] [expr $offset+27]]
-			    set srchex3 [string range $pldata [expr $offset+28] [expr $offset+29]]
-			    set srchex4 [string range $pldata [expr $offset+30] [expr $offset+31]]
-			    set ReturnString "${ReturnString}[format "%i" 0x$srchex1].[format "%i" 0x$srchex2]\
-				    .[format "%i" 0x$srchex3].[format "%i" 0x$srchex4]${delimiter}"
-			} else {
-			    set ReturnString "${ReturnString}a.b.c.d${delimiter}"
-			}
-			
-			# Find and build the src port
-			set hdroffset [expr [string index $pldata [expr ($offset+1)]] * 8 + $offset]
-			set sporthex [string range $pldata $hdroffset [expr $hdroffset+3]]
-			set ReturnString "${ReturnString}[format "%i" 0x$sporthex]${delimiter}"
-			
-			if { $sanitize == 0 } {
-			    # Build the dst address
-			    set dsthex1 [string range $pldata [expr $offset+32] [expr $offset+33]]
-			    set dsthex2 [string range $pldata [expr $offset+34] [expr $offset+35]]
-			    set dsthex3 [string range $pldata [expr $offset+36] [expr $offset+37]]
-			    set dsthex4 [string range $pldata [expr $offset+38] [expr $offset+39]]
-			    set ReturnString "${ReturnString}\
-				    [format "%i" 0x$dsthex1].[format "%i" 0x$dsthex2]\
-				    .[format "%i" 0x$dsthex3].[format "%i" 0x$dsthex4]${delimiter}"
-			} else {
-			    set ReturnString "${ReturnString}e.f.g.h${delimiter}"
-			}
-			
-			# Dest Port
-			set dporthex [string range $pldata [expr $hdroffset+4] [expr $hdroffset+7]]
-			set ReturnString "${ReturnString}[format "%i" 0x$dporthex]${delimiter}"
-			
-		    }
-		}
-	    }
-	    # Get and insert the pack payload all pretty like if detail is set to 1
-	    if { $detail == "1" } {
-		# Send the Report Request to the server
-		SendToSguild "ReportRequest PAYLOAD [lindex $eventID 0] [lindex $eventID 1]"
-		
-		# wait for the response to fill in
-		tkwait variable REPORT_DONE
-		# Reset REPORT_DONE to 0 for the next report
-		set REPORT_DONE 0
-		
-		set eventPayload [lindex $REPORT_RESULTS 0]
-		set REPORT_RESULTS ""
-		if { $eventPayload == "error" } {
-		    ErrorMessage "Error getting payload data."
-		}
-		if {$eventPayload  == "" || [string length $eventPayload] == 0 || $eventPayload == "{}"} { 
-		    set ReturnString "${ReturnString}None${delimiter}"
-		} else {
-		    set dataLength [string length $eventPayload]
-		    set asciiStr ""
-		    set counter 2
-		    for {set i 1} {$i < $dataLength} {incr i 2} {
-			set currentByte [string range $eventPayload [expr $i - 1] $i]
-			lappend hexStr $currentByte
-			set intValue [format "%i" 0x$currentByte]
-			if { $intValue < 32 || $intValue > 126 } {
-			    # Non printable char
-			    set currentChar "."
-			} else {
-			    set currentChar [format "%c" $intValue]
-			}
-			set asciiStr "$asciiStr$currentChar"
-			if { $counter == 32 } {
-			    set ReturnString "${ReturnString}$asciiStr"
-			    set hexStr ""
-			    set asciiStr ""
-			    set counter 2
-			} else {
-			    incr counter 2
-			}
-		    }
-		    set ReturnString "${ReturnString}$asciiStr${delimiter}"
-		}
-	    }
-	} else {
-	    # Send the Report Request to the server
-	    SendToSguild "ReportRequest PORTSCAN [lindex [$winname.dateTimeFrame.list get $selectedIndex] 0]\
-		    [$winname.srcIPFrame.list get $selectedIndex]"
-	    
-	    # wait for the response to fill in
-	    tkwait variable REPORT_DONE
-	    # Reset REPORT_DONE to 0 for the next report
-	    set REPORT_DONE 0
-	    
-	    set psdata $REPORT_RESULTS
-	    set REPORT_RESULTS ""
-	    
-	    for { set i 0 } { $i < [llength $psdata] } {incr i} {
-		if { $sanitize == 1 } {
-		    set psrow1 [lreplace [lindex $psdata $i] 2 2 "a.b.c.d"]
-		    set psrow [lreplace $psrow1 4 4 "e.f.g.h"]
-		} else {
-		    set psrow [lindex $psdata $i]
-		}
-		set ReturnString "${ReturnString}$psrow${delimiter}"
-	    }
-	}
-	set ReturnString "${ReturnString}\n"
-    }
-    
-    return $ReturnString
-}
+#proc DelimitedText { detail sanitize winname curselection delimiter} {
+#    global DEBUG REPORT_DONE REPORT_RESULTS
+#    set ReturnString ""
+#    if { $delimiter == "TAB"} {set delimiter "\t"}
+#    foreach selectedIndex $curselection {
+#	if {$DEBUG} {puts "Reporting index: $selectedIndex"}
+#	set eventID [split [$winname getcells $selectedIndex,alertID] .]
+#	if {[lindex [$winname.msgFrame.list get $selectedIndex] 0] != "spp_portscan:"} {
+#	    set ReturnString "${ReturnString}[$winname.countFrame.list get $selectedIndex]${delimiter}"
+#	    set ReturnString "${ReturnString}[$winname.eventIDFrame.list get $selectedIndex]${delimiter}"
+#	    set ReturnString "${ReturnString}[$winname.dateTimeFrame.list get $selectedIndex]${delimiter}"
+#	    set ReturnString "${ReturnString}[$winname.msgFrame.list get $selectedIndex]${delimiter}"
+#	    if { $sanitize == 0 } {
+#		set ReturnString "${ReturnString}[$winname.srcIPFrame.list get $selectedIndex]${delimiter}"
+#		set ReturnString "${ReturnString}[$winname.dstIPFrame.list get $selectedIndex]${delimiter}"
+#	    } else {
+#		set ReturnString "${ReturnString}a.b.c.d${delimiter}e.f.g.h${delimiter}"
+#	    }
+#	    #
+#	    # Get the IP hdr details
+#	    #
+#	    # Send the Report Request to the server
+#	    SendToSguild "ReportRequest IP [lindex $eventID 0] [lindex $eventID 1]"
+#	    
+#	    # wait for the response to fill in
+#	    tkwait variable REPORT_DONE
+#	    # Reset REPORT_DONE to 0 for the next report
+#	    set REPORT_DONE 0
+#	    
+#	    set eventIpHdr $REPORT_RESULTS
+#	    # clear REPORT_RESULTS 
+#	    set REPORT_RESULTS ""
+#	    set ReturnString "${ReturnString}[lindex $eventIpHdr 2]${delimiter}"
+#	    set ReturnString "${ReturnString}[lindex $eventIpHdr 3]${delimiter}"
+#	    set ReturnString "${ReturnString}[lindex $eventIpHdr 4]${delimiter}"
+#	    set ReturnString "${ReturnString}[lindex $eventIpHdr 5]${delimiter}"
+#	    set ReturnString "${ReturnString}[lindex $eventIpHdr 6]${delimiter}"
+#	    set ReturnString "${ReturnString}[lindex $eventIpHdr 7]${delimiter}"
+#	    set ReturnString "${ReturnString}[lindex $eventIpHdr 8]${delimiter}"
+#	    set ReturnString "${ReturnString}[lindex $eventIpHdr 9]${delimiter}"
+#	    set ReturnString "${ReturnString}[lindex $eventIpHdr 10]${delimiter}"
+#	    set ReturnString "${ReturnString}[$winname.protoFrame.list get $selectedIndex]${delimiter}"
+#	    
+#	    #
+#	    # If it is TCP or UDP put in port numbers
+#	    #
+#	    if {[$winname.protoFrame.list get $selectedIndex] == "6" || \
+#		    [$winname.protoFrame.list get $selectedIndex] == "17"} {
+#		set ReturnString "${ReturnString}[$winname.srcPortFrame.list get $selectedIndex]${delimiter}"
+#		set ReturnString "${ReturnString}[$winname.dstPortFrame.list get $selectedIndex]${delimiter}"
+#		
+#		#
+#		# If TCP get the TCP hdr, parse it out and insert
+#		#
+#		if {[$winname.protoFrame.list get $selectedIndex] == "6"} {
+#		    # Send the Report Request to the server
+#		    SendToSguild "ReportRequest TCP [lindex $eventID 0] [lindex $eventID 1]"
+#		    
+#		    # wait for the response to fill in
+#		    tkwait variable REPORT_DONE
+#		    # Reset REPORT_DONE to 0 for the next report
+#		    set REPORT_DONE 0
+#		    
+#		    set eventTcpHdr $REPORT_RESULTS
+#		    set REPORT_RESULTS ""
+#		    if { $eventTcpHdr == "error"} {
+#			ErrorMessage "Error getting TCP Header Data."
+#		    }
+#		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 0]${delimiter}"
+#		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 1]${delimiter}"
+#		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 2]${delimiter}"
+#		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 3]${delimiter}"
+#		    # TCP Flags
+#		    set ipFlags [lindex $eventTcpHdr 4]
+#		    set r1Flag "."
+#		    set r0Flag "."
+#		    set urgFlag "."
+#		    set ackFlag "."
+#		    set pshFlag "."
+#		    set rstFlag "."
+#		    set synFlag "."
+#		    set finFlag "."
+#		    if { $ipFlags != "" } {
+#			if { 128 & $ipFlags } {
+#			    set r1Flag "1"
+#			    set ipFlags [expr $ipFlags - 128]
+#			} else {
+#			    set r1Flag "*"
+#			}
+#			if { 64 & $ipFlags } {
+#			    set r0Flag "0"
+#			    set ipFlags [expr $ipFlags - 64]
+#			} else {
+#			    set r0Flag "*"
+#			}
+#			if { 32 & $ipFlags } {
+#			    set urgFlag "U"
+#			    set ipFlags [expr $ipFlags - 32]
+#			} else {
+#			    set urgFlag "*"
+#			}
+#			if { 16 & $ipFlags } {
+#			    set ackFlag "A"
+#			    set ipFlags [expr $ipFlags - 16]
+#			} else {
+#			    set ackFlag "*"
+#			}
+#			if { 8 & $ipFlags } {
+#			    set pshFlag "P"
+#			    set ipFlags [expr $ipFlags - 8]
+#			} else {
+#			    set pshFlag "*"
+#			}
+#			if { 4 & $ipFlags } {
+#			    set rstFlag "R"
+#			    set ipFlags [expr $ipFlags - 4]
+#			} else {
+#			    set rstFlag "*"
+#			}
+#			if { 2 & $ipFlags } {
+#			    set synFlag "S"
+#			    set ipFlags [expr $ipFlags - 2]
+#			} else {
+#			    set synFlag "*"
+#			}
+#			if { 1 & $ipFlags } {
+#			    set finFlag "F"
+#			} else {
+#			    set finFlag "*"
+#			}
+#		    }
+#		    set ReturnString "${ReturnString}$r1Flag"
+#		    set ReturnString "${ReturnString}${r0Flag}"
+#		    set ReturnString "${ReturnString}${urgFlag}"
+#		    set ReturnString "${ReturnString}${ackFlag}"
+#		    set ReturnString "${ReturnString}${pshFlag}"
+#		    set ReturnString "${ReturnString}${rstFlag}"
+#		    set ReturnString "${ReturnString}${synFlag}"
+#		    set ReturnString "${ReturnString}${finFlag}${delimiter}"
+#		    
+#		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 5]${delimiter}"
+#		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 6]${delimiter}"
+#		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 7]${delimiter}"
+#		}
+#		
+#		#
+#		# If UDP get the UDP hdr and Insert it
+#		#
+#		if {[$winname.protoFrame.list get $selectedIndex] == "17"} {
+#		    # Send the Report Request to the server
+#		    SendToSguild "ReportRequest UDP [lindex $eventID 0] [lindex $eventID 1]"
+#		    
+#		    # wait for the response to fill in
+#		    tkwait variable REPORT_DONE
+#		    # Reset REPORT_DONE to 0 for the next report
+#		    set REPORT_DONE 0
+#		    
+#		    set eventUDPHdr $REPORT_RESULTS
+#		    set REPORT_RESULTS ""
+#		    if { $eventUdpHdr == "error" } {
+#			ErrorMessage "Error getting UDP Header Data."
+#		    }
+#		    set ReturnString "${ReturnString}[lindex $eventUdpHdr 0]${delimiter}"
+#		    set ReturnString "${ReturnString}[lindex $eventUdpHdr 1]${delimiter}"
+#		}
+#	    }
+#	    
+#	    # 
+#	    # If ICMP get the ICMP hdr and payload, parse and insert
+#	    #
+#	    if {[$winname.protoFrame.list get $selectedIndex] == "1"} {
+#		# Send the Report Request to the server
+#		SendToSguild "ReportRequest ICMP [lindex $eventID 0] [lindex $eventID 1]"
+#		
+#		# wait for the response to fill in
+#		tkwait variable REPORT_DONE
+#		# Reset REPORT_DONE to 0 for the next report
+#		set REPORT_DONE 0
+#		
+#		set eventIcmpHdr $REPORT_RESULTS
+#		set REPORT_RESULTS ""
+#		set ReturnString "${ReturnString}[lindex $eventIcmpHdr 0]${delimiter}"
+#		set ReturnString "${ReturnString}[lindex $eventIcmpHdr 1]${delimiter}"
+#		set ReturnString "${ReturnString}[lindex $eventIcmpHdr 2]${delimiter}"
+#		set ReturnString "${ReturnString}[lindex $eventIcmpHdr 3]${delimiter}"
+#		set ReturnString "${ReturnString}[lindex $eventIcmpHdr 4]${delimiter}"
+#		
+#		# If the ICMP packet is a dest unreachable or a time exceeded,
+#		# check to see if it is network, host, port unreachable or admin prohibited or filtered
+#		# then show some other stuff
+#		if {[lindex $eventIcmpHdr 0] == "3" || [lindex $eventIcmpHdr 0] == "11"} {
+#		    if {[lindex $eventIcmpHdr 1] == "0" || [lindex $eventIcmpHdr 1] == "4"\
+#			    || [lindex $eventIcmpHdr 1] == "9" || [lindex $eventIcmpHdr 1] == "13"\
+#			    || [lindex $eventIcmpHdr 1] == "1" || [lindex $eventIcmpHdr 1] == "3"} {
+#			
+#			#  There may be 32-bits of NULL padding at the start of the payload
+#			set offset 0
+#			set pldata [lindex $eventIcmpHdr 5]
+#			
+#			if {[string range $pldata 0 7] == "00000000"} {
+#			    set offset 8
+#			}
+#			# puts [string range $pldata [expr $offset+24] [expr $offset+25]]
+#			
+#			# Build the protocol
+#			set protohex [string range $pldata [expr $offset+18] [expr $offset+19]]
+#			set ReturnString "${ReturnString}Orig Protocol=[format "%i" 0x$protohex] "
+#			
+#			if { $sanitize == 0 } {
+#			    # Build the src address 
+#			    set srchex1 [string range $pldata [expr $offset+24] [expr $offset+25]]
+#			    set srchex2 [string range $pldata [expr $offset+26] [expr $offset+27]]
+#			    set srchex3 [string range $pldata [expr $offset+28] [expr $offset+29]]
+#			    set srchex4 [string range $pldata [expr $offset+30] [expr $offset+31]]
+#			    set ReturnString "${ReturnString}[format "%i" 0x$srchex1].[format "%i" 0x$srchex2]\
+#				    .[format "%i" 0x$srchex3].[format "%i" 0x$srchex4]${delimiter}"
+#			} else {
+#			    set ReturnString "${ReturnString}a.b.c.d${delimiter}"
+#			}
+#			
+#			# Find and build the src port
+#			set hdroffset [expr [string index $pldata [expr ($offset+1)]] * 8 + $offset]
+#			set sporthex [string range $pldata $hdroffset [expr $hdroffset+3]]
+#			set ReturnString "${ReturnString}[format "%i" 0x$sporthex]${delimiter}"
+#			
+#			if { $sanitize == 0 } {
+#			    # Build the dst address
+#			    set dsthex1 [string range $pldata [expr $offset+32] [expr $offset+33]]
+#			    set dsthex2 [string range $pldata [expr $offset+34] [expr $offset+35]]
+#			    set dsthex3 [string range $pldata [expr $offset+36] [expr $offset+37]]
+#			    set dsthex4 [string range $pldata [expr $offset+38] [expr $offset+39]]
+#			    set ReturnString "${ReturnString}\
+#				    [format "%i" 0x$dsthex1].[format "%i" 0x$dsthex2]\
+#				    .[format "%i" 0x$dsthex3].[format "%i" 0x$dsthex4]${delimiter}"
+#			} else {
+#			    set ReturnString "${ReturnString}e.f.g.h${delimiter}"
+#			}
+#			
+#			# Dest Port
+#			set dporthex [string range $pldata [expr $hdroffset+4] [expr $hdroffset+7]]
+#			set ReturnString "${ReturnString}[format "%i" 0x$dporthex]${delimiter}"
+#			
+#		    }
+#		}
+#	    }
+#	    # Get and insert the pack payload all pretty like if detail is set to 1
+#	    if { $detail == "1" } {
+#		# Send the Report Request to the server
+#		SendToSguild "ReportRequest PAYLOAD [lindex $eventID 0] [lindex $eventID 1]"
+#		
+#		# wait for the response to fill in
+#		tkwait variable REPORT_DONE
+#		# Reset REPORT_DONE to 0 for the next report
+#		set REPORT_DONE 0
+#		
+#		set eventPayload [lindex $REPORT_RESULTS 0]
+#		set REPORT_RESULTS ""
+#		if { $eventPayload == "error" } {
+#		    ErrorMessage "Error getting payload data."
+#		}
+#		if {$eventPayload  == "" || [string length $eventPayload] == 0 || $eventPayload == "{}"} { 
+#		    set ReturnString "${ReturnString}None${delimiter}"
+#		} else {
+#		    set dataLength [string length $eventPayload]
+#		    set asciiStr ""
+#		    set counter 2
+#		    for {set i 1} {$i < $dataLength} {incr i 2} {
+#			set currentByte [string range $eventPayload [expr $i - 1] $i]
+#			lappend hexStr $currentByte
+#			set intValue [format "%i" 0x$currentByte]
+#			if { $intValue < 32 || $intValue > 126 } {
+#			    # Non printable char
+#			    set currentChar "."
+#			} else {
+#			    set currentChar [format "%c" $intValue]
+#			}
+#			set asciiStr "$asciiStr$currentChar"
+#			if { $counter == 32 } {
+#			    set ReturnString "${ReturnString}$asciiStr"
+#			    set hexStr ""
+#			    set asciiStr ""
+#			    set counter 2
+#			} else {
+#			    incr counter 2
+#			}
+#		    }
+#		    set ReturnString "${ReturnString}$asciiStr${delimiter}"
+#		}
+#	    }
+#	} else {
+#	    # Send the Report Request to the server
+#	    SendToSguild "ReportRequest PORTSCAN [lindex [$winname.dateTimeFrame.list get $selectedIndex] 0]\
+#		    [$winname.srcIPFrame.list get $selectedIndex]"
+#	    
+#	    # wait for the response to fill in
+#	    tkwait variable REPORT_DONE
+#	    # Reset REPORT_DONE to 0 for the next report
+#	    set REPORT_DONE 0
+#	    
+#	    set psdata $REPORT_RESULTS
+#	    set REPORT_RESULTS ""
+#	    
+#	    for { set i 0 } { $i < [llength $psdata] } {incr i} {
+#		if { $sanitize == 1 } {
+#		    set psrow1 [lreplace [lindex $psdata $i] 2 2 "a.b.c.d"]
+#		    set psrow [lreplace $psrow1 4 4 "e.f.g.h"]
+#		} else {
+#		    set psrow [lindex $psdata $i]
+#		}
+#		set ReturnString "${ReturnString}$psrow${delimiter}"
+#	    }
+#	}
+#	set ReturnString "${ReturnString}\n"
+#    }
+#    
+#    return $ReturnString
+#}
     
 proc ExportHumanText { winname } {
 
     # leaving the sanitize toggle in here in case I want it later
     set sanitize 0
     set ReturnString ""
-    set ListSize [$winname.eventIDFrame.list size]
+    set ListSize [llength [$winname getcolumns 1]]
     for {set i 0} {$i<$ListSize} {incr i} {
 	set ReturnString "${ReturnString}------------------------------------------------------------------------\n"
-	set ReturnString "${ReturnString}Status:[$winname.statusFrame.list get $i] "
-	set ReturnString "${ReturnString}Count:[$winname.countFrame.list get $i] "
-	set ReturnString "${ReturnString}Sensor:[$winname.sensorFrame.list get $i] "
-	set ReturnString "${ReturnString}Event#[$winname.eventIDFrame.list get $i] "
+	set ReturnString "${ReturnString}Status:[$winname getcells $i,status] "
+	set ReturnString "${ReturnString}Count:[$winname getcells $i,count] "
+	set ReturnString "${ReturnString}Sensor:[$winname getcells $i,sensor] "
+	set ReturnString "${ReturnString}Event#[$winname getcells $i,alertID] "
 
-	set ReturnString "${ReturnString}[$winname.dateTimeFrame.list get $i]\n"
-	set ReturnString "${ReturnString}[$winname.msgFrame.list get $i]\n"
-	set ReturnString "${ReturnString}[$winname.protoFrame.list get $i] "
+	set ReturnString "${ReturnString}[$winnamet getcells $i,date]\n"
+	set ReturnString "${ReturnString}[$winname getcells $i,event]\n"
+	set ReturnString "${ReturnString}[$winname getcells $i,ipproto] "
 	if { $sanitize == 0 } {
-	    set ReturnString "${ReturnString}[$winname.srcIPFrame.list get $i]:"
-	    set ReturnString "${ReturnString}[$winname.srcPortFrame.list get $i] -> "
-	    set ReturnString "${ReturnString}[$winname.dstIPFrame.list get $i]:"
-	    set ReturnString "${ReturnString}[$winname.dstPortFrame.list get $i]\n"
+	    set ReturnString "${ReturnString}[$winname getcells $i,srcip]:"
+	    set ReturnString "${ReturnString}[$winname getcells $i,srcport] -> "
+	    set ReturnString "${ReturnString}[$winname getcells $i,dstip]:"
+	    set ReturnString "${ReturnString}[$winname getcells $i,dstport]\n"
 	} else {
 	    set ReturnString "${ReturnString}a.b.c.d:"
-	    set ReturnString "${ReturnString}[$winname.srcPortFrame.list get $i] -> e.f.g.h:"
-	    set ReturnString "${ReturnString}[$winname.dstPortFrame.list get $i]\n"
+	    set ReturnString "${ReturnString}[$winname getcells $i,srcport] -> e.f.g.h:"
+	    set ReturnString "${ReturnString}[$winname getcells $i,dstport]\n"
 	}
 	
     }
@@ -1178,31 +1183,31 @@ proc ExportDelimitedText { winname SepChar quote header} {
     } else {
 	set ReturnString ""
     }
-    set ListSize [$winname.eventIDFrame.list size]
+    set ListSize [llength [$winname getcolumns 1]]
     for {set i 0} {$i<$ListSize} {incr i} {
-	set ReturnString "${ReturnString}[$winname.statusFrame.list get $i]${SepChar}"
-	set ReturnString "${ReturnString}[$winname.countFrame.list get $i]${SepChar}"
-	set ReturnString "${ReturnString}[$winname.sensorFrame.list get $i]${SepChar}"
-	set ReturnString "${ReturnString}[$winname.eventIDFrame.list get $i]${SepChar}"
+	set ReturnString "${ReturnString}[$winname getcells $i,status]${SepChar}"
+	set ReturnString "${ReturnString}[$winname getcells $i,count]${SepChar}"
+	set ReturnString "${ReturnString}[$winname getcells $i,sensor]${SepChar}"
+	set ReturnString "${ReturnString}[$winname getcells $i,alertID]${SepChar}"
 
-	set ReturnString "${ReturnString}[$winname.dateTimeFrame.list get $i]${SepChar}"
+	set ReturnString "${ReturnString}[$winname getcells $i,date]${SepChar}"
 	
 	
 	if { $sanitize == 0 } {
-	    set ReturnString "${ReturnString}[$winname.srcIPFrame.list get $i]${SepChar}"
-	    set ReturnString "${ReturnString}[$winname.srcPortFrame.list get $i]${SepChar}"
-	    set ReturnString "${ReturnString}[$winname.dstIPFrame.list get $i]${SepChar}"
-	    set ReturnString "${ReturnString}[$winname.dstPortFrame.list get $i]${SepChar}"
+	    set ReturnString "${ReturnString}[$winname getcells $i,srcip]${SepChar}"
+	    set ReturnString "${ReturnString}[$winname getcells $i,srcport]${SepChar}"
+	    set ReturnString "${ReturnString}[$winname getcells $i,dstip]${SepChar}"
+	    set ReturnString "${ReturnString}[$winnamegetcells $i,dstport]${SepChar}"
 	} else {
 	    set ReturnString "${ReturnString}a.b.c.d${SepChar}"
-	    set ReturnString "${ReturnString}[$winname.srcPortFrame.list get $i]${SepChar}e.f.g.h${SepChar}"
-	    set ReturnString "${ReturnString}[$winname.dstPortFrame.list get $i]${SepChar}"
+	    set ReturnString "${ReturnString}[$winname getcells $i,srcport]${SepChar}e.f.g.h${SepChar}"
+	    set ReturnString "${ReturnString}[$winname getcells $i,dstport]${SepChar}"
 	}
-	set ReturnString "${ReturnString}[$winname.protoFrame.list get $i]${SepChar}"
+	set ReturnString "${ReturnString}[$winname getcells $i,ipproto]${SepChar}"
 	if { $quote == 1 } {
-	    set ReturnString "${ReturnString}\"[$winname.msgFrame.list get $i]\"\n"
+	    set ReturnString "${ReturnString}\"[$winname getcells $i,event]\"\n"
 	} else {
-	    set ReturnString "${ReturnString}[$winname.msgFrame.list get $i]\n"
+	    set ReturnString "${ReturnString}[$winname getcells $i,event]\n"
 	}
     }
     return $ReturnString
@@ -1212,29 +1217,29 @@ proc ExportHumanSSNText { winname } {
     # leaving the sanitize toggle in here in case I want it later
     set sanitize 0
     set ReturnString ""
-    set ListSize [$winname.xidFrame.list size]
+    set ListSize [llength [$winname getcolumns 1]]
     for {set i 0} {$i<$ListSize} {incr i} {
 	set ReturnString "${ReturnString}------------------------------------------------------------------------\n"
-	set ReturnString "${ReturnString}Sensor:[$winname.sensorFrame.list get $i] "
-	set ReturnString "${ReturnString}Session ID:[$winname.xidFrame.list get $i]\n"
-	set ReturnString "${ReturnString}Start Time:[$winname.startTimeFrame.list get $i] "
-	set ReturnString "${ReturnString}End Time:[$winname.endTimeFrame.list get $i]\n"
+	set ReturnString "${ReturnString}Sensor:[$winname getcells $i,sensor] "
+	set ReturnString "${ReturnString}Session ID:[$winname getcells $i,alertID]\n"
+	set ReturnString "${ReturnString}Start Time:[$winname getcells $i,starttime] "
+	set ReturnString "${ReturnString}End Time:[$winname getcells $i,endtime]\n"
 
 	if { $sanitize == 0 } {
-	    set ReturnString "${ReturnString}[$winname.srcIPFrame.list get $i]:"
-	    set ReturnString "${ReturnString}[$winname.srcPortFrame.list get $i] -> "
-	    set ReturnString "${ReturnString}[$winname.dstIPFrame.list get $i]:"
-	    set ReturnString "${ReturnString}[$winname.dstPortFrame.list get $i]\n"
+	    set ReturnString "${ReturnString}[$winname getcells $i,srcip]:"
+	    set ReturnString "${ReturnString}[$winname getcells $i,srcport] -> "
+	    set ReturnString "${ReturnString}[$winname getcells $i,dstip]:"
+	    set ReturnString "${ReturnString}[$winname getcells $i,dstport]\n"
 	} else {
 	    set ReturnString "${ReturnString}a.b.c.d:"
-	    set ReturnString "${ReturnString}[$winname.srcPortFrame.list get $i] -> e.f.g.h:"
-	    set ReturnString "${ReturnString}[$winname.dstPortFrame.list get $i]\n"
+	    set ReturnString "${ReturnString}[$winname getcells $i,srcport] -> e.f.g.h:"
+	    set ReturnString "${ReturnString}[$winname getcells $i,dstport]\n"
 	}
 	
-	set ReturnString "${ReturnString}Source Packets:[$winname.srcPcktsFrame.list get $i] "
-	set ReturnString "${ReturnString}Bytes:[$winname.srcBytesFrame.list get $i]\n"
-	set ReturnString "${ReturnString}Dest Packets:[$winname.dstPcktsFrame.list get $i] "
-	set ReturnString "${ReturnString}Bytes:[$winname.dstBytesFrame.list get $i]\n"
+	set ReturnString "${ReturnString}Source Packets:[$winname getcells $i,srcpckts] "
+	set ReturnString "${ReturnString}Bytes:[$winname getcells $i,srcbytes]\n"
+	set ReturnString "${ReturnString}Dest Packets:[$winname getcells $i,dstpckts] "
+	set ReturnString "${ReturnString}Bytes:[$winname getcells $i,dstbytes]\n"
     }
     return $ReturnString
 }
@@ -1250,28 +1255,28 @@ proc ExportDelimitedSSNText { winname SepChar quote header } {
     }
     # leaving the sanitize toggle in here in case I want it later
     set sanitize 0
-    set ListSize [$winname.xidFrame.list size]
+    set ListSize [llength [$winname getcolumns 1]]
     for {set i 0} {$i<$ListSize} {incr i} {
-	set ReturnString "${ReturnString}[$winname.sensorFrame.list get $i]${SepChar}"
-	set ReturnString "${ReturnString}[$winname.xidFrame.list get $i]${SepChar}"
-	set ReturnString "${ReturnString}[$winname.startTimeFrame.list get $i]${SepChar}"
-	set ReturnString "${ReturnString}[$winname.endTimeFrame.list get $i]${SepChar}"
+	set ReturnString "${ReturnString}[$winname getcells $i,sensor]${SepChar}"
+	set ReturnString "${ReturnString}[$winname getcells $i,alertID]${SepChar}"
+	set ReturnString "${ReturnString}[$winname getcells $i,starttime]${SepChar}"
+	set ReturnString "${ReturnString}[$winname getcells $i,endtime]${SepChar}"
 
 	if { $sanitize == 0 } {
-	    set ReturnString "${ReturnString}[$winname.srcIPFrame.list get $i]${SepChar}"
-	    set ReturnString "${ReturnString}[$winname.srcPortFrame.list get $i]${SepChar}"
-	    set ReturnString "${ReturnString}[$winname.dstIPFrame.list get $i]${SepChar}"
-	    set ReturnString "${ReturnString}[$winname.dstPortFrame.list get $i]${SepChar}"
+	    set ReturnString "${ReturnString}[$winname getcells srcip $i]${SepChar}"
+	    set ReturnString "${ReturnString}[$winname getcells $i,srcport]${SepChar}"
+	    set ReturnString "${ReturnString}[$winname getcells $i,dstip]${SepChar}"
+	    set ReturnString "${ReturnString}[$winname getcells $i,dstport]${SepChar}"
 	} else {
 	    set ReturnString "${ReturnString}a.b.c.d${SepChar}"
-	    set ReturnString "${ReturnString}[$winname.srcPortFrame.list get $i]${SepChar}e.f.g.h${SepChar}"
-	    set ReturnString "${ReturnString}[$winname.dstPortFrame.list get $i]${SepChar}"
+	    set ReturnString "${ReturnString}[$winname getcells $i,srcport]${SepChar}e.f.g.h${SepChar}"
+	    set ReturnString "${ReturnString}[$winname getcells $i,dstport]${SepChar}"
 	}
 	
-	set ReturnString "${ReturnString}[$winname.srcPcktsFrame.list get $i]${SepChar}"
-	set ReturnString "${ReturnString}[$winname.srcBytesFrame.list get $i]${SepChar}"
-	set ReturnString "${ReturnString}[$winname.dstPcktsFrame.list get $i]${SepChar}"
-	set ReturnString "${ReturnString}[$winname.dstBytesFrame.list get $i]\n"
+	set ReturnString "${ReturnString}[$winname getcells $i,srcpckts]${SepChar}"
+	set ReturnString "${ReturnString}[$winname getcells $i,srcbytes]${SepChar}"
+	set ReturnString "${ReturnString}[$winname getcells $i,dstpckts]${SepChar}"
+	set ReturnString "${ReturnString}[$winname getcells $i,dstbytes]\n"
     }
     return $ReturnString
 }

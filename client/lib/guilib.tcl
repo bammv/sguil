@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.18 2005/08/19 20:29:14 bamm Exp $
+# $Id: guilib.tcl,v 1.19 2005/11/16 22:27:12 bamm Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -18,6 +18,7 @@ proc UpdateClock {} {
   $gmtClock configure -text "[GetCurrentTimeStamp] GMT"
   after 1000 UpdateClock
 }
+
 proc AboutBox {} {
     global VERSION
     set aboutWin .aboutWin
@@ -59,32 +60,43 @@ proc TableColumns { tableName tmpColumnList } {
   global tableColumnArray
   set tableColumnArray($tableName) $tmpColumnList
 }
+
 proc ShowDBTables {} {
-  global tableList tableColumnArray currentTableList tableListFrame
-  set tableWin .tableWin
-  if [winfo exists $tableWin] {
-    wm withdraw $tableWin
-    wm deiconify $tableWin
-    return
-  }
-  toplevel $tableWin
-  wm title $tableWin "Table Descriptions"
-  set tableSelMenu [optionmenu $tableWin.tableSelMenu\
-    -labeltext "Table Name:" -command "DisplayTableColumns $tableWin.tableSelMenu"] 
-  foreach tableName $tableList {
-    $tableSelMenu insert end $tableName
-    set tableListFrame($tableName) [frame $tableWin.${tableName}Frame\
-     -background black -borderwidth 1]
-    CreateTableListBox $tableListFrame($tableName) $tableColumnArray($tableName)
-  }
-  set currentTableList $tableName
-  button $tableWin.close -text "Close" -command "destroy $tableWin"
-  pack $tableSelMenu $tableListFrame($tableName) $tableWin.close -side top
-  $tableSelMenu sort ascending
-  $tableSelMenu select event
-  $tableSelMenu configure -cyclicon true
-  DisplayTableColumns $tableWin.tableSelMenu
+
+    global tableList tableColumnArray currentTableList tableListFrame
+
+    set tableWin .tableWin
+
+    if [winfo exists $tableWin] {
+        wm withdraw $tableWin
+        wm deiconify $tableWin
+        return
+    }
+
+    toplevel $tableWin
+    wm title $tableWin "Table Descriptions"
+    set tableSelMenu [optionmenu $tableWin.tableSelMenu\
+      -labeltext "Table Name:" -command "DisplayTableColumns $tableWin.tableSelMenu"] 
+
+    foreach tableName $tableList {
+
+        $tableSelMenu insert end $tableName
+        set tableListFrame($tableName) [frame $tableWin.${tableName}Frame\
+         -background black -borderwidth 1]
+        CreateTableListBox $tableListFrame($tableName) $tableColumnArray($tableName)
+
+    }
+
+    set currentTableList $tableName
+    button $tableWin.close -text "Close" -command "destroy $tableWin"
+    pack $tableSelMenu $tableListFrame($tableName) $tableWin.close -side top
+    $tableSelMenu sort ascending
+    $tableSelMenu select event
+    $tableSelMenu configure -cyclicon true
+    DisplayTableColumns $tableWin.tableSelMenu
+
 }
+
 proc DisplayTableColumns { winName } {
   global currentTableList tableListFrame
   set tableName [$winName get]
@@ -92,40 +104,33 @@ proc DisplayTableColumns { winName } {
   pack $tableListFrame($tableName) -after $winName -fill both -expand true
   set currentTableList $tableName
 }
+
 proc CreateTableListBox { winName columnList } {
-  set nameFrame [frame  $winName.nameFrame]
-    set nameLabel [label $nameFrame.nameLabel -text "Column Name" -background black -foreground white]
-    set nameList [listbox $nameFrame.nameList -width 15 -height 10\
-     -yscrollcommand "$winName.scroll set" -exportselection false -borderwidth 0]
-    pack $nameLabel -fill x -side top
-    pack $nameList -side top -fill both -expand true
-  set typeFrame [frame  $winName.typeFrame]
-    set typeLabel [label $typeFrame.typeLabel -text "Type" -background black -foreground white]
-    set typeList [listbox $typeFrame.typeList -width 10 -height 10\
-     -yscrollcommand "$winName.scroll set" -exportselection false -borderwidth 0]
-    pack $typeLabel -fill x -side top
-    pack $typeList -side top -fill both -expand true
-  set lengthFrame [frame $winName.lenghtFrame]
-    set lengthLabel [label $lengthFrame.lengthLabel -text "Length" -background black -foreground white]
-    set lengthList [listbox $lengthFrame.lengthList -width 10 -height 10\
-     -yscrollcommand "$winName.scroll set" -exportselection false -borderwidth 0]
-    pack $lengthLabel -fill x -side top
-    pack $lengthList -side top -fill both -expand true
-  scrollbar $winName.scroll -command "MultiScrollBar \"$nameList $typeList $lengthList\""\
-   -width 10
-  pack $nameFrame $typeFrame $lengthFrame -side left -expand true -fill both
-  pack $winName.scroll -side right -fill y
+
+    set tbl $winName.table
+    set sb $winName.scrollbar
+
+    tablelist::tablelist $tbl \
+        -columns {15  "Column Name"  left
+                  10  "Type"         left
+                  10 "Length"        left} \
+         -selectmode single \
+         -movablecolumns 0 \
+         -yscrollcommand [list $sb set] -width 40
+
+    $tbl columnconfigure 0 -name cname -resizable 1 -stretchable 1 -sortmode dictionary
+    $tbl columnconfigure 1 -name ctype -resizable 1 -stretchable 1 -sortmode dictionary
+    $tbl columnconfigure 2 -name clength -resizable 1 -stretchable 1 -sortmode integer
+
+    scrollbar $sb -orient vertical -width 10 -command [list $tbl yview]
+
+    pack $tbl -side left -fill both -expand true
+    pack $sb -side right -fill y
    
-  set BCOLOR white
-  foreach column $columnList {
-    $nameList insert end [lindex $column 0]
-    $typeList insert end [lindex $column 1]
-    $lengthList insert end [lindex $column 2]
-    if { $BCOLOR == "white" } { set BCOLOR lightblue } else { set BCOLOR white }
-    $nameList itemconfigure end -background $BCOLOR
-    $typeList itemconfigure end -background $BCOLOR
-    $lengthList itemconfigure end -background $BCOLOR
-  }
+    foreach column $columnList {
+        $tbl insert end $column
+    }
+
 }
 
 proc DisplayIncidentCats {} {
@@ -145,48 +150,7 @@ proc DisplayIncidentCats {} {
   $categoryText component text insert end "Category VI\tReconnaissance/Probes/Scans\n"
   $categoryText component text insert end "Category VII\tVirus Infection\n"
 }
-proc LaunchXscriptMenu { winName yRoot} {
-  global ACTIVE_EVENT eventIDMenut MULTI_SELECT
-  if {!$ACTIVE_EVENT || $MULTI_SELECT == 1} { return }
-  set selectedIndex { $winName curselection }
-  if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
-  tk_popup $eventIDMenut [winfo rootx $winName] [expr $yRoot + 6]
-}
-proc LaunchIPQueryMenu { winName yRoot } {
-  global ACTIVE_EVENT ipQueryMenu MULTI_SELECT
-  if {!$ACTIVE_EVENT || $MULTI_SELECT == 1} { return }
-  set selectedIndex { $winName curselection }
-  if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
-  tk_popup $ipQueryMenu [winfo rootx $winName] [expr $yRoot + 6]
-}
-proc LaunchPortQueryMenu { winName yRoot } {
-  global ACTIVE_EVENT portQueryMenu MULTI_SELECT
-  if {!$ACTIVE_EVENT || $MULTI_SELECT == 1} { return }
-  set selectedIndex { $winName curselection }
-  if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
-  tk_popup $portQueryMenu [winfo rootx $winName] [expr $yRoot + 6]
-}
-proc LaunchSigQueryMenu { winName yRoot } {
-  global ACTIVE_EVENT sigQueryMenu MULTI_SELECT
-    if {!$ACTIVE_EVENT || $MULTI_SELECT == 1} { return }
-  set selectedIndex { $winName curselection }
-  if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
-  tk_popup $sigQueryMenu [winfo rootx $winName] [expr $yRoot + 6]
-}
-proc LaunchCorrelateMenu { winName yRoot } {
-  global ACTIVE_EVENT correlateMenu MULTI_SELECT
-  if {!$ACTIVE_EVENT || $MULTI_SELECT == 1} { return }
-  set selectedIndex { $winName curselection }
-  if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
-  tk_popup $correlateMenu [winfo rootx $winName] [expr $yRoot +6]
-}
-proc LaunchStatusMenu { winName yRoot } {
-  global ACTIVE_EVENT statusMenu
-  if {!$ACTIVE_EVENT} { return }
-  set selectedIndex { $winName curselection }
-  if { $selectedIndex == "" } { set ACTIVE_EVENT 0; return }
-  tk_popup $statusMenu [winfo rootx $winName] [expr $yRoot +6]
-}
+
 proc ClearPacketData {} {
   global srcIPHdrFrame dstIPHdrFrame verIPHdrFrame hdrLenIPHdrFrame
   global tosIPHdrFrame lenIPHdrFrame idIPHdrFrame flagsIPHdrFrame
@@ -447,132 +411,52 @@ proc UnSelectPacketOptions { } {
 # ScrollHome: If ScrollHome var is set, move the scrollbar to the bottom of the list
 #
 proc ScrollHome { paneName } {
+
   global SCROLL_HOME
-  if {$SCROLL_HOME($paneName)} {
-    foreach childWin [winfo children $paneName] {
-      if { [winfo name $childWin] != "scroll" } {
-        $childWin.list see end
-      }
-    }
-  }
+
+  if {$SCROLL_HOME($paneName)} { $paneName see end }
+
 }
 
-#
-# BindSelectionToAllLists: Grabs button-1 events and make sure that a list is
-#                          selected across all lists.
-#
-proc BindSelectionToAllLists { listName } {
-    global tcl_platform
-    foreach buttonEvent { "Shift-Button-1" } {
-	bind $listName <$buttonEvent> { ShiftSelect %W [%W nearest %y]; break }
-    }
-    foreach buttonEvent { "Control-Button-1" } {
-	bind $listName <$buttonEvent> { CtrlSelect %W [%W nearest %y]; break }
-    }
-    foreach buttonEvent { "Button-1" } {
-        bind $listName <$buttonEvent> { SingleSelect %W [%W nearest %y]; break }
-    }
-    foreach buttonEvent { "B1-Motion" "Control-B1-Motion" } {
-	bind $listName <$buttonEvent> { MotionSelect %W [%W nearest %y]; break }
-    }
-    foreach buttonEvent { "ButtonRelease-1" } {
-	bind $listName <$buttonEvent> { ReSetMotion }
-    }
-    foreach buttonEvent { "MouseWheel" "Button-5" } {
-	bind $listName <$buttonEvent> { WheelScroll %D %W "5"; break }
-    }
-    foreach buttonEvent { "Button-4" } {
-	bind $listName <$buttonEvent> { WheelScroll %D %W "4"; break }
-    }
-    # We have to manually grab the focus for mouse wheels. On win32.
-
-    if { $tcl_platform(platform) == "windows" } {
-        bind $listName <Enter> { focus %W }
-    }
-}    
-proc BindSelectionToAllPSLists { listName } {
-    
-    foreach buttonEvent { "MouseWheel" "Button-5" } {
-	bind $listName <$buttonEvent> { WheelScroll %D %W "5"; break }
-    }
-    foreach buttonEvent { "Button-4" } {
-	bind $listName <$buttonEvent> { WheelScroll %D %W "4"; break }
-    }
-}
 proc BindSelectionToAllDataBoxes { boxName } {
-    
+
     foreach buttonEvent { "MouseWheel" "Button-5" } {
-	bind $boxName <$buttonEvent> { WheelDataScroll %D %W "5"; break }
+        bind $boxName <$buttonEvent> { WheelDataScroll %D %W "5"; break }
     }
+
     foreach buttonEvent { "Button-4" } {
-	bind $boxName <$buttonEvent> { WheelDataScroll %D %W "4"; break }
+        bind $boxName <$buttonEvent> { WheelDataScroll %D %W "4"; break }
     }
+
 }
-#
-# WheelScroll: Scroll all of the lists together on a mousey-wheely-scrolly
-#
-proc WheelScroll { delta winName source } {
-    global SCROLL_HOME
-    if { $source == 4 || $source == 5 } {
-	set parentWin [winfo parent [winfo parent $winName]]
-    } else {
-	set parentWin $winName
-    }
-    set SCROLL_HOME($parentWin) 0
-    # first we have to support Windows and X
-    # Windows will trigger on MouseWheel events and delta will be high (at least more than 10)
-    # if it is a negative number, then we are looking a a MouseWheel event
-    # XWindows (in most cases generate Button-4 or -5 events and delta will be 4 or 5
-    # Some strange mice in some X systems in some WM's don't fill in delta
-    # so instead, we grab which button event happened and use it for delta
-    if { $delta == "??" } {
-	set delta $source
-    }
-    # X-Windows wheel motion
-    if { $delta == 4 || $delta == 5 } {
-	if { $delta == 4 } { set move -3 }
-	if { $delta == 5 } { set move 3 }
-    } else {
-	# MouseWheel Motion (usually Windows generated)
-	if { $delta > 0 } { set move -3 }
-	if { $delta < 0 } { set move 3}
-	if { $delta == 0 } { break } 
-    }
-    foreach childWin [winfo children $parentWin] {
-	if { [winfo name $childWin] != "scroll" } {
-	
-	    $childWin.list yview scroll $move units
-	}
-    }
-    # check scrollbar position, if at the bottom, toggle SCROLL_HOME
-    set scrollbarPosition [lindex [$parentWin.scroll get] 1]
-    if {$scrollbarPosition == 1.0} {set SCROLL_HOME($parentWin) 1}
-}
+
 #
 # WheelDataScroll: Scroll all of the packet data text boxes together on a mousey-wheely-scrolly
 #
 proc WheelDataScroll { delta winName source } {
-    
+
     if { $delta == "??" } {
-	set delta $source
+        set delta $source
     }
     # X-Windows wheel motion
     if { $delta == 4 || $delta == 5 } {
-	if { $delta == 4 } { set move -3 }
-	if { $delta == 5 } { set move 3 }
+        if { $delta == 4 } { set move -3 }
+        if { $delta == 5 } { set move 3 }
     } else {
-	# MouseWheel Motion (usually Windows generated)
-	if { $delta > 0 } { set move -3 }
-	if { $delta < 0 } { set move 3}
-	if { $delta == 0 } { break } 
+        # MouseWheel Motion (usually Windows generated)
+        if { $delta > 0 } { set move -3 }
+        if { $delta < 0 } { set move 3}
+        if { $delta == 0 } { break }
     }
     foreach childWin [winfo children [winfo parent $winName]] {
-	if { [winfo name $childWin] != "scroll" } {
+        if { [winfo name $childWin] != "scroll" } {
 
-	    $childWin yview scroll $move units
-	}
+            $childWin yview scroll $move units
+        }
     }
 }
+
+
 proc InfoMessage { message } {
     
     global DEBUG

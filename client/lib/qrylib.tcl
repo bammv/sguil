@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.25 2005/02/09 16:13:35 shalligan Exp $ #
+# $Id: qrylib.tcl,v 1.26 2005/11/16 22:27:12 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -6,76 +6,101 @@
 # and finally call DBQueryRequest or SsnQueryRequest.
 #
 proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}}} {
+
     global CUR_SEL_PANE
+
     set eventtimestamp [lindex [GetCurrentTimeStamp "1 week ago"] 0]
     set ssntimestamp [lindex [GetCurrentTimeStamp "1 day ago"] 0]
+    set selectedIndex [$CUR_SEL_PANE(name) curselection]
+
     if { $tableName == "event" } {
+
 	if { $incidentCat == "RT" } {
 	    set whereTmp "WHERE event.status = 0 AND "
 	} else {
 	    set whereTmp "WHERE $tableName.timestamp > '$eventtimestamp' AND "
 	}   
+
     } else {
+
 	if { ( $queryType == "srcip" || $queryType == "dstip" || $queryType == "src2dst" ) && $incidentCat == "hour" } {
-	    if { $CUR_SEL_PANE(format) == "SSN" } {
-		set selectedIndex [$CUR_SEL_PANE(name).startTimeFrame.list curselection]
-		set starttime [clock scan "30 min ago" -base [clock scan [$CUR_SEL_PANE(name).startTimeFrame.list get $selectedIndex]]]
-	    } else {
-		set selectedIndex [$CUR_SEL_PANE(name).dateTimeFrame.list curselection]
-		set starttime [clock scan "30 min ago" -base [clock scan [$CUR_SEL_PANE(name).dateTimeFrame.list get $selectedIndex]]]
-	    }
+
+            set starttime [clock scan "30 min ago" -base [clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,date]]]
 	    set endtime [expr $starttime + 3600]
 	    set tminus [clock format $starttime -f "%Y-%m-%d %T"]
 	    set tplus [clock format $endtime -f "%Y-%m-%d %T"]
 	    set whereTmp "WHERE $tableName.start_time > '$tminus' AND $tableName.start_time < '$tplus' AND "
+
 	} else {
+
 	    set whereTmp "WHERE $tableName.start_time > '$ssntimestamp' AND "
+
 	}  
+
     }
+
     if { $queryType == "srcip" } {
-	set selectedIndex [$CUR_SEL_PANE(name).srcIPFrame.list curselection]
-	set srcIP [$CUR_SEL_PANE(name).srcIPFrame.list get $selectedIndex]
+
+	set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
 	set whereTmp "$whereTmp ($tableName.src_ip = INET_ATON('$srcIP') OR $tableName.dst_ip = INET_ATON('$srcIP'))"
+
     } elseif { $queryType == "srcport" } {
-	set selectedIndex [$CUR_SEL_PANE(name).srcPortFrame.list curselection]
-	set srcport [$CUR_SEL_PANE(name).srcPortFrame.list get $selectedIndex]
+
+	set srcport [$CUR_SEL_PANE(name) getcells $selectedIndex,srcport]
 	set whereTmp "$whereTmp ($tableName.src_port = '$srcport' OR $tableName.dst_port = '$srcport')"
+
     } elseif { $queryType == "dstport" } {
-	set selectedIndex [$CUR_SEL_PANE(name).dstPortFrame.list curselection]
-	set dstport [$CUR_SEL_PANE(name).dstPortFrame.list get $selectedIndex]
+
+	set dstport [$CUR_SEL_PANE(name) getcells $selectedIndex,dstport]
 	set whereTmp "$whereTmp ($tableName.src_port = '$dstport' OR $tableName.dst_port = '$dstport')"
+
     } elseif { $queryType == "dstip" } {
-	set selectedIndex [$CUR_SEL_PANE(name).srcIPFrame.list curselection]
-	set dstIP [$CUR_SEL_PANE(name).dstIPFrame.list get $selectedIndex]
+
+	set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
 	set whereTmp "$whereTmp ($tableName.src_ip  = INET_ATON('$dstIP') OR $tableName.dst_ip = INET_ATON('$dstIP'))"
+
     } elseif { $queryType == "empty" } {
+
 	set whereTmp "$whereTmp <Insert Query Here>"
+
     } elseif { $queryType == "src2dst" } {
-	set selectedIndex [$CUR_SEL_PANE(name).srcIPFrame.list curselection]
-	set srcIP [$CUR_SEL_PANE(name).srcIPFrame.list get $selectedIndex]
-	set dstIP [$CUR_SEL_PANE(name).dstIPFrame.list get $selectedIndex]
+
+	set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
+	set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
 	set whereTmp "$whereTmp $tableName.src_ip  = INET_ATON('$srcIP') AND $tableName.dst_ip = INET_ATON('$dstIP')"
+
     } elseif { $queryType == "category" } {
+
 	set whereTmp "$whereTmp event.status = $incidentCat"
+
     } elseif { $queryType == "signature" } {
-	set selectedIndex [$CUR_SEL_PANE(name).srcIPFrame.list curselection]
-	set eventMsg [$CUR_SEL_PANE(name).msgFrame.list get $selectedIndex]
+
+	set eventMsg [$CUR_SEL_PANE(name) getcells $selectedIndex,event]
 	set whereTmp "$whereTmp event.signature = '$eventMsg'"
+
     }
+
     # if it is a sancp query tack a order by start_time on it.  MERGE tables mess up the returned order.
-    if { $tableName == "sancp" } {
-	set whereTmp "$whereTmp ORDER BY $tableName.start_time"
-    }
+    if { $tableName == "sancp" } { set whereTmp "$whereTmp ORDER BY $tableName.start_time" }
+
     if { $build != "quick" } {
+
 	set tmpWhereStatement [QryBuild $tableName $whereTmp]
 	set whereStatement [lindex $tmpWhereStatement 1]
 	set tableName [lindex $tmpWhereStatement 0]
+
     } else {
+
         set whereStatement "$whereTmp LIMIT 500"
+
     }
+
     if { $whereStatement == "cancel" } { return }
+
     if { $tableName == "event" } {
+
 	if { $queryType == "category" } {
+
 	    switch -exact $incidentCat {
 		11 { set winTitle "Cat I" }
 		12 { set winTitle "Cat II" }
@@ -86,15 +111,25 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 		17 { set winTitle "Cat VII" }
 		default { set winTitle "none" }
 	    }
+
 	    DBQueryRequest $whereStatement $winTitle
+
 	} else {
+ 
 	    DBQueryRequest $whereStatement
+
 	}
+
     } elseif { $tableName == "sessions" } {
+
 	SsnQueryRequest $whereStatement
+
     } elseif { $tableName == "sancp" } {
+
 	SancpQueryRequest $whereStatement
+
     }
+
 }
 #
 # Build a ssn query tab and send the query to sguild.
@@ -115,7 +150,7 @@ proc SsnQueryRequest { whereStatement } {
   set queryFrame [frame $currentTab.ssnquery_${SSN_QUERY_NUMBER} -background black -borderwidth 1]
   $eventTabs select end
   # Here is where we build the session display lists.
-  CreateSessionLists sessions $queryFrame
+  CreateSessionLists $queryFrame
   set buttonFrame [frame $currentTab.buttonFrame]
   set whereText [text $buttonFrame.text -height 1 -background white -wrap none]
   $whereText insert 0.0 $whereStatement
@@ -184,7 +219,7 @@ proc DBQueryRequest { whereStatement {winTitle {none} } } {
   set tabIndex [$eventTabs index end]
   set queryFrame [frame $currentTab.query_$QUERY_NUMBER -background black -borderwidth 1]
   $eventTabs select end
-  CreateEventLists $queryFrame
+  CreateEventLists $queryFrame 1 0
   set buttonFrame [frame $currentTab.buttonFrame]
   set whereText [text $buttonFrame.text -background white -height 1 -wrap none]
   $whereText insert 0.0 $whereStatement
@@ -208,8 +243,8 @@ proc DBQueryRequest { whereStatement {winTitle {none} } } {
   pack $buttonFrame -side top -fill x
   pack $queryFrame -side bottom -fill both
   $queryFrame configure -cursor watch
-  if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
-  SendToSguild "QueryDB $queryFrame $selectQuery"
+  if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame.tablelist $selectQuery" }
+  SendToSguild "QueryDB $queryFrame.tablelist $selectQuery"
 }
 # Depreciated
 proc GetStdQuery {} {
