@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.196 2005/11/16 22:27:12 bamm Exp $ #
+# $Id: sguil.tk,v 1.197 2005/11/16 23:25:45 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1250,6 +1250,8 @@ proc SelectSessionPane { win type format } {
 
     UnSelectPacketOptions
 
+    if { $selectedIndex == "" } { return }
+
     if { $type == "SANCP" } {
 
         if { $DISPLAYEDDETAIL != $sancpFrame } {
@@ -1288,6 +1290,8 @@ proc SelectEventPane { win type format } {
 
         set MULTI_SELECT 0
         set selectedIndex [$win curselection]
+
+        if { $selectedIndex == "" } { return }
 
         if { [regexp "^spp_portscan:" [$win getcells $selectedIndex,event]] } {
 
