@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.20 2005/11/09 19:02:56 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.21 2005/11/29 22:41:39 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -21,7 +21,7 @@ proc ForkLoader {} {
         catch {close $sguildWritePipe}
         catch {close $sguildReadPipe}
 
-        # Cmd recieved via pipe
+        # Cmd received via pipe
         proc SguildCmdRcvd { pipeID } {
 
             fconfigure $pipeID -buffering line
@@ -33,7 +33,7 @@ proc ForkLoader {} {
 
             } else {
 
-                InfoMessage "loaderd: Recieved: $data"
+                InfoMessage "loaderd: Received: $data"
                 set cmd [lindex $data 0]
                 # Here the cmds the loaderd knows
                 switch -exact -- $cmd {
@@ -42,7 +42,7 @@ proc ForkLoader {} {
                     LoadSsnFile    { LoadSsnFile [lindex $data 1] [lindex $data 2] [lindex $data 3] }
                     LoadSancpFile  { LoadSancpFile [lindex $data 1] [lindex $data 2] [lindex $data 3] }
                     LoadNessusData { LoadNessusData [lindex $data 1] [lindex $data 2] }
-                    default        { LogMessage "Unknown command recieved from sguild: $cmd" }
+                    default        { LogMessage "Unknown command received from sguild: $cmd" }
 
                 }
   
@@ -75,7 +75,7 @@ proc ForkLoader {} {
 
             } else {
 
-                InfoMessage "sguild: Recieved from loaderd: $data"
+                InfoMessage "sguild: Received from loaderd: $data"
                 set cmd [lindex $data 0]
                 # Here the cmds the sguild gets from loaderd
                 switch -exact -- $cmd {
@@ -83,7 +83,7 @@ proc ForkLoader {} {
                     ConfirmSancpFile    { ConfirmSancpFile [lindex $data 1] [lindex $data 2] }
                     ConfirmSsnFile      { ConfirmSsnFile [lindex $data 1] [lindex $data 2] }
                     ConfirmPortscanFile { ConfirmPortscanFile [lindex $data 1] [lindex $data 2] }
-                    default             { LogMessage "Unknown command recieved from loaderd: $cmd" }
+                    default             { LogMessage "Unknown command received from loaderd: $cmd" }
 
                 }
 

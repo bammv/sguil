@@ -1,4 +1,4 @@
-# $Id: INSTALL,v 1.19 2005/10/28 04:37:33 bamm Exp $ #
+# $Id: INSTALL,v 1.20 2005/11/29 22:41:38 bamm Exp $ #
 
 NOTE: If you are upgrading from an older version of 
 guil to version 0.6.0, please use the UPGRADE document
@@ -175,7 +175,7 @@ yet, you will be prompted to create it at this point:
     <snip>
     Sguild Initialized
 
-At this point, sguild is ready to recieve connections from sensor
+At this point, sguild is ready to receive connections from sensor
 agents and sguil.tk clients.
 
 

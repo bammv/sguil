@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.17 2005/11/10 15:54:01 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.18 2005/11/29 22:41:39 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -12,7 +12,7 @@ proc ClientCmdRcvd { socketID } {
     ClientExitClose $socketID
     LogMessage "Socket $socketID closed" 
   } else {
-    InfoMessage "Client Command Recieved: $data"
+    InfoMessage "Client Command Received: $data"
     set origData $data
     set clientCmd [ctoken data " "]
     # Check to make the client validated itself
@@ -370,7 +370,7 @@ proc SendCurrentEvents { socketID } {
 
 proc LoadNessusReports { socketID filename table bytes} {
     global TMPDATADIR sguildWritePipe userIDArray
-    InfoMessage "Recieving nessus file $filename."
+    InfoMessage "Receiving nessus file $filename."
     set NESSUS_OUTFILE $TMPDATADIR/$filename
     set outFileID [open $NESSUS_OUTFILE w]
     fconfigure $outFileID -translation binary

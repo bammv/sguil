@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.16 2005/10/11 21:17:11 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.17 2005/11/29 22:41:39 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global connectedAgents agentSensorNameArray
@@ -75,7 +75,7 @@ proc RcvPortscanFile { socketID sensorName fileName bytes } {
 
     global TMPDATADIR sguildWritePipe
 
-    InfoMessage "Recieving portscan file $fileName."
+    InfoMessage "Receiving portscan file $fileName."
     set PS_OUTFILE $TMPDATADIR/$fileName
     # Copy file from sensor_agent
     RcvBinCopy $socketID $PS_OUTFILE $bytes

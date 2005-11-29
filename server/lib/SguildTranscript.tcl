@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.11 2005/06/03 22:35:43 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.12 2005/11/29 22:41:39 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -178,10 +178,10 @@ proc RawDataFile { socketID fileName TRANS_ID bytes } {
     # xscript or ethereal request
     set type [lindex $transInfoArray($TRANS_ID) 3]
 
-    InfoMessage "Recieving rawdata file $fileName."
+    InfoMessage "Receiving rawdata file $fileName."
     if { $type == "xscript" } {
         SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
-         "XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] Recieving raw file from sensor."
+         "XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] Receiving raw file from sensor."
     }
 
     set outfile [lindex $transInfoArray($TRANS_ID) 2]/$fileName

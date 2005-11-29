@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.14 2005/11/29 22:11:45 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.15 2005/11/29 22:41:39 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -62,7 +62,7 @@ proc AddEventToEventArray { eventDataList } {
   set sensorName [lindex $eventDataList 3]
   set eventIDArray($eventID) $eventDataList
   # Arrays are not kept in any particular order so we have to keep
-  # a list in order to control the order the clients recieve events
+  # a list in order to control the order the clients receive events
   lappend eventIDList $eventID
 }
 

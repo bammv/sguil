@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.18 2005/11/09 19:02:56 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.19 2005/11/29 22:41:39 bamm Exp $ #
 
 proc SendSensorAgent { socketID msg } {
 
@@ -50,7 +50,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
       && [info exists LAST_EVENT_ID($sensorName)] \
       && $LAST_EVENT_ID($sensorName) == $eventID } {
 
-        InfoMessage "Non-fatal Error: recieved a duplicate alert from $sensorName. : $eventID"
+        InfoMessage "Non-fatal Error: received a duplicate alert from $sensorName. : $eventID"
 
         # Send by/op_sguil confirmation
         SendSensorAgent $socketID [list Confirm $req_socketID $cid]
