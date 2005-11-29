@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.13 2005/11/02 20:09:11 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.14 2005/11/29 22:11:45 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -89,7 +89,12 @@ proc DeleteEventIDList { socketID data } {
                                                                                                             
     set tmpSid [lindex [split $eventID .] 0]
     set tmpCid [lindex [split $eventID .] 1]
-    lappend tmpCidList($tmpSid) $tmpCid
+    set sensorName [lindex $eventIDArray($eventID) 3]
+    set tmpDate [clock format [clock scan [lindex $eventIDArray($eventID) 4]] -gmt true -format "%Y%m%d"]
+    set tmpEventTable "event_${sensorName}_${tmpDate}"
+    if { ![info exists sensorSid($tmpEventTable)] } { set sensorSid($tmpEventTable) $tmpSid }
+
+    lappend tmpCidList($tmpEventTable) $tmpCid
                                                                                                             
     # Delete from the escalate list
     if { [info exists escalateIDList] } {set escalateIDList [ldelete $escalateIDList $eventID]}
@@ -102,7 +107,12 @@ proc DeleteEventIDList { socketID data } {
       foreach row $correlatedEventArray($eventID) {
         set tmpSid [lindex $row 5]
         set tmpCid [lindex $row 6]
-        lappend tmpCidList($tmpSid) $tmpCid
+        set sensorName [lindex $row 3]
+        set tmpDate [clock format [clock scan [lindex $row 4]] -gmt true -format "%Y%m%d"]
+        set tmpEventTable "event_${sensorName}_${tmpDate}"
+        if { ![info exists sensorSid($tmpEventTable)] } { set sensorSid($tmpEventTable) $tmpSid }
+
+        lappend tmpCidList($tmpEventTable) $tmpCid
                                                                                                             
         if { [info exists escalateIDList] } {
           set escalateIDList [ldelete $escalateIDList "$tmpSid.$tmpCid"]
@@ -145,14 +155,13 @@ proc DeleteEventIDList { socketID data } {
   }
                                                                                                             
   # Finally we update the event table.
-  # Do an UPDATE for each unique sid
   set totalUpdates 0
-  foreach uSid [array names tmpCidList] {
+  foreach eventTable [array names tmpCidList] {
     # Make sure there are no duplicates
-    set tmpCidList($uSid) [lsort -unique $tmpCidList($uSid)]
+    set tmpCidList($eventTable) [lsort -unique $tmpCidList($eventTable)]
     # Build our WHERE
-    set whereTmp "sid=$uSid AND cid IN ([join $tmpCidList($uSid) ,])"
-    set tmpUpdated [UpdateDBStatusList $whereTmp [GetCurrentTimeStamp] $userIDArray($socketID) $status]
+    set whereTmp "sid=$sensorSid($eventTable) AND cid IN ([join $tmpCidList($eventTable) ,])"
+    set tmpUpdated [UpdateDBStatusList $eventTable $whereTmp [GetCurrentTimeStamp] $userIDArray($socketID) $status]
     set totalUpdates [expr $totalUpdates + $tmpUpdated]
   }
   # See if the number of rows updated matched the number of events we
