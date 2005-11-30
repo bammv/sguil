@@ -1,4 +1,4 @@
-# $Id: UPGRADE,v 1.1 2005/10/28 04:37:33 bamm Exp $ #
+# $Id: UPGRADE,v 1.2 2005/11/30 04:23:25 bamm Exp $ #
 
 The following are instructions for upgrading a previous sguil
 install to version 0.6.0.  If you are installing fresh, please
@@ -45,6 +45,11 @@ directory).
 
 
 * How To Migrate Old Data To The New Schema *
+
+Note: Before you run the migration scripts, make sure you
+DB is using Version 0.11 of the schema (mysql> SELECT * 
+FROM version;). If it is not, then run the update_sguildb
+scripts from the server/sql_scripts directory.
 
 Two migration scripts are included with sguil version 0.6.0.
 Both migrate_sancp.tcl and migrate_event.tcl are available
