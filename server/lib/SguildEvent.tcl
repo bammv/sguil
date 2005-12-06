@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.15 2005/11/29 22:41:39 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.16 2005/12/06 22:17:14 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -89,9 +89,25 @@ proc DeleteEventIDList { socketID data } {
                                                                                                             
     set tmpSid [lindex [split $eventID .] 0]
     set tmpCid [lindex [split $eventID .] 1]
-    set sensorName [lindex $eventIDArray($eventID) 3]
-    set tmpDate [clock format [clock scan [lindex $eventIDArray($eventID) 4]] -gmt true -format "%Y%m%d"]
-    set tmpEventTable "event_${sensorName}_${tmpDate}"
+    if { [info exists eventIDArray($eventID)] } {
+
+        set sensorName [lindex $eventIDArray($eventID) 3]
+        set tmpDate [clock format [clock scan [lindex $eventIDArray($eventID) 4]] -gmt true -format "%Y%m%d"]
+        set tmpEventTable "event_${sensorName}_${tmpDate}"
+
+    } else {
+
+        # We just update the main event table then.
+        #set tmpQry "SELECT hostname FROM sensor WHERE sid=$tmpSid"
+        #set sensorName [FlatDBQuery $tmpQry]
+        #set tmpQry "SELECT timestamp FROM event WHERE sid=$tmpSid AND cid=$tmpCid"
+        #set dateTime [lindex [FlatDBQuery $tmpQry] 0]
+        #set tmpDate [clock format [clock scan $dateTime] -gmt true -format "%Y%m%d"]
+        set tmpEventTable "event"
+
+    }
+
+
     if { ![info exists sensorSid($tmpEventTable)] } { set sensorSid($tmpEventTable) $tmpSid }
 
     lappend tmpCidList($tmpEventTable) $tmpCid

@@ -1,4 +1,4 @@
-# $Id: SguildAutoCat.tcl,v 1.3 2005/01/26 17:16:15 shalligan Exp $ #
+# $Id: SguildAutoCat.tcl,v 1.4 2005/12/06 22:17:14 bamm Exp $ #
 
 # Format for the autocat file is:
 # <erase time>||<sensorName>||<src_ip>||<src_port>||<dst_ip>||<dst_port>||<proto>||<sig msg>||<cat value>
@@ -115,7 +115,7 @@ proc AutoCat { data } {
 	}
 	if { $MATCH } {
 	    InfoMessage "AUTO MARKING EVENT AS : $acCat($rid)"
-	    UpdateDBStatus "[lindex $data 5].[lindex $data 6]" [GetCurrentTimeStamp] $AUTOID $acCat($rid)
+	    UpdateDBStatus [lindex $data 3] [lindex $data 4] [lindex $data 5] [lindex $data 6] [GetCurrentTimeStamp] $AUTOID $acCat($rid)
 	    InsertHistory [lindex $data 5] [lindex $data 6] $AUTOID [GetCurrentTimeStamp] $acCat($rid) "Auto Update"
 	    return 1
 	}

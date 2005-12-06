@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.19 2005/11/29 22:11:45 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.20 2005/12/06 22:17:14 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -129,14 +129,17 @@ proc UpdateDBStatusList { tableName whereTmp timestamp uid status } {
 
 }
 
-proc UpdateDBStatus { eventID timestamp uid status } {
+proc UpdateDBStatus { sensorName date sid cid timestamp uid status } {
 
     global MAIN_DB_SOCKETID
 
-    set sid [lindex [split $eventID .] 0]
-    set cid [lindex [split $eventID .] 1]
+    set tmpDate [clock format [clock scan $date] -gmt true -format "%Y%m%d"]
+    set tableName "event_${sensorName}_$tmpDate"
     set updateString\
-     "UPDATE event SET status=$status, last_modified='$timestamp', last_uid='$uid' WHERE sid=$sid AND cid=$cid"
+     "UPDATE `$tableName` SET status=$status, last_modified='$timestamp', last_uid='$uid' WHERE sid=$sid AND cid=$cid"
+
+    InfoMessage $updateString 
+
     set execResults [mysqlexec $MAIN_DB_SOCKETID $updateString]
 
 }
