@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.30 2005/11/16 22:27:12 bamm Exp $
+# $Id: extdata.tcl,v 1.31 2005/12/22 23:12:01 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -911,11 +911,11 @@ proc CreateStatusLabel { status tableName row col win } {
 
     if { $status == 1 } {
 
-        label $win -text "UP" -background green -relief raised -width 5
+        label $win -text "UP" -background green -relief flat -width 5
 
     } else {
 
-        label $win -text "DOWN" -background red -relief raised -width 5
+        label $win -text "DOWN" -background red -relief flat -width 5
 
     }
 }

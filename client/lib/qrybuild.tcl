@@ -1,7 +1,9 @@
-# $Id: qrybuild.tcl,v 1.33 2005/02/14 17:02:08 shalligan Exp $ #
-proc QryBuild {tableSelected whereTmp } {
-    global RETURN_FLAG SELECTEDTABLE
-    global  tableColumnArray tableList funcList
+# $Id: qrybuild.tcl,v 1.34 2005/12/22 23:12:01 bamm Exp $ #
+proc QryBuild { tableSelected whereTmp } {
+
+    global RETURN_FLAG SELECTEDTABLE SELECT_LIMIT
+    global  tableColumnArray tableList funcList whereBoxList
+
     set RETURN_FLAG 0
     set SELECTEDTABLE $tableSelected
     
@@ -70,35 +72,49 @@ proc QryBuild {tableSelected whereTmp } {
     # Edit Frame
     set editFrame [frame $mainFrame.eFrame -background black -borderwidth 1]
       
-      # main edit box
-      set editBox [scrolledtext $editFrame.eBox -textbackground white -vscrollmode dynamic \
-		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 60x10 -textfont ourFixedFont \
-		-labeltext "Edit Where Clause"]
-      
-      if { ![string match -nocase *limit* $whereTmp] } { set whereTmp "$whereTmp  LIMIT 500" }
-      $editBox insert end $whereTmp
-      $editBox mark set insert "end -11 c"
-      
+    set whereFrame [frame $editFrame.whereFrame]
+    set cnt 0
+    foreach where $whereTmp {
+        set f ${whereFrame}.frame${cnt}
+        set b ${f}.ub
+        if [info exists editBox] {
+            $b configure -text "Delete" -command "DeleteWhereBox $f $editBox"
+        }
 
+        set editBox [AddWhereBox $whereFrame $cnt]
+        lappend whereBoxList $editBox
+        incr cnt
+
+        $editBox insert end $where
+        $editBox mark set insert "end -11 c"
+
+    }
+
+    # Define LIMIT
+    set SELECT_LIMIT 1000
+    set maxRowsText [entryfield $whereFrame.maxRows -labeltext "LIMIT" -labelpos w -width 5 \
+                     -textvariable SELECT_LIMIT]
+    pack $maxRowsText -side bottom -expand no
+
+
+      
       # Button box on left of edit box 
       set mainBB1 [buttonbox $editFrame.mbb1 -padx 0 -pady 0 -orient vertical]
       foreach logical $funcList(Logical) {
-	  set command "$editBox insert insert \"[lindex $logical 1] \""
-	  $mainBB1 add [lindex $logical 0] -text [lindex $logical 0] -padx 0 -pady 0 -command "$command"
+	      $mainBB1 add [lindex $logical 0] -text [lindex $logical 0] -padx 0 -pady 0 -command "ScrolledTextInsert [lindex $logical 1]"
       }
       # One last button for the left side that acts differently
-      $mainBB1 add ipAddress -text "IP Address" -padx 0 -pady 0 -command "IPAddress2SQL builder $editBox"
+      $mainBB1 add ipAddress -text "IP Address" -padx 0 -pady 0 -command "IPAddress2SQL builder"
       
       # button box to right of main edit box
       set mainBB2 [buttonbox $editFrame.mbb2 -padx 0 -pady 0 -orient vertical]
       foreach comparison $funcList(Comparison) {
-	  set command "$editBox insert insert \"[lindex $comparison 1] \""
-	  $mainBB2 add [lindex $comparison 0] -text [lindex $comparison 0] -padx 0 -pady 0 -command "$command"
+          $mainBB2 add [lindex $comparison 0] -text [lindex $comparison 0] -padx 0 -pady 0 -command "SrolledTextInsert [lindex $comparison 1]"
       }
       
       # packing children of edit frame
       pack $mainBB1 -side left -fill y
-      pack $editBox -side left -fill both -expand true
+      pack $whereFrame -side left -fill both -expand true
       pack $mainBB2 -side left -fill y
 
     # Select Frame
@@ -113,7 +129,7 @@ proc QryBuild {tableSelected whereTmp } {
 	      -labelpos n -vscrollmode static \
 	      -visibleitems 20x10 -foreground darkblue -textbackground lightblue]
       set itemList [scrolledlistbox $selectFrame.iList -hscrollmode dynamic -sbwidth 10\
-	     -dblclickcommand "addToEditBox $editBox $selectFrame" \
+	     -dblclickcommand "addToEditBox $selectFrame" \
 	     -scrollmargin 5 -labeltext "Items" \
 	     -labelpos n -vscrollmode static -hscrollmode static\
 	     -visibleitems 20x10 -foreground darkblue -textbackground lightblue]
@@ -132,7 +148,7 @@ proc QryBuild {tableSelected whereTmp } {
 	  $logicBox add and -text "AT LEAST selected flags"
 	  $logicBox add not -text "NOT selected flags"
 	  $logicBox select only
-	set insertButton [button $flagFrame.iButton -command "addToEditBoxFlags $editBox $flagFrame" -text "Insert"]
+	set insertButton [button $flagFrame.iButton -command "addToEditBoxFlags $flagFrame" -text "Insert"]
 	
 	# packing children of flag Frame
 	pack $srcdstBox $flagBox $logicBox $insertButton -side top -fill both -expand true
@@ -161,18 +177,111 @@ proc QryBuild {tableSelected whereTmp } {
 update
 
     tkwait variable RETURN_FLAG
-    set returnWhere [list cancel cancel]
+    set returnWhere [list cancel [list cancel]]
     if {$RETURN_FLAG} {
-        # No \n for you!
-        regsub -all {\n} [$editBox get 0.0 end] {} returnWhere
-	set returnWhere "[list $SELECTEDTABLE $returnWhere]"
+        foreach box $whereBoxList {
+            # No \n for you!
+            regsub -all {\n} [$box get 0.0 end] {} tmpWhere
+            lappend whereList $tmpWhere
+        }
+	set returnWhere "[list $SELECTEDTABLE $whereList]"
     } else {
-	set returnWhere [list cancel cancel]
+	set returnWhere [list cancel [list cancel]]
     }
     destroy $qryBldWin
+
+    set whereBoxList ""
+
     return $returnWhere  
+
 }
 
+proc AddWhereBox { frame cnt } {
+
+    incr cnt
+    set f $frame.frame$cnt
+    set st $f.st
+    set ub $f.ub
+
+    frame $f 
+    scrolledtext $st -textbackground white -vscrollmode dynamic \
+		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 60x3 -textfont ourFixedFont \
+		-labeltext "Edit Where Clause $cnt"
+    button $ub -text "Add Union" -command "AddUnion $frame $f $st $ub $cnt"
+
+    pack $st -side top -expand true -fill both
+    pack $ub -side bottom -expand false
+    pack $f -side top -expand true -fill both
+
+    return $st
+
+}
+
+proc DeleteWhereBox { oldFrame oldSt } {
+
+    global whereBoxList
+   
+    set whereBoxList [ldelete $whereBoxList $oldSt]
+    destroy $oldFrame 
+
+}
+
+proc AddUnion { frame oldFrame oldSt oldUb cnt } {
+
+    global whereBoxList
+
+    # Change the button on the calling where box.
+    $oldUb configure -text "Delete" -command "DeleteWhereBox $oldFrame $oldSt"
+    
+    # Create new where box
+    set st [AddWhereBox $frame $cnt]
+    lappend whereBoxList $st
+
+    # Copy data from old into new
+    set whereTmp [$oldSt get 0.0 end]
+    $st insert end $whereTmp
+    $st  mark set insert "end -11 c"
+
+}
+
+proc IsWhereBox { win } {
+
+    global whereBoxList
+
+    set FOCUS 0
+    foreach whereBox $whereBoxList {
+
+        if { $win == [$whereBox component text] } {
+
+            set FOCUS 1
+            break
+
+        }
+        
+    }
+
+    return $FOCUS
+
+}
+
+proc ScrolledTextInsert { data } {
+
+    global whereBoxList
+
+    set currentWin [focus]
+
+    if { [IsWhereBox $currentWin] } { 
+
+        $currentWin insert insert "$data "
+
+    } else {
+
+        tk_messageBox -type ok -parent .qryBldWin \
+          -message "Cannot insert \"$data\" into SQL. None of the text boxes have focus."
+
+    }
+
+}
 
 proc updateCatList { selectFrame } {
     global funcList metaSelection SELECTEDTABLE
@@ -228,10 +337,17 @@ proc updateItemList { selectFrame} {
     }
 }
 
-proc addToEditBox { editBox selectFrame } {
+proc addToEditBox { selectFrame } {
+
     global catSelection metaSelection funcList
     
     
+    set currentWin [focus]
+    if { ![IsWhereBox $currentWin] } {
+        tk_messageBox -type ok -parent .qryBldWin \
+          -message "Click in the text box you want to insert data into first."
+        return
+    }
     #if Meta is set to table, prepend tablename. to the item
     if {$metaSelection == "Tables"} {
 	set addText [lindex [$selectFrame.iList getcurselection] 0]
@@ -240,11 +356,17 @@ proc addToEditBox { editBox selectFrame } {
 	set addText [lindex [lindex $funcList($catSelection) [$selectFrame.iList curselection]]  1]
     }
     
-    $editBox insert insert "$addText "
+    $currentWin insert insert "$addText "
 }
 
-proc addToEditBoxFlags {editBox flagFrame} {
+proc addToEditBoxFlags { flagFrame } {
     
+    set currentWin [focus]
+    if { ![IsWhereBox $currentWin] } {
+        tk_messageBox -type ok -parent .qryBldWin \
+          -message "Click in the text box you want to insert data into first."
+        return
+    }
     # add up the flags selected to get the decimal representation
     set flaglist [$flagFrame.fBox get]
     # puts $flaglist
@@ -273,7 +395,7 @@ proc addToEditBoxFlags {editBox flagFrame} {
 	set insert "sancp.${target} = ${decimalFlag}"
     }
     
-    $editBox insert insert $insert
+    $currentWin insert insert $insert
 }	
 
 proc typeChange {} {
@@ -304,12 +426,12 @@ proc typeChange {} {
 #
 #  InvokeQryBuild:  Call this proc if you need QueryBuilder to run stand-alone.
 #     Calls DBQryRequest or SSNQryRequest after QryBuild is done
-proc InvokeQryBuild { tableSelected whereTmp } {
+proc InvokeQryBuild { tableSelected whereTmpList } {
     
-    set tmpWhereStatement [QryBuild $tableSelected $whereTmp]
-    set whereStatement [lindex $tmpWhereStatement 1]
+    set tmpWhereStatement [QryBuild $tableSelected $whereTmpList]
     set tableName [lindex $tmpWhereStatement 0]
-    if { $whereStatement == "cancel" } { return }
+    if { $tableName == "cancel" } { return }
+    set whereStatement [lindex $tmpWhereStatement 1]
     if { $tableName == "event" } {
 	DBQueryRequest $whereStatement
     } elseif { $tableName == "sessions" } {
@@ -329,7 +451,20 @@ proc InvokeQryBuild { tableSelected whereTmp } {
 #
 proc IPAddress2SQL { caller {parameter {NULL}} } {
 
-    global SELECTEDTABLE RETURN_FLAG_IP
+    global SELECTEDTABLE RETURN_FLAG_IP whereBoxList
+
+    # If we came in thru the query builder then we check to see
+    # which WHERE is active.
+    if { $caller == "builder" } {
+
+        set currentWin [focus]
+        if { ![IsWhereBox $currentWin] } {
+            tk_messageBox -type ok -parent .qryBldWin \
+              -message "Click in the text box you want to insert data into first."
+            return
+        }
+
+    }
 
     # Create the window
     set ipAddressWin .ipAddressWin
@@ -390,13 +525,12 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
     if { $iplist==0 } { 
 	ErrorMessage "Error.  Invalid IP Address"
 	    destroy $ipAddressWin
-	    IPAddress2SQL $caller $parameter
+	    IPAddress2SQL $caller
     }
     
     set networknumber [lindex $iplist 2]
     set bcastaddress [lindex $iplist 3]
     # find the decimal values for the ip network and broadcast addresses
-    set editBox $parameter
     set decNetwork [InetAtoN $networknumber]
     set decBcast [InetAtoN $bcastaddress]
     if { $caller != "builder" } {
@@ -415,7 +549,7 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
 
     # do something depending on who called us
     if { $caller == "builder" } {
-	$editBox insert insert $inserttext
+	$currentWin insert insert $inserttext
 	destroy $ipAddressWin 
 	return
     } elseif { $caller == "menu" } {

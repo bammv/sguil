@@ -1,18 +1,37 @@
-# $Id: sancp.tcl,v 1.5 2005/11/16 22:27:12 bamm Exp $ 
+# $Id: sancp.tcl,v 1.6 2005/12/22 23:12:01 bamm Exp $ 
 #
 # Build a sancp query tab and send the query to sguild.
 #
-proc SancpQueryRequest { whereStatement } {
+proc SancpQueryRequest { whereList } {
 
-    global eventTabs SANCP_QUERY_NUMBER DEBUG CONNECTED
+    global eventTabs SANCP_QUERY_NUMBER DEBUG CONNECTED SELECT_LIMIT
 
     if {!$CONNECTED} {ErrorMessage "Not connected to sguild. Query aborted"; return}
 
-    set selectQuery "SELECT sensor.hostname, sancp.sancpid, sancp.start_time, sancp.end_time,\
+    set COLUMNS "sensor.hostname, sancp.sancpid, sancp.start_time as datetime, sancp.end_time,\
      INET_NTOA(sancp.src_ip), sancp.src_port, INET_NTOA(sancp.dst_ip), sancp.dst_port,\
-     sancp.ip_proto, sancp.src_pkts, sancp.src_bytes, sancp.dst_pkts, sancp.dst_bytes\
-     FROM sancp INNER JOIN sensor ON sancp.sid=sensor.sid $whereStatement"
-    regsub -all {\n} $selectQuery {} selectQuery
+     sancp.ip_proto, sancp.src_pkts, sancp.src_bytes, sancp.dst_pkts, sancp.dst_bytes"
+
+    foreach whereStatement $whereList {
+
+        lappend queries "SELECT $COLUMNS FROM sancp IGNORE INDEX (p_key) \
+                         INNER JOIN sensor ON sancp.sid=sensor.sid $whereStatement" 
+
+    }
+
+    # Build UNION if required
+    if { [llength $queries] > 1 } {
+
+        set tmpQry [join $queries " ) UNION ( "]
+        set fQuery "( $tmpQry ) ORDER BY datetime DESC LIMIT $SELECT_LIMIT"
+
+    } else {
+
+        set fQuery "[lindex $queries 0] ORDER BY datetime DESC LIMIT $SELECT_LIMIT"
+
+    }
+
+    regsub -all {\n} $fQuery {} selectQuery
 
     incr SANCP_QUERY_NUMBER
     $eventTabs add -label "Sancp Query $SANCP_QUERY_NUMBER"
@@ -25,7 +44,7 @@ proc SancpQueryRequest { whereStatement } {
     CreateSessionLists $queryFrame
     set buttonFrame [frame $currentTab.buttonFrame]
     set whereText [text $buttonFrame.text -height 1 -background white -wrap none]
-    $whereText insert 0.0 $whereStatement
+    $whereText insert 0.0 $selectQuery
     bind $whereText <Return> {
       set whereStatement [%W get 0.0 end]
       SancpQueryRequest $whereStatement

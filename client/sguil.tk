@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.198 2005/11/30 14:45:47 bamm Exp $ #
+# $Id: sguil.tk,v 1.199 2005/12/22 23:12:00 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -19,7 +19,7 @@ exec wish "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.6.0-RC4"
+set VERSION "SGUIL-0.6.0"
 
 # Load extended tcl
 if [catch {package require Tclx} tclxVersion] {
@@ -547,7 +547,7 @@ proc InsertEvent { eventData } {
         SortRTPane $insertPane
     }
 
-    if {$SOUND} { Speak "Alert received from $sensor. $message" }
+    if {$SOUND} { Speak "Alert received from $sensor - - $message" }
 
 }
 
@@ -1320,7 +1320,6 @@ proc SelectEventPane { win type format } {
 
         }
 
-        GetRuleInfo
         ResolveHosts
         GetWhoisData
 
@@ -1766,8 +1765,10 @@ set SERVERHOSTSELECTED [lindex $SERVERHOST 0]
 wm withdraw .
 
 option add *textBackground white
-option add *selectBackground $SELECTBACKGROUND
-option add *selectForeground $SELECTFOREGROUND
+#option add *selectBackground $SELECTBACKGROUND
+#option add *selectForeground $SELECTFOREGROUND
+option add *Tablelist.selectBackground $SELECTBACKGROUND
+option add *Tablelist.selectForeground $SELECTFOREGROUND
 option add *Tablelist.activeStyle       frame
 option add *Tablelist.background        gray98
 option add *Tablelist.stripeBackground  #e0e8f0
