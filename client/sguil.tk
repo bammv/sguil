@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.201 2005/12/28 17:00:34 bamm Exp $ #
+# $Id: sguil.tk,v 1.202 2005/12/28 22:39:07 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -93,6 +93,7 @@ set REPORTNUM 0
 set CUR_SEL_FRAME(name) 0 
 set COUNTER 0
 set SEARCHFRAME 1
+set SELECT_LIMIT 1000
 
 ######################## COMMUNICATION PROCS ########################
 

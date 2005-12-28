@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.34 2005/12/22 23:12:01 bamm Exp $ #
+# $Id: qrybuild.tcl,v 1.35 2005/12/28 22:39:07 bamm Exp $ #
 proc QryBuild { tableSelected whereTmp } {
 
     global RETURN_FLAG SELECTEDTABLE SELECT_LIMIT
@@ -90,8 +90,6 @@ proc QryBuild { tableSelected whereTmp } {
 
     }
 
-    # Define LIMIT
-    set SELECT_LIMIT 1000
     set maxRowsText [entryfield $whereFrame.maxRows -labeltext "LIMIT" -labelpos w -width 5 \
                      -textvariable SELECT_LIMIT]
     pack $maxRowsText -side bottom -expand no
