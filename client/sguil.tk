@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.200 2005/12/28 16:47:01 bamm Exp $ #
+# $Id: sguil.tk,v 1.201 2005/12/28 17:00:34 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1272,18 +1272,8 @@ proc SelectSessionPane { win type format } {
 
 proc SelectEventPane { win type format } {
 
-    global CUR_SEL_PANE CUR_SEL_INDEX ACTIVE_EVENT BUSY MULTI_SELECT DISPLAYEDDETAIL
+    global CUR_SEL_PANE CUR_SEL_EVENT ACTIVE_EVENT BUSY MULTI_SELECT DISPLAYEDDETAIL
     global portscanDataFrame packetDataFrame sancpFrame
-
-    set tmpWinName $win
-    set selectedIndex [$win curselection]
-
-    # If we clicked on an already active event, do nothing.
-    if { [info exists CUR_SEL_INDEX] && $CUR_SEL_INDEX == $selectedIndex && $CUR_SEL_PANE(name) == $tmpWinName } {
-
-        return
-
-    }
 
     set CUR_SEL_PANE(name) $win
     set CUR_SEL_PANE(type) $type
@@ -1300,9 +1290,16 @@ proc SelectEventPane { win type format } {
 
         set MULTI_SELECT 0
         set selectedIndex [$win curselection]
-        set CUR_SEL_INDEX $selectedIndex
 
         if { $selectedIndex == "" } { return }
+        set eventID [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID]
+
+        # If we clicked on an already active event, do nothing.
+        if { [info exists CUR_SEL_EVENT] && $CUR_SEL_EVENT == $eventID } {
+            return
+        }
+
+        set CUR_SEL_EVENT $eventID
 
         if { [regexp "^spp_portscan:" [$win getcells $selectedIndex,event]] } {
 
