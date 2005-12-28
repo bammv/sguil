@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.202 2005/12/28 22:39:07 bamm Exp $ #
+# $Id: sguil.tk,v 1.203 2005/12/28 23:14:37 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2428,11 +2428,11 @@ foreach { currentMenu subcommand } { .ipQueryMenu.quickMenu "quick" .ipQueryMenu
     $currentMenu add cascade -label "Query Sancp Table" -menu $currentMenu.sancpMenu
     
     menu $currentMenu.eventMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
-	-activebackground white
+        -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
     menu $currentMenu.sessionsMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
-	-activebackground white
+        -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
     menu $currentMenu.sancpMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
-	-activebackground white
+        -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
     
     $currentMenu.eventMenu add command -label "Query SrcIP" -command "QueryRequest event srcip normal $subcommand"
     $currentMenu.eventMenu add command -label "Query DstIP" -command "QueryRequest event dstip normal $subcommand"
