@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.27 2005/12/22 23:12:01 bamm Exp $ #
+# $Id: qrylib.tcl,v 1.28 2006/01/12 18:14:23 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -142,11 +142,11 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 		default { set winTitle "none" }
 	    }
 
-	    DBQueryRequest $whereStatement $winTitle
+	    DBQueryRequest $tableName $whereStatement $winTitle
 
 	} else {
  
-	    DBQueryRequest $whereStatement
+	    DBQueryRequest $tableName $whereStatement
 
 	}
 
@@ -156,7 +156,7 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 
     } elseif { $tableName == "sancp" } {
 
-	SancpQueryRequest $whereStatement
+	SancpQueryRequest $tableName $whereStatement
 
     }
 
@@ -210,7 +210,7 @@ proc SsnQueryRequest { whereStatement } {
 #
 # Build an event query tab and send the query to sguild.
 #
-proc DBQueryRequest { whereList {winTitle {none} } } {
+proc DBQueryRequest { selectedTable whereList {winTitle {none} } } {
 
     global eventTabs QUERY_NUMBER socketID DEBUG
     global CONNECTED SELECT_LIMIT
@@ -285,34 +285,61 @@ proc DBQueryRequest { whereList {winTitle {none} } } {
     set queryFrame [frame $currentTab.query_$QUERY_NUMBER -background black -borderwidth 1]
     $eventTabs select end
     CreateEventLists $queryFrame 1 0
-    set buttonFrame [frame $currentTab.buttonFrame]
-    set whereText [scrolledtext $buttonFrame.text -textbackground white -visibleitems 30x2 -wrap word \
+    set topFrame [frame $currentTab.topFrame]
+    set whereText [scrolledtext $topFrame.text -textbackground white -visibleitems 30x3 -wrap word \
       -vscrollmode dynamic -hscrollmode none -sbwidth 10]
     $whereText insert 0.0 $selectQuery
-    bind $whereText <Return> {
-        set whereStatement [%W get 0.0 end]
-        DBQueryRequest $whereStatement
-        break
-    }
-    set closeButton [button $buttonFrame.close -text "Close" \
+    $whereText configure -state disabled
+    set lbuttonsFrame [frame $topFrame.lbuttons]
+    set closeButton [button $lbuttonsFrame.close -text "Close" \
 	    -relief raised -borderwidth 2 -pady 0 \
 	    -command "DeleteTab $eventTabs $currentTab"]
-    set exportButton [button $buttonFrame.export -text "Export " \
+    set exportButton [button $lbuttonsFrame.export -text "Export " \
 	    -relief raised -borderwidth 2 -pady 0 \
 	    -command "ExportResults $queryFrame event"]
-    set rsubmitButton [button $buttonFrame.rsubmit -text "Submit " \
+    pack $closeButton $exportButton -side top -fill x
+    set rbuttonsFrame [frame $topFrame.rbuttons]
+    set rsubmitButton [button $rbuttonsFrame.rsubmit -text "Submit " \
 	    -relief raised -borderwidth 2 -pady 0 \
-	    -command "DBQueryRequest \[$whereText get 0.0 end\] "]
-    pack $closeButton $exportButton -side left
-    pack $whereText -side left -fill x -expand true
-    pack $rsubmitButton  -side left
-    pack $buttonFrame -side top -fill x
+	    -command "[list DBQueryRequest $selectedTable $whereList]"]
+    set editButton [button $rbuttonsFrame.edit -text "Edit " \
+	    -relief raised -borderwidth 2 -pady 0 \
+	    -command "[list EditQuery $selectedTable $whereList]"]
+    pack $rsubmitButton $editButton -side top -fill x
+    pack $lbuttonsFrame  -side left
+    pack $whereText -side left -fill both -expand true
+    pack $rbuttonsFrame  -side left
+    pack $topFrame -side top -fill x
     pack $queryFrame -side bottom -fill both
     $queryFrame configure -cursor watch
     if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame.tablelist $selectQuery" }
     SendToSguild "QueryDB $queryFrame.tablelist $selectQuery"
 
 }
+proc EditQuery { tableName whereList } {
+
+    set tmpWhereStatement [QryBuild $tableName $whereList]
+    set whereList [lindex $tmpWhereStatement 1]
+    set tableName [lindex $tmpWhereStatement 0]
+
+    if { $whereList  == "cancel" } { return }
+
+    if { $tableName == "event" } {
+
+        DBQueryRequest $tableName $whereList 
+
+    } elseif { $tableName == "sessions" } {
+
+	SsnQueryRequest $tableName $whereList 
+
+    } elseif { $tableName == "sancp" } {
+
+	SancpQueryRequest $tableName $whereList 
+
+    }
+
+}
+
 # Depreciated
 proc GetStdQuery {} {
   set data [StdQuery]

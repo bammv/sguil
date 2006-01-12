@@ -1,8 +1,8 @@
-# $Id: sancp.tcl,v 1.6 2005/12/22 23:12:01 bamm Exp $ 
+# $Id: sancp.tcl,v 1.7 2006/01/12 18:14:24 bamm Exp $ 
 #
 # Build a sancp query tab and send the query to sguild.
 #
-proc SancpQueryRequest { whereList } {
+proc SancpQueryRequest { selectedTable whereList } {
 
     global eventTabs SANCP_QUERY_NUMBER DEBUG CONNECTED SELECT_LIMIT
 
@@ -42,28 +42,34 @@ proc SancpQueryRequest { whereList } {
 
     # Here is where we build the session display lists.
     CreateSessionLists $queryFrame
-    set buttonFrame [frame $currentTab.buttonFrame]
-    set whereText [text $buttonFrame.text -height 1 -background white -wrap none]
+
+    set topFrame [frame $currentTab.topFrame]
+    set whereText [scrolledtext $topFrame.text -textbackground white -visibleitems 30x3 -wrap word \
+      -vscrollmode dynamic -hscrollmode none -sbwidth 10]
     $whereText insert 0.0 $selectQuery
-    bind $whereText <Return> {
-      set whereStatement [%W get 0.0 end]
-      SancpQueryRequest $whereStatement
-      break
-    }
-    set closeButton [button $buttonFrame.close -text "Close" \
+    $whereText configure -state disabled
+    set lbuttonsFrame [frame $topFrame.lbuttons]
+    set closeButton [button $lbuttonsFrame.close -text "Close" \
             -relief raised -borderwidth 2 -pady 0 \
             -command "DeleteTab $eventTabs $currentTab"]
-    set exportButton [button $buttonFrame.export -text "Export" \
+    set exportButton [button $lbuttonsFrame.export -text "Export " \
             -relief raised -borderwidth 2 -pady 0 \
-            -command "ExportResults $queryFrame sancp"]
-    set rsubmitButton [button $buttonFrame.rsubmit -text "Submit " \
+            -command "ExportResults $queryFrame event"]
+    pack $closeButton $exportButton -side top -fill x
+    set rbuttonsFrame [frame $topFrame.rbuttons]
+    set rsubmitButton [button $rbuttonsFrame.rsubmit -text "Submit " \
             -relief raised -borderwidth 2 -pady 0 \
-            -command "SancpQueryRequest \[$whereText get 0.0 end\] "]
-    pack $closeButton $exportButton -side left
-    pack $whereText -side left -fill x -expand true
-    pack $rsubmitButton -side left
-    pack $buttonFrame -side top -fill x
+            -command "[list DBQueryRequest $selectedTable $whereList]"]
+    set editButton [button $rbuttonsFrame.edit -text "Edit " \
+            -relief raised -borderwidth 2 -pady 0 \
+            -command "[list EditQuery $selectedTable $whereList]"]
+    pack $rsubmitButton $editButton -side top -fill x
+    pack $lbuttonsFrame  -side left
+    pack $whereText -side left -fill both -expand true
+    pack $rbuttonsFrame  -side left
+    pack $topFrame -side top -fill x
     pack $queryFrame -side bottom -fill both
+
 
     $queryFrame configure -cursor watch
     if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }

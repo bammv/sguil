@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.35 2005/12/28 22:39:07 bamm Exp $ #
+# $Id: qrybuild.tcl,v 1.36 2006/01/12 18:14:22 bamm Exp $ #
 proc QryBuild { tableSelected whereTmp } {
 
     global RETURN_FLAG SELECTEDTABLE SELECT_LIMIT
@@ -431,11 +431,11 @@ proc InvokeQryBuild { tableSelected whereTmpList } {
     if { $tableName == "cancel" } { return }
     set whereStatement [lindex $tmpWhereStatement 1]
     if { $tableName == "event" } {
-	DBQueryRequest $whereStatement
+	DBQueryRequest $SELECTEDTABLE $whereStatement
     } elseif { $tableName == "sessions" } {
-	SsnQueryRequest $whereStatement
+	SsnQueryRequest $SELECTEDTABLE $whereStatement
     } else {
-	SancpQueryRequest $whereStatement
+	SancpQueryRequest $SELECTEDTABLE $whereStatement
     }
 }
 
@@ -567,11 +567,11 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
 	} else {
 	    destroy $ipAddressWin
 	    if { $SELECTEDTABLE == "event" } {
-		DBQueryRequest $tmpWhere
+		DBQueryRequest $SELECTEDTABLE $tmpWhere
 	    } elseif { $SELECTEDTABLE == "sessions" } {
-		SsnQueryRequest $tmpWhere
+		SsnQueryRequest $SELECTEDTABLE $tmpWhere
 	    } elseif { $SELECTEDTABLE == "sancp" } {
-		SancpQueryRequest $tmpWhere
+		SancpQueryRequest $SELECTEDTABLE $tmpWhere
 	    }
 	} 
     }
