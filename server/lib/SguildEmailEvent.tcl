@@ -1,4 +1,4 @@
-# $Id: SguildEmailEvent.tcl,v 1.5 2004/11/22 23:53:57 bamm Exp $ #
+# $Id: SguildEmailEvent.tcl,v 1.6 2006/01/18 19:23:01 bamm Exp $ #
 
 proc EmailEvent { dataList } {
 
@@ -16,6 +16,8 @@ proc EmailEvent { dataList } {
     set dhost [GetHostbyAddr $dip]
     set sp [lindex $dataList 11]
     set dp [lindex $dataList 12]
+    set sig_id [lindex $dataList 13]
+    set class [lindex $dataList 2]
 
     # Do the subs
     regsub -all {%} $EMAIL_MSG {$} tmpMsg
