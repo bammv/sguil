@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.36 2006/01/12 18:14:22 bamm Exp $ #
+# $Id: qrybuild.tcl,v 1.37 2006/01/20 22:54:55 bamm Exp $ #
 proc QryBuild { tableSelected whereTmp } {
 
     global RETURN_FLAG SELECTEDTABLE SELECT_LIMIT
@@ -397,24 +397,19 @@ proc addToEditBoxFlags { flagFrame } {
 }	
 
 proc typeChange {} {
-    global SELECTEDTABLE
+    global SELECTEDTABLE whereBoxList
+
     set mainFrame .qryBldWin.mFrame
-    $mainFrame.eFrame.eBox delete 0.0 end
-    $mainFrame.sFrame.iList delete 0 end
-    $mainFrame.sFrame.cList delete 0 end
+    foreach box $whereBoxList {
+        $box delete 0.0 end
+    }
     
     if {[$mainFrame.qFrame.qTypeBox get] == "event" } {
-	$mainFrame.eFrame.eBox insert end "WHERE  LIMIT 500"
 	set SELECTEDTABLE "event"
-	$mainFrame.eFrame.eBox mark set insert "end -11 c"
     } elseif {[$mainFrame.qFrame.qTypeBox get] == "sessions" } {
 	set SELECTEDTABLE "sessions"
-	$mainFrame.eFrame.eBox insert end "WHERE  LIMIT 500"
-	$mainFrame.eFrame.eBox mark set insert "end -11 c"
     } else {
 	set SELECTEDTABLE "sancp"
-	$mainFrame.eFrame.eBox insert end "WHERE  ORDER BY sancp.start_time LIMIT 500"
-	$mainFrame.eFrame.eBox mark set insert "end -36 c"
     }
     
     
