@@ -1,4 +1,4 @@
-# $Id: sancp.tcl,v 1.7 2006/01/12 18:14:24 bamm Exp $ 
+# $Id: sancp.tcl,v 1.8 2006/01/23 19:09:50 bamm Exp $ 
 #
 # Build a sancp query tab and send the query to sguild.
 #
@@ -54,7 +54,7 @@ proc SancpQueryRequest { selectedTable whereList } {
             -command "DeleteTab $eventTabs $currentTab"]
     set exportButton [button $lbuttonsFrame.export -text "Export " \
             -relief raised -borderwidth 2 -pady 0 \
-            -command "ExportResults $queryFrame event"]
+            -command "ExportResults $queryFrame sancp"]
     pack $closeButton $exportButton -side top -fill x
     set rbuttonsFrame [frame $topFrame.rbuttons]
     set rsubmitButton [button $rbuttonsFrame.rsubmit -text "Submit " \

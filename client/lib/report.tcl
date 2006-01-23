@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.34 2005/11/16 22:27:12 bamm Exp $ #
+# $Id: report.tcl,v 1.35 2006/01/23 19:09:50 bamm Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -12,8 +12,6 @@ proc EmailEvents { detail sanitize } {
 	# save the currentSelectPane in case someone clicks a new pane while the report is being built
 	set winname $CUR_SEL_PANE(name)
 	set curselection [$CUR_SEL_PANE(name) curselection]
-        puts "DEBUG winname ===> $winname"
-        puts "DEBUG curselection == > $curselection"
 	set editEmail .editEmail
 	if { [winfo exists $editEmail] } {
 	    wm withdraw $editEmail
@@ -135,9 +133,9 @@ proc ExportResults { currentTab type } {
     regsub -all { } $tabLabel {_} defaultname
     set defaultname "${defaultname}.csv"
     set filename [tk_getSaveFile -initialdir $env(HOME) -initialfile $defaultname]
-    set winname $currentTab
     if { $filename == "" } {return}
     
+    set winname $currentTab.tablelist
     if {$SepChar == "HUMAN-READABLE" } {
 	if { $type == "event"} {
           set OutputText [ExportHumanText $winname]
@@ -169,8 +167,6 @@ proc TextReport  { detail sanitize } {
     if {$ACTIVE_EVENT} {
 	set winname $CUR_SEL_PANE(name)
 	set curselection [$CUR_SEL_PANE(name) curselection]
-        puts "DEBUG winname ===> $winname"
-        puts "DEBUG curselection == > $curselection"
 
 	set sepPromptWin [dialogshell .sepPromptWin_$REPORTNUM -title "Select a Text Report Type"\
 		-buttonboxpos s -width 150]
@@ -1154,7 +1150,7 @@ proc ExportHumanText { winname } {
 	set ReturnString "${ReturnString}Sensor:[$winname getcells $i,sensor] "
 	set ReturnString "${ReturnString}Event#[$winname getcells $i,alertID] "
 
-	set ReturnString "${ReturnString}[$winnamet getcells $i,date]\n"
+	set ReturnString "${ReturnString}[$winname getcells $i,date]\n"
 	set ReturnString "${ReturnString}[$winname getcells $i,event]\n"
 	set ReturnString "${ReturnString}[$winname getcells $i,ipproto] "
 	if { $sanitize == 0 } {
@@ -1197,7 +1193,7 @@ proc ExportDelimitedText { winname SepChar quote header} {
 	    set ReturnString "${ReturnString}[$winname getcells $i,srcip]${SepChar}"
 	    set ReturnString "${ReturnString}[$winname getcells $i,srcport]${SepChar}"
 	    set ReturnString "${ReturnString}[$winname getcells $i,dstip]${SepChar}"
-	    set ReturnString "${ReturnString}[$winnamegetcells $i,dstport]${SepChar}"
+	    set ReturnString "${ReturnString}[$winname getcells $i,dstport]${SepChar}"
 	} else {
 	    set ReturnString "${ReturnString}a.b.c.d${SepChar}"
 	    set ReturnString "${ReturnString}[$winname getcells $i,srcport]${SepChar}e.f.g.h${SepChar}"
@@ -1263,7 +1259,7 @@ proc ExportDelimitedSSNText { winname SepChar quote header } {
 	set ReturnString "${ReturnString}[$winname getcells $i,endtime]${SepChar}"
 
 	if { $sanitize == 0 } {
-	    set ReturnString "${ReturnString}[$winname getcells srcip $i]${SepChar}"
+	    set ReturnString "${ReturnString}[$winname getcells $i,srcip]${SepChar}"
 	    set ReturnString "${ReturnString}[$winname getcells $i,srcport]${SepChar}"
 	    set ReturnString "${ReturnString}[$winname getcells $i,dstip]${SepChar}"
 	    set ReturnString "${ReturnString}[$winname getcells $i,dstport]${SepChar}"
