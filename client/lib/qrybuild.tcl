@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.37 2006/01/20 22:54:55 bamm Exp $ #
+# $Id: qrybuild.tcl,v 1.38 2006/01/25 20:39:55 bamm Exp $ #
 proc QryBuild { tableSelected whereTmp } {
 
     global RETURN_FLAG SELECTEDTABLE SELECT_LIMIT
@@ -107,7 +107,7 @@ proc QryBuild { tableSelected whereTmp } {
       # button box to right of main edit box
       set mainBB2 [buttonbox $editFrame.mbb2 -padx 0 -pady 0 -orient vertical]
       foreach comparison $funcList(Comparison) {
-          $mainBB2 add [lindex $comparison 0] -text [lindex $comparison 0] -padx 0 -pady 0 -command "SrolledTextInsert [lindex $comparison 1]"
+          $mainBB2 add [lindex $comparison 0] -text [lindex $comparison 0] -padx 0 -pady 0 -command "ScrolledTextInsert [lindex $comparison 1]"
       }
       
       # packing children of edit frame
