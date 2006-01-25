@@ -2,7 +2,7 @@
 # Sguil procs that deal with selection and         #
 # Multi-selection of events                        #
 ####################################################
-# $Id: sellib.tcl,v 1.5 2005/11/16 22:27:12 bamm Exp $
+# $Id: sellib.tcl,v 1.6 2006/01/25 03:22:18 bamm Exp $
 #
 # ReSetMotion: Reset Motion Vars on a button release
 #
@@ -27,4 +27,58 @@ proc SelectNextEvent { paneName index } {
 
     }
 
+}
+
+proc SelectUp {} {
+
+    global CUR_SEL_PANE
+
+    set listSize [$CUR_SEL_PANE(name) size]
+    if { $listSize == 0 } { set ACTIVE_EVENT 0; return }
+
+    set selectedIndex [$CUR_SEL_PANE(name) curselection]
+    # Can't move up
+    if { $selectedIndex == 0 } { return }
+
+    set nIndex [expr $selectedIndex - 1]
+    $CUR_SEL_PANE(name) selection clear $selectedIndex
+    $CUR_SEL_PANE(name) selection set $nIndex
+    $CUR_SEL_PANE(name) see $nIndex
+
+    if { $CUR_SEL_PANE(type) == "EVENT" } {
+
+        SelectEventPane $CUR_SEL_PANE(name) EVENT EVENT
+
+    } elseif { $CUR_SEL_PANE(type) == "SANCP" } {
+
+        SelectSessionPane $CUR_SEL_PANE(name) SANCP SSN
+
+    }
+}
+
+proc SelectDown {} {
+
+    global CUR_SEL_PANE
+
+    set listSize [$CUR_SEL_PANE(name) size]
+    if { $listSize == 0 } { set ACTIVE_EVENT 0; return }
+
+    set selectedIndex [$CUR_SEL_PANE(name) curselection]
+    set nIndex [expr $selectedIndex + 1]
+    # Can't move down
+    if { $nIndex == $listSize } { return }
+
+    $CUR_SEL_PANE(name) selection clear $selectedIndex
+    $CUR_SEL_PANE(name) selection set $nIndex
+    $CUR_SEL_PANE(name) see $nIndex
+
+    if { $CUR_SEL_PANE(type) == "EVENT" } {
+
+        SelectEventPane $CUR_SEL_PANE(name) EVENT EVENT
+
+    } elseif { $CUR_SEL_PANE(type) == "SANCP" } {
+
+        SelectSessionPane $CUR_SEL_PANE(name) SANCP SSN
+
+    }
 }

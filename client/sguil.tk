@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.203 2005/12/28 23:14:37 bamm Exp $ #
+# $Id: sguil.tk,v 1.204 2006/01/25 03:22:18 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -19,7 +19,7 @@ exec wish "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.6.0"
+set VERSION "SGUIL-0.6.0p1"
 
 # Load extended tcl
 if [catch {package require Tclx} tclxVersion] {
@@ -2638,6 +2638,17 @@ bind . <Control-Key-q> {
 bind . <Control-Key-f> {
   ShowHideSearch
 }
+
+# Up arrow moves selected event up one.
+bind . <Key-Up> {
+    if {$ACTIVE_EVENT && !$MULTI_SELECT} { SelectUp }
+}
+
+bind . <Key-Down> {
+    if {$ACTIVE_EVENT && !$MULTI_SELECT} { SelectDown }
+}
+
+# Down arrow moves selected event down one.
 # Ctl right/left arrow selects next/prev tab
 #bind . <Control-Key-Right> {
 #  $eventTabs next
@@ -2695,42 +2706,6 @@ bind . <Control-Key-f> {
 #	    $CUR_SEL_PANE(name).eventIDFrame.list activate [expr $activeIndex + 1]
 #	    ShiftSelect $CUR_SEL_PANE(name).eventIDFrame.list [expr $activeIndex + 1]  
 #	}
-#}
-# Up arrow moves selected event up one.
-#bind . <Key-Up> {
-#  if {$ACTIVE_EVENT} {
-#      set selectedIndex [$CUR_SEL_PANE(name).sensorFrame.list index active]
-#    
-#    set listSize [$CUR_SEL_PANE(name).sensorFrame.list size]
-#    if { $selectedIndex != 0 && $selectedIndex < $listSize  } {
-#      SingleSelect $CUR_SEL_PANE(name).sensorFrame.list [expr $selectedIndex - 1]
-#      foreach childWin [winfo children $CUR_SEL_PANE(name)] {
-#        if { [winfo name $childWin] != "scroll" } {
-#	    $childWin.list itemconfigure $selectedIndex -foreground black
-#	    $childWin.list see [expr $selectedIndex - 1]
-#          set SCROLL_HOME($CUR_SEL_PANE(name)) 0
-#	}        
-#      }
-#    }
-#  }
-#}
-
-# Down arrow moves selected event down one.
-#bind . <Key-Down> {
-#  if {$ACTIVE_EVENT} {
-#    set selectedIndex [$CUR_SEL_PANE(name).sensorFrame.list index active]
-#    set listSize [$CUR_SEL_PANE(name).sensorFrame.list size]
-#    if { $selectedIndex < [expr $listSize -1]  } {
-#      SingleSelect $CUR_SEL_PANE(name).sensorFrame.list [expr $selectedIndex + 1]
-#      foreach childWin [winfo children $CUR_SEL_PANE(name)] {
-#        if { [winfo name $childWin] != "scroll" } {
-#          $childWin.list see [expr $selectedIndex + 1]
-#	  $childWin.list itemconfigure $selectedIndex -foreground black
-#          set SCROLL_HOME($CUR_SEL_PANE(name)) 0
-#        }
-#      }
-#    }
-#  }
 #}
 
 # Esc unselects all options
