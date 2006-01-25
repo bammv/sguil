@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.38 2006/01/25 20:39:55 bamm Exp $ #
+# $Id: qrybuild.tcl,v 1.39 2006/01/25 23:26:05 bamm Exp $ #
 proc QryBuild { tableSelected whereTmp } {
 
     global RETURN_FLAG SELECTEDTABLE SELECT_LIMIT
@@ -421,6 +421,8 @@ proc typeChange {} {
 #     Calls DBQryRequest or SSNQryRequest after QryBuild is done
 proc InvokeQryBuild { tableSelected whereTmpList } {
     
+    global SELECTEDTABLE
+
     set tmpWhereStatement [QryBuild $tableSelected $whereTmpList]
     set tableName [lindex $tmpWhereStatement 0]
     if { $tableName == "cancel" } { return }
