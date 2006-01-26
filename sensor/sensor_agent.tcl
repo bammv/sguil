@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.46 2005/11/03 03:32:30 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.47 2006/01/26 21:55:09 bamm Exp $ #
 
 # Copyright (C) 2002-2005 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -117,6 +117,13 @@ proc SendToSguild { data } {
     flush $sguildSocketID
     return 1
   }
+}
+
+proc CleanMsg { msg } {
+
+    regsub -all {\n} $msg {} tmpMsg
+    return $tmpMsg
+
 }
 
 proc BYEventRcvd { socketID eventInfo } {
@@ -589,7 +596,7 @@ proc RawDataRequest { socketID TRANS_ID sensor timestamp srcIP dstIP srcPort dst
         if {$DEBUG} { puts $tmpMsg }
 
         if { $type == "xscript" } {
-            SendToSguild [list XscriptDebugMsg $TRANS_ID $tmpMsg]
+            SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $tmpMsg]]
         } else {
 
             SendToSguild [list SystemMessage $tmpMsg]
@@ -689,7 +696,7 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
   if [catch { eval exec $tcpdumpCmd } tcpdumpError] {
       set tmpMsg "Error running $tcpdumpCmd: $tcpdumpError"
       if { $type == "xscript" } {
-          SendToSguild [list XscriptDebugMsg $TRANS_ID $tmpMsg]
+          SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $tmpMsg]]
       } else { 
           SendToSguild [list SystemMessage $tmpMsg]
       }
