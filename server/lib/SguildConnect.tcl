@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.12 2005/10/14 21:21:04 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.13 2006/01/27 23:15:59 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -45,17 +45,44 @@ proc ClientConnect { socketID IPAddr port } {
 
 proc SensorConnect { socketID IPAddr port } {
 
-  LogMessage "Connect from $IPAddr:$port $socketID"
-  # Check the client access list
+  global VERSION AGENT_OPENSSL AGENT_VERSION KEY PEM
+
+  LogMessage "Sensor agent connect from $IPAddr:$port $socketID"
+
+  # Check the sensor access list
   if { ![ValidateSensorAccess $IPAddr] } {
     SendSocket $socketID "Connection Refused."
     catch {close $socketID} tmpError
     LogMessage "Invalid access attempt from $IPAddr"
     return
   }
-  LogMessage "ALLOWED"
-  fconfigure $socketID -buffering line -blocking 0
-  fileevent $socketID readable [list SensorCmdRcvd $socketID]
+  LogMessage "Valid sensor agent: $IPAddr"
+  fconfigure $socketID -buffering line
+  # Version check
+  if [catch {puts $socketID $AGENT_VERSION} tmpError] {
+    LogMessage "ERROR: $tmpError"
+    catch {close $socketID}
+    return
+  }
+  if [catch {gets $socketID} agentVersion] {
+    LogMessage "ERROR: Unable to get agent version: $agentVersion"
+    catch {close $socketID}
+    return
+  }
+  if { $agentVersion != $AGENT_VERSION } {
+    catch {close $socketID} 
+    LogMessage "ERROR: Agent connect denied - mismatched versions"
+    LogMessage "AGENT VERSION: $agentVersion"
+    LogMessage "SERVER VERSION: $VERSION"
+    return
+  }
+  #fconfigure $socketID -buffering line -blocking 0
+  if {$AGENT_OPENSSL} {
+    tls::import $socketID -server true -keyfile $KEY -certfile $PEM
+    fileevent $socketID readable [list HandShake $socketID SensorCmdRcvd]
+  } else {
+    fileevent $socketID readable [list SensorCmdRcvd $socketID]
+  }
 }
 
 proc SensorAgentInit { socketID sensorName barnyardStatus} {
@@ -150,6 +177,3 @@ proc HandShake { socketID cmd } {
     fileevent $socketID readable [list $cmd $socketID]
   }
 }
-
-
-

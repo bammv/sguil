@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.47 2006/01/26 21:55:09 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.48 2006/01/27 23:15:58 bamm Exp $ #
 
 # Copyright (C) 2002-2005 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -18,11 +18,13 @@ exec tclsh "$0" "$@"
 #
 
 # Don't touch these
+set VERSION "SGUIL-0.6.0"
 set CONNECTED 0
 set SANCPFILEWAIT 0
 set SSNFILEWAIT 0
 set PORTSCANFILEWAIT 0
 set BYCONNECT 0
+set OPENSSL 0
 
 proc bgerror { errorMsg } {
                                                                                                                            
@@ -714,8 +716,9 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
 
 }
 proc ConnectToSguilServer {} {
-  global sguildSocketID HOSTNAME CONNECTED
-  global SERVER_HOST SERVER_PORT DEBUG BYCONNECT
+  global sguildSocketID HOSTNAME CONNECTED OPENSSL
+  global SERVER_HOST SERVER_PORT DEBUG BYCONNECT VERSION
+
   if {[catch {set sguildSocketID [socket $SERVER_HOST $SERVER_PORT]}] > 0} {
     set CONNECTED 0
     if {$DEBUG} {puts "Unable to connect to $SERVER_HOST on port $SERVER_PORT."}
@@ -723,6 +726,34 @@ proc ConnectToSguilServer {} {
     after 15000 ConnectToSguilServer
   } else {
     fconfigure $sguildSocketID -buffering line
+    # Version check
+    if {$OPENSSL} {
+      set tmpVERSION "$VERSION OPENSSL ENABLED"
+    } else {
+      set tmpVERSION "$VERSION OPENSSL DISABLED"
+    }
+    if [catch {gets $sguildSocketID} serverVersion] {
+      puts "ERROR: $serverVersion"
+      catch {close $sguildSocketID}
+      exit
+    }
+    if { $serverVersion == "Connection Refused." } {
+      puts $serverVersion
+      catch {close $sguildSocketID}
+      exit
+    } elseif { $serverVersion != $tmpVERSION } {
+      catch {close $sguildSocketID}
+      puts "Mismatched versions.\nSERVER: ($serverVersion)\nAGENT: ($tmpVERSION)"
+      exit
+    }
+    if [catch {puts $sguildSocketID "$tmpVERSION"} tmpError] {
+      catch {close $sguildSocketID}
+      puts "Unable to send version string: $tmpError"
+    }
+    flush $sguildSocketID
+    if {$OPENSSL} {
+      tls::import $sguildSocketID
+    }
     fileevent $sguildSocketID readable [list SguildCmdRcvd $sguildSocketID]
     set CONNECTED 1
     if {$DEBUG} {puts "Connected to $SERVER_HOST"}
@@ -773,8 +804,10 @@ proc SguildCmdRcvd { socketID } {
 }
 
 proc DisplayUsage { cmdName } {
-  puts "Usage: $cmdName \[-D\] \[-c\] <filename>"
+  puts "Usage: $cmdName \[-D\] \[-b\] \[-c\] \[-o\] <filename>"
   puts "  -c <filename>: PATH to config (sensor_agent.conf) file."
+  puts "  -o Enable OpenSSL"
+  puts "  -b Port to listen for Barnyard connections on."
   puts "  -D Runs sensor_agent in daemon mode."
   exit
 }
@@ -845,11 +878,14 @@ foreach arg $argv {
         -D { set DAEMON_CONF_OVERRIDE 1 }
         -c { set state conf }
         -b { set state byport } 
+        -o { set OPENSSL 1 }
+        -O { set state sslpath }
         default { DisplayUsage $argv0 }
       }
     }
     conf    { set CONF_FILE $arg; set state flag }
     byport  { set BY_PORT $arg; set state flag }
+    sslpath { set TLS_PATH $arg; set state flag }
     default { DisplayUsage $argv0 }
   }
 }
@@ -894,6 +930,18 @@ if { [info exists CONF_FILE] } {
 # Command line overrides the conf file.
 if {[info exists DAEMON_CONF_OVERRIDE] && $DAEMON_CONF_OVERRIDE} { set DAEMON 1}
 if {[info exists DAEMON] && $DAEMON} {Daemonize}
+
+# Check for OPENSSL
+if { $OPENSSL } {
+  # Need path?
+  if { [info exists TLS_PATH] } {
+    if [catch {load $TLS_PATH} tlsError] {
+      puts "ERROR: Unable to load tls libs ($TLS_PATH): $tlsError"
+      DisplayUsage $argv0
+    }
+  }
+  package require tls
+}
 
 ConnectToSguilServer
 InitBYSocket $BY_PORT

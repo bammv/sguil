@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.19 2005/11/29 22:41:39 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.20 2006/01/27 23:15:59 bamm Exp $ #
 
 proc SendSensorAgent { socketID msg } {
 
@@ -46,6 +46,14 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
     # doesn't make it back to BY quick enough.
     set eventID "${sid}.${cid}"
 
+    #puts "DEBUG #### Got event: $eventID"
+    #if { [array exists LAST_EVENT_ID] && [info exists LAST_EVENT_ID($sensorName)] } {
+    #    puts "DEBUG #### Last event from $sensorName: $LAST_EVENT_ID($sensorName)"
+    #} else {
+    #    puts "DEBUG #### First event from $sensorName"
+    #}
+      
+
     if { [array exists LAST_EVENT_ID] \
       && [info exists LAST_EVENT_ID($sensorName)] \
       && $LAST_EVENT_ID($sensorName) == $eventID } {
@@ -53,7 +61,8 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
         InfoMessage "Non-fatal Error: received a duplicate alert from $sensorName. : $eventID"
 
         # Send by/op_sguil confirmation
-        SendSensorAgent $socketID [list Confirm $req_socketID $cid]
+        # Still undecided how best to hand this.
+        #SendSensorAgent $socketID [list Confirm $req_socketID $cid]
 
         return
 

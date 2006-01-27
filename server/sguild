@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.165 2006/01/27 19:49:31 bamm Exp $ #
+# $Id: sguild,v 1.166 2006/01/27 23:15:58 bamm Exp $ #
 
 # Copyright (C) 2002-2005 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -16,6 +16,7 @@ exec tclsh "$0" "$@"
 ########################## GLOBALS ##################################
 
 set VERSION "SGUIL-0.6.0"
+set AGENT_VERSION "SGUIL-0.6.0"
 # DB Version
 set DB_VERSION "0.11"
 # Counter for tracking xscript transactions
@@ -38,8 +39,9 @@ proc DisplayUsage { cmdName } {
   puts "  -P <filename>: Name of file to write the PID to."
   puts "                 Default is /var/run/sguild.pid"
   puts "  -l <filepath>: PATH to sguild libraries."
-  puts "  -o Enable OpenSSL"
-  puts "  -O <filename>: Enable OpenSSL using PATH to tls (tcl openssl) lib (libtls1.4.so)"
+  puts "  -o Require OpenSSL for clients"
+  puts "  -s Require OpenSSL for sensor agents"
+  puts "  -O <filename>: Define PATH to tls (tcl openssl) lib (libtls1.x.so)"
   puts "  -C <directory>: Directory that contains sguild.pem and sguild.key"
   puts "  -D Runs sguild in daemon mode."
   puts "  -adduser <username>: Add user to sguild.users"
@@ -174,6 +176,7 @@ foreach arg $argv {
         -P { set state pid_file }
         -O { set state openssl }
         -o { set OPENSSL 1 }
+        -s { set AGENT_OPENSSL 1 }
         -C { set state certs }
         -A { set state accessfile }
         -l { set state sguild_lib }
@@ -189,7 +192,7 @@ foreach arg $argv {
     gquery { set GLOBAL_QRY_FILE $arg; set state flag }
     users_file { set USERS_FILE $arg; set state flag }
     pid_file { set PID_FILE $arg; set state flag }
-    openssl { set OPENSSL 1; set TLS_PATH $arg; set state flag }
+    openssl { set TLS_PATH $arg; set state flag }
     certs { set CERTS_PATH $arg; set state flag }
     adduser { set ADDUSER 1; set userName $arg; set state flag }
     deluser { set DELUSER 1; set userName $arg; set state flag }
@@ -199,9 +202,15 @@ foreach arg $argv {
   }
 }
 
-# Check openssl requirements if enabled
-if { [info exists OPENSSL] && $OPENSSL } {
-  set VERSION "$VERSION OPENSSL ENABLED"
+# if client ssl isn't defined, turn it off.
+if { ![info exists OPENSSL] } { set OPENSSL 0 }
+# if agent ssl isn't defined, turn it off.
+if { ![info exists AGENT_OPENSSL] } { set AGENT_OPENSSL 0 }
+
+# Load the SSL foo if either are enabled.
+if { $OPENSSL || $AGENT_OPENSSL } {
+  if {$OPENSSL} {set VERSION "$VERSION OPENSSL ENABLED"}
+  if {$AGENT_OPENSSL} { set AGENT_VERSION "$AGENT_VERSION OPENSSL ENABLED"}
   # Need a path to the tls libs
   if { [info exists TLS_PATH] } {
     if [catch {load $TLS_PATH} tlsError] {
@@ -233,7 +242,6 @@ if { [info exists OPENSSL] && $OPENSSL } {
   }
   # If we get this far we should be good.
 } else {
-  set OPENSSL 0
   set VERSION "$VERSION OPENSSL DISABLED"
 }
 
@@ -639,6 +647,7 @@ if { $mergeTableListArray(event) != "" } {
 
 # Get DB info (table names and column info)
 LogMessage "Retrieving DB info..." 
+LogMessage "  Getting a list of tables."
 set tableNameList [mysqlinfo $MAIN_DB_SOCKETID tables]
 # Clean up the PiMPDB tables
 regsub -all {event_\S+\s} $tableNameList {} tableNameList
@@ -648,6 +657,7 @@ regsub -all {icmphdr_\S+\s} $tableNameList {} tableNameList
 regsub -all {data_\S+\s} $tableNameList {} tableNameList
 regsub -all {sancp_\S+\s} $tableNameList {} tableNameList
 foreach tableName $tableNameList {
+  LogMessage "  ...Getting info on $tableName."
   set tableArray($tableName) [mysqlcol $MAIN_DB_SOCKETID $tableName {name type length}]
 }
 
