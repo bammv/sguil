@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.164 2006/01/27 19:33:56 bamm Exp $ #
+# $Id: sguild,v 1.165 2006/01/27 19:49:31 bamm Exp $ #
 
 # Copyright (C) 2002-2005 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -438,12 +438,15 @@ if { $DBPASS == "" } {
 } else {
   set connectCmd "-host $DBHOST -user $DBUSER -port $DBPORT -password $DBPASS"
 }
+LogMessage "Connecting to $DBHOST on $DBPORT as $DBUSER"
 if [catch {eval mysqlconnect $connectCmd} MAIN_DB_SOCKETID] {
   LogMessage "ERROR: Unable to connect to $DBHOST on $DBPORT: Make sure mysql is running."
   ErrorMessage "$MAIN_DB_SOCKETID"
 }
 # DB Version
 set MYSQL_VERSION [FlatDBQuery "SHOW VARIABLES LIKE 'version'"]
+LogMessage "MySQL Version: $MYSQL_VERSION"
+
 # See if the DB we want to use exists
 if { [catch {mysqluse $MAIN_DB_SOCKETID $DBNAME} noDBError] } {
   LogMessage "Error: $noDBError"
@@ -452,6 +455,8 @@ if { [catch {mysqluse $MAIN_DB_SOCKETID $DBNAME} noDBError] } {
 }
 # Make sure we have a compatible DB version
 set currentDBVer [FlatDBQuery "SELECT version FROM version"]
+LogMessage "SguilDB Version: $currentDBVer"
+
 if { [lsearch $DB_VERSION $currentDBVer] < 0 } {
   ErrorMessage "ERROR: Incompatable DB schema. Required Version: $DB_VERSION \
     Installed Version: $currentDBVer Check the server/sql_scripts directory of \
@@ -502,20 +507,24 @@ set eventIDList ""
 LogMessage "Retrieving DB info..." 
 
 set sensorQuery "SELECT hostname FROM sensor ORDER BY hostname ASC"
+LogMessage "  $sensorQuery"
 set sensorList [FlatDBQuery $sensorQuery]
 
 # Build the sensor status array
 foreach sensorName $sensorList {
 
     set tmpQuery "SELECT sid FROM sensor WHERE hostname='$sensorName'"
+    LogMessage "  $tmpQuery"
     set sensorSid [FlatDBQuery $tmpQuery]
 
     set tmpQuery "SELECT ip FROM sensor WHERE hostname='$sensorName'"
+    LogMessage "  $tmpQuery"
     set sensorIP [lindex [FlatDBQuery $tmpQuery] 0]
     if { $sensorIP == "" } { set sensorIP "Unknown" }
 
     if { $mergeTableListArray(event) != "" } {
         set tmpQuery "SELECT MAX(timestamp) FROM event WHERE sid=$sensorSid"
+        LogMessage "  $tmpQuery"
         set lastAlert [lindex [FlatDBQuery $tmpQuery] 0]
         if { $lastAlert == "" } { set lastAlert None }
     } else {
@@ -588,12 +597,28 @@ if { $mergeTableListArray(event) != "" } {
     }
 
     LogMessage "Querying DB for escalated events..."
-    set tmpQry "SELECT event.status, event.priority, event.class, sensor.hostname,      \n\
-                event.timestamp, event.sid, event.cid, event.signature,                 \n\
-                INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto,       \n\
-                event.src_port, event.dst_port                                          \n\
-                FROM event, sensor                                                      \n\
-                WHERE event.sid=sensor.sid AND event.status=2 ORDER BY event.timestamp ASC"
+    if { $MAJOR_MYSQL_VERSION > 3 } {
+
+        set tmpQry "SELECT event.status, event.priority, event.class, sensor.hostname,      \n\
+                    event.timestamp, event.sid, event.cid, event.signature,                 \n\
+                    INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto,       \n\
+                    event.src_port, event.dst_port                                          \n\
+                    FROM event                                                               \n\
+                    FORCE INDEX (status)                                                     \n\
+                    JOIN sensor ON event.sid=sensor.sid                                      \n\
+                    WHERE event.sid=sensor.sid AND event.status=2 ORDER BY event.timestamp ASC"
+
+    } else {
+
+        set tmpQry "SELECT event.status, event.priority, event.class, sensor.hostname,      \n\
+                    event.timestamp, event.sid, event.cid, event.signature,                 \n\
+                    INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto,       \n\
+                    event.src_port, event.dst_port                                          \n\
+                    FROM event                                                               \n\
+                    JOIN sensor ON event.sid=sensor.sid                                      \n\
+                    WHERE event.sid=sensor.sid AND event.status=2 ORDER BY event.timestamp ASC"
+
+    }
 
     InfoMessage $tmpQry
 
