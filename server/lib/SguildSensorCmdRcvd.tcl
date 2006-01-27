@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.17 2005/11/29 22:41:39 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.18 2006/01/27 19:33:57 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global connectedAgents agentSensorNameArray
@@ -27,7 +27,7 @@ proc SensorCmdRcvd { socketID } {
       SystemMessage      { SystemMsgRcvd $socketID [lindex $data 1] }
       BarnyardConnect    { BarnyardConnect $socketID [lindex $data 1] }
       BarnyardDisConnect { BarnyardDisConnect $socketID [lindex $data 1] }
-      default            { if {$sensorCmd != ""} { LogMessage "Sensor Cmd Unkown ($socketID): $sensorCmd" } }
+      default            { if {$sensorCmd != ""} { LogMessage "Sensor Cmd Unknown ($socketID): $sensorCmd" } }
     }
   }
 }
@@ -90,7 +90,9 @@ proc DiskReport { socketID fileSystem percentage } {
 
     global agentSensorNameArray
 
-    SendSystemInfoMsg $agentSensorNameArray($socketID) "$fileSystem $percentage"
+    if [info exists agentSensorNameArray($socketID)] { 
+        SendSystemInfoMsg $agentSensorNameArray($socketID) "$fileSystem $percentage"
+    }
 
 }
 
@@ -98,7 +100,9 @@ proc SystemMsgRcvd { socketID msg } {
 
     global agentSensorNameArray
 
-    SendSystemInfoMsg $agentSensorNameArray($socketID) $msg
+    if [info exists agentSensorNameArray($socketID)] { 
+        SendSystemInfoMsg $agentSensorNameArray($socketID) $msg
+    }
 
 }
 
