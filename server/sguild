@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.166 2006/01/27 23:15:58 bamm Exp $ #
+# $Id: sguild,v 1.167 2006/01/30 14:56:13 bamm Exp $ #
 
 # Copyright (C) 2002-2005 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -207,10 +207,18 @@ if { ![info exists OPENSSL] } { set OPENSSL 0 }
 # if agent ssl isn't defined, turn it off.
 if { ![info exists AGENT_OPENSSL] } { set AGENT_OPENSSL 0 }
 
+if {$OPENSSL} {
+    set VERSION "$VERSION OPENSSL ENABLED"
+} else {
+    set VERSION "$VERSION OPENSSL DISABLED"
+}
+if {$AGENT_OPENSSL} {
+    set AGENT_VERSION "$AGENT_VERSION OPENSSL ENABLED"
+} else {
+    set AGENT_VERSION "$AGENT_VERSION OPENSSL DISABLED"
+}
 # Load the SSL foo if either are enabled.
 if { $OPENSSL || $AGENT_OPENSSL } {
-  if {$OPENSSL} {set VERSION "$VERSION OPENSSL ENABLED"}
-  if {$AGENT_OPENSSL} { set AGENT_VERSION "$AGENT_VERSION OPENSSL ENABLED"}
   # Need a path to the tls libs
   if { [info exists TLS_PATH] } {
     if [catch {load $TLS_PATH} tlsError] {
@@ -241,8 +249,6 @@ if { $OPENSSL || $AGENT_OPENSSL } {
     DisplayUsage $argv0
   }
   # If we get this far we should be good.
-} else {
-  set VERSION "$VERSION OPENSSL DISABLED"
 }
 
 if { ![info exists CONF_FILE] } {
