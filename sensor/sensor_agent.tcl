@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.48 2006/01/27 23:15:58 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.49 2006/01/30 15:36:05 bamm Exp $ #
 
 # Copyright (C) 2002-2005 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -804,9 +804,10 @@ proc SguildCmdRcvd { socketID } {
 }
 
 proc DisplayUsage { cmdName } {
-  puts "Usage: $cmdName \[-D\] \[-b\] \[-c\] \[-o\] <filename>"
+  puts "Usage: $cmdName \[-D\] \[-b\] \[-c\] \[-o\] \[-O\] <filename>"
   puts "  -c <filename>: PATH to config (sensor_agent.conf) file."
   puts "  -o Enable OpenSSL"
+  puts "  -o Path to tcltls lib"
   puts "  -b Port to listen for Barnyard connections on."
   puts "  -D Runs sensor_agent in daemon mode."
   exit
