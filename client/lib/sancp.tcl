@@ -1,4 +1,4 @@
-# $Id: sancp.tcl,v 1.9 2006/01/31 19:29:39 bamm Exp $ 
+# $Id: sancp.tcl,v 1.10 2006/01/31 19:45:34 bamm Exp $ 
 #
 # Build a sancp query tab and send the query to sguild.
 #
@@ -59,7 +59,7 @@ proc SancpQueryRequest { selectedTable whereList } {
     set rbuttonsFrame [frame $topFrame.rbuttons]
     set rsubmitButton [button $rbuttonsFrame.rsubmit -text "Submit " \
             -relief raised -borderwidth 2 -pady 0 \
-            -command "[list DBQueryRequest $selectedTable $whereList]"]
+            -command "[list SancpQueryRequest $selectedTable $whereList]"]
     set editButton [button $rbuttonsFrame.edit -text "Edit " \
             -relief raised -borderwidth 2 -pady 0 \
             -command "[list EditQuery $selectedTable $whereList]"]
