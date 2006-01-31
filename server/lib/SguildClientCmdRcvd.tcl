@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.18 2005/11/29 22:41:39 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.19 2006/01/31 21:07:06 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -313,6 +313,8 @@ proc MonitorSensors { socketID ClientSensorList } {
     global clientList clientMonitorSockets connectedAgents socketInfo sensorUsers sensorList
    
 
+    set userName [lindex $socketInfo($socketID) 2]
+
     if {[lsearch -exact $clientList $socketID] < 0} { 
 	LogMessage "$socketID added to clientList"
 	lappend clientList $socketID
@@ -323,13 +325,13 @@ proc MonitorSensors { socketID ClientSensorList } {
             set clientMonitorSockets($sensor) [ldelete $clientMonitorSockets($sensor) $socketID]
 	}
 	if [info exists sensorUsers($sensor)] {
-            set sensorUsers($sensor) [ldelete $sensorUsers($sensor) $socketID]
+            set sensorUsers($sensor) [ldelete $sensorUsers($sensor) $userName]
 	}
     }
 
     foreach sensorName $ClientSensorList {
 	lappend clientMonitorSockets($sensorName) $socketID
-	lappend sensorUsers($sensorName) [lindex $socketInfo($socketID) 2] 
+	lappend sensorUsers($sensorName) $userName
     }
     SendSystemInfoMsg sguild "User [lindex $socketInfo($socketID) 2] is monitoring sensors: $ClientSensorList"
     SendCurrentEvents $socketID
