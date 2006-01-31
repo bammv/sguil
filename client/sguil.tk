@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.205 2006/01/26 18:00:27 bamm Exp $ #
+# $Id: sguil.tk,v 1.206 2006/01/31 19:34:02 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -986,9 +986,9 @@ proc CreateSessionLists { baseFrame } {
     $currentPane columnconfigure 2 -name starttime -resizable 1 -stretchable 1 -sortmode dictionary
     $currentPane columnconfigure 3 -name endtime -resizable 1 -stretchable 1 -sortmode dictionary
     $currentPane columnconfigure 4 -name srcip -resizable 1 -stretchable 1 -sortmode dictionary
-    $currentPane columnconfigure 5 -name srcport -resizable 1 -stretchable 1 -sortmode integer
+    $currentPane columnconfigure 5 -name srcport -resizable 1 -stretchable 1 -sortmode dictionary
     $currentPane columnconfigure 6 -name dstip -resizable 1 -stretchable 1 -sortmode dictionary
-    $currentPane columnconfigure 7 -name dstport -resizable 1 -stretchable 1 -sortmode integer
+    $currentPane columnconfigure 7 -name dstport -resizable 1 -stretchable 1 -sortmode dictionary
     $currentPane columnconfigure 8 -name ipproto -resizable 1 -stretchable 1  -sortmode integer
     $currentPane columnconfigure 9 -name srcpckts -resizable 1 -stretchable 1  -sortmode integer
     $currentPane columnconfigure 10 -name srcbytes -resizable 1 -stretchable 1  -sortmode integer
@@ -1112,9 +1112,9 @@ proc CreateEventLists { baseFrame {movable {1}} {rtpane {0}} } {
     $currentPane columnconfigure 3 -name alertID -resizable 1 -stretchable 0 -sortmode real
     $currentPane columnconfigure 4 -name date -resizable 1 -stretchable 0 -sortmode dictionary
     $currentPane columnconfigure 5 -name srcip -resizable 1 -stretchable 0 -sortmode dictionary
-    $currentPane columnconfigure 6 -name srcport -resizable 1 -stretchable 0 -sortmode integer
+    $currentPane columnconfigure 6 -name srcport -resizable 1 -stretchable 0 -sortmode dictionary
     $currentPane columnconfigure 7 -name dstip -resizable 1 -stretchable 0 -sortmode dictionary
-    $currentPane columnconfigure 8 -name dstport -resizable 1 -stretchable 0 -sortmode integer
+    $currentPane columnconfigure 8 -name dstport -resizable 1 -stretchable 0 -sortmode dictionary
     $currentPane columnconfigure 9 -name ipproto -resizable 1 -stretchable 0  -sortmode integer
     $currentPane columnconfigure 10 -name event -resizable 1 -stretchable 1 -sortmode ascii
 
