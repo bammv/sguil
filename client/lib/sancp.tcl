@@ -1,4 +1,4 @@
-# $Id: sancp.tcl,v 1.8 2006/01/23 19:09:50 bamm Exp $ 
+# $Id: sancp.tcl,v 1.9 2006/01/31 19:29:39 bamm Exp $ 
 #
 # Build a sancp query tab and send the query to sguild.
 #
@@ -23,11 +23,11 @@ proc SancpQueryRequest { selectedTable whereList } {
     if { [llength $queries] > 1 } {
 
         set tmpQry [join $queries " ) UNION ( "]
-        set fQuery "( $tmpQry ) ORDER BY datetime DESC LIMIT $SELECT_LIMIT"
+        set fQuery "( $tmpQry ) ORDER BY datetime, src_port ASC LIMIT $SELECT_LIMIT"
 
     } else {
 
-        set fQuery "[lindex $queries 0] ORDER BY datetime DESC LIMIT $SELECT_LIMIT"
+        set fQuery "[lindex $queries 0] ORDER BY datetime, src_port ASC LIMIT $SELECT_LIMIT"
 
     }
 

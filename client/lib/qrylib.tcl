@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.28 2006/01/12 18:14:23 bamm Exp $ #
+# $Id: qrylib.tcl,v 1.29 2006/01/31 19:29:39 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -262,11 +262,11 @@ proc DBQueryRequest { selectedTable whereList {winTitle {none} } } {
     if { [llength $queries] > 1 } {
  
         set tmpQry [join $queries " ) UNION ( "]
-        set fQuery "( $tmpQry ) ORDER BY datetime DESC LIMIT $SELECT_LIMIT"
+        set fQuery "( $tmpQry ) ORDER BY datetime, src_port ASC LIMIT $SELECT_LIMIT"
     
     } else {
 
-        set fQuery "[lindex $queries 0] ORDER BY datetime DESC LIMIT $SELECT_LIMIT"
+        set fQuery "[lindex $queries 0] ORDER BY datetime, src_port ASC LIMIT $SELECT_LIMIT"
 
     }
 
