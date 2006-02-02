@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.39 2006/01/25 23:26:05 bamm Exp $ #
+# $Id: qrybuild.tcl,v 1.40 2006/02/02 17:09:15 bamm Exp $ #
 proc QryBuild { tableSelected whereTmp } {
 
     global RETURN_FLAG SELECTEDTABLE SELECT_LIMIT
@@ -523,26 +523,41 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
 	    IPAddress2SQL $caller
     }
     
-    set networknumber [lindex $iplist 2]
-    set bcastaddress [lindex $iplist 3]
-    # find the decimal values for the ip network and broadcast addresses
-    set decNetwork [InetAtoN $networknumber]
-    set decBcast [InetAtoN $bcastaddress]
     if { $caller != "builder" } {
 	set SELECTEDTABLE [$tableBox get]
     }
-    
-    # build the ip part of the query.  It will look the same no matter what table we are working with. 
-    if { [$srcdstBox get] == "src" } {
-	set inserttext "${SELECTEDTABLE}.src_ip BETWEEN ${decNetwork} AND ${decBcast} "
-    } elseif { [$srcdstBox get] == "dst" } {
-	set inserttext "${SELECTEDTABLE}.dst_ip BETWEEN ${decNetwork} AND ${decBcast} "
-    } else {
-	set inserttext "(${SELECTEDTABLE}.dst_ip BETWEEN ${decNetwork} AND ${decBcast} \
-		OR ${SELECTEDTABLE}.src_ip BETWEEN ${decNetwork} AND ${decBcast}) "
-    }
+    set qryType [$srcdstBox get]
 
-    # do something depending on who called us
+    if { [lindex $iplist 1] == 32 } {
+
+        # Query a single IP
+        if { $qryType == "src" || $qryType == "dst" } {
+            set inserttext "${SELECTEDTABLE}.${qryType}_ip = INET_ATON('[lindex $iplist 0]')"
+        } else {
+            set inserttext "${SELECTEDTABLE}.src_ip = INET_ATON('[lindex $iplist 0]') AND ${SELECTEDTABLE}.dst_ip = INET_ATON('[lindex $iplist 0]')"
+        }
+
+    } else { 
+
+        set networknumber [lindex $iplist 2]
+        set bcastaddress [lindex $iplist 3]
+        # find the decimal values for the ip network and broadcast addresses
+        set decNetwork [InetAtoN $networknumber]
+        set decBcast [InetAtoN $bcastaddress]
+    
+        # build the ip part of the query.  It will look the same no matter what table we are working with. 
+        if { $qryType == "src" } {
+	    set inserttext "${SELECTEDTABLE}.src_ip BETWEEN ${decNetwork} AND ${decBcast} "
+        } elseif { $qryType  == "dst" } {
+	    set inserttext "${SELECTEDTABLE}.dst_ip BETWEEN ${decNetwork} AND ${decBcast} "
+        } else {
+	    set inserttext "(${SELECTEDTABLE}.dst_ip BETWEEN ${decNetwork} AND ${decBcast} \
+		    OR ${SELECTEDTABLE}.src_ip BETWEEN ${decNetwork} AND ${decBcast}) "
+        }
+    
+        # do something depending on who called us
+
+    }
     if { $caller == "builder" } {
 	$currentWin insert insert $inserttext
 	destroy $ipAddressWin 
@@ -551,24 +566,24 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
 
 	if { $SELECTEDTABLE == "event" } {
 	    set timestamp [lindex [GetCurrentTimeStamp "1 week ago"] 0]
-	    set tmpWhere "WHERE ${SELECTEDTABLE}.timestamp > '$timestamp' AND $inserttext LIMIT 500"
+	    set tmpWhere "WHERE ${SELECTEDTABLE}.timestamp > '$timestamp' AND $inserttext"
 	} else {
 	    set timestamp [lindex [GetCurrentTimeStamp "1 day ago"] 0]
 	    set tmpWhere "WHERE ${SELECTEDTABLE}.start_time > '${timestamp}' AND \
-		    $inserttext ORDER BY ${SELECTEDTABLE}.start_time  LIMIT 500"
+		    $inserttext ORDER BY ${SELECTEDTABLE}.start_time"
 	}
 	# Are we going to the builder or submitting the query
 	if { $RETURN_FLAG_IP == 2 } {
 	    destroy $ipAddressWin
-	    InvokeQryBuild $SELECTEDTABLE $tmpWhere
+	    InvokeQryBuild $SELECTEDTABLE [list $tmpWhere]
 	} else {
 	    destroy $ipAddressWin
 	    if { $SELECTEDTABLE == "event" } {
-		DBQueryRequest $SELECTEDTABLE $tmpWhere
+		DBQueryRequest $SELECTEDTABLE [list $tmpWhere]
 	    } elseif { $SELECTEDTABLE == "sessions" } {
 		SsnQueryRequest $SELECTEDTABLE $tmpWhere
 	    } elseif { $SELECTEDTABLE == "sancp" } {
-		SancpQueryRequest $SELECTEDTABLE $tmpWhere
+		SancpQueryRequest $SELECTEDTABLE [list $tmpWhere]
 	    }
 	} 
     }
