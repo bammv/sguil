@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.40 2006/02/02 17:09:15 bamm Exp $ #
+# $Id: qrybuild.tcl,v 1.41 2006/02/03 16:54:02 bamm Exp $ #
 proc QryBuild { tableSelected whereTmp } {
 
     global RETURN_FLAG SELECTEDTABLE SELECT_LIMIT
@@ -569,8 +569,7 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
 	    set tmpWhere "WHERE ${SELECTEDTABLE}.timestamp > '$timestamp' AND $inserttext"
 	} else {
 	    set timestamp [lindex [GetCurrentTimeStamp "1 day ago"] 0]
-	    set tmpWhere "WHERE ${SELECTEDTABLE}.start_time > '${timestamp}' AND \
-		    $inserttext ORDER BY ${SELECTEDTABLE}.start_time"
+	    set tmpWhere "WHERE ${SELECTEDTABLE}.start_time > '${timestamp}' AND  $inserttext"
 	}
 	# Are we going to the builder or submitting the query
 	if { $RETURN_FLAG_IP == 2 } {
