@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.206 2006/01/31 19:34:02 bamm Exp $ #
+# $Id: sguil.tk,v 1.207 2006/02/03 17:14:47 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1241,7 +1241,7 @@ proc ManualSelectRow { win x y } {
 
 proc SelectSessionPane { win type format } {
 
-    global CUR_SEL_PANE ACTIVE_EVENT BUSY MULTI_SELECT DISPLAYEDDETAIL
+    global CUR_SEL_PANE CUR_SEL_EVENT ACTIVE_EVENT BUSY MULTI_SELECT DISPLAYEDDETAIL
     global portscanDataFrame packetDataFrame sancpFrame
 
     set CUR_SEL_PANE(name) $win
@@ -1255,6 +1255,13 @@ proc SelectSessionPane { win type format } {
     UnSelectPacketOptions
 
     if { $selectedIndex == "" } { return }
+
+    set eventID [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID]
+    # If we clicked on an already active event, do nothing.
+    if { [info exists CUR_SEL_EVENT] && $CUR_SEL_EVENT == $eventID } {
+        return
+    }
+    set CUR_SEL_EVENT $eventID
 
     if { $type == "SANCP" } {
 
