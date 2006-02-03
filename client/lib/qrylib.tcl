@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.29 2006/01/31 19:29:39 bamm Exp $ #
+# $Id: qrylib.tcl,v 1.30 2006/02/03 17:48:45 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -312,7 +312,7 @@ proc DBQueryRequest { selectedTable whereList {winTitle {none} } } {
     pack $topFrame -side top -fill x
     pack $queryFrame -side bottom -fill both
     $queryFrame configure -cursor watch
-    if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame.tablelist $selectQuery" }
+    puts "DEBUG #### $queryFrame configure -cursor watch"
     SendToSguild "QueryDB $queryFrame.tablelist $selectQuery"
 
 }
