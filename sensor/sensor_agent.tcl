@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.49 2006/01/30 15:36:05 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.50 2006/02/08 06:23:19 bamm Exp $ #
 
 # Copyright (C) 2002-2005 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -39,6 +39,113 @@ proc bgerror { errorMsg } {
                                                                                                                            
 }
 
+proc InitSnortStats {} {
+
+    global SNORT_PERF_FILE
+
+    # Check for var and correct file foo.
+    if { ![info exists SNORT_PERF_FILE] } {
+
+        set errMsg "Error: No infile provided for snort stats."
+        SendToSguild [list SystemMessage $errMsg]
+        return
+
+    } elseif { ![file exists $SNORT_PERF_FILE] } {
+
+        set errMsg "Error: Unable to monitor snort stats. File $SNORT_PERF_FILE does not exist."
+        SendToSguild [list SystemMessage $errMsg]
+        return
+
+    } elseif { ![file readable $SNORT_PERF_FILE] } {
+
+        set errMsg "Error: File $SNORT_PERF_FILE is not readable by sensor_agent.tcl."
+        SendToSguild [list SystemMessage $errMsg]
+        return
+
+    }
+
+    # Open stats file with tail.
+    if { [catch {open "| tail -1 -f $SNORT_PERF_FILE" r} statsFileID] } {
+
+        set errMsg "Error opening $SNORT_PERF_FILE: $statsFileID"
+        SendToSguild [list SystemMessage $errMsg]
+        return
+
+    }
+
+    fconfigure $statsFileID -buffering line
+    fileevent $statsFileID readable [list ReadSnortStats $statsFileID]
+ 
+}
+
+proc ReadSnortStats { statsFileID } {
+
+    global SNORT_PERF_FILE
+
+    if { [eof $statsFileID] || [catch {gets $statsFileID data} tmpError] } {
+
+        catch {close $statsFileID} tmpError
+        if { [info exists tmpError] } {
+            set errMsg "Error while processing $SNORT_PERF_FILE: $tmpError"
+        } else {
+            set errMsg "Error: Received EOF from $SNORT_PERF_FILE"
+        }
+        SendToSguild [list SystemMessage $errMsg]
+        SendToSguild [list SystemMessage "Trying to reread file in 30 secs."]
+        after 30000 InitSnortStats
+        return
+
+    } else {
+
+        ProcessSnortStats $data
+
+    }
+
+}
+
+proc ProcessSnortStats { data } {
+
+    global snortStatsList
+
+    set dataList [split $data ,]
+
+    set snortStatsList [list [clock format [lindex $dataList 0] -gmt true -f "%Y-%m-%d %T"]]
+    foreach i [list 1 2 3 4 5 6 9 10 11] {
+        lappend snortStatsList [lindex $dataList $i]
+    }
+
+    # Save me
+    #set snortStats(time) [clock format [lindex $dataList 0] -gmt true -f "%Y-%m-%d %T"]
+    #set snortStats(drop) [lindex $dataList 1]
+    #set snortStats(wireMb) [lindex $dataList 2]
+    #set snortStats(alerts_per_sec) [lindex $dataList 3]
+    #set snortStats(pkts_per_sec) [lindex $dataList 4]
+    #set snortStats(bytes_per_sec) [lindex $dataList 5]
+    #set snortStats(patmatch) [lindex $dataList 6]
+    #set snortStats(new_ssns) [lindex $dataList 9]
+    #set snortStats(total_ssns) [lindex $dataList 10]
+    #set snortStats(max_ssns) [lindex $dataList 11]
+
+    SendStats
+
+}
+
+proc SendStats {} {
+
+    global snortStatsList SENSOR_ID 
+
+    if { ![info exists SENSOR_ID] } { return }
+
+    if { [info exists snortStatsList] } {
+        set tmpList [linsert $snortStatsList 0 $SENSOR_ID]
+    } else {
+        set tmpList [list $SENSOR_ID N/A N/A N/A N/A N/A N/A N/A N/A N/A N/A]
+    }
+
+    SendToSguild [list SnortStats $tmpList]
+
+}
+
 proc InitBYSocket { port } {
 
     global DEBUG
@@ -61,13 +168,14 @@ proc BYConnect { socketID IPaddr port } {
 
     SendToSguild [list SystemMessage "Barnyard connected via sensor localhost."]
     set BYCONNECT 1
+    set byStatsList [list 1 [GetCurrentTimeStamp]]
     SendToSguild [list BarnyardConnect $BYCONNECT]
 
 }
 
 proc BYCmdRcvd { socketID } {
 
-    global DEBUG BYCONNECT
+    global DEBUG BYCONNECT byStatsList
 
     if { [eof $socketID] || [catch {gets $socketID data}] } {
 
@@ -76,6 +184,7 @@ proc BYCmdRcvd { socketID } {
         SendToSguild [list SystemMessage "Barnyard disconnected."]
         SendToSguild [list BarnyardDisConnect [GetCurrentTimeStamp]]
         set BYCONNECT 0
+        set byStatsList [list 0 [GetCurrentTimeStamp]]
 
     } else {
 
@@ -94,7 +203,7 @@ proc BYCmdRcvd { socketID } {
 
 proc SendToBarnyard { socketID msg } {
 
-    global BYCONNECT DEBUG
+    global BYCONNECT DEBUG byStatsList
 
     if [catch { puts $socketID $msg } tmpError] {
         catch { close $socketID }
@@ -102,6 +211,7 @@ proc SendToBarnyard { socketID msg } {
         SendToSguild [list SystemMessage "Barnyard disconnected."]
         set BYCONNECT 0
         SendToSguild [list BarnyardDisConnect 0]
+        set byStatsList [list 0 [GetCurrentTimeStamp]]
     } else {
         catch { flush $socketID }
     }
@@ -757,8 +867,7 @@ proc ConnectToSguilServer {} {
     fileevent $sguildSocketID readable [list SguildCmdRcvd $sguildSocketID]
     set CONNECTED 1
     if {$DEBUG} {puts "Connected to $SERVER_HOST"}
-    puts $sguildSocketID "AgentInit $HOSTNAME $BYCONNECT"
-    flush $sguildSocketID
+    SendToSguild [list AgentInit $HOSTNAME $BYCONNECT]
   }
 }
 
@@ -804,10 +913,9 @@ proc SguildCmdRcvd { socketID } {
 }
 
 proc DisplayUsage { cmdName } {
-  puts "Usage: $cmdName \[-D\] \[-b\] \[-c\] \[-o\] \[-O\] <filename>"
+  puts "Usage: $cmdName \[-D\] \[-b\] \[-c\] \[-o\] <filename>"
   puts "  -c <filename>: PATH to config (sensor_agent.conf) file."
   puts "  -o Enable OpenSSL"
-  puts "  -o Path to tcltls lib"
   puts "  -b Port to listen for Barnyard connections on."
   puts "  -D Runs sensor_agent in daemon mode."
   exit
@@ -859,6 +967,7 @@ proc SetSensorID { sensorID } {
     global SENSOR_ID
 
     set SENSOR_ID $sensorID
+    SendStats
 
 }
 
@@ -949,6 +1058,7 @@ InitBYSocket $BY_PORT
 CheckForPortscanFiles
 if { [info exists S4_KEEP_STATS] && $S4_KEEP_STATS } { CheckForSsnFiles }
 if { [info exists SANCP] && $SANCP } { CheckForSancpFiles }
+if { [info exists SNORT_PERF_STATS] && $SNORT_PERF_STATS } { InitSnortStats }
 CheckDiskSpace
 if {$PING_DELAY != 0} { PingServer }
 vwait FOREVER
