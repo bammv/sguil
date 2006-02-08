@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.20 2006/01/27 23:15:59 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.21 2006/02/08 06:24:12 bamm Exp $ #
 
 proc SendSensorAgent { socketID msg } {
 
@@ -248,5 +248,31 @@ proc BarnyardDisConnect { socketID dateTime } {
     }
 
     SendAllSensorStatusInfo
+
+}
+
+proc SnortStatsRcvd { socketID statsList } {
+
+    global agentSensorNameArray snortStatsArray clientList
+
+    if [info exists agentSensorNameArray($socketID)] {
+
+        set sensorName $agentSensorNameArray($socketID)
+        set snortStatsArray($sensorName) $statsList
+
+    }
+
+    if { [info exists clientList] && [llength $clientList] > 0 } {
+
+        foreach clientSocket $clientList {
+
+            if [catch {SendSocket $clientSocket [list UpdateSnortStats [linsert $statsList 1 $sensorName]]} tmpError] { 
+                 puts "\n\n $tmpError \n\n"
+            }
+
+        }
+
+    }
+
 
 }

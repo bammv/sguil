@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.18 2006/01/27 19:33:57 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.19 2006/02/08 06:24:12 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global connectedAgents agentSensorNameArray
@@ -25,6 +25,7 @@ proc SensorCmdRcvd { socketID } {
       XscriptDebugMsg    { $sensorCmd [lindex $data 1] [lindex $data 2] }
       RawDataFile        { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
       SystemMessage      { SystemMsgRcvd $socketID [lindex $data 1] }
+      SnortStats         { SnortStatsRcvd $socketID [lindex $data 1] }
       BarnyardConnect    { BarnyardConnect $socketID [lindex $data 1] }
       BarnyardDisConnect { BarnyardDisConnect $socketID [lindex $data 1] }
       default            { if {$sensorCmd != ""} { LogMessage "Sensor Cmd Unknown ($socketID): $sensorCmd" } }

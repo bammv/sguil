@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.167 2006/01/30 14:56:13 bamm Exp $ #
+# $Id: sguild,v 1.168 2006/02/08 06:24:11 bamm Exp $ #
 
 # Copyright (C) 2002-2005 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -238,8 +238,6 @@ if { $OPENSSL || $AGENT_OPENSSL } {
   # Need sguild.key and sguild.pem
   set PEM [file join $CERTS_PATH sguild.pem]
   set KEY [file join $CERTS_PATH sguild.key]
-  global KEY
-  puts "KEY is $KEY"
   if {![file exists $PEM] || ![file readable $PEM] } {
     puts "ERROR: $PEM does not exist or is not readable"
     DisplayUsage $argv0
@@ -548,6 +546,9 @@ foreach sensorName $sensorList {
     # Format sid ip agent barnyard lastAlert
     # agent/by == time of connect or 0 if disconnected.
     set sensorStatusArray($sensorName) [list $sensorSid $lastAlert 0 0 $sensorIP]
+
+    # Init snort stats array
+    set snortStatsArray($sensorName) [list $sensorSid N/A N/A N/A N/A N/A N/A N/A N/A N/A N/A]
 
 }
 

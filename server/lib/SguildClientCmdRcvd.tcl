@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.19 2006/01/31 21:07:06 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.20 2006/02/08 06:24:12 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -310,7 +310,9 @@ proc GetOpenPorts { socketID sid cid } {
 #                 now the client gets everything.
 #
 proc MonitorSensors { socketID ClientSensorList } {
+
     global clientList clientMonitorSockets connectedAgents socketInfo sensorUsers sensorList
+    global snortStatsArray
    
 
     set userName [lindex $socketInfo($socketID) 2]
@@ -338,6 +340,20 @@ proc MonitorSensors { socketID ClientSensorList } {
     #if { [info exists connectedAgents] } {
 	#  SendSystemInfoMsg sguild "Connected sensors - $connectedAgents"
     #}
+
+    # Send the snort stats info here.
+    if { [array exists snortStatsArray] && [array names snortStatsArray] != "" } {
+
+        foreach sensor [array names snortStatsArray] {
+
+            lappend tmpList [linsert $snortStatsArray($sensor) 1 $sensor]
+
+        }
+
+        catch { SendSocket $socketID [list NewSnortStats $tmpList] } tmpError
+
+    }   
+
 }
                                                                                                             
 proc SendEscalatedEvents { socketID } {
