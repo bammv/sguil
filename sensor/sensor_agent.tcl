@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.50 2006/02/08 06:23:19 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.51 2006/02/08 21:12:08 bamm Exp $ #
 
 # Copyright (C) 2002-2005 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -109,10 +109,11 @@ proc ProcessSnortStats { data } {
 
     set dataList [split $data ,]
 
-    set snortStatsList [list [clock format [lindex $dataList 0] -gmt true -f "%Y-%m-%d %T"]]
+    set snortStatsList ""
     foreach i [list 1 2 3 4 5 6 9 10 11] {
         lappend snortStatsList [lindex $dataList $i]
     }
+    lappend snortStatsList [clock format [lindex $dataList 0] -gmt true -f "%Y-%m-%d %T"]
 
     # Save me
     #set snortStats(time) [clock format [lindex $dataList 0] -gmt true -f "%Y-%m-%d %T"]
