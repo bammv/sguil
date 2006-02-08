@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.32 2006/02/08 06:22:32 bamm Exp $
+# $Id: extdata.tcl,v 1.33 2006/02/08 21:11:10 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -863,7 +863,7 @@ proc NewSnortStats { statsList } {
 proc ParseSnortStatsLine { stats } {
 
     # Add % to Loss and Match
-    foreach i [list 3 8] {
+    foreach i [list 2 7] {
 
         if { [lindex $stats $i] != "N/A" } {
             set tmpValue [lindex $stats $i]
@@ -873,20 +873,26 @@ proc ParseSnortStatsLine { stats } {
     }
 
     # Add Mb/s to Wire
-    if { [lindex $stats 4] != "N/A" } {
-        set tmpValue [lindex $stats 4]
-        set stats [lreplace $stats 4 4 "${tmpValue}Mb/s"]
+    if { [lindex $stats 3] != "N/A" } {
+        set tmpValue [lindex $stats 3]
+        set stats [lreplace $stats 3 3 "${tmpValue}Mb/s"]
+    }
+
+    # Add k/sec to packets
+    if { [lindex $stats 5] != "N/A" } {
+        set tmpValue [lindex $stats 5]
+        set stats [lreplace $stats 5 5 "${tmpValue}k/sec"]
     }
 
     # Per packet for bytes
-    if { [lindex $stats 7] != "N/A" } {
-        set tmpValue [lindex $stats 7]
-        set stats [lreplace $stats 7 7 "${tmpValue}/pckt"]
+    if { [lindex $stats 6] != "N/A" } {
+        set tmpValue [lindex $stats 6]
+        set stats [lreplace $stats 6 6 "${tmpValue}/pckt"]
     }
 
 
     # Add /sec 
-    foreach i [list 5 6 9] {
+    foreach i [list 4 8] {
 
         if { [lindex $stats $i] != "N/A" } {
             set tmpValue [lindex $stats $i]

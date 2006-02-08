@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.209 2006/02/08 06:22:32 bamm Exp $ #
+# $Id: sguil.tk,v 1.210 2006/02/08 21:11:10 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2059,16 +2059,16 @@ set snortStatsXScroll $snortStatsTableFrame.snortStatsXScroll
 tablelist::tablelist $snortStatsTable \
     -columns {3  "Sid"        center
               10 "Sensor"     left
-              20 "Timestamp " center
-              10 "Pckt Loss"  right
+              9  "Pckt Loss"  right
               8  "Avg B/W"    right
               8  "Alerts"     right
-              8  "Pckts"      right
+              8  "Packets"    right
               8  "Bytes"      right
               8  "Match"      right
-              10 "NewSsns"    right
-              8  "TtlSsns"    right
-              8  "MaxSsns"    right}   \
+              10 "New Ssns"   right
+              8  "Ttl Ssns"   right
+              8  "Max Ssns"   right
+              20 "Timestamp"  center}   \
     -stretch all \
     -yscrollcommand [list $snortStatsYScroll set] \
     -xscrollcommand [list $snortStatsXScroll set] \
@@ -2081,7 +2081,7 @@ $snortStatsTable columnconfigure 2 -name snortTime -sortmode dictionary -resizab
 $snortStatsTable columnconfigure 3 -name snortLoss -resizable 0 -sortmode dictionary
 $snortStatsTable columnconfigure 4 -name snortWire -resizable 0 -sortmode dictionary
 $snortStatsTable columnconfigure 5 -name snortAlerts -resizable 0 -sortmode dictionary
-$snortStatsTable columnconfigure 6 -name snortPckts -resizable 0 -sortmode dictionary
+$snortStatsTable columnconfigure 6 -name snortKpckts -resizable 0 -sortmode dictionary
 $snortStatsTable columnconfigure 7 -name snortBytes -resizable 0 -sortmode dictionary
 $snortStatsTable columnconfigure 8 -name snortMatch -resizable 0 -sortmode dictionary
 $snortStatsTable columnconfigure 9 -name snortNewSsns -resizable 0 -sortmode dictionary
