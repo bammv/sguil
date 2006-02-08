@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.31 2005/12/22 23:12:01 bamm Exp $
+# $Id: extdata.tcl,v 1.32 2006/02/08 06:22:32 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -845,6 +845,79 @@ proc SensorStatusRequest {} {
 
     after [expr $STATUS_UPDATE * 1000] SensorStatusRequest
 
+}
+
+proc NewSnortStats { statsList } {
+
+    global snortStatsTable
+
+    $snortStatsTable delete 0 end
+    foreach row $statsList {
+
+        $snortStatsTable insert end [ParseSnortStatsLine $row]
+        
+    }
+
+}
+
+proc ParseSnortStatsLine { stats } {
+
+    # Add % to Loss and Match
+    foreach i [list 3 8] {
+
+        if { [lindex $stats $i] != "N/A" } {
+            set tmpValue [lindex $stats $i]
+            set stats [lreplace $stats $i $i "${tmpValue}%"]
+        }
+
+    }
+
+    # Add Mb/s to Wire
+    if { [lindex $stats 4] != "N/A" } {
+        set tmpValue [lindex $stats 4]
+        set stats [lreplace $stats 4 4 "${tmpValue}Mb/s"]
+    }
+
+    # Per packet for bytes
+    if { [lindex $stats 7] != "N/A" } {
+        set tmpValue [lindex $stats 7]
+        set stats [lreplace $stats 7 7 "${tmpValue}/pckt"]
+    }
+
+
+    # Add /sec 
+    foreach i [list 5 6 9] {
+
+        if { [lindex $stats $i] != "N/A" } {
+            set tmpValue [lindex $stats $i]
+            set stats [lreplace $stats $i $i "${tmpValue}/sec"]
+        }
+
+    }
+
+    return $stats
+
+}
+
+proc UpdateSnortStats { stats } {
+
+    global snortStatsTable
+
+    set sid [lindex $stats 0]
+    set match [lsearch -exact [lindex [$snortStatsTable getcolumns 0 0] 0] $sid]
+    set tmpStats [ParseSnortStatsLine $stats]
+
+    if { $match >= 0 } {
+
+        $snortStatsTable delete $match $match
+        $snortStatsTable insert $match $tmpStats
+
+    } else {
+
+        $snortStatsTable insert end $tmpStats
+
+    }
+ 
 }
  
 proc SensorStatusUpdate { statusList } {

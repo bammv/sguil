@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.208 2006/02/03 17:48:44 bamm Exp $ #
+# $Id: sguil.tk,v 1.209 2006/02/08 06:22:32 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -124,6 +124,8 @@ proc ServerCommandRcvd { socketID } {
    
     switch -exact -- $serverCmd {
       SensorStatusUpdate { $serverCmd [lrange $origData 1 end] }
+      NewSnortStats { $serverCmd [lindex $origData 1] }
+      UpdateSnortStats { $serverCmd [lindex $origData 1] }
       InsertEvent { $serverCmd $data1 }
       IncrEvent { $serverCmd $data1 }
       InsertSystemInfoMsg { $serverCmd $index1 $data2 }
@@ -309,11 +311,11 @@ proc UserMessage { user userMsg } {
 
       # BOING!
       #bell
-      $detailTabs pageconfigure 3 -foreground red 
+      $detailTabs pageconfigure 4 -foreground red 
 
     } else {
 
-      $detailTabs pageconfigure 3 -foreground
+      $detailTabs pageconfigure 4 -foreground
 
     }
 
@@ -424,11 +426,11 @@ proc InsertSystemInfoMsg { sensorName msg } {
     # Change label to red if we add data when it's not being viewed
     if { [$detailTabs view] != 2 } {
 
-      $detailTabs pageconfigure 2 -foreground red 
+      $detailTabs pageconfigure 3 -foreground red 
 
     } else {
 
-      $detailTabs pageconfigure 2 -foreground
+      $detailTabs pageconfigure 3 -foreground
 
     }
 
@@ -1928,10 +1930,11 @@ pack $detailTabs -side left -expand true -fill both -padx 0 -pady 0
 
 $detailTabs add -label "IP Resolution"
 $detailTabs add -label "Sensor Status"
+$detailTabs add -label "Snort Statistics"
 $detailTabs add -label "System Msgs"\
- -command "$detailTabs pageconfigure 2 -foreground black"
-$detailTabs add -label "User Msgs"\
  -command "$detailTabs pageconfigure 3 -foreground black"
+$detailTabs add -label "User Msgs"\
+ -command "$detailTabs pageconfigure 4 -foreground black"
 $detailTabs select 0
 
 set ipDataFrame [frame [$detailTabs childsite 0].ipDataFrame]
@@ -2043,13 +2046,71 @@ pack $sensorStatusUpdateFrame -side bottom -anchor e
 
 if { ![info exists STATUS_UPDATE] || $STATUS_UPDATE == "" } { set STATUS_UPDATE 15 } 
 
-set systemInfoFrame [frame [$detailTabs childsite 2].systemInfoFrame]
+#
+# Snort Status Tab
+#
+set snortStatsTableFrame [$detailTabs childsite 2].tableFrame
+frame $snortStatsTableFrame
+
+set snortStatsTable $snortStatsTableFrame.snortStatsTable
+set snortStatsYScroll $snortStatsTableFrame.snortStatsYScroll
+set snortStatsXScroll $snortStatsTableFrame.snortStatsXScroll
+
+tablelist::tablelist $snortStatsTable \
+    -columns {3  "Sid"        center
+              10 "Sensor"     left
+              20 "Timestamp " center
+              10 "Pckt Loss"  right
+              8  "Avg B/W"    right
+              8  "Alerts"     right
+              8  "Pckts"      right
+              8  "Bytes"      right
+              8  "Match"      right
+              10 "NewSsns"    right
+              8  "TtlSsns"    right
+              8  "MaxSsns"    right}   \
+    -stretch all \
+    -yscrollcommand [list $snortStatsYScroll set] \
+    -xscrollcommand [list $snortStatsXScroll set] \
+    -width 20
+
+
+$snortStatsTable columnconfigure 0 -name snortSid -sortmode integer -resizable 0
+$snortStatsTable columnconfigure 1 -name snortName -sortmode ascii -resizable 1 -stretchable 1
+$snortStatsTable columnconfigure 2 -name snortTime -sortmode dictionary -resizable 0
+$snortStatsTable columnconfigure 3 -name snortLoss -resizable 0 -sortmode dictionary
+$snortStatsTable columnconfigure 4 -name snortWire -resizable 0 -sortmode dictionary
+$snortStatsTable columnconfigure 5 -name snortAlerts -resizable 0 -sortmode dictionary
+$snortStatsTable columnconfigure 6 -name snortPckts -resizable 0 -sortmode dictionary
+$snortStatsTable columnconfigure 7 -name snortBytes -resizable 0 -sortmode dictionary
+$snortStatsTable columnconfigure 8 -name snortMatch -resizable 0 -sortmode dictionary
+$snortStatsTable columnconfigure 9 -name snortNewSsns -resizable 0 -sortmode dictionary
+$snortStatsTable columnconfigure 10 -name snortTtlSsns -resizable 0 -sortmode dictionary
+$snortStatsTable columnconfigure 11 -name snortMaxSsns -resizable 0 -sortmode dictionary
+
+scrollbar $snortStatsYScroll -orient vertical -width 10 -command [list $snortStatsTable yview]
+scrollbar $snortStatsXScroll -orient horizontal -width 10 -command [list $snortStatsTable xview]
+
+# Trap button clicks. No reason to select rows att.
+foreach buttonEvent [list Button-1 B1-Motion] {
+    bind [$snortStatsTable bodytag] <$buttonEvent> { break }
+}
+
+
+grid $snortStatsTable $snortStatsYScroll -sticky news
+grid $snortStatsXScroll -sticky news
+grid rowconfigure $snortStatsTableFrame 0 -weight 1
+grid columnconfigure $snortStatsTableFrame 0 -weight 1
+
+pack $snortStatsTableFrame -side top -fill both -expand true
+
+set systemInfoFrame [frame [$detailTabs childsite 3].systemInfoFrame]
 set systemInfoText [scrolledtext $systemInfoFrame.systemInfoText -vscrollmode static -hscrollmode dynamic\
  -wrap word -visibleitems 20x4 -sbwidth 10]
   $systemInfoText component text configure -font ourFixedFont -state disabled
 pack $systemInfoText -side top -fill both -expand true
 pack $systemInfoFrame -fill both -expand true
-set userMsgsFrame [frame [$detailTabs childsite 3].userMsgsFrame]
+set userMsgsFrame [frame [$detailTabs childsite 4].userMsgsFrame]
   set userMsgText [scrolledtext $userMsgsFrame.userMsgText -vscrollmode static -hscrollmode dynamic\
    -wrap word -visibleitems 20x3 -sbwidth 10]
   $userMsgText component text configure -font ourFixedFont -state disabled
