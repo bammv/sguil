@@ -1,7 +1,7 @@
-/* $Id: op_sguil.c,v 1.16 2005/09/01 15:17:56 bamm Exp $ */
+/* $Id: op_sguil.c,v 1.17 2006/02/09 22:12:47 bamm Exp $ */
 
 /*
-** Copyright (C) 2002-2005 Robert (Bamm) Visscher <bamm@sguil.net> 
+** Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net> 
 **
 ** This program is distributed under the terms of version 1.0 of the
 ** Q Public License.  See LICENSE.QPL for further details.
