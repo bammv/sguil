@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.212 2006/02/09 22:14:26 bamm Exp $ #
+# $Id: sguil.tk,v 1.213 2006/02/09 22:15:48 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2072,21 +2072,22 @@ tablelist::tablelist $snortStatsTable \
     -stretch all \
     -yscrollcommand [list $snortStatsYScroll set] \
     -xscrollcommand [list $snortStatsXScroll set] \
+    -movablecolumns 0 \
     -width 20
 
 
-$snortStatsTable columnconfigure 0 -name snortSid -sortmode integer -resizable 0
+$snortStatsTable columnconfigure 0 -name snortSid -sortmode integer -resizable 1
 $snortStatsTable columnconfigure 1 -name snortName -sortmode ascii -resizable 1 -stretchable 1
-$snortStatsTable columnconfigure 2 -name snortTime -sortmode dictionary -resizable 0
-$snortStatsTable columnconfigure 3 -name snortLoss -resizable 0 -sortmode dictionary
-$snortStatsTable columnconfigure 4 -name snortWire -resizable 0 -sortmode dictionary
-$snortStatsTable columnconfigure 5 -name snortAlerts -resizable 0 -sortmode dictionary
-$snortStatsTable columnconfigure 6 -name snortKpckts -resizable 0 -sortmode dictionary
-$snortStatsTable columnconfigure 7 -name snortBytes -resizable 0 -sortmode dictionary
-$snortStatsTable columnconfigure 8 -name snortMatch -resizable 0 -sortmode dictionary
-$snortStatsTable columnconfigure 9 -name snortNewSsns -resizable 0 -sortmode dictionary
-$snortStatsTable columnconfigure 10 -name snortTtlSsns -resizable 0 -sortmode dictionary
-$snortStatsTable columnconfigure 11 -name snortMaxSsns -resizable 0 -sortmode dictionary
+$snortStatsTable columnconfigure 2 -name snortTime -sortmode dictionary -resizable 1
+$snortStatsTable columnconfigure 3 -name snortLoss -resizable 1 -sortmode dictionary
+$snortStatsTable columnconfigure 4 -name snortWire -resizable 1 -sortmode dictionary
+$snortStatsTable columnconfigure 5 -name snortAlerts -resizable 1 -sortmode dictionary
+$snortStatsTable columnconfigure 6 -name snortKpckts -resizable 1 -sortmode dictionary
+$snortStatsTable columnconfigure 7 -name snortBytes -resizable 1 -sortmode dictionary
+$snortStatsTable columnconfigure 8 -name snortMatch -resizable 1 -sortmode dictionary
+$snortStatsTable columnconfigure 9 -name snortNewSsns -resizable 1 -sortmode dictionary
+$snortStatsTable columnconfigure 10 -name snortTtlSsns -resizable 1 -sortmode dictionary
+$snortStatsTable columnconfigure 11 -name snortMaxSsns -resizable 1 -sortmode dictionary
 
 scrollbar $snortStatsYScroll -orient vertical -width 10 -command [list $snortStatsTable yview]
 scrollbar $snortStatsXScroll -orient horizontal -width 10 -command [list $snortStatsTable xview]
