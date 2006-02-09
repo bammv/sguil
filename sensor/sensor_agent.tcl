@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.53 2006/02/09 22:12:47 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.54 2006/02/09 22:14:26 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -18,7 +18,7 @@ exec tclsh "$0" "$@"
 #
 
 # Don't touch these
-set VERSION "SGUIL-0.6.0"
+set VERSION "SGUIL-0.6.1"
 set CONNECTED 0
 set SANCPFILEWAIT 0
 set SSNFILEWAIT 0
