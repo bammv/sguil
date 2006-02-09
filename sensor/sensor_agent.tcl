@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.51 2006/02/08 21:12:08 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.52 2006/02/09 21:06:20 bamm Exp $ #
 
 # Copyright (C) 2002-2005 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -140,7 +140,7 @@ proc SendStats {} {
     if { [info exists snortStatsList] } {
         set tmpList [linsert $snortStatsList 0 $SENSOR_ID]
     } else {
-        set tmpList [list $SENSOR_ID N/A N/A N/A N/A N/A N/A N/A N/A N/A N/A]
+        return
     }
 
     SendToSguild [list SnortStats $tmpList]
