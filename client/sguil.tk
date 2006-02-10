@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.213 2006/02/09 22:15:48 bamm Exp $ #
+# $Id: sguil.tk,v 1.214 2006/02/10 18:28:34 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2243,10 +2243,13 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
     #
     # Event/Packet Detail
     #
-    set packetDataFrame [frame $detailDataFrame.packetDataFrame]
+    set packetDataFrame [panedwindow $detailDataFrame.packetDataFrame]
+    $packetDataFrame add ruleinfo -margin 0
+    $packetDataFrame add packetinfo -margin 0
 
     # Rule Info
-    set ruleButtonFrame [frame $packetDataFrame.ruleButtonFrame]
+    set ruleFrame [frame [$packetDataFrame childsite 0].ruleFrame]
+    set ruleButtonFrame [frame $ruleFrame.ruleButtonFrame]
       set displayPacketButton [checkbutton $ruleButtonFrame.displayPacketButton\
        -text "Show Packet Data" -variable PACKETINFO -command GetPacketInfo]
       set displayRuleButton [checkbutton $ruleButtonFrame.displayRuleButton\
@@ -2256,13 +2259,14 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
         set icatButton [button $ruleButtonFrame.icatButton\
          -text "nvd.nist.gov" -command "GetIcat" -state disabled]
       pack $displayPacketButton $displayRuleButton $referenceButton $icatButton -side left
-    set ruleText [scrolledtext $packetDataFrame.ruleText -hscrollmode none -visibleitems 10x2\
+    set ruleText [scrolledtext $ruleFrame.ruleText -hscrollmode none -visibleitems 10x2\
      -sbwidth 10 -vscrollmode dynamic -wrap word]
     $ruleText component text configure -state disabled
     pack $ruleButtonFrame -side top -fill x
     pack $ruleText -side top -fill both -expand true
+    pack $ruleFrame -side top -fill both -expand true
     
-    set packetFrame [frame $packetDataFrame.packetFrame -background black -borderwidth 1]
+    set packetFrame [frame [$packetDataFrame childsite 1].packetFrame -background black -borderwidth 1]
     ################ IP HEADER #############################
     set ipHdrFrame [frame $packetFrame.ipHdrFrame -background black -borderwidth 1]
       set ipHdrLabel [label $ipHdrFrame.ipHdrLabel -text IP -width 8 -foreground white -background deepskyblue]
@@ -2467,6 +2471,7 @@ set DISPLAYEDDETAIL $packetDataFrame
 pack $detailDataFrame -fill both -expand true
 $eventPane fraction 55 45
 $detailPane fraction 40 60
+$packetDataFrame fraction 20 80
 
 # Xscript Menu
 set eventIDMenut [ menu .eventIDMenut -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
