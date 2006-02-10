@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.55 2006/02/10 20:16:35 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.56 2006/02/10 20:30:40 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -109,7 +109,7 @@ proc ProcessSnortStats { data } {
 
     set dataList [split $data ,]
 
-    if { ![string is integer [lindex $data 0]] } {
+    if { ![string is integer [lindex $dataList 0]] } {
         if {$DEBUG} { puts "Error: Invalid snort stats line: $data" }
         return
     }
