@@ -1,4 +1,4 @@
-# $Id: INSTALL,v 1.20 2005/11/29 22:41:38 bamm Exp $ #
+# $Id: INSTALL,v 1.21 2006/02/10 18:10:10 bamm Exp $ #
 
 NOTE: If you are upgrading from an older version of 
 guil to version 0.6.0, please use the UPGRADE document
@@ -73,7 +73,10 @@ Make sure each sensor has INSERT and SELECT privledges:
   Bamm@syn# mysql -u sguil -p -e "GRANT INSERT,SELECT on sguildb.* to <user>@<sensorip>"
 Build the required tables:
   Bamm@syn# mysql -u sguil -p -D sguildb < ./server/sql_scripts/create_sguildb.sql
-  *NOTE: Verify all is well with: mysql -u root -p -e "show tables"
+  *NOTE: Verify all is well with: mysql -u root -p -e "show tables". As of Sguil 
+         version 0.6.0, you will no longer see event, tcphdr, udphdr, icmphdr,
+         data, and sancp tables after a fresh install. They will be created by
+         sguild as data comes in from sensor_agent.
   +-------------------+
   | Tables_in_sguildb |
   +-------------------+
@@ -267,6 +270,11 @@ A. Begin by installing snort -
     
     Enable unified logging with this line:
       output log_unified: filename snort.log, limit 128
+
+    If you want to have access to snort statistics from Sguil, enable the perfmonitor
+    preprocessor.
+    EXAMPLE:
+      preprocessor perfmonitor: time 300 file /snort_data/<sensorname>/snort.stats pktcnt 10000
 
   Make sure all the config files for snort are copied to the appropriate
   directory (ie /etc/snort) and create the appropriate log dirs if you are
