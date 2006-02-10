@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.54 2006/02/09 22:14:26 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.55 2006/02/10 20:16:35 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -65,7 +65,7 @@ proc InitSnortStats {} {
     }
 
     # Open stats file with tail.
-    if { [catch {open "| tail -1 -f $SNORT_PERF_FILE" r} statsFileID] } {
+    if { [catch {open "| tail -n 1 -f $SNORT_PERF_FILE" r} statsFileID] } {
 
         set errMsg "Error opening $SNORT_PERF_FILE: $statsFileID"
         SendToSguild [list SystemMessage $errMsg]
@@ -105,10 +105,14 @@ proc ReadSnortStats { statsFileID } {
 
 proc ProcessSnortStats { data } {
 
-    global snortStatsList
+    global snortStatsList DEBUG
 
     set dataList [split $data ,]
 
+    if { ![string is integer [lindex $data 0]] } {
+        if {$DEBUG} { puts "Error: Invalid snort stats line: $data" }
+        return
+    }
     set snortStatsList ""
     foreach i [list 1 2 3 4 5 6 9 10 11] {
         lappend snortStatsList [lindex $dataList $i]
