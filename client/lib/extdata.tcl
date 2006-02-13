@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.33 2006/02/08 21:11:10 bamm Exp $
+# $Id: extdata.tcl,v 1.34 2006/02/13 23:14:09 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -922,6 +922,12 @@ proc UpdateSnortStats { stats } {
 
         $snortStatsTable insert end $tmpStats
 
+    }
+    # And what our last sort was on
+    set sortColumn [$snortStatsTable sortcolumn]
+    if { $sortColumn >= 0 } { 
+        set sortOrder [$snortStatsTable sortorder]
+        $snortStatsTable sortbycolumn $sortColumn -$sortOrder
     }
  
 }
