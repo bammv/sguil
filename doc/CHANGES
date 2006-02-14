@@ -1,4 +1,23 @@
-# $Id: CHANGES,v 1.48 2005/11/29 22:41:38 bamm Exp $ #
+# $Id: CHANGES,v 1.49 2006/02/14 04:47:51 bamm Exp $ #
+sguil-0.6.1 (13 Feb 2006)
+
+  sguil.tk
+    * Use Dr. Csaba Nemethi's tablelist widget.
+    * RealTime event panes are now sortable. 
+    * Columns for query results are sortable and moveable.
+    * Snort statistics displayed.
+    * Query builder includes support for UNIONs.
+    * Resizeable pane for rule info and packet data.
+
+
+  sguild
+    * OpenSSL/TLS support between sensor_agent and sguild.
+    * Snort statistic support.
+
+  sensor_agent.tcl
+    * OpenSSL/TLS support between sensor_agent and sguild.
+    * Snort statistic support.
+   
 
 sguil-0.6.0-RC1 (02 Nov 2005)
 
