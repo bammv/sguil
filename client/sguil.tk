@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.214 2006/02/10 18:28:34 bamm Exp $ #
+# $Id: sguil.tk,v 1.215 2006/02/15 20:35:03 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1571,6 +1571,7 @@ proc GetEventHistory {} {
     }
 
     set tmpWin [CreateHistoryWin $historyWinName]
+    $tmpWin configure -cursor watch
     SendToSguild "EventHistoryRequest $tmpWin $sid $cid"
 
 }
@@ -1623,12 +1624,12 @@ proc CreateHistoryWin {winName } {
 
 proc InsertHistoryResults { winName results } {
 
-    if { $results == "done" } { return }
+    if { $results == "done" } { $winName configure -cursor left_ptr; return }
     if { ![winfo exists $winName] } { CreateHistoryWin $winName }
 
     set tmpList [lreplace $results 0 1 "[lindex $results 0].[lindex $results 1]"]
     set comment [lindex $results 6]
-    if { $comment == ""} { set tmpList [lreplace $tmpList 6 6 "None."] }
+    if { $comment == ""} { set tmpList [lreplace $tmpList 5 5 "None."] }
 
     $winName insert end $tmpList
 
