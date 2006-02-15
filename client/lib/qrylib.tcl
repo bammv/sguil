@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.31 2006/02/03 17:53:16 bamm Exp $ #
+# $Id: qrylib.tcl,v 1.32 2006/02/15 22:58:17 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -37,7 +37,7 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 
     set eventtimestamp [lindex [GetCurrentTimeStamp "1 week ago"] 0]
     set ssntimestamp [lindex [GetCurrentTimeStamp "1 day ago"] 0]
-    set selectedIndex [$CUR_SEL_PANE(name) curselection]
+    if { $queryType != "category" } { set selectedIndex [$CUR_SEL_PANE(name) curselection] }
 
     if { $tableName == "event" } {
 
