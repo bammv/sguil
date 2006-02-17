@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.217 2006/02/17 16:20:38 bamm Exp $ #
+# $Id: sguil.tk,v 1.218 2006/02/17 19:25:41 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -94,6 +94,10 @@ set CUR_SEL_FRAME(name) 0
 set COUNTER 0
 set SEARCHFRAME 1
 set SELECT_LIMIT 1000
+
+# Grab the bgerror so we can intercept panedwindow conflicts
+auto_load bgerror
+rename bgerror tk_error
 
 ######################## COMMUNICATION PROCS ########################
 
@@ -297,6 +301,16 @@ proc SendUserMsg {} {
 ########################## PROCS ####################################
 
 
+
+proc bgerror { errorMsg } {
+
+    global errorInfo
+
+    if ![regexp {bad option "identify":} $errorMsg] {
+        tk_error $errorMsg
+    }
+
+}
 
 proc UserMessage { user userMsg } {
 
