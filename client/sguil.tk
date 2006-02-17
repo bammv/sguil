@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.216 2006/02/15 23:08:59 bamm Exp $ #
+# $Id: sguil.tk,v 1.217 2006/02/17 16:20:38 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2732,6 +2732,11 @@ bind . <Key-Up> {
 
 bind . <Key-Down> {
     if {$ACTIVE_EVENT && !$MULTI_SELECT} { SelectDown }
+}
+
+# Do mouse wheel magic on winders
+if { $tcl_platform(platform) == "windows" } {
+    bind all <MouseWheel> { WheelEvent %X %Y %D }
 }
 
 # Down arrow moves selected event down one.
