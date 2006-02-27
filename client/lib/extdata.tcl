@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.34 2006/02/13 23:14:09 bamm Exp $
+# $Id: extdata.tcl,v 1.35 2006/02/27 21:38:03 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -73,11 +73,64 @@ proc InsertRuleData { ruleData } {
 
         }
 
+        set w [$ruleText component text]
+
+        #$w tag remove URL 0.0 end
+        eval {$w tag delete} [$w tag names]
+
+        set i 0
+        set cur 1.0
+        while 1 {
+	    set cur [$w search -count length -regexp -- {reference:.*?;} $cur end]
+	    if {$cur == ""} {
+	        break
+	    }
+            $ruleText component text tag configure URL$i -foreground blue -underline 1
+	    $w tag add URL$i $cur "$cur + $length char"
+            $w tag bind URL$i <Enter> { %W configure -cursor hand2 }
+            $w tag bind URL$i <Leave> { %W configure -cursor left_ptr }
+            $w tag bind URL$i <ButtonRelease-1> [list DisplayReference %W $cur $length]
+	    set cur [$w index "$cur + $length char"]
+            incr i
+        }
+
     }
 
     $ruleText component text configure -state disabled
 
 }
+
+proc DisplayReference { win start length } {
+
+    global BROWSER_PATH
+    
+    set row [lindex [split $start .] 0]
+    set end "$row.[expr [lindex [split $start .] 1] + $length]"
+    set ref [$win get $start $end]
+
+    set type ""
+    if ![regexp {^reference:(.*?),(.*?);} $ref match type content] {
+
+        # Not a reference, maybe sid. 
+        if [regexp {^(sid):([0-9]*);} $ref match type content] { set foo bar }
+
+    }
+ 
+     switch -exact -- $type {
+
+        url        { exec $BROWSER_PATH http://$content & }
+        bugtraq    { exec $BROWSER_PATH http://www.securityfocus.com/bid/$content & }
+        cve        { exec $BROWSER_PATH http://nvd.nist.gov/nvd.cfm?cvename=CAN-$content & }
+        nessus     { exec $BROWSER_PATH http://cgi.nessus.org/plugins/dump.php3?id=$content & }
+        mcafee     { exec $BROWSER_PATH http://vil.nai.com/vil/content/v_$content & }
+        arachnids  { InfoMessage "ArachNIDS references are no long supported." }
+        sid        { exec $BROWSER_PATH http://www.snort.org/pub-bin/sigs.cgi?sid=$content & }
+        default    { InfoMessage "Unknown reference in rule: $ref" }
+
+    }
+
+}
+
 proc GetDshieldIP { arg } {
 
     global DEBUG BROWSER_PATH CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT
