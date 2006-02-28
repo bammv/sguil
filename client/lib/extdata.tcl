@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.36 2006/02/28 04:27:06 bamm Exp $
+# $Id: extdata.tcl,v 1.37 2006/02/28 17:00:53 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -75,9 +75,31 @@ proc InsertRuleData { ruleData } {
 
         set w [$ruleText component text]
 
-        #$w tag remove URL 0.0 end
+        #Remove any existing tags
         eval {$w tag delete} [$w tag names]
 
+        # Find the sid for snort.org links.
+        set sidIndex [$w search -count length -regexp -- {sid:.*?;} 0.0 end]
+        if { $sidIndex != "" } {
+
+            set row [lindex [split $sidIndex .] 0]
+            set col [lindex [split $sidIndex .] 1]
+            set start "$row.[expr $col + 4]"
+            set end "$row.[expr [lindex [split $sidIndex .] 1] + $length - 1]"
+            set sid [lindex [split [$w get $sidIndex $end] :] 1]
+
+            if { $sid < 1000000 } { 
+                # Within snort.org rule range
+                $ruleText component text tag configure SID -foreground blue -underline 0
+	        $w tag add SID $start "$start + [expr $length - 5] char"
+                $w tag bind SID <Enter> { %W configure -cursor hand2 }
+                $w tag bind SID <Leave> { %W configure -cursor left_ptr }
+                $w tag bind SID <ButtonRelease-1> [list DisplayReference %W $sidIndex $length]
+            }
+
+        }
+
+        # Marks all the reference tags.
         set i 0
         set cur 1.0
         while 1 {
@@ -85,8 +107,13 @@ proc InsertRuleData { ruleData } {
 	    if {$cur == ""} {
 	        break
 	    }
+
+            set row [lindex [split $cur .] 0]
+            set col [lindex [split $cur .] 1]
+            set start "$row.[expr $col + 10]"
+
             $ruleText component text tag configure URL$i -foreground blue -underline 0
-	    $w tag add URL$i $cur "$cur + $length char"
+	    $w tag add URL$i $start "$start + [expr $length - 11] char"
             $w tag bind URL$i <Enter> { %W configure -cursor hand2 }
             $w tag bind URL$i <Leave> { %W configure -cursor left_ptr }
             $w tag bind URL$i <ButtonRelease-1> [list DisplayReference %W $cur $length]
