@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.37 2006/02/28 17:00:53 bamm Exp $
+# $Id: extdata.tcl,v 1.38 2006/02/28 17:05:08 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -131,6 +131,16 @@ proc DisplayReference { win start length } {
 
     global BROWSER_PATH
     
+    if { ![info exists BROWSER_PATH] } { 
+        ErrorMessage "Error: BROWSER_PATH is NOT defined."
+        return
+    }
+
+    if { ![file exists $BROWSER_PATH] || ![file executable $BROWSER_PATH] } {
+        ErrorMessage "Error: The application $BROWSER_PATH does not exist or is not executable."
+        return
+    }
+
     set row [lindex [split $start .] 0]
     set end "$row.[expr [lindex [split $start .] 1] + $length]"
     set ref [$win get $start $end]
