@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.35 2006/02/27 21:38:03 bamm Exp $
+# $Id: extdata.tcl,v 1.36 2006/02/28 04:27:06 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -85,7 +85,7 @@ proc InsertRuleData { ruleData } {
 	    if {$cur == ""} {
 	        break
 	    }
-            $ruleText component text tag configure URL$i -foreground blue -underline 1
+            $ruleText component text tag configure URL$i -foreground blue -underline 0
 	    $w tag add URL$i $cur "$cur + $length char"
             $w tag bind URL$i <Enter> { %W configure -cursor hand2 }
             $w tag bind URL$i <Leave> { %W configure -cursor left_ptr }
