@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.56 2006/02/10 20:30:40 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.57 2006/03/06 22:45:44 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -54,12 +54,14 @@ proc InitSnortStats {} {
 
         set errMsg "Error: Unable to monitor snort stats. File $SNORT_PERF_FILE does not exist."
         SendToSguild [list SystemMessage $errMsg]
+        after 30000 InitSnortStats
         return
 
     } elseif { ![file readable $SNORT_PERF_FILE] } {
 
         set errMsg "Error: File $SNORT_PERF_FILE is not readable by sensor_agent.tcl."
         SendToSguild [list SystemMessage $errMsg]
+        after 30000 InitSnortStats
         return
 
     }
@@ -69,6 +71,7 @@ proc InitSnortStats {} {
 
         set errMsg "Error opening $SNORT_PERF_FILE: $statsFileID"
         SendToSguild [list SystemMessage $errMsg]
+        after 30000 InitSnortStats
         return
 
     }
