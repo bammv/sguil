@@ -1,4 +1,4 @@
-# $Id: SguildAutoCat.tcl,v 1.4 2005/12/06 22:17:14 bamm Exp $ #
+# $Id: SguildAutoCat.tcl,v 1.5 2006/03/06 23:18:24 bamm Exp $ #
 
 # Format for the autocat file is:
 # <erase time>||<sensorName>||<src_ip>||<src_port>||<dst_ip>||<dst_port>||<proto>||<sig msg>||<cat value>
@@ -94,6 +94,7 @@ proc AutoCat { data } {
 		set bcastIP [lindex $rMatch 1]
 		if { $dataVar < $netIP || $dataVar > $bcastIP } {
 		    set MATCH 0
+                    break
 		}
 	    } else {
 		# Check to see if the rule is a regexp if so
