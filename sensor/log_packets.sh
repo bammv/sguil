@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: log_packets.sh,v 1.24 2005/05/27 20:45:04 bamm Exp $ #
+# $Id: log_packets.sh,v 1.25 2006/03/09 15:51:47 bamm Exp $ #
 
 ################################################
 #                                              #
@@ -82,7 +82,7 @@ start() {
       mkdir $LOG_DIR/$today
       chmod 777 $LOG_DIR/$today
     fi
-    if [ -n $FILTER ]; then
+    if [ -n "$FILTER" ]; then
       eval exec $SNORT_PATH $OPTIONS -l $LOG_DIR/$today -b -i $INTERFACE $FILTER > /tmp/snort.log 2>&1 &
     else
       eval exec $SNORT_PATH $OPTIONS -l $LOG_DIR/$today -b -i $INTERFACE > /tmp/snort.log 2>&1 &

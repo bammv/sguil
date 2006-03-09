@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.57 2006/03/06 22:45:44 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.58 2006/03/09 15:51:47 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -862,7 +862,8 @@ proc ConnectToSguilServer {} {
     } elseif { $serverVersion != $tmpVERSION } {
       catch {close $sguildSocketID}
       puts "Mismatched versions.\nSERVER: ($serverVersion)\nAGENT: ($tmpVERSION)"
-      exit
+      after 15000 ConnectToSguilServer
+      return
     }
     if [catch {puts $sguildSocketID "$tmpVERSION"} tmpError] {
       catch {close $sguildSocketID}
