@@ -1,4 +1,4 @@
-# $Id: whois.tcl,v 1.5 2003/11/19 18:18:13 bamm Exp $ #
+# $Id: whois.tcl,v 1.6 2006/04/11 22:12:46 bamm Exp $ #
 
 proc ClientSocketTimeOut { host port timeout } {
   global WHOIS_CONNECTED
@@ -15,6 +15,16 @@ proc ClientSocketTimeOut { host port timeout } {
     return -code error "Connection to $host timed out"
   }
 }
+
+proc GetServerFromRef { line } {
+
+    # Referer should be a whois URL.
+    set refName "arin.whos.net" 
+    regexp {whois://(.*):} $line match refName
+    return $refName
+    
+}
+
 proc SimpleWhois { ipAddr } {
   # Here is an attempt to do away with third party whois tools.
   # We only lookup by IP addr right now so it shouldn't be a big
@@ -48,6 +58,7 @@ proc SimpleWhois { ipAddr } {
   # work for these regexps :)
   foreach line $results {
     switch -regexp -- $line {
+        {ReferralServer}                {set newNicSrvr [GetServerFromRef $line]; break }
     	{.*LACNIC.*}			{set newNicSrvr "whois.lacnic.net"}
     	{.*APNIC.*}			{set newNicSrvr "whois.apnic.net"}
     	{.*APNIC-.*}			{set newNicSrvr "whois.apnic.net"}
