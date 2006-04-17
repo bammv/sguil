@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.59 2006/04/17 18:52:34 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.60 2006/04/17 19:46:34 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -263,7 +263,8 @@ proc InitBYSocket { port } {
 
 proc BYConnect { socketID IPaddr port } {
 
-    global DEBUG BYCONNECT
+    global DEBUG BYCONNECT HOSTNAME
+
 
     if { $DEBUG } { puts "barnyard connected: $socketID $IPaddr $port" }
     fconfigure $socketID -buffering line -blocking 0 -translation lf
@@ -272,6 +273,7 @@ proc BYConnect { socketID IPaddr port } {
     SendToSguild [list SystemMessage "Barnyard connected via sensor localhost."]
     set BYCONNECT 1
     set byStatsList [list 1 [GetCurrentTimeStamp]]
+    SendToSguild [list BarnyardInit $HOSTNAME $BYCONNECT]
     SendToSguild [list BarnyardConnect $BYCONNECT]
 
 }
@@ -971,7 +973,7 @@ proc ConnectToSguilServer {} {
     fileevent $sguildSocketID readable [list SguildCmdRcvd $sguildSocketID]
     set CONNECTED 1
     if {$DEBUG} {puts "Connected to $SERVER_HOST"}
-    SendToSguild [list AgentInit $HOSTNAME $BYCONNECT]
+    SendToSguild [list AgentInit $HOSTNAME]
   }
 }
 
