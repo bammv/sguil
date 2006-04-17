@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.218 2006/02/17 19:25:41 bamm Exp $ #
+# $Id: sguil.tk,v 1.219 2006/04/17 18:57:36 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -144,6 +144,7 @@ proc ServerCommandRcvd { socketID } {
       # subject to user input, so lrange is fine
       InsertIcmpHdr { $serverCmd [lrange $origData 1 5] [lrange $origData 6 end]}
       InsertPayloadData { $serverCmd $data1 }
+      InsertPadsBanner { $serverCmd $data1 }
       InsertOpenPortsData { $serverCmd $data1 }
       InsertQueryResults { $serverCmd $index1 $data2 }
       InfoMessage { $serverCmd $data1 }
@@ -783,6 +784,34 @@ proc ClearPSLists {} {
 
 }
 
+proc DisplayPadsBanner {} {
+
+    global DISPLAY_PADS ACTIVE_EVENT MULTI_SELECT CONNECTED CUR_SEL_PANE
+    global bannerText bannerHex
+
+    $bannerText delete 0.0 end
+    $bannerHex delete 0.0 end
+
+    if { $ACTIVE_EVENT && $DISPLAY_PADS && !$MULTI_SELECT } {
+
+        if {!$CONNECTED} {
+            ErrorMessage "Not connected to sguild. Cannot request pads banner data."
+            return 
+        }
+
+        set selectedIndex [$CUR_SEL_PANE(name) curselection]
+        set eventID [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID]
+        set sid [lindex [split $eventID .] 0]
+        set aid [lindex [split $eventID .] 1]
+
+        Working
+        SendToSguild "GetAssetData $sid $aid"
+
+    }
+
+}
+
+
 proc DisplayPortscanData {} {
 
     global ACTIVE_EVENT PSINFO CUR_SEL_PANE DEBUG socketID portscanDataFrame MULTI_SELECT
@@ -1308,7 +1337,7 @@ proc SelectSessionPane { win type format } {
 proc SelectEventPane { win type format } {
 
     global CUR_SEL_PANE CUR_SEL_EVENT ACTIVE_EVENT BUSY MULTI_SELECT DISPLAYEDDETAIL
-    global portscanDataFrame packetDataFrame sancpFrame
+    global portscanDataFrame packetDataFrame sancpFrame padsFrame
 
     set CUR_SEL_PANE(name) $win
     set CUR_SEL_PANE(type) $type
@@ -1346,6 +1375,18 @@ proc SelectEventPane { win type format } {
 
             set DISPLAYEDDETAIL $portscanDataFrame
             DisplayPortscanData
+
+        } elseif { [regexp {^PADS} [$win getcells $selectedIndex,event]] } {
+
+            if { $DISPLAYEDDETAIL != $padsFrame } {
+
+                pack forget $DISPLAYEDDETAIL
+                pack $padsFrame -fill both -expand true
+
+            }
+
+            set DISPLAYEDDETAIL $padsFrame
+            DisplayPadsBanner
 
         } else {
 
@@ -2152,6 +2193,26 @@ set USER_MSG_SCROLL 1
 
 
 set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
+
+    #
+    # Pads Banner
+    #
+    set padsFrame [frame $detailDataFrame.padsFrame]
+      set padsDisplayButton [checkbutton $padsFrame.padsButton -variable DISPLAY_PADS\
+        -command DisplayPadsBanner -text "Display Detected Banner"]
+      set padsBannerFrame [frame $padsFrame.padsBannerFrame]
+        set bannerText [text $padsBannerFrame.bannerText -height 10 -width 16\
+         -yscrollcommand "$padsBannerFrame.bannerScroll set"\
+	    -background white -font ourFixedFont]
+	set bannerHex [text $padsBannerFrame.bannerHex -height 10 -width 47\
+ 	 -yscrollcommand "$padsBannerFrame.bannerScroll set"\
+	 -background white -font ourFixedFont]
+        set bannerScroll [scrollbar $padsBannerFrame.bannerScroll -command "MultiScrollBar \"$bannerHex $bannerText\"" -width 10]
+	pack $bannerScroll -side right -fill y
+	pack $bannerHex $bannerText -side left -fill both -expand true
+      pack $padsDisplayButton -side top
+      pack $padsBannerFrame -side bottom -fill both -expand true
+
     #
     # Portscan Detail
     #

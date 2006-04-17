@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.20 2006/02/17 16:20:39 bamm Exp $
+# $Id: guilib.tcl,v 1.21 2006/04/17 18:57:36 bamm Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -347,6 +347,68 @@ proc InsertIcmpHdr { data pldata } {
 	pack forget $icmpDecodeFrame
     }	    
 }
+proc InsertPadsBanner { data } {
+
+    global bannerText bannerHex
+
+    set banner [lindex $data 0]
+
+    if { $banner == "" } {
+
+        $bannerText insert 0.0 "None"
+        $bannerHex insert 0.0 "None"
+
+    } else {
+
+        set dataLength [string length $banner]
+        set asciiStr ""
+        set counter 2
+
+        for {set i 1} {$i < $dataLength} {incr i 2} {
+
+            set currentByte [string range $banner [expr $i - 1] $i]
+            append hexStr "$currentByte "
+            set intValue [format "%i" 0x$currentByte]
+
+            if { $intValue < 32 || $intValue > 126 } {
+                # Non printable char
+                set currentChar "."
+            } else {
+                set currentChar [format "%c" $intValue]
+            }
+
+            append asciiStr "$currentChar"
+
+            if { $counter == 32 } {
+
+                $bannerHex insert end "$hexStr\n"
+                $bannerText insert end "$asciiStr\n"
+                set hexStr ""
+                set asciiStr ""
+                set counter 2
+
+            } elseif { $counter == 16 } {
+
+                append hexStr " "
+                append asciiStr " "
+                incr counter 2
+
+            } else {
+
+                incr counter 2
+
+            }
+
+        }
+
+        $bannerText insert end $asciiStr
+        $bannerHex insert end $hexStr
+        Idle
+
+    }
+
+}
+
 proc InsertPayloadData { data } {
   global dataText dataHex dataSearchButton sfpDataFrame
   set payload [lindex $data 0]
