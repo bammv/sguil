@@ -1,4 +1,4 @@
-# $Id: stdquery.tcl,v 1.8 2003/11/19 18:18:13 bamm Exp $ #
+# $Id: stdquery.tcl,v 1.9 2006/04/17 18:56:23 bamm Exp $ #
 
 # stdquery.tcl launches a popup containing global and user
 # queries. It returns the WHERE clause of the selected 
@@ -81,7 +81,7 @@ proc StdQuery {} {
     SsnQueryRequest [lindex $whereStatement 1]
   } else {
     destroy $stdQryWin
-    DBQueryRequest [lindex $whereStatement 1]
+    DBQueryRequest event [list [lindex $whereStatement 1]]
   }
 }
 proc InsertGlobalQueries { win } {
