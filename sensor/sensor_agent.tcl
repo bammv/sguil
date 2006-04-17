@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.58 2006/03/09 15:51:47 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.59 2006/04/17 18:52:34 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -37,6 +37,101 @@ proc bgerror { errorMsg } {
 
     exit
                                                                                                                            
+}
+
+proc InitPads {} {
+
+    global DEBUG PADS_FIFO HOSTNAME
+
+    if { ![info exists PADS_FIFO] } { 
+        puts "Error: No path to PADS FIFO specified"
+        exit
+    }
+    if { ![file readable $PADS_FIFO] } {
+        puts "Error: Unable to read $PADS_FIFO"
+        exit
+    }
+    
+    if [catch {open "| cat $PADS_FIFO" r} fifoID] {
+        puts "Error opening $PADS_FIFO for reading: $fifoID"
+        exit
+    }
+
+    # Tcl will go crazy processing eof if the writing
+    # fifo goes away, so we open the file for writing
+    # but never write to it.
+    if [catch {open $PADS_FIFO w} doNotFlushMeID] {
+        puts "Error opening $PADS_FIFO for writing: $doNotFlushMeID"
+        exit
+    }
+    
+    if { ![file writable $PADS_FIFO] } {
+        puts "Error: Unable to write to $PADS_FIFO"
+        exit
+    }
+
+    SendToSguild [list PadsSensorIDReq $HOSTNAME]
+
+    fileevent $fifoID readable [list GetFifoData $fifoID]
+
+}
+
+# Data from pads looks like
+# * action_id            action
+# * 01                   TCP / ICMP Asset Discovered
+# * 02                   ARP Asset Discovered
+# * 03                   TCP / ICMP Statistic Information
+#
+# * Sguil patch adds ntohl ip addrs in output as well as client ips, ports, and hex payload
+# * 01,10.10.10.83,168430163,10.10.10.82,168430162,22,6,ssh,OpenSSH 3.8.1 (Protocol 2.0),1100846817,0101080A006C94FA3A...
+# * 02,10.10.10.81,168430161,3Com 3CRWE73796B,00:50:da:5a:2d:ae,1100846817
+# * 03,10.10.10.83,168430163,22,6,1100847309
+proc GetFifoData { fifoID } {
+
+    if { [eof $fifoID] || [catch {gets $fifoID data} tmpError] } {
+    
+        puts "Lost FIFO"
+
+    } else {
+            
+        ProcessPadsData $data
+
+    }
+
+}
+
+proc SetPadsID { padsID } {
+
+    global PADS_SENSOR_ID
+
+    set PADS_SENSOR_ID $padsID
+
+}
+
+
+proc ProcessPadsData { data } {
+
+    global CONNECTED HOSTNAME PADS_SENSOR_ID
+
+    set dataList [split $data ,]
+
+    # Grab asset discoveries for now
+    if { [lindex $dataList 0] == "01" } {
+
+        if { $CONNECTED && [info exists PADS_SENSOR_ID] } {
+
+            SendToSguild [list PadsAsset [linsert $dataList 0 $HOSTNAME $PADS_SENSOR_ID]]
+
+        } else {
+
+            # Try to send later
+            after 5000 [list ProcessPadsData $data]
+
+        }
+
+    }
+
+
 }
 
 proc InitSnortStats {} {
@@ -140,12 +235,12 @@ proc ProcessSnortStats { data } {
 
 proc SendStats {} {
 
-    global snortStatsList SENSOR_ID 
+    global snortStatsList BY_SENSOR_ID 
 
-    if { ![info exists SENSOR_ID] } { return }
+    if { ![info exists BY_SENSOR_ID] } { return }
 
     if { [info exists snortStatsList] } {
-        set tmpList [linsert $snortStatsList 0 $SENSOR_ID]
+        set tmpList [linsert $snortStatsList 0 $BY_SENSOR_ID]
     } else {
         return
     }
@@ -262,20 +357,20 @@ proc BYEventRcvd { socketID eventInfo } {
 
 proc SidCidRequest { socketID } {
 
-    global CONNECTED SENSOR_ID
+    global CONNECTED BY_SENSOR_ID
 
-    if { $CONNECTED && [info exists SENSOR_ID] } {
+    if { $CONNECTED && [info exists BY_SENSOR_ID] } {
 
-        SendToSguild [list AgentLastCidReq $socketID $SENSOR_ID]
+        SendToSguild [list AgentLastCidReq $socketID $BY_SENSOR_ID]
 
     }
 }
 
 proc SendBYLastCid { socketID maxCid } {
 
-    global SENSOR_ID
+    global BY_SENSOR_ID
 
-    SendToBarnyard $socketID [list SidCidResponse $SENSOR_ID $maxCid]
+    SendToBarnyard $socketID [list SidCidResponse $BY_SENSOR_ID $maxCid]
     # Add status updates?
 
 }
@@ -350,10 +445,10 @@ proc CheckForPortscanFiles {} {
 proc CheckForSsnFiles {} {
 
     global SSN_DIR SSN_CHECK_DELAY_IN_MSECS DEBUG CONNECTED
-    global SENSOR_ID SSNFILEWAIT HOSTNAME
+    global BY_SENSOR_ID SSNFILEWAIT HOSTNAME
 
     # Have to have a sensor ID before we can send a ssn file
-    if { ![info exists SENSOR_ID] || !$CONNECTED } {
+    if { ![info exists BY_SENSOR_ID] || !$CONNECTED } {
         # Try again later
         after $SSN_CHECK_DELAY_IN_MSECS CheckForSsnFiles
         return
@@ -417,11 +512,11 @@ proc CheckForSsnFiles {} {
   
 proc CheckForSancpFiles {} {
 
-    global DEBUG SANCP_DIR SENSOR_ID CONNECTED SSN_CHECK_DELAY_IN_MSECS
+    global DEBUG SANCP_DIR BY_SENSOR_ID CONNECTED SSN_CHECK_DELAY_IN_MSECS
     global HOSTNAME SANCPFILEWAIT
 
     # Have to have a sensor ID before we can send a sancp file.
-    if { ![info exists SENSOR_ID] || !$CONNECTED } {
+    if { ![info exists BY_SENSOR_ID] || !$CONNECTED } {
         # Try again later
         after $SSN_CHECK_DELAY_IN_MSECS CheckForSancpFiles
         return
@@ -627,7 +722,7 @@ proc BinCopyToSguild { fileName } {
 #
 proc ParseSsnSancpFiles { fileName } {
 
-    global SENSOR_ID HOSTNAME DEBUG
+    global BY_SENSOR_ID HOSTNAME DEBUG
     
     set inFileID [open $fileName r]
     while { [ gets $inFileID line] >= 0 } {
@@ -652,7 +747,7 @@ proc ParseSsnSancpFiles { fileName } {
             } 
 
             # Prepend sensorID
-            puts $outFileID($fDate) "${SENSOR_ID}|$line"  
+            puts $outFileID($fDate) "${BY_SENSOR_ID}|$line"  
 
         }
 
@@ -880,6 +975,17 @@ proc ConnectToSguilServer {} {
   }
 }
 
+proc RegisterSensorsTypes {} {
+
+    global HOSTNAME BYCONNECT
+
+    # Barnyard
+    SendToSguild [list BarnyardInit $HOSTNAME $BYCONNECT]
+    # PADS
+    SendToSguild [list PadsInit $HOSTNAME]
+
+}
+
 proc SguildCmdRcvd { socketID } {
 
     global DEBUG SANCPFILEWAIT CONNECTED
@@ -906,13 +1012,14 @@ proc SguildCmdRcvd { socketID } {
             PONG                  { if {$DEBUG} {puts "PONG received"} }
             PING                  { SendToSguild "PONG" }
             RawDataRequest        { eval $sguildCmd $socketID [lrange $data 1 end] }
-            SensorID              { SetSensorID [lindex $data 1] }
+            BarnyardSensorID      { BarnyardSetSensorID [lindex $data 1] }
             LastCidResults        { SendBYLastCid [lindex $data 1] [lindex $data 2] }
             Confirm               { SendBYConfirmMsg [lindex $data 1] [lindex $data 2] }
             ConfirmSancpFile      { ConfirmSancpFile [lindex $data 1] }
             ConfirmSsnFile        { ConfirmSsnFile [lindex $data 1] }
             ConfirmPortscanFile   { ConfirmPortscanFile [lindex $data 1] }
             Failed                { SendBYFailMsg [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+            PadsID                { SetPadsID [lindex $data 1] }
             default               { if {$DEBUG} {puts "Sguil Cmd Unkown: $sguildCmd"} }
 
         }
@@ -971,11 +1078,11 @@ proc CheckLineFormat { line } {
 }
 
 # May need to add more to this later
-proc SetSensorID { sensorID } {
+proc BarnyardSetSensorID { sensorID } {
 
-    global SENSOR_ID
+    global BY_SENSOR_ID
 
-    set SENSOR_ID $sensorID
+    set BY_SENSOR_ID $sensorID
     SendStats
 
 }
@@ -1064,6 +1171,7 @@ if { $OPENSSL } {
 
 ConnectToSguilServer
 InitBYSocket $BY_PORT
+if { [info exists PADS] && $PADS } { InitPads } else { set PADS 0 }
 CheckForPortscanFiles
 if { [info exists S4_KEEP_STATS] && $S4_KEEP_STATS } { CheckForSsnFiles }
 if { [info exists SANCP] && $SANCP } { CheckForSancpFiles }

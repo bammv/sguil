@@ -1,4 +1,4 @@
--- $Id: create_sguildb.sql,v 1.15 2005/10/26 21:44:44 bamm Exp $
+-- $Id: create_sguildb.sql,v 1.16 2006/04/17 18:52:36 bamm Exp $
 -- Users may want to use a different DB name.
 -- CREATE DATABASE IF NOT EXISTS sguildb;
 -- USE sguildb;
@@ -96,6 +96,7 @@ CREATE TABLE sensor
 (
   sid		INT UNSIGNED	NOT NULL AUTO_INCREMENT,
   hostname	VARCHAR(255)	NOT NULL,
+  sensor_type   INT UNSIGNED,
   interface	VARCHAR(255),
   description	TEXT,
   bpf_filter	TEXT,
@@ -187,6 +188,21 @@ CREATE TABLE nessus
   PRIMARY KEY (rid),
   INDEX ip (ip));
 
+CREATE TABLE IF NOT EXISTS `pads`
+(
+  hostname              VARCHAR(255)     NOT NULL,
+  sid                   INT UNSIGNED     NOT NULL,
+  asset_id              INT UNSIGNED     NOT NULL,
+  timestamp             DATETIME         NOT NULL,
+  ip                    INT UNSIGNED     NOT NULL,
+  service               VARCHAR(40)      NOT NULL,
+  port                  INT UNSIGNED     NOT NULL,
+  ip_proto              TINYINT UNSIGNED NOT NULL,
+  application           VARCHAR(255)     NOT NULL,
+  hex_payload           VARCHAR(255),
+  PRIMARY KEY (sid,asset_id)
+);
+
 --
 -- Depreciated for MERGE tables
 --CREATE TABLE sancp
@@ -234,5 +250,5 @@ CREATE TABLE version
   installed	DATETIME
 );
 
-INSERT INTO version (version, installed) VALUES ("0.11", now());
+INSERT INTO version (version, installed) VALUES ("0.12", now());
 

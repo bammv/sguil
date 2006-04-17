@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.21 2006/02/08 06:24:12 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.22 2006/04/17 18:52:36 bamm Exp $ #
 
 proc SendSensorAgent { socketID msg } {
 
@@ -274,5 +274,32 @@ proc SnortStatsRcvd { socketID statsList } {
 
     }
 
+
+}
+
+proc GetPadsID { socketID sensorName } {
+
+    # Unique sid for each sensor/type. 2 == PADS
+    set padsID [GetSensorID $sensorName 2]
+
+    if { $padsID == "" } {
+
+        LogMessage "New PADS sensor. Adding sensor $sensorName to the DB."
+        # We have a new sensor
+
+        set tmpQuery "INSERT INTO sensor (hostname, sensor_type) VALUES ('$sensorName', '2')"
+
+        if [catch {SafeMysqlExec $tmpQuery} tmpError] {
+            # Insert failed
+            ErrorMessage "ERROR from mysqld: $tmpError :\nQuery => $tmpQuery"
+            ErrorMessage "ERROR: Unable to add new sensors."
+            return
+        }
+
+        set padsID [GetSensorID $sensorName 2]
+
+    }
+
+    SendSensorAgent $socketID [list PadsID $padsID]
 
 }

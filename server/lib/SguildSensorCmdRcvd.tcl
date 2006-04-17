@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.19 2006/02/08 06:24:12 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.20 2006/04/17 18:52:36 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global connectedAgents agentSensorNameArray
@@ -13,10 +13,12 @@ proc SensorCmdRcvd { socketID } {
     InfoMessage "Sensor Data Rcvd: $data"
     set sensorCmd [lindex $data 0]
     switch -exact -- $sensorCmd {
+      PadsAsset          { ProcessPadsAsset [lindex $data 1] }
       SsnFile            { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
       SancpFile          { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
       PSFile             { RcvPortscanFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
-      AgentInit          { SensorAgentInit $socketID [lindex $data 1] [lindex $data 2] }
+      AgentInit          { AgentInit $socketID [lindex $data 1] }
+      BarnyardInit       { BarnyardInit $socketID [lindex $data 1] [lindex $data 2] }
       AgentLastCidReq    { AgentLastCidReq $socketID [lindex $data 1] [lindex $data 2] }
       BYEventRcvd        { eval BYEventRcvd $socketID [lrange $data 1 end] }
       DiskReport         { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
@@ -28,6 +30,7 @@ proc SensorCmdRcvd { socketID } {
       SnortStats         { SnortStatsRcvd $socketID [lindex $data 1] }
       BarnyardConnect    { BarnyardConnect $socketID [lindex $data 1] }
       BarnyardDisConnect { BarnyardDisConnect $socketID [lindex $data 1] }
+      PadsSensorIDReq    { GetPadsID $socketID [lindex $data 1] }
       default            { if {$sensorCmd != ""} { LogMessage "Sensor Cmd Unknown ($socketID): $sensorCmd" } }
     }
   }

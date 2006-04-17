@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.170 2006/02/09 22:14:26 bamm Exp $ #
+# $Id: sguild,v 1.171 2006/04/17 18:52:36 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -18,7 +18,7 @@ exec tclsh "$0" "$@"
 set VERSION "SGUIL-0.6.1"
 set AGENT_VERSION "SGUIL-0.6.1"
 # DB Version
-set DB_VERSION "0.11"
+set DB_VERSION "0.12"
 # Counter for tracking xscript transactions
 set NEXT_TRANS_ID 0
 
@@ -64,7 +64,7 @@ proc bgerror { errorMsg } {
 
 }
 
-proc CleanExit { { error { 0} } } {
+proc CleanExit { { error {0} } } {
   global PID_FILE FORKD_PIDS MAIN_DB_SOCKETID
 
     catch {mysqlclose $MAIN_DB_SOCKETID}
@@ -303,6 +303,7 @@ set sourceLibs {
     SguildGenericDB.tcl        \
     SguildHealthChecks.tcl     \
     SguildLoaderd.tcl          \
+    SguildPadsLib.tcl          \
     SguildQueryd.tcl           \
     SguildReportBuilder.tcl    \
     SguildSendComms.tcl        \
@@ -525,11 +526,11 @@ set sensorList [FlatDBQuery $sensorQuery]
 # Build the sensor status array
 foreach sensorName $sensorList {
 
-    set tmpQuery "SELECT sid FROM sensor WHERE hostname='$sensorName'"
+    set tmpQuery "SELECT sid FROM sensor WHERE hostname='$sensorName' AND sensor_type=1"
     LogMessage "  $tmpQuery"
     set sensorSid [FlatDBQuery $tmpQuery]
 
-    set tmpQuery "SELECT ip FROM sensor WHERE hostname='$sensorName'"
+    set tmpQuery "SELECT ip FROM sensor WHERE hostname='$sensorName' AND sensor_type=1"
     LogMessage "  $tmpQuery"
     set sensorIP [lindex [FlatDBQuery $tmpQuery] 0]
     if { $sensorIP == "" } { set sensorIP "Unknown" }

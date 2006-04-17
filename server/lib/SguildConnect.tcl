@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.13 2006/01/27 23:15:59 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.14 2006/04/17 18:52:36 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -85,7 +85,7 @@ proc SensorConnect { socketID IPAddr port } {
   }
 }
 
-proc SensorAgentInit { socketID sensorName barnyardStatus} {
+proc AgentInit { socketID sensorName } {
 
     global connectedAgents agentSocketArray agentSensorNameArray
     global sensorStatusArray
@@ -93,6 +93,16 @@ proc SensorAgentInit { socketID sensorName barnyardStatus} {
     lappend connectedAgents $sensorName
     set agentSocketArray($sensorName) $socketID
     set agentSensorNameArray($socketID) $sensorName
+
+    SendSystemInfoMsg $sensorName "Agent connected."
+
+}
+
+proc BarnyardInit { socketID sensorName barnyardStatus} {
+
+    global connectedAgents agentSocketArray agentSensorNameArray
+    global sensorStatusArray
+
     set sensorID [GetSensorID $sensorName]
 
     if { $sensorID == "" } {
@@ -101,7 +111,7 @@ proc SensorAgentInit { socketID sensorName barnyardStatus} {
         # We have a new sensor
         set sensorName $agentSensorNameArray($socketID)
 
-        set tmpQuery "INSERT INTO sensor (hostname) VALUES ('$sensorName')"
+        set tmpQuery "INSERT INTO sensor (hostname, sensor_type) VALUES ('$sensorName', '1')"
 
         if [catch {SafeMysqlExec $tmpQuery} tmpError] {
             # Insert failed
@@ -114,8 +124,8 @@ proc SensorAgentInit { socketID sensorName barnyardStatus} {
 
     }
 
-    SendSystemInfoMsg $sensorName "Agent connected."
-    SendSensorAgent $socketID [list SensorID $sensorID]
+    SendSystemInfoMsg $sensorName "Barnyard connected."
+    SendSensorAgent $socketID [list BarnyardSensorID $sensorID]
 
     if { [info exists sensorStatusArray($sensorName)] } {
 
@@ -127,7 +137,6 @@ proc SensorAgentInit { socketID sensorName barnyardStatus} {
         set sensorStatusArray($sensorName) [list $sensorID Unknown 1 $barnyardStatus None]
 
     }
-
 
     SendAllSensorStatusInfo
 
