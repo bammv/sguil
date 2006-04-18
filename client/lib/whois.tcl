@@ -1,4 +1,4 @@
-# $Id: whois.tcl,v 1.6 2006/04/11 22:12:46 bamm Exp $ #
+# $Id: whois.tcl,v 1.7 2006/04/18 18:12:46 bamm Exp $ #
 
 proc ClientSocketTimeOut { host port timeout } {
   global WHOIS_CONNECTED
@@ -18,10 +18,22 @@ proc ClientSocketTimeOut { host port timeout } {
 
 proc GetServerFromRef { line } {
 
-    # Referer should be a whois URL.
+    
+    # Defaults
+    set refPort 43
     set refName "arin.whos.net" 
-    regexp {whois://(.*):} $line match refName
-    return $refName
+
+    # Referer should be a whois URL.
+    regexp {whois://(.*)} $line match tmpRef
+
+    # Parse hostname:port
+    set tmpSplit [split $tmpRef :]
+    set refName [lindex $tmpSplit 0]
+
+    # Grab the port if we had one
+    if { [llength $tmpSplit] > 1 } { regexp {([0-9]+)} [lindex $tmpSplit 1] match refPort }
+
+    return [list $refName $refPort]
     
 }
 
@@ -58,7 +70,7 @@ proc SimpleWhois { ipAddr } {
   # work for these regexps :)
   foreach line $results {
     switch -regexp -- $line {
-        {ReferralServer}                {set newNicSrvr [GetServerFromRef $line]; break }
+        {ReferralServer}                {set refServer [GetServerFromRef $line]; break }
     	{.*LACNIC.*}			{set newNicSrvr "whois.lacnic.net"}
     	{.*APNIC.*}			{set newNicSrvr "whois.apnic.net"}
     	{.*APNIC-.*}			{set newNicSrvr "whois.apnic.net"}
@@ -89,6 +101,11 @@ proc SimpleWhois { ipAddr } {
     }
   }
 
+  if { [info exists refServer] } {
+      puts "Getting Here"
+      set newNicSrvr [lindex $refServer 0]
+      set rPort [lindex $refServer 1]
+  }
   if { $nicSrvr != $newNicSrvr } {
     if [catch {ClientSocketTimeOut $newNicSrvr $rPort 10000} socketID] {
       return "{ERROR: $socketID}"
