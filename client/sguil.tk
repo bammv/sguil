@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.219 2006/04/17 18:57:36 bamm Exp $ #
+# $Id: sguil.tk,v 1.220 2006/04/18 15:17:32 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -784,13 +784,20 @@ proc ClearPSLists {} {
 
 }
 
-proc DisplayPadsBanner {} {
+proc ClearPadsData {} {
 
-    global DISPLAY_PADS ACTIVE_EVENT MULTI_SELECT CONNECTED CUR_SEL_PANE
     global bannerText bannerHex
 
     $bannerText delete 0.0 end
     $bannerHex delete 0.0 end
+
+}
+
+proc DisplayPadsBanner {} {
+
+    global DISPLAY_PADS ACTIVE_EVENT MULTI_SELECT CONNECTED CUR_SEL_PANE
+
+    ClearPadsData
 
     if { $ACTIVE_EVENT && $DISPLAY_PADS && !$MULTI_SELECT } {
 

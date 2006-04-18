@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.21 2006/04/17 18:57:36 bamm Exp $
+# $Id: guilib.tcl,v 1.22 2006/04/18 15:17:32 bamm Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -459,16 +459,27 @@ proc InsertPayloadData { data } {
 # UnSelectPacketOptions:  Used when ESC is hit or on a multiple selection to turn off packet details, etc
 #
 proc UnSelectPacketOptions { } {
-  global displayPacketButton displayRuleButton referenceButton icatButton displayPSButton
-  $displayPacketButton deselect
-  ClearPacketData
-  $displayRuleButton deselect
-  ClearRuleText
-  $referenceButton configure -state disabled
-  $icatButton configure -state disabled
-  ClearPSLists
-  $displayPSButton deselect
+
+    global displayPacketButton displayRuleButton referenceButton icatButton 
+    global padsDisplayButton displayPSButton
+
+    $displayPacketButton deselect
+    ClearPacketData
+
+    $displayRuleButton deselect
+    ClearRuleText
+
+    $referenceButton configure -state disabled
+    $icatButton configure -state disabled
+
+    ClearPSLists
+    $displayPSButton deselect
+
+    ClearPadsData
+    $padsDisplayButton deselect
+  
 }
+
 #
 # ScrollHome: If ScrollHome var is set, move the scrollbar to the bottom of the list
 #
