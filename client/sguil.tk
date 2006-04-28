@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.220 2006/04/18 15:17:32 bamm Exp $ #
+# $Id: sguil.tk,v 1.221 2006/04/28 17:32:57 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1015,6 +1015,57 @@ proc DeleteTab { eventTabs tabName } {
 
 }
 
+proc CreatePadsLists { baseFrame } {
+
+    # mysql> DESC pads;
+    # +-------------+---------------------+------+-----+---------------------+-------+
+    # | Field       | Type                | Null | Key | Default             | Extra |
+    # +-------------+---------------------+------+-----+---------------------+-------+
+    # | hostname    | varchar(255)        |      |     |                     |       |
+    # | sid         | int(10) unsigned    |      | PRI | 0                   |       |
+    # | asset_id    | int(10) unsigned    |      | PRI | 0                   |       |
+    # | timestamp   | datetime            |      |     | 0000-00-00 00:00:00 |       |
+    # | ip          | int(10) unsigned    |      |     | 0                   |       |
+    # | service     | varchar(40)         |      |     |                     |       |
+    # | port        | int(10) unsigned    |      |     | 0                   |       |
+    # | ip_proto    | tinyint(3) unsigned |      |     | 0                   |       |
+    # | application | varchar(255)        |      |     |                     |       |
+    # | hex_payload | varchar(255)        | YES  |     | NULL                |       |
+    # +-------------+---------------------+------+-----+---------------------+-------+
+
+    set currentPane $baseFrame.tablelist
+    set currentSB $baseFrame.scroll
+
+    tablelist::tablelist $currentPane \
+        -columns {10 "Sensor"        left
+                  20 "ID#"           center
+                  18 "Timestamp"     center
+                  16 "Asset IP"      left
+                  3  "Pr"            left
+                  6  "Service"       left
+                  16 "Port"          left
+                  10 "Application"   left} \
+         -selectmode browse \
+         -yscrollcommand [list $currentSB set] -width 40
+
+    $currentPane columnconfigure 0 -name sensor -resizable 1 -stretchable 1 -sortmode dictionary
+    $currentPane columnconfigure 1 -name id -resizable 1 -stretchable 1 -sortmode real
+    $currentPane columnconfigure 2 -name timestamp -resizable 1 -stretchable 1 -sortmode dictionary
+    $currentPane columnconfigure 3 -name ip -resizable 1 -stretchable 1 -sortmode dictionary
+    $currentPane columnconfigure 4 -name ip_proto -resizable 1 -stretchable 1 -sortmode integer
+    $currentPane columnconfigure 5 -name service -resizable 1 -stretchable 1 -sortmode dictionary
+    $currentPane columnconfigure 6 -name port -resizable 1 -stretchable 1 -sortmode integer
+    $currentPane columnconfigure 7 -name app -resizable 1 -stretchable 1 -sortmode dictionary
+
+    scrollbar $currentSB -orient vertical -width 10 -command [list $currentPane yview]
+
+    pack $currentPane -side left -fill both -expand true
+    pack $currentSB -side right -fill y
+    pack $baseFrame -expand true -fill both
+
+    set bindWin [$currentPane bodytag]
+
+}
 
 proc CreateSessionLists { baseFrame } {
 
@@ -1252,8 +1303,6 @@ proc LaunchRightClickMenu { win x y cellWin } {
     if { $CUR_SEL_PANE(type) == "EVENT" } { 
         set tmpY [expr [winfo rooty $cellWin]+[lindex [$win bbox $nIndex] 1]-1]
     } else {
-        puts "DEBUG ### [$win bbox $nIndex]"
-        puts "DEBUG ### [winfo rooty $cellWin]"
         set tmpY [expr [winfo rooty $cellWin]+[lindex [$win bbox $nIndex] 1]-7] 
     }
 
