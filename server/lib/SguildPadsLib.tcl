@@ -98,7 +98,7 @@ proc AlertAsset { type sensorName sid aid timestamp intTime s_inetIP s_intIP d_i
     
     # Send RT Event
     # RTEvent|st|priority|class_type|hostname|timestamp|sid|cid|msg|srcip|dstip|ipproto|srcport|dstport|sig_id|rev|u_event_id|u_event_ref
-    EventRcvd [list 0 5 new-asset $sensorName $timestamp $sid $aid "PADS New Asset - $service $app" \
+    EventRcvd [list 0 5 new-asset $sensorName $timestamp $sid $aid $msg \
                $s_inetIP $d_inetIP $ip_proto $s_port $d_port $sig_id $rev_id $aid $aid]
 
 }
