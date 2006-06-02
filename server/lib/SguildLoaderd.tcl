@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.21 2005/11/29 22:41:39 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.22 2006/06/02 20:40:57 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -52,6 +52,7 @@ proc ForkLoader {} {
 
         fileevent $loaderdReadPipe readable [list SguildCmdRcvd $loaderdReadPipe]
         LogMessage "Loaderd Forked"
+        CheckLoaderDir
 
     } else {
 
@@ -172,7 +173,7 @@ proc CreateSancpMergeTable {} {
         dst_bytes     INT UNSIGNED            NOT NULL,    \
         src_flags     TINYINT UNSIGNED        NOT NULL,    \
         dst_flags     TINYINT UNSIGNED        NOT NULL,    \
-        INDEX p_key (sid,sancpid),
+        INDEX p_key (sid,sancpid),                         \
         INDEX src_ip (src_ip),                             \
         INDEX dst_ip (dst_ip),                             \
         INDEX dst_port (dst_port),                         \
@@ -235,6 +236,10 @@ proc LoadFile { fileName table } {
 
     global LOADERD_DB_ID DBHOST
 
+    if { ![file exists $fileName] || ![file readable $fileName] } {
+        LogMessage "Non-fatal error: File $fileName does not exist or is not readable."
+    }
+
     if { $DBHOST != "localhost" && $DBHOST != "127.0.0.1" } {
         set dbCmd "LOAD DATA CONCURRENT LOCAL INFILE '$fileName' INTO TABLE `$table`\
                    FIELDS TERMINATED BY '|'"
@@ -249,7 +254,7 @@ proc LoadFile { fileName table } {
 
     # Delete the tmpfile
     if [catch {file delete $fileName} tmpError] {
-        ErrorMessage "ERROR: loaderd: $tmpError"
+        LogMessage "ERROR: loaderd: $tmpError"
     }
 
     InfoMessage "loaderd: Loaded $fileName into the table $table."
@@ -318,12 +323,44 @@ proc LoadSancpFile { sensor filename date } {
     }
 
     LoadFile $filename $tableName 
+    file delete $filename
 
-    if [catch { puts $loaderdWritePipe [list ConfirmSancpFile $sensor [file tail $filename]] } tmpError] {
-        LogMessage "ERROR: $tmpError"
-    }
+    #if [catch { puts $loaderdWritePipe [list ConfirmSancpFile $sensor [file tail $filename]] } tmpError] {
+    #    LogMessage "ERROR: $tmpError"
+    #}
     if [catch {flush $loaderdWritePipe} tmpError] {
         LogMessage "ERROR: $tmpError"
     }
 
+}
+
+proc CheckLoaderDir {} {
+
+    global TMP_LOAD_DIR
+
+    if { ![file exists $TMP_LOAD_DIR] } { file mkdir $TMP_LOAD_DIR }
+
+    # Load SANCP files
+    foreach fileName [glob -nocomplain $TMP_LOAD_DIR/parsed.*] {
+
+        set splitFile [split [file tail $fileName] .]
+        set sensorName [lindex $splitFile 1]
+        set date [lindex $splitFile 5]
+        LoadSancpFile $sensorName $fileName $date
+
+    }
+
+
+    # Load portscan files
+    foreach fileName [glob -nocomplain $TMP_LOAD_DIR/*portscan_log*] {
+
+        set splitFile [split [file tail $fileName] .]
+        set sensorName [lindex $splitFile 0]
+        LoadPSFile $sensorName $fileName
+
+    }
+
+
+    after 5000 CheckLoaderDir
+ 
 }
