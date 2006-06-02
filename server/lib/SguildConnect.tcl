@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.14 2006/04/17 18:52:36 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.15 2006/06/02 20:49:11 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -85,7 +85,7 @@ proc SensorConnect { socketID IPAddr port } {
   }
 }
 
-proc AgentInit { socketID sensorName } {
+proc AgentInit { socketID sensorName byStatus } {
 
     global connectedAgents agentSocketArray agentSensorNameArray
     global sensorStatusArray
@@ -94,7 +94,15 @@ proc AgentInit { socketID sensorName } {
     set agentSocketArray($sensorName) $socketID
     set agentSensorNameArray($socketID) $sensorName
 
+    # Update status array
+    if { [info exists sensorStatusArray($sensorName)] } {
+        set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 2 3 1 $byStatus ]
+    } else { 
+        set sensorStatusArray($sensorName) [list $sensorID Unknown 1 $byStatus None]
+    }
+
     SendSystemInfoMsg $sensorName "Agent connected."
+    SendAllSensorStatusInfo
 
 }
 

@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.20 2006/04/17 18:52:36 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.21 2006/06/02 20:49:11 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global connectedAgents agentSensorNameArray
@@ -17,7 +17,7 @@ proc SensorCmdRcvd { socketID } {
       SsnFile            { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
       SancpFile          { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
       PSFile             { RcvPortscanFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
-      AgentInit          { AgentInit $socketID [lindex $data 1] }
+      AgentInit          { AgentInit $socketID [lindex $data 1] [lindex $data 2] }
       BarnyardInit       { BarnyardInit $socketID [lindex $data 1] [lindex $data 2] }
       AgentLastCidReq    { AgentLastCidReq $socketID [lindex $data 1] [lindex $data 2] }
       BYEventRcvd        { eval BYEventRcvd $socketID [lrange $data 1 end] }
@@ -62,31 +62,34 @@ proc RcvSsnFile { socketID sensorName fileName date bytes } {
 
 proc RcvSancpFile { socketID sensorName fileName date bytes } {
 
-    global TMPDATADIR sguildWritePipe
+    global TMPDATADIR TMP_LOAD_DIR sguildWritePipe
 
-    set sancpFile $TMPDATADIR/$fileName
+    set sancpFile $TMP_LOAD_DIR/$fileName
     RcvBinCopy $socketID $sancpFile $bytes
+
+    ConfirmSancpFile $sensorName $fileName
  
-    update
+    #update
     
     # The loader child proc does the LOAD for us.
-    puts $sguildWritePipe [list LoadSancpFile $sensorName $sancpFile $date]
-    flush $sguildWritePipe
+    #puts $sguildWritePipe [list LoadSancpFile $sensorName $sancpFile $date]
+    #flush $sguildWritePipe
 
 }
 
 proc RcvPortscanFile { socketID sensorName fileName bytes } {
 
-    global TMPDATADIR sguildWritePipe
+    global TMPDATADIR TMP_LOAD_DIR sguildWritePipe
 
     InfoMessage "Receiving portscan file $fileName."
-    set PS_OUTFILE $TMPDATADIR/$fileName
+    set PS_OUTFILE $TMP_LOAD_DIR/${sensorName}.${fileName}
     # Copy file from sensor_agent
     RcvBinCopy $socketID $PS_OUTFILE $bytes
+    ConfirmPortscanFile $sensorName $fileName
 
     # The loader child proc does the LOAD for us.
-    puts $sguildWritePipe [list LoadPSFile $sensorName $PS_OUTFILE]
-    flush $sguildWritePipe
+    #puts $sguildWritePipe [list LoadPSFile $sensorName $PS_OUTFILE]
+    #flush $sguildWritePipe
 
 }
 

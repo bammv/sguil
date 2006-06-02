@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.16 2005/12/06 22:17:14 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.17 2006/06/02 20:49:11 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -6,6 +6,16 @@
 proc EventRcvd { eventDataList } {
   global EMAIL_EVENTS EMAIL_CLASSES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS EMAIL_PRIORITIES
   global eventIDCountArray acRules acCat correlatedEventArray eventIDList correlatedEventIDArray
+
+  set tmpSList [list hrcc-ids01 dytn-ids01 coor-ids01 ballse-ids01 ballse-ids02 hk-ids01 shen-ids01]
+  set sensorName [lindex $eventDataList 3]
+ 
+  if { [lsearch -exact $tmpSList $sensorName] < 0 } { 
+      puts "###################################################################################"
+      puts $eventDataList
+      puts "###################################################################################"
+      CleanExit
+  }
 
   if { [lindex $eventDataList 2] == "system-info" } {
     InfoMessage "SYSTEM INFO: $eventDataList"

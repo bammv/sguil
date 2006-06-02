@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.171 2006/04/17 18:52:36 bamm Exp $ #
+# $Id: sguild,v 1.172 2006/06/02 20:49:11 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -519,7 +519,7 @@ set eventIDList ""
 
 LogMessage "Retrieving DB info..." 
 
-set sensorQuery "SELECT hostname FROM sensor ORDER BY hostname ASC"
+set sensorQuery "SELECT hostname FROM sensor WHERE active='Y' ORDER BY hostname ASC"
 LogMessage "  $sensorQuery"
 set sensorList [FlatDBQuery $sensorQuery]
 
@@ -669,7 +669,7 @@ foreach tableName $tableNameList {
   set tableArray($tableName) [mysqlcol $MAIN_DB_SOCKETID $tableName {name type length}]
 }
 
-set sensorQuery "SELECT hostname FROM sensor"
+set sensorQuery "SELECT hostname FROM sensor WHERE active='Y'"
 set sensorList [FlatDBQuery $sensorQuery]
 
 # Open a socket for clients to connect to

@@ -13,5 +13,6 @@ CREATE TABLE IF NOT EXISTS `pads` (
 );
 
 ALTER TABLE sensor ADD COLUMN ( sensor_type    INT UNSIGNED);
+UPDATE sensor SET sensor_type=1;
 
 UPDATE version SET version="0.12", installed = now();
