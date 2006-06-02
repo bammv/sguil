@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.33 2006/02/21 19:01:43 bamm Exp $ #
+# $Id: qrylib.tcl,v 1.34 2006/06/02 20:53:14 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -47,6 +47,14 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 	    set globalWhere "WHERE $tableName.timestamp > '$eventtimestamp' AND "
 	}   
 
+    } elseif { $tableName == "pads" } {
+
+        if { $build == "build" } { 
+            set globalWhere "WHERE $tableName.timestamp > $eventtimestamp AND " 
+        } else { 
+            set globalWhere "WHERE " 
+        }
+
     } else {
 
 	if { ( $queryType == "srcip" || $queryType == "dstip" || $queryType == "src2dst" ) && $incidentCat == "hour" } {
@@ -68,8 +76,17 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
     if { $queryType == "srcip" } {
 
 	set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
-	lappend whereTmp "$globalWhere $tableName.src_ip = INET_ATON('$srcIP')"
-        lappend whereTmp "$globalWhere $tableName.dst_ip = INET_ATON('$srcIP')"
+
+        if { $tableName == "pads" } {
+
+            set whereTmp "$globalWhere $tableName.ip = INET_ATON('$srcIP')"
+
+        } else {
+
+	    lappend whereTmp "$globalWhere $tableName.src_ip = INET_ATON('$srcIP')"
+            lappend whereTmp "$globalWhere $tableName.dst_ip = INET_ATON('$srcIP')"
+
+        }
 
     } elseif { $queryType == "srcport" } {
 
@@ -86,8 +103,17 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
     } elseif { $queryType == "dstip" } {
 
 	set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
-	lappend whereTmp "$globalWhere $tableName.src_ip = INET_ATON('$dstIP')"
-        lappend whereTmp "$globalWhere $tableName.dst_ip = INET_ATON('$dstIP')"
+
+        if { $tableName == "pads" } {
+
+            set whereTmp "$globalWhere $tableName.ip = INET_ATON('$dstIP')"
+
+        } else {
+
+	    lappend whereTmp "$globalWhere $tableName.src_ip = INET_ATON('$dstIP')"
+            lappend whereTmp "$globalWhere $tableName.dst_ip = INET_ATON('$dstIP')"
+
+        }
 
     } elseif { $queryType == "empty" } {
 
@@ -107,6 +133,10 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 
 	set eventMsg [$CUR_SEL_PANE(name) getcells $selectedIndex,event]
 	lappend whereTmp "$globalWhere event.signature = '$eventMsg'"
+
+    } elseif { $queryType == "pads" } {
+
+	set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
 
     }
 
@@ -157,6 +187,10 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
     } elseif { $tableName == "sancp" } {
 
 	SancpQueryRequest $tableName $whereStatement
+
+    } elseif { $tableName == "pads" } { 
+
+        PadsQueryRequest $tableName $whereStatement
 
     }
 
@@ -315,6 +349,64 @@ proc DBQueryRequest { selectedTable whereList {winTitle {none} } } {
     SendToSguild "QueryDB $queryFrame.tablelist $selectQuery"
 
 }
+
+proc PadsQueryRequest { table where } {
+
+    global eventTabs PADS_QUERY_NUMBER DEBUG CONNECTED SELECT_LIMIT
+
+    if {!$CONNECTED} {ErrorMessage "Not connected to sguild. Query aborted"; return}
+
+    set COLUMNS "pads.hostname, pads.sid, pads.asset_id, pads.timestamp as datetime, \
+     INET_NTOA(pads.ip), pads.ip_proto, pads.service, pads.port, pads.application"
+
+    set tmpQuery "SELECT $COLUMNS FROM pads $where"
+    regsub -all {\n} $tmpQuery {} selectQuery
+
+    incr PADS_QUERY_NUMBER
+    $eventTabs add -label "Asset Query $PADS_QUERY_NUMBER"
+    set currentTab [$eventTabs childsite end]
+    set tabIndex [$eventTabs index end]
+    set queryFrame [frame $currentTab.padsquery_${PADS_QUERY_NUMBER} -background black -borderwidth 1]
+    $eventTabs select end
+
+    # Build the display list
+    CreatePadsLists $queryFrame
+
+    # Create the rest of the frame
+    set topFrame [frame $currentTab.topFrame]
+    set whereText [scrolledtext $topFrame.text -textbackground white -visibleitems 30x3 -wrap word \
+      -vscrollmode dynamic -hscrollmode none -sbwidth 10]
+    $whereText insert 0.0 $selectQuery
+    $whereText configure -state disabled
+    set lbuttonsFrame [frame $topFrame.lbuttons]
+    set closeButton [button $lbuttonsFrame.close -text "Close" \
+            -relief raised -borderwidth 2 -pady 0 \
+            -command "DeleteTab $eventTabs $currentTab"]
+    set exportButton [button $lbuttonsFrame.export -text "Export " \
+            -relief raised -borderwidth 2 -pady 0 \
+            -command "ExportResults $queryFrame pads"]
+    pack $closeButton $exportButton -side top -fill x
+    set rbuttonsFrame [frame $topFrame.rbuttons]
+    set rsubmitButton [button $rbuttonsFrame.rsubmit -text "Submit " \
+            -relief raised -borderwidth 2 -pady 0 \
+            -command "[list PadsQueryRequest $table $where]"]
+    set editButton [button $rbuttonsFrame.edit -text "Edit " \
+            -relief raised -borderwidth 2 -pady 0 \
+            -command "[list EditQuery $table $where]"]
+    pack $rsubmitButton $editButton -side top -fill x
+    pack $lbuttonsFrame  -side left
+    pack $whereText -side left -fill both -expand true
+    pack $rbuttonsFrame  -side left
+    pack $topFrame -side top -fill x
+    pack $queryFrame -side bottom -fill both
+
+    $queryFrame configure -cursor watch
+    if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
+
+    SendToSguild "QueryDB $queryFrame.tablelist $selectQuery"
+
+}
+
 proc EditQuery { tableName whereList } {
 
     set tmpWhereStatement [QryBuild $tableName $whereList]

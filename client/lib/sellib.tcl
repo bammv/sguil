@@ -2,7 +2,7 @@
 # Sguil procs that deal with selection and         #
 # Multi-selection of events                        #
 ####################################################
-# $Id: sellib.tcl,v 1.6 2006/01/25 03:22:18 bamm Exp $
+# $Id: sellib.tcl,v 1.7 2006/06/02 20:53:14 bamm Exp $
 #
 # ReSetMotion: Reset Motion Vars on a button release
 #
@@ -53,7 +53,12 @@ proc SelectUp {} {
 
         SelectSessionPane $CUR_SEL_PANE(name) SANCP SSN
 
+    } elseif { $CUR_SEL_PANE(type) == "PADS" } {
+
+        SelectPadsPane $CUR_SEL_PANE(name) PADS PADS
+
     }
+
 }
 
 proc SelectDown {} {
@@ -80,5 +85,10 @@ proc SelectDown {} {
 
         SelectSessionPane $CUR_SEL_PANE(name) SANCP SSN
 
+    } elseif { $CUR_SEL_PANE(type) == "PADS" } {
+
+        SelectPadsPane $CUR_SEL_PANE(name) PADS PADS
+
     }
+
 }

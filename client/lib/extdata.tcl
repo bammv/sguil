@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.38 2006/02/28 17:05:08 bamm Exp $
+# $Id: extdata.tcl,v 1.39 2006/06/02 20:53:14 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -295,15 +295,25 @@ proc ResolveHosts {} {
     if {$REVERSE_DNS && $ACTIVE_EVENT && !$MULTI_SELECT} {
 
         Working
-        update
 
         set selectedIndex [$CUR_SEL_PANE(name) curselection]
-        set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
-        set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
-        set srcName [GetHostbyAddr $srcIP]
-        set dstName [GetHostbyAddr $dstIP]
+        # PADS data only has a single IP
+        if { $CUR_SEL_PANE(type) == "PADS" } {
 
-        InsertDNSData $srcIP $srcName $dstIP $dstName
+            set ip [$CUR_SEL_PANE(name) getcells $selectedIndex,ip]
+            set name [GetHostbyAddr $ip]
+            InsertDNSData $ip $name $ip $name
+
+        } else {
+
+            set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
+            set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
+            set srcName [GetHostbyAddr $srcIP]
+            set dstName [GetHostbyAddr $dstIP]
+            InsertDNSData $srcIP $srcName $dstIP $dstName
+
+        }
+
         Idle
 
     }
@@ -323,7 +333,16 @@ proc GetWhoisData {} {
         Working
         update
         set selectedIndex [$CUR_SEL_PANE(name) curselection]
-        set ip [$CUR_SEL_PANE(name) getcells $selectedIndex,$WHOISLIST]
+
+        if { $CUR_SEL_PANE(type) == "PADS" } { 
+
+            set ip [$CUR_SEL_PANE(name) getcells $selectedIndex,ip]
+
+        } else {
+
+            set ip [$CUR_SEL_PANE(name) getcells $selectedIndex,$WHOISLIST]
+
+        }
 
         if { $WHOIS_PATH == "SimpleWhois" } {
 
