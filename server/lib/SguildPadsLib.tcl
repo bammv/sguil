@@ -12,8 +12,7 @@ proc ProcessPadsAsset { dataList } {
     set app [lindex $dataList 11]
 
     # Check for new assest
-    set tmpQuery "SELECT timestamp, application FROM pads \
-                  WHERE sid=$sid AND ip=$d_intIP AND port=$d_port AND ip_proto=$ip_proto ORDER BY timestamp DESC"
+    set tmpQuery "SELECT timestamp, application FROM pads WHERE sid=$sid AND ip=$d_intIP AND port=$d_port AND ip_proto=$ip_proto ORDER BY timestamp DESC"
     set results [MysqlSelect $tmpQuery]
 
     if { [llength $results] == 0 } { 
