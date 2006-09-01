@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.34 2006/06/02 20:53:14 bamm Exp $ #
+# $Id: qrylib.tcl,v 1.35 2006/09/01 16:54:12 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -79,7 +79,7 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 
         if { $tableName == "pads" } {
 
-            set whereTmp "$globalWhere $tableName.ip = INET_ATON('$srcIP')"
+            lappend whereTmp "$globalWhere $tableName.ip = INET_ATON('$srcIP')"
 
         } else {
 
@@ -106,7 +106,7 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 
         if { $tableName == "pads" } {
 
-            set whereTmp "$globalWhere $tableName.ip = INET_ATON('$dstIP')"
+            lappend whereTmp "$globalWhere $tableName.ip = INET_ATON('$dstIP')"
 
         } else {
 
@@ -359,7 +359,7 @@ proc PadsQueryRequest { table where } {
     set COLUMNS "pads.hostname, pads.sid, pads.asset_id, pads.timestamp as datetime, \
      INET_NTOA(pads.ip), pads.ip_proto, pads.service, pads.port, pads.application"
 
-    set tmpQuery "SELECT $COLUMNS FROM pads $where"
+    set tmpQuery "SELECT $COLUMNS FROM pads [lindex $where 0]"
     regsub -all {\n} $tmpQuery {} selectQuery
 
     incr PADS_QUERY_NUMBER

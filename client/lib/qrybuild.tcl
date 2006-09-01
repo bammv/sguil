@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.41 2006/02/03 16:54:02 bamm Exp $ #
+# $Id: qrybuild.tcl,v 1.42 2006/09/01 16:54:12 bamm Exp $ #
 proc QryBuild { tableSelected whereTmp } {
 
     global RETURN_FLAG SELECTEDTABLE SELECT_LIMIT
@@ -64,6 +64,7 @@ proc QryBuild { tableSelected whereTmp } {
         $qryTypeBox add event -text "Events" -selectcolor red -foreground black
         $qryTypeBox add sessions -text "Sessions" -selectcolor red -foreground black
         $qryTypeBox add sancp -text "Sancp" -selectcolor red -foreground black  
+        $qryTypeBox add pads -text "PADS" -selectcolor red -foreground black  
  
         $qryTypeBox select $SELECTEDTABLE
         $qryTypeBox configure -command {typeChange}
@@ -296,9 +297,11 @@ proc updateCatList { selectFrame } {
 	    set localTableList [list event data icmphdr tcphdr udphdr sensor]
 	} elseif { $SELECTEDTABLE == "sessions" } {
 	    set localTableList [list sessions sensor]
-	} else {
+	} elseif { $SELECTEDTABLE == "sancp" } {
 	    set localTableList [list sancp sensor]
-	}
+	} elseif { $SELECTEDTABLE == "pads" } {
+            set localTableList [list pads sensor] } {
+        }
 	eval $selectFrame.cList insert 0 $localTableList
     } else {
 	eval $selectFrame.cList insert 0 $funcList(main)
@@ -403,13 +406,17 @@ proc typeChange {} {
     foreach box $whereBoxList {
         $box delete 0.0 end
     }
+
+    set tableType [$mainFrame.qFrame.qTypeBox get]
     
-    if {[$mainFrame.qFrame.qTypeBox get] == "event" } {
+    if { $tableType == "event" } {
 	set SELECTEDTABLE "event"
-    } elseif {[$mainFrame.qFrame.qTypeBox get] == "sessions" } {
+    } elseif { $tableType == "sessions" } {
 	set SELECTEDTABLE "sessions"
-    } else {
+    } elseif { $tableType == "sancp" } {
 	set SELECTEDTABLE "sancp"
+    } elseif { $tableType == "pads" } {
+	set SELECTEDTABLE "pads"
     }
     
     
