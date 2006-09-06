@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.222 2006/06/02 20:53:14 bamm Exp $ #
+# $Id: sguil.tk,v 1.223 2006/09/06 16:29:37 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -902,7 +902,6 @@ proc InsertOpenPortsData { data } {
 		set asciiPayload "${asciiPayload}${currentChar}"
 	    
 	    }
-	    puts $asciiPayload
 	    if [regexp "Open Port: (\\d*)"  $asciiPayload fullmatch PortNumber] {
 		    $sfpOPDataFrame.sfpOPDataText insert end "${dstIP}:${PortNumber}\n"
 	    }
