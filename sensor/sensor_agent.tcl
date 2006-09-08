@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.61 2006/04/17 20:25:49 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.62 2006/09/08 20:48:40 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -740,7 +740,7 @@ proc ParseSsnSancpFiles { fileName } {
 
         } else {
 
-            set fDate [clock format [clock scan $date] -gmt true -f "%Y%m%d"]
+            set fDate [clock format [clock scan $date] -f "%Y%m%d"]
 
             # Files can contain data from different start days
             if { ![info exists outFileID($fDate)] } {
