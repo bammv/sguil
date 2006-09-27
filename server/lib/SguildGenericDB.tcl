@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.21 2006/04/17 18:52:36 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.22 2006/09/27 18:13:18 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -22,9 +22,25 @@ proc InsertHistory { sid cid uid timestamp status comment} {
 proc GetSensorID { sensorName {type {1}} } {
 
     # For now we query the DB everytime we need the sid.
-    set sid [FlatDBQuery "SELECT sid FROM sensor WHERE hostname='$sensorName' AND sensor_type='$type'"]
+    set sensorID [FlatDBQuery "SELECT sid FROM sensor WHERE hostname='$sensorName' AND sensor_type='$type'"]
 
-    return $sid
+    if { $sensorID == "" } {
+
+        LogMessage "New sensor. Adding sensor $sensorName to the DB."
+
+        set tmpQuery "INSERT INTO sensor (hostname, sensor_type) VALUES ('$sensorName', '1')"
+
+        if [catch {SafeMysqlExec $tmpQuery} tmpError] {
+            # Insert failed exit on error
+            ErrorMessage "ERROR Unable to add new sensor: mysqld: $tmpError :\nQuery => $tmpQuery"
+            return
+        }
+
+        set sensorID [GetSensorID $sensorName]
+
+    }
+
+    return $sensorID
 
 }
 
