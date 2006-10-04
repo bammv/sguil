@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.39 2006/06/02 20:53:14 bamm Exp $
+# $Id: extdata.tcl,v 1.40 2006/10/04 02:44:37 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -20,12 +20,13 @@ proc GetRuleInfo {} {
         }
 
         set selectedIndex [$CUR_SEL_PANE(name) curselection]
+        set event_id [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID]
         set message [$CUR_SEL_PANE(name) getcells $selectedIndex,event]
         set sensorName [$CUR_SEL_PANE(name) getcells $selectedIndex,sensor]
 
-        if {$DEBUG} {puts  "RuleRequest $sensorName $message"}
+        if {$DEBUG} {puts "RuleRequest $event_id $sensorName $message"}
 
-        SendToSguild "RuleRequest $sensorName $message"
+        SendToSguild "RuleRequest $event_id $sensorName $message"
 
     } else {
 

@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.21 2006/04/17 18:52:36 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.22 2006/10/04 02:44:37 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -47,7 +47,7 @@ proc ClientCmdRcvd { socketID } {
       GetUdpData { $clientCmd $socketID $index1 $index2 }
       MonitorSensors { $clientCmd $socketID $data1 }
       QueryDB { $clientCmd $socketID $index1 $data2 }
-      RuleRequest { $clientCmd $socketID $index1 $data2 }
+      RuleRequest { $clientCmd $socketID $index1 $index2 $data3 }
       SendSensorList { $clientCmd $socketID }
       SendEscalatedEvents { $clientCmd $socketID }
       SendDBInfo { $clientCmd $socketID }
@@ -151,36 +151,66 @@ proc SendDBInfo { socketID } {
 # RuleRequest finds rule based on message. Should change this to
 # use sig ids in the future.
 #
-proc RuleRequest { socketID sensor message } {
-  global RULESDIR
+proc RuleRequest { socketID event_id sensor message } {
+
+    global RULESDIR
                                                                                                             
-  set RULEFOUND 0
-  set ruleDir $RULESDIR/$sensor
-  if { [file exists $ruleDir] } {
-    foreach ruleFile [glob -nocomplain $ruleDir/*.rules] {
-      InfoMessage "Checking $ruleFile..."
-      set ruleFileID [open $ruleFile r]
-      set line 0
-      while { [gets $ruleFileID data] >= 0 } {
-        incr  line
-        if { [string match "*$message*" $data] } {
-          set RULEFOUND 1
-          InfoMessage "Matching rule found in $ruleFile."
-          break
-        }
-      }
-      close $ruleFileID
-      if {$RULEFOUND} {break}
+    set RULEFOUND 0
+    set ruleDir $RULESDIR/$sensor
+
+    # Check for an alert with no sid-msg.map (Snort Alert [#:#:#])
+    if { [regexp {Snort Alert \[([0-9]+):([0-9]+):([0-9]+)\]} $message match gen_id rule_id rev] } {
+
+        set search_string "sid:$rule_id"
+
+    } else {
+
+        set search_string "msg:\"$message\""
+
     }
-  } else {
-    set data "Could not find $ruleDir."
-  }
-  if {$RULEFOUND} {
-    catch {SendSocket $socketID "InsertRuleData $data"} tmpError
-    catch {SendSocket $socketID "InsertRuleData $ruleFile: Line $line"} tmpError
-  } else {
-    catch {SendSocket $socketID "InsertRuleData Unable to find matching rule in $ruleDir."} tmpError
-  }
+  
+
+    if { [file exists $ruleDir] } {
+
+        foreach ruleFile [glob -nocomplain $ruleDir/*.rules] {
+
+            InfoMessage "Checking $ruleFile..."
+            set ruleFileID [open $ruleFile r]
+            set line 0
+
+            while { [gets $ruleFileID data] >= 0 } {
+
+                incr  line
+                if { [string match "*$search_string*" $data] } {
+                    set RULEFOUND 1
+                    InfoMessage "Matching rule found in $ruleFile."
+                    break
+                }
+
+            }
+
+            close $ruleFileID
+            if {$RULEFOUND} {break}
+
+        }
+
+    } else {
+  
+        set data "Could not find $ruleDir."
+
+    }
+
+    if {$RULEFOUND} {
+
+        catch {SendSocket $socketID "InsertRuleData $data"} tmpError
+        catch {SendSocket $socketID "InsertRuleData $ruleFile: Line $line"} tmpError
+
+    } else {
+
+        catch {SendSocket $socketID "InsertRuleData Unable to find matching rule in $ruleDir."} tmpError
+
+    }
+
 }
 
 proc GetPSData { socketID timestamp srcIP MAX_PS_ROWS } {
