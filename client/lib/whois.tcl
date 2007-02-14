@@ -1,4 +1,4 @@
-# $Id: whois.tcl,v 1.7 2006/04/18 18:12:46 bamm Exp $ #
+# $Id: whois.tcl,v 1.8 2007/02/14 17:25:41 bamm Exp $ #
 
 proc ClientSocketTimeOut { host port timeout } {
   global WHOIS_CONNECTED
@@ -102,7 +102,6 @@ proc SimpleWhois { ipAddr } {
   }
 
   if { [info exists refServer] } {
-      puts "Getting Here"
       set newNicSrvr [lindex $refServer 0]
       set rPort [lindex $refServer 1]
   }
