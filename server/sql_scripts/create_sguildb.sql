@@ -1,4 +1,4 @@
--- $Id: create_sguildb.sql,v 1.16 2006/04/17 18:52:36 bamm Exp $
+-- $Id: create_sguildb.sql,v 1.17 2007/03/01 05:06:45 bamm Exp $
 -- Users may want to use a different DB name.
 -- CREATE DATABASE IF NOT EXISTS sguildb;
 -- USE sguildb;
@@ -96,7 +96,8 @@ CREATE TABLE sensor
 (
   sid		INT UNSIGNED	NOT NULL AUTO_INCREMENT,
   hostname	VARCHAR(255)	NOT NULL,
-  sensor_type   INT UNSIGNED,
+  agent_type    VARCHAR(40),
+  net_name	VARCHAR(40),
   interface	VARCHAR(255),
   description	TEXT,
   bpf_filter	TEXT,

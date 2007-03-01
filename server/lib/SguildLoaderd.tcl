@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.22 2006/06/02 20:40:57 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.23 2007/03/01 05:06:45 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -338,7 +338,16 @@ proc CheckLoaderDir {} {
 
     global TMP_LOAD_DIR
 
-    if { ![file exists $TMP_LOAD_DIR] } { file mkdir $TMP_LOAD_DIR }
+    if { ![file exists $TMP_LOAD_DIR] } { 
+
+        # Attempt to create it
+        if { [catch {file mkdir $TMP_LOAD_DIR} err] } {
+
+            ErrorMessage "Unable to create load directory: $err"
+
+        }
+
+    }
 
     # Load SANCP files
     foreach fileName [glob -nocomplain $TMP_LOAD_DIR/parsed.*] {

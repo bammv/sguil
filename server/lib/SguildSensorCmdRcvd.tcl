@@ -1,7 +1,7 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.21 2006/06/02 20:49:11 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.22 2007/03/01 05:06:45 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
-  global connectedAgents agentSensorNameArray
+  global connectedAgents agentSensorNameArray validSensorSockets
   if { [eof $socketID] || [catch {gets $socketID data}] } {
     # Socket closed
     catch { close $socketID } closeError
@@ -11,8 +11,25 @@ proc SensorCmdRcvd { socketID } {
     }
   } else {
     InfoMessage "Sensor Data Rcvd: $data"
-    set sensorCmd [lindex $data 0]
+    if { [catch {lindex $data 0} sensorCmd] } {
+        LogMessage "Ignoring bad command received from $socketID: $data"
+        return
+    }
+
+    # Make sure agent has registered
+    if { $sensorCmd != "RegisterAgent" } {
+
+        if { [lsearch -exact $validSensorSockets $socketID] < 0 } {
+
+            LogMessage "Ignoring cmd from unregistered agent: $data"
+            return
+
+        }
+
+    }
+
     switch -exact -- $sensorCmd {
+      RegisterAgent      { RegisterAgent $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
       PadsAsset          { ProcessPadsAsset [lindex $data 1] }
       SsnFile            { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
       SancpFile          { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
@@ -67,7 +84,8 @@ proc RcvSancpFile { socketID sensorName fileName date bytes } {
     set sancpFile $TMP_LOAD_DIR/$fileName
     RcvBinCopy $socketID $sancpFile $bytes
 
-    ConfirmSancpFile $sensorName $fileName
+
+    SendSensorAgent $socketID [list ConfirmSancpFile $fileName]
  
     #update
     
@@ -112,4 +130,3 @@ proc SystemMsgRcvd { socketID msg } {
     }
 
 }
-

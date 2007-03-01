@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.12 2005/11/29 22:41:39 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.13 2007/03/01 05:06:45 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -39,7 +39,7 @@ proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   return [list $sensorDir $rawDataFileName]
 }
 
-proc EtherealRequest { socketID sensor timestamp srcIP srcPort dstIP dstPort ipProto force } {
+proc EtherealRequest { socketID sensor sensorID timestamp srcIP srcPort dstIP dstPort ipProto force } {
   global NEXT_TRANS_ID transInfoArray LOCAL_LOG_DIR
     # Increment the xscript counter. Gives us a unique way to track the xscript
   incr NEXT_TRANS_ID
@@ -56,7 +56,7 @@ proc EtherealRequest { socketID sensor timestamp srcIP srcPort dstIP dstPort ipP
   set transInfoArray($TRANS_ID) [list $socketID null $sensorDir ethereal $sensor $timestamp ]
   if { ! [file exists $sensorDir/$rawDataFileName] || $force } {
     # No local archive (first request) or the user has requested we force a check for new data.
-    if { ![GetRawDataFromSensor $TRANS_ID $sensor $timestamp $srcIP $srcPort $dstIP $dstPort $ipProto $rawDataFileName ethereal] } {
+    if { ![GetRawDataFromSensor $TRANS_ID $sensor $sensorID $timestamp $srcIP $srcPort $dstIP $dstPort $ipProto $rawDataFileName ethereal] } {
       # This means the sensor_agent for this sensor isn't connected.
       SendSocket $socketID "ErrorMessage ERROR: Unable to request rawdata at this time.\
        The sensor $sensor is NOT connected."
@@ -101,7 +101,7 @@ proc AbortXscript { socketID winName } {
   set CANCEL_TRANS_FLAG($winName) 1
   update
 }
-proc XscriptRequest { socketID sensor winID timestamp srcIP srcPort dstIP dstPort force } {
+proc XscriptRequest { socketID sensor sensorID winID timestamp srcIP srcPort dstIP dstPort force } {
   global NEXT_TRANS_ID transInfoArray LOCAL_LOG_DIR TCPFLOW CANCEL_TRANS_FLAG
   # If we don't have TCPFLOW then error to the user and return
   if { ![info exists TCPFLOW] || ![file exists $TCPFLOW] || ![file executable $TCPFLOW] } {
@@ -131,7 +131,7 @@ proc XscriptRequest { socketID sensor winID timestamp srcIP srcPort dstIP dstPor
   set transInfoArray($TRANS_ID) [list $socketID $winID $sensorDir xscript $sensor $timestamp ]
   if { ! [file exists $sensorDir/$rawDataFileName] || $force } {
     # No local archive (first request) or the user has requested we force a check for new data.
-    if { ![GetRawDataFromSensor $TRANS_ID $sensor $timestamp $srcIP $srcPort $dstIP $dstPort 6 $rawDataFileName xscript] } {
+    if { ![GetRawDataFromSensor $TRANS_ID $sensor $sensorID $timestamp $srcIP $srcPort $dstIP $dstPort 6 $rawDataFileName xscript] } {
       # This means the sensor_agent for this sensor isn't connected.
       SendSocket $socketID "ErrorMessage ERROR: Unable to request xscript at this time.\
        The sensor $sensor is NOT connected."
@@ -146,21 +146,33 @@ proc XscriptRequest { socketID sensor winID timestamp srcIP srcPort dstIP dstPor
   }
 }
 
-proc GetRawDataFromSensor { TRANS_ID sensor timestamp srcIP srcPort dstIP dstPort proto filename type } {
+proc GetRawDataFromSensor { TRANS_ID sensor sensorID timestamp srcIP srcPort dstIP dstPort proto filename type } {
   global agentSocketArray connectedAgents transInfoArray
+  global pcapSocket
+
   set RFLAG 1
-  if { [array exists agentSocketArray] && [info exists agentSocketArray($sensor)]} {
-      set sensorSocketID $agentSocketArray($sensor)
+  set sensorNetName [MysqlGetNetName $sensorID]
+  puts "#### DEBUG: $sensorNetName"
+  if { $sensorNetName == "unknown" } { return 0 }
+  puts "#### DEBUG: [array names pcapSocket]"
+
+  if { [array exists pcapSocket] } { puts "#### DEBUG: array pcapSocket exists" } 
+  if { [info exists pcapSocket($sensorNetName)] } { puts "#### DEBUG: pcapSocket($sensorNetName) exists" } 
+
+  puts "#### DEBUG: $pcapSocket($sensorNetName)"
+
+  if { [array exists pcapSocket] && [info exists pcapSocket($sensorNetName)]} {
+      set pcapSocketID $pcapSocket($sensorNetName)
       InfoMessage "Sending $sensor: RawDataRequest $TRANS_ID $sensor $timestamp $srcIP $dstIP $dstPort $proto $filename $type"
 
-      if { [catch { puts $sensorSocketID\
+      if { [catch { puts $pcapSocketID\
 	      "[list RawDataRequest $TRANS_ID $sensor $timestamp $srcIP $dstIP $srcPort $dstPort $proto $filename $type]" }\
 	      sendError] } {
-	  catch { close $sensorSocketID } tmpError
-	  CleanUpDisconnectedAgent $sensorSocketID
+	  catch { close $pcapSocketID } tmpError
+	  CleanUpDisconnectedAgent $pcapSocketID
 	  set RFLAG 0
       }
-      flush $sensorSocketID
+      flush $pcapSocketID
       if { $type == "xscript" } {
 	  SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
 	      "XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] Raw data request sent to $sensor."

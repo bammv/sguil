@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sensor_agent.tcl,v 1.62 2006/09/08 20:48:40 bamm Exp $ #
+# $Id: sensor_agent.tcl,v 1.63 2007/03/01 05:06:44 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -16,6 +16,11 @@ exec tclsh "$0" "$@"
 #
 # Config options moved to sensor_agent.conf.
 #
+
+puts "sensor_agent.tcl has been depreciated."
+puts "Each data type now has its own agent."
+puts "See documentation for details"
+exit
 
 # Don't touch these
 set VERSION "SGUIL-0.6.1"

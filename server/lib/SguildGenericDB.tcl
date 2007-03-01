@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.22 2006/09/27 18:13:18 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.23 2007/03/01 05:06:45 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -19,24 +19,39 @@ proc InsertHistory { sid cid uid timestamp status comment} {
   }
 }
                                                                                                      
-proc GetSensorID { sensorName {type {1}} } {
+proc MysqlGetNetName { sensorID } {
+
+    set netName [FlatDBQuery "SELECT net_name FROM sensor WHERE sid='$sensorID'"]
+    if { $netName == "" } { set netName "unknown" }
+    return $netName
+   
+}
+
+proc GetSensorID { sensorName type netName } {
 
     # For now we query the DB everytime we need the sid.
-    set sensorID [FlatDBQuery "SELECT sid FROM sensor WHERE hostname='$sensorName' AND sensor_type='$type'"]
+    set sensorID [FlatDBQuery "SELECT sid FROM sensor WHERE hostname='$sensorName' AND agent_type='$type'"]
 
     if { $sensorID == "" } {
 
         LogMessage "New sensor. Adding sensor $sensorName to the DB."
 
-        set tmpQuery "INSERT INTO sensor (hostname, sensor_type) VALUES ('$sensorName', '1')"
+        set tmpQuery "INSERT INTO sensor (hostname, agent_type, net_name) VALUES ('$sensorName', '$type', '$netName')"
 
         if [catch {SafeMysqlExec $tmpQuery} tmpError] {
             # Insert failed exit on error
-            ErrorMessage "ERROR Unable to add new sensor: mysqld: $tmpError :\nQuery => $tmpQuery"
+            ErrorMessage "ERROR: Unable to add new sensor: mysqld: $tmpError :\nQuery => $tmpQuery"
             return
         }
 
-        set sensorID [GetSensorID $sensorName]
+        set sensorID [FlatDBQuery "SELECT sid FROM sensor WHERE hostname='$sensorName' AND agent_type='$type'"]
+        if { $sensorID == "" } {
+
+            # Insert failed exit on error
+            ErrorMessage "ERROR: Unable to add sensor using query => SELECT sid FROM sensor WHERE hostname='$sensorName' AND agent_type='$type'" 
+            return
+
+        }
 
     }
 

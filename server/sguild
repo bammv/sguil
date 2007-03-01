@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.172 2006/06/02 20:49:11 bamm Exp $ #
+# $Id: sguild,v 1.173 2007/03/01 05:06:44 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -116,9 +116,10 @@ proc QuerydCmdRcvd { pipeID } {
 
 ###################### MAIN #####################################
 
-set validSockets ""
+set validSockets {}
+set validSensorSockets {}
 set clientList {}
-set LOGGER ""
+set LOGGER {}
 
 # Check to see if tcl was compiled w/threading enabled.
 # Fork and thread don't play nice together so we bail 
@@ -526,11 +527,11 @@ set sensorList [FlatDBQuery $sensorQuery]
 # Build the sensor status array
 foreach sensorName $sensorList {
 
-    set tmpQuery "SELECT sid FROM sensor WHERE hostname='$sensorName' AND sensor_type=1"
+    set tmpQuery "SELECT sid FROM sensor WHERE hostname='$sensorName' AND agent_type='snort'"
     LogMessage "  $tmpQuery"
     set sensorSid [FlatDBQuery $tmpQuery]
 
-    set tmpQuery "SELECT ip FROM sensor WHERE hostname='$sensorName' AND sensor_type=1"
+    set tmpQuery "SELECT ip FROM sensor WHERE hostname='$sensorName' AND agent_type='snort'"
     LogMessage "  $tmpQuery"
     set sensorIP [lindex [FlatDBQuery $tmpQuery] 0]
     if { $sensorIP == "" } { set sensorIP "Unknown" }

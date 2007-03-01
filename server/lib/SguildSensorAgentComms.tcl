@@ -1,4 +1,48 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.22 2006/04/17 18:52:36 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.23 2007/03/01 05:06:45 bamm Exp $ #
+
+# Get the sid and cid for the agent. Create it if it doesn't exist. 
+# Send the agent [AgentSid {type} {sid}]
+proc RegisterAgent { socketID type sensorName netName } {
+
+    global connectedAgents agentSocketArray agentSensorNameArray
+    global validSensorSockets sensorStatusArray
+    global pcapSocket sancpSocket padsSocket sancpSocket snortSocket
+
+    set sensorID [GetSensorID $sensorName $type $netName]
+
+
+    # Update status array
+    #if { [info exists sensorStatusArray($sensorName)] } {
+    #    set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 2 3 1 $byStatus ]
+    #} else {
+    #    set sensorStatusArray($sensorName) [list $sensorID Unknown 1 $byStatus None]
+    #}
+    #SendAllSensorStatusInfo
+
+    # Add agent to a list of valid sockets
+    lappend validSensorSockets $socketID
+    # Send sensor id to the agent
+    SendSensorAgent $socketID [list AgentInfo $sensorName $type $netName $sensorID]
+    # SensorName to SocketID mapping
+    set agentSensorNameArray($socketID) $sensorName
+
+    # Update various array info
+    switch -exact $type {
+
+        pads { set padsSocket($netName) $socketID }
+        pcap { set pcapSocket($netName) $socketID }
+        sancp { set sancpSocket($netName) $socketID }
+        snort { set snortSocket($netName) $socketID }
+        default { LogMessage "Unknown agent type connected on socket ${socketID}: $type" }
+
+    }
+
+    set socketInfo($socketID) [list $sensorName $netName $type]
+
+    #SendSystemInfoMsg $sensorName "Agent connected."
+
+}
+
 
 proc SendSensorAgent { socketID msg } {
 
@@ -22,11 +66,6 @@ proc SendSensorAgent { socketID msg } {
 proc AgentLastCidReq { socketID req_socketID sid } {
 
     set maxCid [GetMaxCid $sid]
-
-    if { $maxCid == "{}" } {
-        # New sensor
-        set maxCid 0
-    }
 
     SendSensorAgent $socketID [list LastCidResults $req_socketID $maxCid]
 
@@ -159,22 +198,6 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
 
         set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 1 1 $timestamp]
 
-    }
-
-}
-
-proc ConfirmSancpFile { sensorName fileName } {
-
-    global agentSocketArray agentSensorNameArray
-
-    if { [array exists agentSocketArray] && [info exists agentSocketArray($sensorName)]} {
-    
-        SendSensorAgent $agentSocketArray($sensorName) [list ConfirmSancpFile $fileName]
-    
-    } else { 
-    
-        after 5000 ConfirmSancpFile $sensorName $fileName
-    
     }
 
 }
