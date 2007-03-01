@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.223 2006/09/06 16:29:37 bamm Exp $ #
+# $Id: sguil.tk,v 1.224 2007/03/01 05:14:55 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -686,8 +686,8 @@ proc InsertEscalatedEvent { data } {
 proc InsertSessionQueryResults { paneName results } {
  
     if { $results == "done" } { [winfo parent $paneName] configure -cursor left_ptr; return }
-
-    $paneName insert end $results
+    set tmpList [lreplace $results 1 2 "[lindex $results 1].[lindex $results 2]"]
+    $paneName insert end $tmpList
 
 }
 

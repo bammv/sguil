@@ -1,4 +1,4 @@
-# $Id: sancp.tcl,v 1.10 2006/01/31 19:45:34 bamm Exp $ 
+# $Id: sancp.tcl,v 1.11 2007/03/01 05:14:55 bamm Exp $ 
 #
 # Build a sancp query tab and send the query to sguild.
 #
@@ -8,9 +8,10 @@ proc SancpQueryRequest { selectedTable whereList } {
 
     if {!$CONNECTED} {ErrorMessage "Not connected to sguild. Query aborted"; return}
 
-    set COLUMNS "sensor.hostname, sancp.sancpid, sancp.start_time as datetime, sancp.end_time,\
-     INET_NTOA(sancp.src_ip), sancp.src_port, INET_NTOA(sancp.dst_ip), sancp.dst_port,\
-     sancp.ip_proto, sancp.src_pkts, sancp.src_bytes, sancp.dst_pkts, sancp.dst_bytes"
+    set COLUMNS "sensor.hostname, sancp.sid, sancp.sancpid, sancp.start_time as datetime,\
+     sancp.end_time, INET_NTOA(sancp.src_ip), sancp.src_port, INET_NTOA(sancp.dst_ip),\
+     sancp.dst_port, sancp.ip_proto, sancp.src_pkts, sancp.src_bytes, sancp.dst_pkts,\
+     sancp.dst_bytes"
 
     foreach whereStatement $whereList {
 

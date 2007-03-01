@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.40 2006/10/04 02:44:37 bamm Exp $
+# $Id: extdata.tcl,v 1.41 2007/03/01 05:14:55 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -607,17 +607,17 @@ proc GetXscript { type force } {
     if {!$ACTIVE_EVENT} {return}
 
     set selectedIndex [$CUR_SEL_PANE(name) curselection]
+    set sidcidList [split [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID] .]
+    set cnxID [lindex $sidcidList 1]
+    set sensorID [lindex $sidcidList 0]
+    set proto [$CUR_SEL_PANE(name) getcells $selectedIndex,ipproto]
 
     if { $CUR_SEL_PANE(format) == "SSN" } {
 
-        set cnxID [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID]
         set timestamp [$CUR_SEL_PANE(name) getcells $selectedIndex,starttime]
-        set proto [$CUR_SEL_PANE(name) getcells $selectedIndex,ipproto]
 
     } else {
 
-        set proto [$CUR_SEL_PANE(name) getcells $selectedIndex,ipproto]
-        set cnxID [lindex [split [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID] .] 1]
         set timestamp [$CUR_SEL_PANE(name) getcells $selectedIndex,date]
 
     }
@@ -659,19 +659,19 @@ proc GetXscript { type force } {
          "Your request has been sent to the server.\nPlease be patient as this can take some time."
         $xscriptWinName.sText configure -cursor watch
         set XSCRIPTDATARCVD($xscriptWinName) 0
-        SendToSguild "XscriptRequest $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
+        SendToSguild "XscriptRequest $sensor $sensorID $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
 
         if {$DEBUG} {
-            puts "Xscript Request sent: $sensor $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
+            puts "Xscript Request sent: $sensor $sensorID $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
         }
   
     } elseif { $type == "ethereal" } {
 
       if {$DEBUG} {
-          puts "Ethereal Request sent: $sensor \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
+          puts "Ethereal Request sent: $sensor $sensorID \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
       }
 
-      SendToSguild "EtherealRequest $sensor \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
+      SendToSguild "EtherealRequest $sensor $sensorID \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
 
     }
 
