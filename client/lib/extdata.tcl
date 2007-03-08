@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.41 2007/03/01 05:14:55 bamm Exp $
+# $Id: extdata.tcl,v 1.42 2007/03/08 05:47:34 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -1065,24 +1065,26 @@ proc SensorStatusUpdate { statusList } {
     # Clear the current list
     $sensorStatusTable delete 0 end
 
-    set sensorNameIndex [$sensorStatusTable columnindex sensorName]
-    set sensorSidIndex [$sensorStatusTable columnindex sensorSid]
-    set sensorLastAlertIndex [$sensorStatusTable columnindex sensorLastAlert]
-    set sensorAgentIndex [$sensorStatusTable columnindex sensorAgent]
-    set sensorBYIndex [$sensorStatusTable columnindex sensorBY]
+    set agentSidIndex [$sensorStatusTable columnindex agentSid]
+    set agentNetnameIndex [$sensorStatusTable columnindex agentNetname]
+    set agentHostnameIndex [$sensorStatusTable columnindex agentHostname]
+    set agentTypeIndex [$sensorStatusTable columnindex agentType]
+    set agentLastIndex [$sensorStatusTable columnindex agentLast]
+    set agentStatusIndex [$sensorStatusTable columnindex agentStatus]
 
-    foreach sensorName [lsort [array names sensorStatusArray]] {
+    foreach sensorID [lsort [array names sensorStatusArray]] {
 
-        set tmpList [list "" "" "" "" ""]
-        set tmpList [lreplace $tmpList $sensorNameIndex $sensorNameIndex $sensorName]
-        set tmpList [lreplace $tmpList $sensorSidIndex $sensorSidIndex [lindex $sensorStatusArray($sensorName) 0]]
-        set tmpList [lreplace $tmpList $sensorLastAlertIndex $sensorLastAlertIndex [lindex $sensorStatusArray($sensorName) 1]]
-        set tmpList [lreplace $tmpList $sensorAgentIndex $sensorAgentIndex [lindex $sensorStatusArray($sensorName) 2]]
-        set tmpList [lreplace $tmpList $sensorBYIndex $sensorBYIndex [lindex $sensorStatusArray($sensorName) 3]]
+        set tmpList [list "" "" "" "" "" ""]
+        set tmpList [lreplace $tmpList $agentSidIndex $agentSidIndex $sensorID]
+        set tmpList [lreplace $tmpList $agentNetnameIndex $agentNetnameIndex [lindex $sensorStatusArray($sensorID) 0]]
+        set tmpList [lreplace $tmpList $agentHostnameIndex $agentHostnameIndex [lindex $sensorStatusArray($sensorID) 1]]
+        set tmpList [lreplace $tmpList $agentTypeIndex $agentTypeIndex [lindex $sensorStatusArray($sensorID) 2]]
+        set tmpList [lreplace $tmpList $agentLastIndex $agentLastIndex [lindex $sensorStatusArray($sensorID) 3]]
+        set tmpList [lreplace $tmpList $agentStatusIndex $agentStatusIndex [lindex $sensorStatusArray($sensorID) 4]]
 
         $sensorStatusTable insert end $tmpList
-        $sensorStatusTable cellconfigure end,sensorAgent -window "CreateStatusLabel [lindex $tmpList $sensorAgentIndex]"
-        $sensorStatusTable cellconfigure end,sensorBY -window "CreateStatusLabel [lindex $tmpList $sensorBYIndex]"
+        $sensorStatusTable cellconfigure end,agentStatus -window "CreateStatusLabel [lindex $tmpList $agentStatusIndex]"
+        #$sensorStatusTable cellconfigure end,sensorBY -window "CreateStatusLabel [lindex $tmpList $sensorBYIndex]"
 
     }
 

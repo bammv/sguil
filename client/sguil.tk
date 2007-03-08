@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.224 2007/03/01 05:14:55 bamm Exp $ #
+# $Id: sguil.tk,v 1.225 2007/03/08 05:47:33 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1685,7 +1685,7 @@ proc SensorList { sensorList } {
     # Now a frame to contain the checkbutton frames
     set checkButtonFrame [frame $sensorSelectWindow.checkButtonFrame -borderwidth 1 -background black]
     pack $checkButtonFrame -side top -padx 5 -pady 10
-    set winLabel [label $checkButtonFrame.label -text "Select Sensor(s) to Monitor"\
+    set winLabel [label $checkButtonFrame.label -text "Select Network(s) to Monitor"\
      -foreground navy]
     pack $winLabel -side top -fill both -expand true
     # We create a new frame for every 5 sensors to keep the look clean.
@@ -2041,7 +2041,7 @@ set topFrame [frame .topFrame]
   set fileList [menu $fileMenu.menu -tearoff 0]
     $fileList add command -label "Display Incident Categories" -command DisplayIncidentCats  
     $fileList add command -label "Sleep (Ctrl-s)" -command "GoToSleep"
-    $fileList add command -label "Change Sensor(s)" -command "ChangeSensors"
+    $fileList add command -label "Change Monitored Network(s)" -command "ChangeSensors"
     $fileList add cascade -label "Change Font" -menu $fileList.font
     set fontMenu [menu $fileList.font -tearoff 0]
       $fontMenu add command -label "Standard" -command {ChangeFont ourStandardFont}
@@ -2139,7 +2139,7 @@ set detailTabs [tabnotebook [$detailPane childsite 0].detailTabs\
 pack $detailTabs -side left -expand true -fill both -padx 0 -pady 0
 
 $detailTabs add -label "IP Resolution"
-$detailTabs add -label "Sensor Status"
+$detailTabs add -label "Agent Status"
 $detailTabs add -label "Snort Statistics"
 $detailTabs add -label "System Msgs"\
  -command "$detailTabs pageconfigure 3 -foreground black"
@@ -2212,19 +2212,21 @@ set sensorStatusTable $sensorStatusTableFrame.sensorStatusTable
 set sensorStatusScroll $sensorStatusTableFrame.sensorStatusScroll
 
 tablelist::tablelist $sensorStatusTable \
-    -columns {3  "Sid"        center
-              10 "Sensor"     left
-              20 "Last Alert" center
-              6  "Agent"      center
-              6  "BY"         center}   \
+    -columns {3  "Sid"             center
+              12 "Net"             left
+              12 "Hostname"        left
+              8  "Type"            left
+              20 "Last"            center
+              6  "Status"          center}   \
     -stretch all \
     -yscrollcommand [list $sensorStatusScroll set] -width 20
 
-$sensorStatusTable columnconfigure 0 -name sensorSid -sortmode integer -resizable 0
-$sensorStatusTable columnconfigure 1 -name sensorName -sortmode ascii -resizable 1 -stretchable 1
-$sensorStatusTable columnconfigure 2 -name sensorLastAlert -sortmode dictionary -resizable 0
-$sensorStatusTable columnconfigure 3 -name sensorAgent -resizable 0 -sortmode dictionary -formatcommand EmptyString
-$sensorStatusTable columnconfigure 4 -name sensorBY -resizable 0 -sortmode dictionary -formatcommand EmptyString
+$sensorStatusTable columnconfigure 0 -name agentSid -sortmode integer -resizable 1
+$sensorStatusTable columnconfigure 1 -name agentNetname -sortmode ascii -resizable 1 -stretchable 1
+$sensorStatusTable columnconfigure 2 -name agentHostname -sortmode ascii -resizable 1 -stretchable 1
+$sensorStatusTable columnconfigure 3 -name agentType -sortmode ascii -resizable 1 -stretchable 1
+$sensorStatusTable columnconfigure 4 -name agentLast -sortmode dictionary -resizable 0
+$sensorStatusTable columnconfigure 5 -name agentStatus -resizable 0 -sortmode dictionary -formatcommand EmptyString
 
 scrollbar $sensorStatusScroll -orient vertical -width 10 -command [list $sensorStatusTable yview]
 
