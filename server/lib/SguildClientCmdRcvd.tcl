@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.22 2006/10/04 02:44:37 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.23 2007/03/08 05:45:06 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -97,7 +97,7 @@ proc ClientExitClose { socketID } {
 }
 
 proc UserMsgRcvd { socketID userMsg } {
-  global socketInfo clientList connectedAgents
+  global socketInfo clientList 
                                                                                                             
   set userMsg [lindex $userMsg 0]
                                                                                                             
@@ -106,10 +106,6 @@ proc UserMsgRcvd { socketID userMsg } {
   if { $userMsg == "who" } {
      foreach client $clientList { lappend usersList [lindex $socketInfo($client) 2] }
      SendSocket $socketID [list UserMessage sguild "Connected users: $usersList"]
-  } elseif { $userMsg == "sensors" || $userMsg == "agents" } {
-    if { [info exists connectedAgents] } {
-      SendSocket $socketID [list UserMessage sguild "Connected sensors: $connectedAgents"]
-    }
   } elseif { $userMsg == "healthcheck" } { 
     #SensorAgentsHealthCheck 1
     SendSocket $socketID [list UserMessage sguild "Command healthcheck depreciated."]
@@ -342,7 +338,7 @@ proc GetOpenPorts { socketID sid cid } {
 #
 proc MonitorSensors { socketID ClientSensorList } {
 
-    global clientList clientMonitorSockets connectedAgents socketInfo sensorUsers sensorList
+    global clientList clientMonitorSockets socketInfo sensorUsers sensorList
     global snortStatsArray
    
 
@@ -368,9 +364,6 @@ proc MonitorSensors { socketID ClientSensorList } {
     }
     SendSystemInfoMsg sguild "User [lindex $socketInfo($socketID) 2] is monitoring sensors: $ClientSensorList"
     SendCurrentEvents $socketID
-    #if { [info exists connectedAgents] } {
-	#  SendSystemInfoMsg sguild "Connected sensors - $connectedAgents"
-    #}
 
     # Send the snort stats info here.
     if { [array exists snortStatsArray] && [array names snortStatsArray] != "" } {
@@ -401,12 +394,14 @@ proc SendEscalatedEvents { socketID } {
 #
 proc SendCurrentEvents { socketID } {
   global eventIDArray eventIDList clientMonitorSockets eventIDCountArray
+  global sidNetNameMap
                                                                                                                        
   if { [info exists eventIDList] && [llength $eventIDList] > 0 } {
     foreach eventID $eventIDList {
-      set sensorName [lindex $eventIDArray($eventID) 3]
-      if { [info exists clientMonitorSockets($sensorName)] } {
-        if { [lsearch -exact $clientMonitorSockets($sensorName) $socketID] >= 0} {
+      set sensorID [lindex [split $eventID .] 0]
+      set netName $sidNetNameMap($sensorID)
+      if { [info exists clientMonitorSockets($netName)] } {
+        if { [lsearch -exact $clientMonitorSockets($netName) $socketID] >= 0} {
           InfoMessage "Sending client $socketID: InsertEvent [lrange $eventIDArray($eventID) 0 12]" 
           catch {\
            SendSocket $socketID "InsertEvent [lrange $eventIDArray($eventID) 0 12] $eventIDCountArray($eventID)"\

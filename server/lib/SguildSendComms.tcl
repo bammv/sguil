@@ -1,4 +1,4 @@
-# $Id: SguildSendComms.tcl,v 1.4 2006/04/17 18:52:36 bamm Exp $ #
+# $Id: SguildSendComms.tcl,v 1.5 2007/03/08 05:45:06 bamm Exp $ #
 
 #
 # SendSocket: Send command to client
@@ -20,10 +20,11 @@ proc SendSocket { socketID command } {
 # SendEvent: Send events to connected clients
 #
 proc SendEvent { eventDataList } {
-  global clientMonitorSockets
-  set sensorName [lindex $eventDataList 3]
-  if { [info exists clientMonitorSockets($sensorName)] } {
-    foreach clientSocket $clientMonitorSockets($sensorName) {
+  global clientMonitorSockets sidNetNameMap
+  set sensorID [lindex $eventDataList 1]
+  set netName $sidNetNameMap($sensorID)
+  if { [info exists clientMonitorSockets($netName)] } {
+    foreach clientSocket $clientMonitorSockets($netName) {
       catch {SendSocket $clientSocket "InsertEvent $eventDataList"} tmpError
     }
   } else {
@@ -32,9 +33,11 @@ proc SendEvent { eventDataList } {
 }
 
 proc SendIncrEvent { eid sensorName count priority} {
-  global clientMonitorSockets
-  if { [info exists clientMonitorSockets($sensorName)] } {
-    foreach clientSocket $clientMonitorSockets($sensorName) {
+  global clientMonitorSockets sidNetNameMap
+  set sensorID [lindex [split $eid .] 0]
+  set netName $sidNetNameMap($sensorID)
+  if { [info exists clientMonitorSockets($netName)] } {
+    foreach clientSocket $clientMonitorSockets($netName) {
       catch {SendSocket $clientSocket "IncrEvent $eid $count $priority"} tmpError
     }
   } else {
@@ -57,7 +60,7 @@ proc SendSystemInfoMsg { sensor msg } {
 #
 proc SendSensorList { socketID } {
   global sensorList clientMonitorSockets socketInfo sensorUsers
-  set query "SELECT DISTINCT(hostname) FROM sensor WHERE active='Y' ORDER BY hostname ASC"
+  set query "SELECT DISTINCT(net_name) FROM sensor WHERE active='Y' ORDER BY net_name ASC"
   set sensorList [FlatDBQuery $query]
   if { $sensorList == "" } {
     # No sensors in the DB yet

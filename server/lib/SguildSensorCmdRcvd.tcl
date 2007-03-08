@@ -1,12 +1,12 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.22 2007/03/01 05:06:45 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.23 2007/03/08 05:45:06 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
-  global connectedAgents agentSensorNameArray validSensorSockets
+  global agentSensorNameArray validSensorSockets
   if { [eof $socketID] || [catch {gets $socketID data}] } {
     # Socket closed
     catch { close $socketID } closeError
     InfoMessage "Socket $socketID closed"
-    if { [info exists connectedAgents] && [info exists agentSensorNameArray($socketID)] } {
+    if { [info exists agentSensorNameArray($socketID)] } {
       CleanUpDisconnectedAgent $socketID
     }
   } else {
@@ -29,6 +29,7 @@ proc SensorCmdRcvd { socketID } {
     }
 
     switch -exact -- $sensorCmd {
+      LastPcapTime       { UpdateLastPcapTime $socketID [lindex $data 1] }
       RegisterAgent      { RegisterAgent $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
       PadsAsset          { ProcessPadsAsset [lindex $data 1] }
       SsnFile            { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
@@ -79,20 +80,20 @@ proc RcvSsnFile { socketID sensorName fileName date bytes } {
 
 proc RcvSancpFile { socketID sensorName fileName date bytes } {
 
-    global TMPDATADIR TMP_LOAD_DIR sguildWritePipe
+    global TMPDATADIR TMP_LOAD_DIR sguildWritePipe agentStatusList
+    global agentSocketInfo
 
     set sancpFile $TMP_LOAD_DIR/$fileName
     RcvBinCopy $socketID $sancpFile $bytes
 
-
     SendSensorAgent $socketID [list ConfirmSancpFile $fileName]
- 
-    #update
-    
-    # The loader child proc does the LOAD for us.
-    #puts $sguildWritePipe [list LoadSancpFile $sensorName $sancpFile $date]
-    #flush $sguildWritePipe
+    # Update last load time
+    set sid [lindex $agentSocketInfo($socketID) 0]
+    if [info exists agentStatusList($sid)] {
+        set agentStatusList($sid) [lreplace $agentStatusList($sid) 3 3 [GetCurrentTimeStamp]]
+    }
 
+ 
 }
 
 proc RcvPortscanFile { socketID sensorName fileName bytes } {

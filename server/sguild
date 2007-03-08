@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.173 2007/03/01 05:06:44 bamm Exp $ #
+# $Id: sguild,v 1.174 2007/03/08 05:45:05 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -520,37 +520,70 @@ set eventIDList ""
 
 LogMessage "Retrieving DB info..." 
 
-set sensorQuery "SELECT hostname FROM sensor WHERE active='Y' ORDER BY hostname ASC"
+set sensorQuery "SELECT sid, net_name, hostname, agent_type FROM sensor WHERE active='Y' ORDER BY net_name, sid ASC"
 LogMessage "  $sensorQuery"
-set sensorList [FlatDBQuery $sensorQuery]
+set agentList [MysqlSelect $sensorQuery]
 
 # Build the sensor status array
-foreach sensorName $sensorList {
+foreach agentSidType $agentList {
 
-    set tmpQuery "SELECT sid FROM sensor WHERE hostname='$sensorName' AND agent_type='snort'"
-    LogMessage "  $tmpQuery"
-    set sensorSid [FlatDBQuery $tmpQuery]
+    set sid [lindex $agentSidType 0]
+    set net_name [lindex $agentSidType 1]
+    set hostname [lindex $agentSidType 2]
+    set agent_type [lindex $agentSidType 3]
 
-    set tmpQuery "SELECT ip FROM sensor WHERE hostname='$sensorName' AND agent_type='snort'"
-    LogMessage "  $tmpQuery"
-    set sensorIP [lindex [FlatDBQuery $tmpQuery] 0]
-    if { $sensorIP == "" } { set sensorIP "Unknown" }
+    # Get the time of the last alert or load 
+    if { $agent_type == "snort" } {
 
-    if { $mergeTableListArray(event) != "" } {
-        set tmpQuery "SELECT MAX(timestamp) FROM event WHERE sid=$sensorSid"
-        LogMessage "  $tmpQuery"
-        set lastAlert [lindex [FlatDBQuery $tmpQuery] 0]
-        if { $lastAlert == "" } { set lastAlert None }
+        # Make sure the event table has built
+        if { $mergeTableListArray(event) != "" } {
+
+            set tmpQuery "SELECT MAX(timestamp) FROM event WHERE sid=$sid"
+
+        } else { 
+
+            set tmpQuery "N/A"
+
+        }
+
+        # Init snort stats array
+        set snortStatsArray($hostname) [list $sid N/A N/A N/A N/A N/A N/A N/A N/A N/A N/A]
+
+    } elseif { $agent_type == "pads" } {
+
+        set tmpQuery "SELECT MAX(timestamp) FROM pads WHERE sid=$sid"
+
+    } elseif { $agent_type == "sancp" } {
+
+        if { $mergeTableListArray(sancp) != "" } {
+
+            set tmpQuery "SELECT MAX(start_time) FROM sancp WHERE sid=$sid"
+
+        } else {
+
+            set tmpQuery "N/A"
+
+        }
+
     } else {
-        set lastAlert None
+
+        set tmpQuery "N/A"
+
     }
 
-    # Format sid ip agent barnyard lastAlert
-    # agent/by == time of connect or 0 if disconnected.
-    set sensorStatusArray($sensorName) [list $sensorSid $lastAlert 0 0 $sensorIP]
+    if { $tmpQuery == "N/A" } {
 
-    # Init snort stats array
-    set snortStatsArray($sensorName) [list $sensorSid N/A N/A N/A N/A N/A N/A N/A N/A N/A N/A]
+        set last $tmpQuery
+
+    } else {
+
+        LogMessage "  $tmpQuery"
+        set last [lindex [MysqlSelect $tmpQuery flatlist] 0]
+
+    }
+
+    # agentStatusList(sid) net_name hostname agent_type last status
+    set agentStatusList($sid) [list $net_name $hostname $agent_type $last 0]
 
 }
 
@@ -670,8 +703,17 @@ foreach tableName $tableNameList {
   set tableArray($tableName) [mysqlcol $MAIN_DB_SOCKETID $tableName {name type length}]
 }
 
-set sensorQuery "SELECT hostname FROM sensor WHERE active='Y'"
+set sensorQuery "SELECT DISTINCT(net_name) FROM sensor WHERE active='Y'"
 set sensorList [FlatDBQuery $sensorQuery]
+
+# Build a map of net names and sids
+set tmpQuery "SELECT net_name, sid FROM sensor"
+set netList [MysqlSelect $tmpQuery]
+foreach net $netList {
+    set netName [lindex $net 0]
+    set sid [lindex $net 1]
+    set sidNetNameMap($sid) $netName
+}
 
 # Open a socket for clients to connect to
 if { [info exists BIND_CLIENT_IP_ADDR] && $BIND_CLIENT_IP_ADDR != "" } {

@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.16 2006/09/27 18:13:18 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.17 2007/03/08 05:45:06 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -87,21 +87,14 @@ proc SensorConnect { socketID IPAddr port } {
 
 proc AgentInit { socketID sensorName byStatus } {
 
-    global connectedAgents agentSocketArray agentSensorNameArray
-    global sensorStatusArray
+    global agentSocketArray agentSensorNameArray
+    global socketInfo
 
     set sensorID [GetSensorID $sensorName]
 
-    lappend connectedAgents $sensorName
     set agentSocketArray($sensorName) $socketID
     set agentSensorNameArray($socketID) $sensorName
-
-    # Update status array
-    if { [info exists sensorStatusArray($sensorName)] } {
-        set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 2 3 1 $byStatus ]
-    } else { 
-        set sensorStatusArray($sensorName) [list $sensorID Unknown 1 $byStatus None]
-    }
+    set agentSocketSid($socketID) $sensorID
 
     SendSensorAgent $socketID [list BarnyardSensorID $sensorID]
     SendSystemInfoMsg $sensorName "Agent connected."
@@ -109,57 +102,28 @@ proc AgentInit { socketID sensorName byStatus } {
 
 }
 
-proc BarnyardInit { socketID sensorName barnyardStatus} {
-
-    global connectedAgents agentSocketArray agentSensorNameArray
-    global sensorStatusArray
-
-    set sensorID [GetSensorID $sensorName]
-
-    SendSystemInfoMsg $sensorName "Barnyard connected."
-    SendSensorAgent $socketID [list BarnyardSensorID $sensorID]
-
-    if { [info exists sensorStatusArray($sensorName)] } {
-
-        set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 2 3 1 $barnyardStatus]
-
-    } else { 
-
-        # TEMPORARY
-        set sensorStatusArray($sensorName) [list $sensorID Unknown 1 $barnyardStatus None]
-
-    }
-
-    SendAllSensorStatusInfo
-
-}
-
 proc CleanUpDisconnectedAgent { socketID } {
 
-    global connectedAgents agentSocketArray agentSensorNameArray
-    global sensorStatusArray
- 
-    if [info exists agentSensorNameArray($socketID)] { 
+    global agentSocketArray agentSensorNameArray validSensorSockets
+    global agentStatusList agentSocketInfo
 
-        set connectedAgents [ldelete $connectedAgents $agentSensorNameArray($socketID)]
-        set sensorName $agentSensorNameArray($socketID)
+    # Remove the agent socket from the valid (registered) list. 
+    if [info exists validSensorSockets] {
+        set validSensorSockets [ldelete $validSensorSockets $socketID]
+    }
 
-        if [info exists agentSocketArray($sensorName)] {
+    if { [array exists agentSocketInfo] && [info exists agentSocketInfo($socketID)] } {
+  
+        set sid [lindex $agentSocketInfo($socketID) 0]
+        if { [array exists agentStatusList] && [info exists agentStatusList($sid)] } {
 
-            unset agentSocketArray($sensorName)
+            set agentStatusList($sid) [lreplace $agentStatusList($sid) 4 4 0 ]
 
-        }
+        } 
 
-        if [info exists sensorStatusArray($sensorName)] {
+        unset agentSocketInfo($socketID)
 
-            set sensorStatusArray($sensorName) [lreplace $sensorStatusArray($sensorName) 2 3 0 0]
- 
-        }
-
-        unset agentSensorNameArray($socketID)
-
-
-    } 
+    }
 
     SendAllSensorStatusInfo
 

@@ -3,13 +3,15 @@
 #    sensorName sid type s_inetIP s_intIP d_inetIP d_intIP s_port d_port ipproto service app intTime hex_payload
 proc ProcessPadsAsset { dataList } {
 
-    global PADS_CID
+    global PADS_CID agentStatusList
 
     set sid [lindex $dataList 1]
     set d_intIP [lindex $dataList 6]
     set d_port [lindex $dataList 8]
     set ip_proto [lindex $dataList 9]
     set app [lindex $dataList 11]
+    set intTime [lindex $dataList 12]
+    set timestamp [clock format $intTime -gmt true -f "%Y-%m-%d %T"]
 
     # Check for new assest
     set tmpQuery "SELECT timestamp, application FROM pads WHERE sid=$sid AND ip=$d_intIP AND port=$d_port AND ip_proto=$ip_proto ORDER BY timestamp DESC"
@@ -24,8 +26,6 @@ proc ProcessPadsAsset { dataList } {
         set d_inetIP [lindex $dataList 5]
         set s_port [lindex $dataList 7]
         set service [lindex $dataList 10]
-        set intTime [lindex $dataList 12]
-        set timestamp [clock format $intTime -gmt true -f "%Y-%m-%d %T"]
         set hex_payload [lindex $dataList 13]
 
         if { ![array exists PADS_CID] || ![info exists PADS_CID($sid)] } { set PADS_CID($sid) [GetMaxCid $sid] }
@@ -61,6 +61,13 @@ proc ProcessPadsAsset { dataList } {
             AlertAsset changed-asset $sensorName $sid $PADS_CID($sid) $timestamp $intTime $s_inetIP $s_intIP $d_inetIP $d_intIP $s_port $d_port $service $ip_proto $app
 
         }
+
+    }
+
+    # Update last pads rcvd time
+    if [info exists agentStatusList($sid)] {
+
+        set agentStatusList($sid) [lreplace $agentStatusList($sid) 3 3 $timestamp]
 
     }
 

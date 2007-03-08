@@ -4,7 +4,7 @@ proc InitializeMysqlMergeTables {} {
 
     # Make sure the new style (merge) tables are being used and create
     # them if they don't exist
-    foreach tableName [list event tcphdr udphdr icmphdr data] {
+    foreach tableName [list event tcphdr udphdr icmphdr data sancp] {
 
         set tmpQry "SHOW TABLE STATUS LIKE '$tableName'"
         set tableStatus [mysqlsel $MAIN_DB_SOCKETID $tmpQry -flatlist]
@@ -41,7 +41,8 @@ proc InitializeMysqlMergeTables {} {
                 tcphdr       { CreateMysqlMainTcpHdrMergeTable }
                 udphdr       { CreateMysqlMainUdpHdrMergeTable }
                 icmphdr      { CreateMysqlMainIcmpHdrMergeTable }
-                data         { CreateMysqlMainDataMergeTable }
+		data         { CreateMysqlMainDataMergeTable }
+                sancp        { CreateSancpMergeTable $MAIN_DB_SOCKETID}
                 default      { ErrorMessage "Unknown table type: $tableName" }
 
             }

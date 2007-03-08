@@ -1,4 +1,4 @@
-# $Id: SguildHealthChecks.tcl,v 1.8 2006/02/08 06:24:12 bamm Exp $ #
+# $Id: SguildHealthChecks.tcl,v 1.9 2007/03/08 05:45:06 bamm Exp $ #
 #
 # SensorAgentsHealthCheck is called to initialize the check for connected
 # tunnels. First we send  PING and then go back thru and check who
@@ -89,11 +89,11 @@ proc SensorAgentPongRcvd { socketID } {
 
 proc SendClientSensorStatusInfo { socketID } {
 
-    global sensorStatusArray 
+    global agentStatusList 
 
-    if { [array exists sensorStatusArray] && [array names sensorStatusArray] != "" } {
+    if { [array exists agentStatusList] && [array names agentStatusList] != "" } {
 
-        catch { SendSocket $socketID [list SensorStatusUpdate [array get sensorStatusArray]] } tmpError
+        catch { SendSocket $socketID [list SensorStatusUpdate [array get agentStatusList]] } tmpError
 
     }
 
