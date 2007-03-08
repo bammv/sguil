@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.23 2007/03/08 05:45:06 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.24 2007/03/08 15:55:20 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -161,7 +161,7 @@ proc RuleRequest { socketID event_id sensor message } {
 
     } else {
 
-        set search_string "msg:\"$message\""
+        set search_string "msg:*\"$message\""
 
     }
   
