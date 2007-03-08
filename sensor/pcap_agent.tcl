@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: pcap_agent.tcl,v 1.1 2007/03/01 05:06:44 bamm Exp $ #
+# $Id: pcap_agent.tcl,v 1.2 2007/03/08 05:44:04 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -134,6 +134,37 @@ proc RawDataRequest { socketID TRANS_ID sensor timestamp srcIP dstIP srcPort dst
     }
 
 }
+
+# Try to determine the last time log_packets wrote to pcap (approx)
+proc CheckLastPcapFile { { onetime {0} } } {
+
+    global FILE_CHECK_IN_MSECS RAW_LOG_DIR CONNECTED
+    global SENSOR_ID
+
+    if {$CONNECTED && [info exists SENSOR_ID] } {
+
+        set tmpDirList [glob -nocomplain $RAW_LOG_DIR/*]
+        foreach i $tmpDirList { lappend dirList [file tail $i] }
+        set lastDate [lindex [lsort -decreasing $dirList] 0]
+        set checkDir "$RAW_LOG_DIR/$lastDate"
+
+        if { [file exists $checkDir] && [file isdirectory $checkDir] } {
+
+            # Get the name of the newest file 
+            set logFile [lindex [lsort -decreasing [glob -nocomplain $checkDir/snort.log.*]] 0]
+
+        }
+
+        file stat $logFile fileStat
+        set lastModified [clock format $fileStat(mtime) -gmt true -f "%Y-%m-%d %T"]
+        SendToSguild [list LastPcapTime $lastModified]
+
+    }
+
+    if { !$onetime } { after $FILE_CHECK_IN_MSECS CheckLastPcapFile }
+
+}
+
 
 proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto rawDataFileName type } {
 
@@ -536,6 +567,7 @@ proc AgentInfo { sensorName type netName sensorID } {
     global SENSOR_ID
 
     set SENSOR_ID $sensorID
+    CheckLastPcapFile 1
 
 }
 
@@ -662,6 +694,7 @@ if { $OPENSSL } {
 }
 
 ConnectToSguilServer
+if { [info exists FILE_CHECK_IN_MSECS] && $FILE_CHECK_IN_MSECS > 0 } { CheckLastPcapFile }
 if { [info exists DISK_CHECK_DELAY_IN_MSECS] && $DISK_CHECK_DELAY_IN_MSECS > 0 } { CheckDiskSpace }
 if {$PING_DELAY != 0} { PingServer }
 vwait FOREVER
