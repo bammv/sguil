@@ -1,4 +1,4 @@
-# $Id: SguildSendComms.tcl,v 1.5 2007/03/08 05:45:06 bamm Exp $ #
+# $Id: SguildSendComms.tcl,v 1.6 2007/03/08 15:38:38 bamm Exp $ #
 
 #
 # SendSocket: Send command to client
@@ -21,7 +21,8 @@ proc SendSocket { socketID command } {
 #
 proc SendEvent { eventDataList } {
   global clientMonitorSockets sidNetNameMap
-  set sensorID [lindex $eventDataList 1]
+
+  set sensorID [lindex $eventDataList 5]
   set netName $sidNetNameMap($sensorID)
   if { [info exists clientMonitorSockets($netName)] } {
     foreach clientSocket $clientMonitorSockets($netName) {
