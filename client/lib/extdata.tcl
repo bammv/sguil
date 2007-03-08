@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.42 2007/03/08 05:47:34 bamm Exp $
+# $Id: extdata.tcl,v 1.43 2007/03/08 06:39:40 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -79,7 +79,7 @@ proc InsertRuleData { ruleData } {
         #Remove any existing tags
         eval {$w tag delete} [$w tag names]
 
-        # Find the sid for snort.org links.
+        # Find the sid for snort.org and bleeding links.
         set sidIndex [$w search -count length -regexp -- {sid:.*?;} 0.0 end]
         if { $sidIndex != "" } {
 
@@ -89,7 +89,7 @@ proc InsertRuleData { ruleData } {
             set end "$row.[expr [lindex [split $sidIndex .] 1] + $length - 1]"
             set sid [lindex [split [$w get $sidIndex $end] :] 1]
 
-            if { $sid < 1000000 } { 
+            if { $sid < 1000000 || ( $sid >= 2000000 && $sid < 3000000 )} { 
                 # Within snort.org rule range
                 $ruleText component text tag configure SID -foreground blue -underline 0
 	        $w tag add SID $start "$start + [expr $length - 5] char"
@@ -162,7 +162,13 @@ proc DisplayReference { win start length } {
         nessus     { exec $BROWSER_PATH http://cgi.nessus.org/plugins/dump.php3?id=$content & }
         mcafee     { exec $BROWSER_PATH http://vil.nai.com/vil/content/v_$content & }
         arachnids  { InfoMessage "ArachNIDS references are no long supported." }
-        sid        { exec $BROWSER_PATH http://www.snort.org/pub-bin/sigs.cgi?sid=$content & }
+        sid        { 
+                     if { $content < 1000000 } {
+                         exec $BROWSER_PATH http://www.snort.org/pub-bin/sigs.cgi?sid=$content &
+                     } else {
+                         exec $BROWSER_PATH http://doc.bleedingthreats.net/$content &
+                     }
+        }
         default    { InfoMessage "Unknown reference in rule: $ref" }
 
     }
