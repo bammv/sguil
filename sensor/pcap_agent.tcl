@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: pcap_agent.tcl,v 1.2 2007/03/08 05:44:04 bamm Exp $ #
+# $Id: pcap_agent.tcl,v 1.3 2007/03/16 23:04:26 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -18,7 +18,7 @@ exec tclsh "$0" "$@"
 #
 
 # Don't touch these
-set VERSION "SGUIL-0.6.1"
+set VERSION "SGUIL-0.7.0-ALPHA"
 set CONNECTED 0
 set OPENSSL 0
 
