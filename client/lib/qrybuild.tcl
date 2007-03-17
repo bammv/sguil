@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.42 2006/09/01 16:54:12 bamm Exp $ #
+# $Id: qrybuild.tcl,v 1.43 2007/03/17 02:43:37 bamm Exp $ #
 proc QryBuild { tableSelected whereTmp } {
 
     global RETURN_FLAG SELECTEDTABLE SELECT_LIMIT
@@ -62,7 +62,7 @@ proc QryBuild { tableSelected whereTmp } {
     set qryFrame [frame $mainFrame.qFrame]
       set qryTypeBox [radiobox $qryFrame.qTypeBox -orient horizontal -labeltext "Select Query Type" -labelpos n -foreground darkblue]
         $qryTypeBox add event -text "Events" -selectcolor red -foreground black
-        $qryTypeBox add sessions -text "Sessions" -selectcolor red -foreground black
+        #$qryTypeBox add sessions -text "Sessions" -selectcolor red -foreground black
         $qryTypeBox add sancp -text "Sancp" -selectcolor red -foreground black  
         $qryTypeBox add pads -text "PADS" -selectcolor red -foreground black  
  
@@ -492,7 +492,7 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
     if { $caller != "builder" } {
 	set tableBox [radiobox $mainFrame.tableBox -orient horizontal]
 	$tableBox add event -text "Event"
-	$tableBox add sessions -text "Sessions"
+	#$tableBox add sessions -text "Sessions"
 	$tableBox add sancp -text "Sancp"
 	$tableBox select 0
     }

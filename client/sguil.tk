@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.226 2007/03/16 23:04:25 bamm Exp $ #
+# $Id: sguil.tk,v 1.227 2007/03/17 02:43:36 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2050,7 +2050,7 @@ set topFrame [frame .topFrame]
     $fileList add command -label "Exit" -command CleanExit
   set queryList [menu $queryMenu.menu -tearoff 0]
     $queryList add command -label "Query Event Table" -command "QueryRequest event empty"
-    $queryList add command -label "Query Sessions Table" -command "QueryRequest sessions empty"
+    #$queryList add command -label "Query Sessions Table" -command "QueryRequest sessions empty"
     $queryList add command -label "Query Sancp Table" -command "QueryRequest sancp empty"
     $queryList add command -label "Standard Queries" -command "StdQuery"
     $queryList add command -label "Query Builder" -command "InvokeQryBuild empty empty"
@@ -2733,7 +2733,7 @@ menu $ipQueryMenu.nessusMenu -tearoff 0 -background $SELECTBACKGROUND -foregroun
 
 foreach { currentMenu subcommand } { .ipQueryMenu.quickMenu "quick" .ipQueryMenu.advancedMenu "build" } {
     $currentMenu add cascade -label "Query Event Table" -menu $currentMenu.eventMenu
-    $currentMenu add cascade -label "Query Sessions Table" -menu $currentMenu.sessionsMenu
+    #$currentMenu add cascade -label "Query Sessions Table" -menu $currentMenu.sessionsMenu
     $currentMenu add cascade -label "Query Sancp Table" -menu $currentMenu.sancpMenu
     $currentMenu add cascade -label "Query PADS Table" -menu $currentMenu.padsMenu
     menu $currentMenu.eventMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \

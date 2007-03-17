@@ -1,4 +1,4 @@
-# $Id: stdquery.tcl,v 1.9 2006/04/17 18:56:23 bamm Exp $ #
+# $Id: stdquery.tcl,v 1.10 2007/03/17 02:43:37 bamm Exp $ #
 
 # stdquery.tcl launches a popup containing global and user
 # queries. It returns the WHERE clause of the selected 
@@ -171,7 +171,7 @@ proc UserQryWiz {type stdQryWin} {
   set frame1 [frame $win.frame1]
   set typeWin [optionmenu $frame1.om -labeltext "Type:" -command "UpdateQryType $frame1.om"]
   $typeWin insert end event
-  $typeWin insert end sessions
+  #$typeWin insert end sessions
   set nameWin [entryfield $frame1.ef -labeltext "Name:" -labelpos w -width 20]
   pack $typeWin -side left
   pack $nameWin -side left -fill x -expand true

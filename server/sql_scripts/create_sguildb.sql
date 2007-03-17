@@ -1,4 +1,4 @@
--- $Id: create_sguildb.sql,v 1.17 2007/03/01 05:06:45 bamm Exp $
+-- $Id: create_sguildb.sql,v 1.18 2007/03/17 02:43:37 bamm Exp $
 -- Users may want to use a different DB name.
 -- CREATE DATABASE IF NOT EXISTS sguildb;
 -- USE sguildb;
@@ -121,27 +121,28 @@ CREATE TABLE portscan
   INDEX ps_src_ip (src_ip),
   INDEX ps_timestamp (timestamp));
 
-CREATE TABLE sessions ( 
-  sid		INT UNSIGNED NOT NULL, 
-  xid		BIGINT UNSIGNED NOT NULL, 
-  start_time	datetime NOT NULL, 
-  end_time	datetime NOT NULL, 
-  src_ip	INT UNSIGNED NOT NULL, 
-  dst_ip	INT UNSIGNED NOT NULL, 
-  src_port	INT UNSIGNED NOT NULL, 
-  dst_port	INT UNSIGNED NOT NULL, 
-  ip_proto	TINYINT UNSIGNED NOT NULL,
-  src_pckts	BIGINT UNSIGNED NOT NULL, 
-  dst_pckts	BIGINT UNSIGNED NOT NULL, 
-  src_bytes	BIGINT UNSIGNED NOT NULL, 
-  dst_bytes	BIGINT UNSIGNED NOT NULL, 
-  PRIMARY KEY (sid,xid), 
-  INDEX begin (start_time), 
-  INDEX end (end_time), 
-  INDEX server (src_ip), 
-  INDEX client (dst_ip), 
-  INDEX sport (src_port), 
-  INDEX cport (dst_port)); 
+-- Depreciated
+-- CREATE TABLE sessions ( 
+--  sid		INT UNSIGNED NOT NULL, 
+--  xid		BIGINT UNSIGNED NOT NULL, 
+--  start_time	datetime NOT NULL, 
+--  end_time	datetime NOT NULL, 
+--  src_ip	INT UNSIGNED NOT NULL, 
+--  dst_ip	INT UNSIGNED NOT NULL, 
+--  src_port	INT UNSIGNED NOT NULL, 
+--  dst_port	INT UNSIGNED NOT NULL, 
+--  ip_proto	TINYINT UNSIGNED NOT NULL,
+--  src_pckts	BIGINT UNSIGNED NOT NULL, 
+--  dst_pckts	BIGINT UNSIGNED NOT NULL, 
+--  src_bytes	BIGINT UNSIGNED NOT NULL, 
+--  dst_bytes	BIGINT UNSIGNED NOT NULL, 
+--  PRIMARY KEY (sid,xid), 
+--  INDEX begin (start_time), 
+--  INDEX end (end_time), 
+--  INDEX server (src_ip), 
+--  INDEX client (dst_ip), 
+--  INDEX sport (src_port), 
+--  INDEX cport (dst_port)); 
 
 CREATE TABLE status
 (
