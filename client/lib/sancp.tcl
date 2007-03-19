@@ -1,4 +1,4 @@
-# $Id: sancp.tcl,v 1.11 2007/03/01 05:14:55 bamm Exp $ 
+# $Id: sancp.tcl,v 1.12 2007/03/19 02:10:05 bamm Exp $ 
 #
 # Build a sancp query tab and send the query to sguild.
 #
@@ -102,10 +102,11 @@ proc GetSancpData {} {
         update
 
         set selectedIndex [$CUR_SEL_PANE(name) curselection]
-        set sensorName [$CUR_SEL_PANE(name) getcells $selectedIndex,sensor]
-        set cnxID [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID]
+        set cnxInfo [split [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID] .]
+	set sensorID [lindex $cnxInfo 0]
+        set cnxID [lindex $cnxInfo 1]
 
-        SendToSguild "GetSancpFlagData $sensorName $cnxID"
+        SendToSguild "GetSancpFlagData $sensorID $cnxID"
 
     }
 
