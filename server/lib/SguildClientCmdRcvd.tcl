@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.24 2007/03/08 15:55:20 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.25 2007/03/19 02:12:27 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -250,10 +250,9 @@ proc EventHistoryRequest { socketID winName sid cid } {
   catch {SendSocket $socketID "InsertHistoryResults $winName done"} tmpError
 }
 
-proc GetSancpFlagData { socketID sensorName xid } {
+proc GetSancpFlagData { socketID sensorID xid } {
   set query\
-   "SELECT src_flags, dst_flags FROM sancp INNER JOIN sensor ON sancp.sid=sensor.sid\
-    WHERE sensor.hostname='$sensorName' AND sancp.sancpid=$xid"
+   "SELECT src_flags, dst_flags FROM sancp WHERE sancp.sid=$sensorID AND sancp.sancpid=$xid"
    set queryResults [FlatDBQuery $query]
    catch {SendSocket $socketID "InsertSancpFlags $queryResults"}
 }
