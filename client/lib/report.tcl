@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.36 2007/03/24 20:31:01 bamm Exp $ #
+# $Id: report.tcl,v 1.37 2007/03/24 20:51:09 bamm Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -191,7 +191,9 @@ proc TextReport  { detail sanitize } {
 	if { $SepChar == "HUMAN-READABLE" } {
 	    set OutputText [HumanText $detail $sanitize $winname $curselection]
 	} else {
-	    # set OutputText [DelimitedText $detail $sanitize $winname $curselection $SepChar]
+	    set OutputText [HumanText $detail $sanitize $winname $curselection]
+            # Not sure where srh was going with this. Srh?
+	    #set OutputText [DelimitedText $detail $sanitize $winname $curselection $SepChar]
 	}
 	if [catch {open $filename w} fileID] {
 	    puts "Error: Could not create/open $filename: $fileID"
