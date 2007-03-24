@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.35 2006/01/23 19:09:50 bamm Exp $ #
+# $Id: report.tcl,v 1.36 2007/03/24 20:31:01 bamm Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -449,17 +449,17 @@ proc BuildPHBReport { sensors datetimestart datetimeend sName sDesc sType sSql s
     }
     toplevel $phbReportOut
     wm geometry $phbReportOut +400+400
-    wm title $phbReportOut "Sensor Summary Report"
+    wm title $phbReportOut "Summary Report"
     set reportText [scrolledtext $phbReportOut.reportText]
     set reportButtonBox [buttonbox $phbReportOut.reportButtonBox]
     $reportButtonBox add reportCloseButton -text "Close" -command "destroy $phbReportOut; return" -state disabled
     $reportButtonBox add reportSaveButton -text "Save Report" -command "SavePHBReport $reportText" -state disabled
     pack $reportText -expand true -fill both
     pack $reportButtonBox -expand false 
-    $reportText insert end "Sensor Summary Report\n"
+    $reportText insert end "Summary Report\n"
     $reportText insert end "===============================================================\n"
     $reportText insert end "\n"
-    $reportText insert end "Sensors included in the report:\n"
+    $reportText insert end "Networks included in the report:\n"
     $reportText insert end "\n"
     foreach sName $sensors {
         $reportText insert end "$sName\n"

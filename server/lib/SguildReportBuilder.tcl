@@ -1,4 +1,4 @@
-# $Id: SguildReportBuilder.tcl,v 1.2 2004/10/11 21:45:25 shalligan Exp $ #
+# $Id: SguildReportBuilder.tcl,v 1.3 2007/03/24 20:31:44 bamm Exp $ #
 
 #
 # ReportBuilder:  Receive multiple data requests from the client for report building
@@ -84,9 +84,9 @@ proc ReportBuilder { socketID type sid cid } {
             regsub -all "%%STARTTIME%%" $sql "'${timestart}'" sql
             regsub -all "%%ENDTIME%%" $sql "'${timeend}'" sql
                                                                                                      
-            set sensormacro "\( sensor.hostname = '[lindex $sensor 0]' "
+            set sensormacro "\( sensor.net_name = '[lindex $sensor 0]' "
             for { set i 1 } { $i < [llength $sensor] } { incr i } {
-                set sensormacro "${sensormacro} OR sensor.hostname = '[lindex $sensor $i]' "
+                set sensormacro "${sensormacro} OR sensor.net_name = '[lindex $sensor $i]' "
             }
             set sensormacro "${sensormacro} \)"
             regsub -all "%%SENSORS%%" $sql $sensormacro sql
