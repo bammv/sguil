@@ -12,7 +12,9 @@ CREATE TABLE IF NOT EXISTS `pads` (
   PRIMARY KEY (sid,asset_id)
 );
 
-ALTER TABLE sensor ADD COLUMN ( sensor_type    INT UNSIGNED);
-UPDATE sensor SET sensor_type=1;
+ALTER TABLE sensor ADD COLUMN (
+  agent_type    VARCHAR(40),
+  net_name      VARCHAR(40)
+);
 
 UPDATE version SET version="0.12", installed = now();
