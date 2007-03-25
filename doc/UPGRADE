@@ -1,4 +1,4 @@
-# $Id: UPGRADE,v 1.2 2005/11/30 04:23:25 bamm Exp $ #
+# $Id: UPGRADE,v 1.3 2007/03/25 15:33:51 bamm Exp $ #
 
 The following are instructions for upgrading a previous sguil
 install to version 0.6.0.  If you are installing fresh, please
@@ -8,7 +8,7 @@ use the INSTALL document.
 Sguil version 0.6.0 takes advantage of MySQL's MERGE table
 type (MRG_MyISAM). With MRG_MyISAM, it's possible to have
 a database containing hundreds of millions of rows of data,
-yet still return queries in a reasonable time from. The 
+yet still return queries in a reasonable time frame. The 
 MRG_MyISAM schema also makes archiving and extracting 
 previously archived data simpler and quicker.
 
