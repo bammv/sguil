@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.25 2007/03/19 02:12:27 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.26 2007/03/25 05:21:17 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -16,7 +16,7 @@ proc ClientCmdRcvd { socketID } {
     set origData $data
     set clientCmd [ctoken data " "]
     # Check to make the client validated itself
-    if { $clientCmd != "ValidateUser" && $clientCmd != "PING" } {
+    if { $clientCmd != "ValidateUser" && $clientCmd != "PING" && $clientCmd != "VersionInfo" } {
       if { [lsearch -exact $validSockets $socketID] < 0 } {
         catch {SendSocket $socketID\
          "InfoMessage {Client does not appear to be logged in. Please exit and log back in.}"} tmpError
@@ -65,6 +65,7 @@ proc ClientCmdRcvd { socketID } {
       GetOpenPorts { $clientCmd $socketID $index1 $index2 }	
       SendClientSensorStatusInfo { $clientCmd $socketID }
       GetAssetData { $clientCmd $socketID $index1 $index2 }
+      VersionInfo { ClientVersionCheck $socketID $data1 }
       default { InfoMessage "Unrecognized command from $socketID: $origData" }
     }
   }

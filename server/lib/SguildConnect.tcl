@@ -1,11 +1,10 @@
-# $Id: SguildConnect.tcl,v 1.17 2007/03/08 05:45:06 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.18 2007/03/25 05:21:17 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
 #
 proc ClientConnect { socketID IPAddr port } {
   global socketInfo VERSION
-  global OPENSSL KEY PEM
 
   LogMessage "Client Connect: $IPAddr $port $socketID"
   
@@ -17,30 +16,49 @@ proc ClientConnect { socketID IPAddr port } {
     return
   }
   LogMessage "Valid client access: $IPAddr"
-  set socketInfo($socketID) "$IPAddr $port"
+  set socketInfo($socketID) [list $IPAddr $port]
   fconfigure $socketID -buffering line
-  # Do version checks
+  fileevent $socketID readable [list ClientCmdRcvd $socketID]
+  # Send version info
   if [catch {SendSocket $socketID "$VERSION"} sendError ] {
     return
   }
-  if [catch {gets $socketID} clientVersion] {
-    LogMessage "ERROR: $clientVersion"
-    return
-  }
+  # Give the user 90 seconds to send login info
+  after 90000 CheckLoginStatus $socketID $IPAddr $port
+
+}
+
+proc ClientVersionCheck { socketID clientVersion } {
+
+  global socketInfo VERSION
+  global OPENSSL KEY PEM
+
   if { $clientVersion != $VERSION } {
     catch {close $socketID} tmpError
     LogMessage "ERROR: Client connect denied - mismatched versions"
     LogMessage "CLIENT VERSION: $clientVersion"
     LogMessage "SERVER VERSION: $VERSION"
+    close $socketID
     ClientExitClose $socketID
     return
   }
+
   if {$OPENSSL} {
-    tls::import $socketID -server true -keyfile $KEY -certfile $PEM
-    fileevent $socketID readable [list HandShake $socketID ClientCmdRcvd]
-  } else {
-    fileevent $socketID readable [list ClientCmdRcvd $socketID]
+    #tls::import $socketID -server true -keyfile $KEY -certfile $PEM
+    if { [catch {tls::import $socketID -server true -keyfile $KEY -certfile $PEM} importError] } {
+        LogMessage "ERROR: $importError"
+        close $socketID
+        ClientExitClose $socketID
+    }
+
+    if { [catch {tls::handshake $socketID} results] } {
+        LogMessage "ERROR: $results"
+        close $socketID
+        ClientExitClose socketID
+    }
+
   }
+
 }
 
 proc SensorConnect { socketID IPAddr port } {
@@ -141,4 +159,30 @@ proc HandShake { socketID cmd } {
     InfoMessage "Handshake complete for $socketID"
     fileevent $socketID readable [list $cmd $socketID]
   }
+}
+
+
+proc CheckLoginStatus { socketID IPAddr port } {
+
+    global socketInfo
+
+    if { [array exists socketInfo] && [info exists socketInfo($socketID)] } {
+ 
+        # Check to make sure the socket is being used by the same dst ip and port
+        if { [lindex $socketInfo($socketID) 0] == "$IPAddr" && [lindex $socketInfo($socketID) 1] == "$port" } {
+
+            # Finally see if there is a username associated
+            if { [llength $socketInfo($socketID)] < 3 } {
+
+                LogMessage "Removing stale client: $socketInfo($socketID)"
+                # Looks like the socket is stale.
+                catch {close $socketID}
+                ClientExitClose $socketID
+
+            }
+
+        }
+
+    }
+
 }
