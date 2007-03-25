@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.18 2007/03/25 05:21:17 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.19 2007/03/25 14:31:45 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -76,17 +76,19 @@ proc SensorConnect { socketID IPAddr port } {
   }
   LogMessage "Valid sensor agent: $IPAddr"
   fconfigure $socketID -buffering line
+  fileevent $socketID readable [list SensorCmdRcvd $socketID]
   # Version check
   if [catch {puts $socketID $AGENT_VERSION} tmpError] {
     LogMessage "ERROR: $tmpError"
     catch {close $socketID}
     return
   }
-  if [catch {gets $socketID} agentVersion] {
-    LogMessage "ERROR: Unable to get agent version: $agentVersion"
-    catch {close $socketID}
-    return
-  }
+}
+
+proc AgentVersionCheck { socketID agentVersion } {
+
+  global VERSION AGENT_OPENSSL AGENT_VERSION KEY PEM
+
   if { $agentVersion != $AGENT_VERSION } {
     catch {close $socketID} 
     LogMessage "ERROR: Agent connect denied - mismatched versions"
@@ -94,13 +96,15 @@ proc SensorConnect { socketID IPAddr port } {
     LogMessage "SERVER VERSION: $VERSION"
     return
   }
-  #fconfigure $socketID -buffering line -blocking 0
+
   if {$AGENT_OPENSSL} {
-    tls::import $socketID -server true -keyfile $KEY -certfile $PEM
-    fileevent $socketID readable [list HandShake $socketID SensorCmdRcvd]
-  } else {
-    fileevent $socketID readable [list SensorCmdRcvd $socketID]
-  }
+    if { [catch {tls::import $socketID -server true -keyfile $KEY -certfile $PEM} importError] } {
+        LogMessage "ERROR: $importError"
+        catch {close $socketID}
+        CleanUpDisconnectedAgent $socketID
+    }
+  } 
+
 }
 
 proc AgentInit { socketID sensorName byStatus } {

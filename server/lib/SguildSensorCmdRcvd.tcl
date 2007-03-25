@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.23 2007/03/08 05:45:06 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.24 2007/03/25 14:31:46 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global agentSensorNameArray validSensorSockets
@@ -17,7 +17,7 @@ proc SensorCmdRcvd { socketID } {
     }
 
     # Make sure agent has registered
-    if { $sensorCmd != "RegisterAgent" } {
+    if { $sensorCmd != "RegisterAgent" && $sensorCmd != "VersionInfo" } {
 
         if { [lsearch -exact $validSensorSockets $socketID] < 0 } {
 
@@ -49,6 +49,7 @@ proc SensorCmdRcvd { socketID } {
       BarnyardConnect    { BarnyardConnect $socketID [lindex $data 1] }
       BarnyardDisConnect { BarnyardDisConnect $socketID [lindex $data 1] }
       PadsSensorIDReq    { GetPadsID $socketID [lindex $data 1] }
+      VersionInfo        { AgentVersionCheck $socketID [lindex $data 1] }
       default            { if {$sensorCmd != ""} { LogMessage "Sensor Cmd Unknown ($socketID): $sensorCmd" } }
     }
   }

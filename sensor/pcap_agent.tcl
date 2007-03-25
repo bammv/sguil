@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: pcap_agent.tcl,v 1.3 2007/03/16 23:04:26 bamm Exp $ #
+# $Id: pcap_agent.tcl,v 1.4 2007/03/25 14:31:39 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -428,7 +428,7 @@ proc ConnectToSguilServer {} {
 
         }
 
-        if [catch {puts $sguildSocketID "$tmpVERSION"} tmpError] {
+        if [catch {puts $sguildSocketID [list VersionInfo $tmpVERSION]} tmpError] {
             catch {close $sguildSocketID}
             puts "Unable to send version string: $tmpError"
         }
