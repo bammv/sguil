@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.24 2007/03/08 05:45:06 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.25 2007/04/08 04:53:47 bamm Exp $ #
 
 # Get the sid and cid for the agent. Create it if it doesn't exist. 
 # Send the agent [AgentSid {type} {sid}]
@@ -10,11 +10,12 @@ proc RegisterAgent { socketID type sensorName netName } {
     global agentSocketInfo
 
     set sensorID [GetSensorID $sensorName $type $netName]
+    set maxCid [GetMaxCid $sensorID]
 
     # Add agent to a list of valid sockets
     lappend validSensorSockets $socketID
-    # Send sensor id to the agent
-    SendSensorAgent $socketID [list AgentInfo $sensorName $type $netName $sensorID]
+    # Send agent id to the agent
+    SendSensorAgent $socketID [list AgentInfo $sensorName $type $netName $sensorID $maxCid]
     # SensorName to SocketID mapping
     set agentSensorNameArray($socketID) $sensorName
     # Sid NetName Map
