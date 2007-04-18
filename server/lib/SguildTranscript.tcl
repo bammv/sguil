@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.13 2007/03/01 05:06:45 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.14 2007/04/18 02:05:24 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -152,14 +152,7 @@ proc GetRawDataFromSensor { TRANS_ID sensor sensorID timestamp srcIP srcPort dst
 
   set RFLAG 1
   set sensorNetName [MysqlGetNetName $sensorID]
-  puts "#### DEBUG: $sensorNetName"
   if { $sensorNetName == "unknown" } { return 0 }
-  puts "#### DEBUG: [array names pcapSocket]"
-
-  if { [array exists pcapSocket] } { puts "#### DEBUG: array pcapSocket exists" } 
-  if { [info exists pcapSocket($sensorNetName)] } { puts "#### DEBUG: pcapSocket($sensorNetName) exists" } 
-
-  puts "#### DEBUG: $pcapSocket($sensorNetName)"
 
   if { [array exists pcapSocket] && [info exists pcapSocket($sensorNetName)]} {
       set pcapSocketID $pcapSocket($sensorNetName)
