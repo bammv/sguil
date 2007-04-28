@@ -1,4 +1,4 @@
-# $Id: SguildUtils.tcl,v 1.11 2005/10/26 21:44:44 bamm Exp $ #
+# $Id: SguildUtils.tcl,v 1.12 2007/04/28 23:13:45 bamm Exp $ #
 
 proc Daemonize {} {
     global PID_FILE env LOGGER
@@ -151,6 +151,8 @@ proc ValidateIPAddress { fullip } {
 #            INET_ATON in mysql
 #
 proc InetAtoN { ipaddress } {
+
+    if { $ipaddress == "" } { return "" }
     set octetlist [split $ipaddress "."]
     set oct1 [lindex $octetlist 0]
     set oct2 [lindex $octetlist 1]
@@ -300,4 +302,45 @@ proc Syslog { msg level } {
     # clean up mysql passwds
     regsub -all {password=\w+} $msg "password=XXXXXXXX " newMsg
     catch { exec logger -t "SGUILD" -p "$SYSLOGFACILITY.$level" $newMsg } logError
+}
+
+#
+# Converts strings to hex
+#
+proc string2hex { s } {
+
+    set i 0
+    set r {}
+    while { $i < [string length $s] } {
+
+        scan [string index $s $i] "%c" tmp
+        append r [format "%02X" $tmp]
+        incr i
+
+    }
+
+    return $r
+
+}
+
+#
+# Convert hex to string. Non-printables print a dot.
+#
+proc hex2string { h } {
+
+    set dataLength [string length $h]
+    set asciiStr {}
+
+    for { set i 1 } { $i < $dataLength } { incr i 2 } {
+
+        set currentByte [string range $h [expr $i - 1] $i]
+        lappend hexStr $currentByte
+        set intValue [format "%i" 0x$currentByte]
+        set currentChar [format "%c" $intValue]
+        append asciiStr "$currentChar"
+
+    }
+
+    return $asciiStr
+
 }

@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.24 2007/03/25 14:31:46 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.25 2007/04/28 23:13:45 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global agentSensorNameArray validSensorSockets
@@ -31,6 +31,7 @@ proc SensorCmdRcvd { socketID } {
     switch -exact -- $sensorCmd {
       LastPcapTime       { UpdateLastPcapTime $socketID [lindex $data 1] }
       RegisterAgent      { RegisterAgent $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+      GenericEvent       { GenericEvent $socketID [lrange $data 1 end] }
       PadsAsset          { ProcessPadsAsset [lindex $data 1] }
       SsnFile            { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
       SancpFile          { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }

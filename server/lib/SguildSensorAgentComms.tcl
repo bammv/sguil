@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.25 2007/04/08 04:53:47 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.26 2007/04/28 23:13:45 bamm Exp $ #
 
 # Get the sid and cid for the agent. Create it if it doesn't exist. 
 # Send the agent [AgentSid {type} {sid}]
@@ -28,7 +28,7 @@ proc RegisterAgent { socketID type sensorName netName } {
         pcap { set pcapSocket($netName) $socketID }
         sancp { set sancpSocket($netName) $socketID }
         snort { set snortSocket($netName) $socketID }
-        default { LogMessage "Unknown agent type connected on socket ${socketID}: $type" }
+        default { set foo bar }
 
     }
 

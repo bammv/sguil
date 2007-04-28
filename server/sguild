@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.175 2007/03/16 23:04:26 bamm Exp $ #
+# $Id: sguild,v 1.176 2007/04/28 23:13:45 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -301,6 +301,7 @@ set sourceLibs {
     SguildCreateDB.tcl         \
     SguildEmailEvent.tcl       \
     SguildEvent.tcl            \
+    SguildGenericEvent.tcl     \
     SguildGenericDB.tcl        \
     SguildHealthChecks.tcl     \
     SguildLoaderd.tcl          \
@@ -533,7 +534,9 @@ foreach agentSidType $agentList {
     set agent_type [lindex $agentSidType 3]
 
     # Get the time of the last alert or load 
-    if { $agent_type == "snort" } {
+    # If the type is not pads or sancp then we assume it is 
+    # an alert of some type and should be in the event table
+    if { $agent_type != "pads" && $agent_type != "sancp" } {
 
         # Make sure the event table has built
         if { $mergeTableListArray(event) != "" } {
