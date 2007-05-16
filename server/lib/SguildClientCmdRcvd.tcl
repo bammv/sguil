@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.26 2007/03/25 05:21:17 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.27 2007/05/16 19:06:41 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -65,6 +65,7 @@ proc ClientCmdRcvd { socketID } {
       GetOpenPorts { $clientCmd $socketID $index1 $index2 }	
       SendClientSensorStatusInfo { $clientCmd $socketID }
       GetAssetData { $clientCmd $socketID $index1 $index2 }
+      GetGenericDetail { $clientCmd $socketID $index1 $index2 }
       VersionInfo { ClientVersionCheck $socketID $data1 }
       default { InfoMessage "Unrecognized command from $socketID: $origData" }
     }
@@ -393,23 +394,32 @@ proc SendEscalatedEvents { socketID } {
 # SendCurrentEvents: Sends newly connected clients the current event list
 #
 proc SendCurrentEvents { socketID } {
-  global eventIDArray eventIDList clientMonitorSockets eventIDCountArray
-  global sidNetNameMap
+
+    global eventIDArray eventIDList clientMonitorSockets eventIDCountArray
+    global sidNetNameMap
                                                                                                                        
-  if { [info exists eventIDList] && [llength $eventIDList] > 0 } {
-    foreach eventID $eventIDList {
-      set sensorID [lindex [split $eventID .] 0]
-      set netName $sidNetNameMap($sensorID)
-      if { [info exists clientMonitorSockets($netName)] } {
-        if { [lsearch -exact $clientMonitorSockets($netName) $socketID] >= 0} {
-          InfoMessage "Sending client $socketID: InsertEvent [lrange $eventIDArray($eventID) 0 12]" 
-          catch {\
-           SendSocket $socketID "InsertEvent [lrange $eventIDArray($eventID) 0 12] $eventIDCountArray($eventID)"\
-          } tmpError
+    if { [info exists eventIDList] && [llength $eventIDList] > 0 } {
+
+        foreach eventID $eventIDList {
+
+            set sensorID [lindex [split $eventID .] 0]
+            set netName $sidNetNameMap($sensorID)
+            if { [info exists clientMonitorSockets($netName)] } {
+
+                if { [lsearch -exact $clientMonitorSockets($netName) $socketID] >= 0} {
+                    #SendSocket $socketID "InsertEvent [lrange $eventIDArray($eventID) 0 12] $eventIDCountArray($eventID)"
+                    InfoMessage "Sending client $socketID: InsertEvent $eventIDArray($eventID) $eventIDCountArray($eventID)" 
+                    catch {\
+                     SendSocket $socketID "InsertEvent $eventIDArray($eventID) $eventIDCountArray($eventID)" \
+                    } tmpError
+
+                }
+            }
+
         }
-      }
+
     }
-  }
+
 }
 
 proc LoadNessusReports { socketID filename table bytes} {

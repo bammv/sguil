@@ -1,4 +1,4 @@
-# $Id: SguildGenericEvent.tcl,v 1.1 2007/05/08 16:00:18 bamm Exp $
+# $Id: SguildGenericEvent.tcl,v 1.2 2007/05/16 19:06:41 bamm Exp $
 
 # GenericEvent status priority class hostname timestamp sensorID alertID hexMessage  \
 #               inet_sip inet_dip ip_proto src_port dst_port generatorID sigID       \
@@ -71,8 +71,8 @@ proc GenericEvent { agentSocketID eventList } {
     # Send RT Event if status is 0
     if { $status == 0 } {
 
-        EventRcvd [list $status $priority $class $hostname $timestamp $sensorID $alertID \
-                   $msg $inet_sip $inet_dip $ip_proto $src_port $dst_port $sig_id        \
+        EventRcvd [list $status $priority $class $hostname $timestamp $sensorID $alertID  \
+                   $msg $inet_sip $inet_dip $ip_proto $src_port $dst_port $gen_id $sig_id \
                    $revision $alertID $refID]
 
     }
@@ -80,7 +80,6 @@ proc GenericEvent { agentSocketID eventList } {
     # Update last event time
     if [info exists agentStatusList($sensorID)] {
 
-        puts "DEBUG #### HERE"
         set agentStatusList($sensorID) [lreplace $agentStatusList($sensorID) 3 3 $timestamp]
 
     }
@@ -88,5 +87,18 @@ proc GenericEvent { agentSocketID eventList } {
 
     # Send the agent confirmation 
     SendSocket $agentSocketID [list ConfirmEvent $alertID]
+
+}
+
+proc GetGenericDetail { socketID sid eventID } {
+
+    set tmpQuery "SELECT data_payload FROM data WHERE data.sid=$sid and data.cid=$eventID"
+    set queryResults [FlatDBQuery $tmpQuery]
+
+    if [catch {SendSocket $socketID [list InsertGenericDetail $queryResults]} tmpError] {
+
+        LogMessage "Error: $tmpError"
+
+    }
 
 }

@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.22 2006/04/18 15:17:32 bamm Exp $
+# $Id: guilib.tcl,v 1.23 2007/05/16 19:07:31 bamm Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -347,6 +347,16 @@ proc InsertIcmpHdr { data pldata } {
 	pack forget $icmpDecodeFrame
     }	    
 }
+
+proc InsertGenericDetail { hexData } {
+
+    global genericText
+
+    $genericText  insert end [hex2string $hexData]
+    Idle
+
+}
+
 proc InsertPadsBanner { data } {
 
     global bannerText bannerHex

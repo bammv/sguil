@@ -1,4 +1,4 @@
-# $Id: SguilUtil.tcl,v 1.21 2005/11/09 19:02:56 bamm Exp $
+# $Id: SguilUtil.tcl,v 1.22 2007/05/16 19:07:31 bamm Exp $
 #
 #  Sguil.Util.tcl:  Random and various tool like procs.
 #
@@ -392,5 +392,27 @@ proc ldelete { list value } {
   } else {
     return $list
   }
+}
+
+#
+# Convert hex to string. Non-printables print a dot.
+#
+proc hex2string { h } {
+
+    set dataLength [string length $h]
+    set asciiStr {}
+
+    for { set i 1 } { $i < $dataLength } { incr i 2 } {
+
+        set currentByte [string range $h [expr $i - 1] $i]
+        lappend hexStr $currentByte
+        set intValue [format "%i" 0x$currentByte]
+        set currentChar [format "%c" $intValue]
+        append asciiStr "$currentChar"
+
+    }
+
+    return $asciiStr
+
 }
 

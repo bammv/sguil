@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.26 2007/04/28 23:13:45 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.27 2007/05/16 19:06:41 bamm Exp $ #
 
 # Get the sid and cid for the agent. Create it if it doesn't exist. 
 # Send the agent [AgentSid {type} {sid}]
@@ -80,11 +80,11 @@ proc AgentLastCidReq { socketID req_socketID sid } {
 
 }
 
-proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
-                   u_event_ref u_ref_time  sig_gen sig_id sig_rev  msg timestamp \
-                   priority class_type dec_sip str_sip dec_dip str_dip \
-                   ip_proto ip_ver ip_hlen ip_tos ip_len ip_id ip_flags ip_off ip_ttl \
-                   ip_csum icmp_type icmp_code icmp_csum icmp_id icmp_seq src_port \
+proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id          \
+                   u_event_ref u_ref_time sig_gen sig_id sig_rev  msg timestamp        \
+                   priority class_type dec_sip str_sip dec_dip str_dip                 \
+                   ip_proto ip_ver ip_hlen ip_tos ip_len ip_id ip_flags ip_off ip_ttl  \
+                   ip_csum icmp_type icmp_code icmp_csum icmp_id icmp_seq src_port     \
                    dst_port tcp_seq tcp_ack tcp_off tcp_res tcp_flags tcp_win tcp_csum \
                    tcp_urp udp_len udp_csum data_payload } {
 
@@ -194,7 +194,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id \
     # RTEvent|st|priority|class_type|hostname|timestamp|sid|cid|msg|srcip|dstip|ipproto|srcport|dstport|sig_id|rev|u_event_id|u_event_ref
     EventRcvd \
      [list 0 $priority $class_type $sensorName $timestamp $sid $cid $msg $str_sip \
-      $str_dip $ip_proto $src_port $dst_port $sig_id $sig_rev $u_event_id $u_event_ref]
+      $str_dip $ip_proto $src_port $dst_port $sig_gen $sig_id $sig_rev $u_event_id $u_event_ref]
 
     # Send by/op_sguil confirmation
     SendSensorAgent $socketID [list Confirm $req_socketID $cid] 

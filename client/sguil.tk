@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.229 2007/03/25 05:19:12 bamm Exp $ #
+# $Id: sguil.tk,v 1.230 2007/05/16 19:07:31 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -147,6 +147,7 @@ proc ServerCommandRcvd { socketID } {
       InsertIcmpHdr { $serverCmd [lrange $origData 1 5] [lrange $origData 6 end]}
       InsertPayloadData { $serverCmd $data1 }
       InsertPadsBanner { $serverCmd $data1 }
+      InsertGenericDetail { $serverCmd $data1 }
       InsertOpenPortsData { $serverCmd $data1 }
       InsertQueryResults { $serverCmd $index1 $data2 }
       InfoMessage { $serverCmd $data1 }
@@ -375,7 +376,7 @@ proc GetComment {} {
 proc ValidateEvent { status {c_flag {0}} } {
 
     global ACTIVE_EVENT CUR_SEL_PANE eventArray correlateArray socketID DEBUG
-    global MULTI_SELECT CONNECTED
+    global MULTI_SELECT CONNECTED generatorListMap sigIDListMap
 
     if {!$CONNECTED} {
 
@@ -410,6 +411,8 @@ proc ValidateEvent { status {c_flag {0}} } {
             # Remove the selected line from the console
             $win delete $selectedIndex
             lappend tmpDeletedEIDList $eventID
+            set sigIDListMap($win) [lreplace $sigIDListMap($win) $selectedIndex $selectedIndex]
+            set generatorListMap($win) [lreplace $generatorListMap($win) $selectedIndex $selectedIndex]
   
         }
     
@@ -548,7 +551,8 @@ proc DeleteEventIDList { eventIDList } {
 #
 proc InsertEvent { eventData } {
 
-  global DEBUG rtPaneArray eventArray SLEEP SOUND RT_SORT
+    global DEBUG rtPaneArray eventArray SLEEP SOUND RT_SORT
+    global generatorListMap sigIDListMap
 
     if {$SLEEP} { WakeUp }
 
@@ -556,7 +560,7 @@ proc InsertEvent { eventData } {
     set insertPane [GetPaneNameByPriority $priority]
     set eventID [join [lrange $eventData 5 6] .]
     set status RT
-    set count [lindex $eventData 13]
+    set count [lindex $eventData 18]
     set sensor [lindex $eventData 3]
     set dateTime [lindex $eventData 4]
     set message [lindex $eventData 7]
@@ -566,12 +570,16 @@ proc InsertEvent { eventData } {
     set srcPort [lindex $eventData 11]
     set dstPort [lindex $eventData 12]
     set statusColor [GetColorByPriority $priority]
+    set genID [lindex $eventData 13]
+    set sigID [lindex $eventData 14]
+    set sigRev [lindex $eventData 15]
+
 
     # Add event to eventArray
     set eventArray($eventID) $eventData
 
-    DisplayEvent $insertPane $status $priority $count $sensor $dateTime $eventID $message\
-      $srcIP $dstIP $proto $srcPort $dstPort $statusColor
+    DisplayEvent $insertPane $status $priority $count $sensor $dateTime $eventID $message \
+      $srcIP $dstIP $proto $srcPort $dstPort $statusColor $genID $sigID $sigRev
 
     ScrollHome $insertPane
     if { $RT_SORT($insertPane) } {
@@ -653,9 +661,12 @@ proc InsertEventQueryResults { paneName results } {
     set protocol [lindex $results 9]
     set srcPort [lindex $results 10]
     set dstPort [lindex $results 11]
+    set genID [lindex $results 12]
+    set sigID [lindex $results 13]
+    set sigRev [lindex $results 14]
 
     DisplayEvent $paneName $status [lindex $results 1] 1 $sensor $dateTime $eventID $message\
-     $srcIP $dstIP $protocol $srcPort $dstPort $statusColor
+     $srcIP $dstIP $protocol $srcPort $dstPort $statusColor $genID $sigID $sigRev
 
 }
 
@@ -674,9 +685,12 @@ proc InsertEscalatedEvent { data } {
     set protocol [lindex $data 10]
     set srcPort [lindex $data 11]
     set dstPort [lindex $data 12]
+    set genID [lindex $data 13]
+    set sigID [lindex $data 14]
+    set sigRev [lindex $data 15]
 
     DisplayEvent $escalateFrame.tablelist $status [lindex $data 1] 1 $sensor $dateTime $eventID $message\
-     $srcIP $dstIP $protocol $srcPort $dstPort $statusColor
+     $srcIP $dstIP $protocol $srcPort $dstPort $statusColor $genID $sigID $sigRev
 
     if { $RT_SORT($escalateFrame.tablelist) } {
         SortRTPane $escalateFrame.tablelist
@@ -722,11 +736,16 @@ proc EventStatusLabel { color status tableName row col win } {
 #
 # DisplayEvent: inserts events into the GUI
 #
-proc DisplayEvent { paneName status priority count sensor dateTime eventID message srcIP\
- dstIP proto srcPort dstPort statusColor } {
+proc DisplayEvent { paneName status priority count sensor dateTime eventID message srcIP \
+                    dstIP proto srcPort dstPort statusColor genID sigID sigRev } {
+
+    global generatorListMap sigIDListMap
   
     $paneName insert end [list $priority $count $sensor $eventID $dateTime $srcIP $srcPort $dstIP $dstPort $proto $message]
     $paneName cellconfigure end,status -window "EventStatusLabel [list $statusColor $status]"
+
+    lappend generatorListMap($paneName) $genID
+    lappend sigIDListMap($paneName) [list $sigID $sigRev]
 
 }
 
@@ -809,6 +828,14 @@ proc ClearPadsData {} {
 
 }
 
+proc ClearGenericDetail {} {
+
+    global genericText 
+
+    $genericText delete 0.0 end
+
+}
+
 proc DisplayPadsBanner {} {
 
     global DISPLAY_PADS ACTIVE_EVENT MULTI_SELECT CONNECTED CUR_SEL_PANE
@@ -834,6 +861,30 @@ proc DisplayPadsBanner {} {
 
 }
 
+proc DisplayGenericDetail {} {
+
+    global DISPLAY_GENERIC ACTIVE_EVENT MULTI_SELECT CONNECTED CUR_SEL_PANE
+
+    ClearGenericDetail
+
+    if { $ACTIVE_EVENT && $DISPLAY_GENERIC && !$MULTI_SELECT } {
+
+        if {!$CONNECTED} {
+            ErrorMessage "Not connected to sguild. Cannot request detail."
+            return 
+        }
+
+        set selectedIndex [$CUR_SEL_PANE(name) curselection]
+        set eventID [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID]
+        set sid [lindex [split $eventID .] 0]
+        set aid [lindex [split $eventID .] 1]
+
+        Working
+        SendToSguild "GetGenericDetail $sid $aid"
+
+    }
+
+}
 
 proc DisplayPortscanData {} {
 
@@ -1483,7 +1534,8 @@ proc SelectPadsPane { win type format } {
 proc SelectEventPane { win type format } {
 
     global CUR_SEL_PANE CUR_SEL_EVENT ACTIVE_EVENT BUSY MULTI_SELECT DISPLAYEDDETAIL
-    global portscanDataFrame packetDataFrame sancpFrame padsFrame
+    global portscanDataFrame packetDataFrame sancpFrame padsFrame genericFrame
+    global generatorListMap sigIDListMap
 
     set CUR_SEL_PANE(name) $win
     set CUR_SEL_PANE(type) $type
@@ -1511,19 +1563,46 @@ proc SelectEventPane { win type format } {
 
         set CUR_SEL_EVENT $eventID
 
-        if { [regexp "^spp_portscan:" [$win getcells $selectedIndex,event]] } {
+        set genID [lindex $generatorListMap($win) $selectedIndex]
+        set sigRevList [lindex $sigIDListMap($win) $selectedIndex]
+        set sigID [lindex $sigRevList 0]
+        set sigRev [lindex $sigRevList 1]
 
-            if { $DISPLAYEDDETAIL != $portscanDataFrame } {
+        # Snort uses a gen id of less than 1000
+        if { $genID < 1000 } { 
 
-                pack forget $DISPLAYEDDETAIL
-                pack $portscanDataFrame -fill both -expand true
+            # Look for the old portscan preproc alerts
+            if { [regexp "^spp_portscan:" [$win getcells $selectedIndex,event]] } {
+
+                if { $DISPLAYEDDETAIL != $portscanDataFrame } {
+
+                    pack forget $DISPLAYEDDETAIL
+                    pack $portscanDataFrame -fill both -expand true
+                }
+
+                set DISPLAYEDDETAIL $portscanDataFrame
+                DisplayPortscanData
+
+            } else {
+
+                if { $DISPLAYEDDETAIL != $packetDataFrame } {
+    
+                    pack forget $DISPLAYEDDETAIL
+                    pack $packetDataFrame -fill both -expand true
+                    set DISPLAYEDDETAIL $packetDataFrame
+
+                }
+
+                DisplayPacketHdr [$win getcells $selectedIndex,ipproto]
+                GetRuleInfo
+                GetPacketInfo
+
             }
 
-            set DISPLAYEDDETAIL $portscanDataFrame
-            DisplayPortscanData
 
-        } elseif { [regexp {^PADS} [$win getcells $selectedIndex,event]] } {
+        } elseif { $genID == "10000" } {
 
+            # PADS alert
             if { $DISPLAYEDDETAIL != $padsFrame } {
 
                 pack forget $DISPLAYEDDETAIL
@@ -1534,19 +1613,24 @@ proc SelectEventPane { win type format } {
             set DISPLAYEDDETAIL $padsFrame
             DisplayPadsBanner
 
-        } else {
+        } elseif { $genID == "10001" } {
 
-            if { $DISPLAYEDDETAIL != $packetDataFrame } {
+            # Generic alert
+            if { $DISPLAYEDDETAIL != $genericFrame } {
 
                 pack forget $DISPLAYEDDETAIL
-                pack $packetDataFrame -fill both -expand true
-                set DISPLAYEDDETAIL $packetDataFrame
+                pack $genericFrame -fill both -expand true
 
             }
+            set DISPLAYEDDETAIL $genericFrame
+            DisplayGenericDetail
 
-            DisplayPacketHdr [$win getcells $selectedIndex,ipproto]
-            GetRuleInfo
-            GetPacketInfo
+        } else {
+
+            pack forget $DISPLAYEDDETAIL
+            set DISPLAYEDDETAIL unknown
+
+            #InfoMessage "Unknown event type with generator ID of $genID. No detail to display."
 
         }
 
@@ -2360,6 +2444,21 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
 	pack $bannerHex $bannerText -side left -fill both -expand true
       pack $padsDisplayButton -side top
       pack $padsBannerFrame -side bottom -fill both -expand true
+
+    #
+    # Detail for generic events
+    #
+    set genericFrame [frame $detailDataFrame.genericFrame]
+      set genericDisplayButton [checkbutton $genericFrame.genericButton -variable DISPLAY_GENERIC \
+        -command DisplayGenericDetail -text "Display Detail"]
+      set genericText [scrolledtext $genericFrame.genericText -hscrollmode none -visibleitems 10x2\
+       -sbwidth 10 -vscrollmode dynamic -wrap word]
+      pack $genericDisplayButton -side top 
+      pack $genericText -side bottom -fill both -expand true
+      pack $padsBannerFrame -side bottom -fill both -expand true
+
+    #
+    # Portscan Detail
 
     #
     # Portscan Detail

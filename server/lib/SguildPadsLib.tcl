@@ -75,6 +75,8 @@ proc ProcessPadsAsset { dataList } {
 
 proc AlertAsset { type sensorName sid aid timestamp intTime s_inetIP s_intIP d_inetIP d_intIP s_port d_port service ip_proto app} {
 
+    set generator_id 10000
+
     # Add to event table
     set tablePrefix "${sensorName}_[clock format [clock scan $timestamp] -gmt true -format "%Y%m%d"]"
 
@@ -93,7 +95,7 @@ proc AlertAsset { type sensorName sid aid timestamp intTime s_inetIP s_intIP d_i
     }
     
 
-    if [catch {InsertEventHdr $tablePrefix $sid $aid $aid $aid $timestamp $msg 99999 $sig_id $rev_id \
+    if [catch {InsertEventHdr $tablePrefix $sid $aid $aid $aid $timestamp $msg $generator_id $sig_id $rev_id \
                $timestamp 5 $type 0 $s_intIP $d_intIP $ip_proto {} {} {} {} {} {} {} \
                {} {} {} {} $s_port $d_port} tmpError] {
 
@@ -105,7 +107,7 @@ proc AlertAsset { type sensorName sid aid timestamp intTime s_inetIP s_intIP d_i
     # Send RT Event
     # RTEvent|st|priority|class_type|hostname|timestamp|sid|cid|msg|srcip|dstip|ipproto|srcport|dstport|sig_id|rev|u_event_id|u_event_ref
     EventRcvd [list 0 5 new-asset $sensorName $timestamp $sid $aid $msg \
-               $s_inetIP $d_inetIP $ip_proto $s_port $d_port $sig_id $rev_id $aid $aid]
+               $s_inetIP $d_inetIP $ip_proto $s_port $d_port $generator_id $sig_id $rev_id $aid $aid]
 
 }
 

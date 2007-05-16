@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.36 2007/02/13 20:42:24 bamm Exp $ #
+# $Id: qrylib.tcl,v 1.37 2007/05/16 19:07:31 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -254,7 +254,8 @@ proc DBQueryRequest { selectedTable whereList {winTitle {none} } } {
     set COLUMNS "event.status, event.priority, sensor.hostname, \
      event.timestamp as datetime, event.sid, event.cid, event.signature,\
      INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto,\
-     event.src_port, event.dst_port"
+     event.src_port, event.dst_port, event.signature_gen, event.signature_id, \
+     event.signature_rev"
 
     # Parse the WHERE's and determine what tables we need to SELECT from.
 

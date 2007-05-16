@@ -3,12 +3,12 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.43 2007/03/08 06:39:40 bamm Exp $
+# $Id: extdata.tcl,v 1.44 2007/05/16 19:07:31 bamm Exp $
 
 proc GetRuleInfo {} {
 
     global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
-    global CONNECTED eventArray
+    global CONNECTED eventArray generatorListMap sigIDListMap
 
     ClearRuleText
 
@@ -19,7 +19,9 @@ proc GetRuleInfo {} {
             return
         }
 
+        set win $CUR_SEL_PANE(name)
         set selectedIndex [$CUR_SEL_PANE(name) curselection]
+        # puts "DEBUG #### genid: [lindex $generatorListMap($win) $selectedIndex]  sigid: [lindex $sigIDListMap($win) $selectedIndex]"
         set event_id [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID]
         set message [$CUR_SEL_PANE(name) getcells $selectedIndex,event]
         set sensorName [$CUR_SEL_PANE(name) getcells $selectedIndex,sensor]

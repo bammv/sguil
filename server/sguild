@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.176 2007/04/28 23:13:45 bamm Exp $ #
+# $Id: sguild,v 1.177 2007/05/16 19:06:41 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -600,8 +600,8 @@ if { $mergeTableListArray(event) != "" } {
         set tmpQry "SELECT event.status, event.priority, event.class, sensor.hostname,       \n\
                     event.timestamp, event.sid, event.cid, event.signature,                  \n\
                     INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto,        \n\
-                    event.src_port, event.dst_port, event.signature_id, event.signature_rev, \n\
-                    event.unified_event_id, unified_event_ref                                \n\
+                    event.src_port, event.dst_port, event.signature_gen, event.signature_id, \n\
+                    event.signature_rev, event.unified_event_id, unified_event_ref           \n\
                     FROM event                                                               \n\
                     FORCE INDEX (status)                                                     \n\
                     JOIN sensor ON event.sid=sensor.sid                                      \n\
@@ -612,8 +612,8 @@ if { $mergeTableListArray(event) != "" } {
         set tmpQry "SELECT event.status, event.priority, event.class, sensor.hostname,       \n\
                     event.timestamp, event.sid, event.cid, event.signature,                  \n\
                     INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto,        \n\
-                    event.src_port, event.dst_port, event.signature_id, event.signature_rev, \n\
-                    event.unified_event_id, unified_event_ref                                \n\
+                    event.src_port, event.dst_port, event.signature_gen, event.signature_id, \n\
+                    event.signature_rev, event.unified_event_id, unified_event_ref           \n\
                     FROM event, sensor                                                       \n\
                     WHERE event.sid=sensor.sid AND event.status=0                            \n\
                     ORDER BY event.timestamp ASC"
@@ -655,10 +655,11 @@ if { $mergeTableListArray(event) != "" } {
         set tmpQry "SELECT event.status, event.priority, event.class, sensor.hostname,      \n\
                     event.timestamp, event.sid, event.cid, event.signature,                 \n\
                     INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto,       \n\
-                    event.src_port, event.dst_port                                          \n\
-                    FROM event                                                               \n\
-                    FORCE INDEX (status)                                                     \n\
-                    JOIN sensor ON event.sid=sensor.sid                                      \n\
+                    event.src_port, event.dst_port, event.signature_gen,                    \n\
+                    event.signature_id, event.signature_rev                                 \n\
+                    FROM event                                                              \n\
+                    FORCE INDEX (status)                                                    \n\
+                    JOIN sensor ON event.sid=sensor.sid                                     \n\
                     WHERE event.sid=sensor.sid AND event.status=2 ORDER BY event.timestamp ASC"
 
     } else {
@@ -666,9 +667,10 @@ if { $mergeTableListArray(event) != "" } {
         set tmpQry "SELECT event.status, event.priority, event.class, sensor.hostname,      \n\
                     event.timestamp, event.sid, event.cid, event.signature,                 \n\
                     INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto,       \n\
-                    event.src_port, event.dst_port                                          \n\
-                    FROM event                                                               \n\
-                    JOIN sensor ON event.sid=sensor.sid                                      \n\
+                    event.src_port, event.dst_port, event.signature_gen,                    \n\
+                    event.signature_id, event.signature_rev                                 \n\
+                    FROM event                                                              \n\
+                    JOIN sensor ON event.sid=sensor.sid                                     \n\
                     WHERE event.sid=sensor.sid AND event.status=2 ORDER BY event.timestamp ASC"
 
     }

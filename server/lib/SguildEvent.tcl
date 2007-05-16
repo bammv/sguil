@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.18 2006/09/01 16:52:12 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.19 2007/05/16 19:06:41 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -6,6 +6,11 @@
 proc EventRcvd { eventDataList } {
   global EMAIL_EVENTS EMAIL_CLASSES EMAIL_DISABLE_SIDS EMAIL_ENABLE_SIDS EMAIL_PRIORITIES
   global eventIDCountArray acRules acCat correlatedEventArray eventIDList correlatedEventIDArray
+
+
+  #      EventRcvd [list $status $priority $class $hostname $timestamp $sensorID $alertID   \
+  #                 $msg $inet_sip $inet_dip $ip_proto $src_port $dst_port $sig_rev $sig_id \
+  #                 $revision $alertID $refID $gen_id]
 
   if { [lindex $eventDataList 2] == "system-info" } {
     InfoMessage "SYSTEM INFO: $eventDataList"
@@ -20,21 +25,23 @@ proc EventRcvd { eventDataList } {
     if { ![array exists acRules] || ![AutoCat $eventDataList] } {
       # Correlation/aggregation checks here: CorrelateEvent SrcIP Message
       set sensorID [lindex $eventDataList 5]
-      set matchAID [ CorrelateEvent $sensorID [lindex $eventDataList 8] [lindex $eventDataList 7] [lindex $eventDataList 15] [lindex $eventDataList 16]]
+      set matchAID [ CorrelateEvent $sensorID [lindex $eventDataList 8] [lindex $eventDataList 7] [lindex $eventDataList 16] [lindex $eventDataList 17]]
       if { $matchAID == 0 } {
         AddEventToEventArray $eventDataList
         # Clients don't need the sid and rev
-        SendEvent "[lrange $eventDataList 0 12] 1"
+        #SendEvent "[lrange $eventDataList 0 12] 1"
+        SendEvent $eventDataList
         if { $EMAIL_EVENTS } {
           #Ug-ly. Things will get better when the rules are in the DB.
-          set sid [lindex $eventDataList 13]
+          set genID [lindex $eventDataList 13]
+          set sigID [lindex $eventDataList 14]
           set class [lindex $eventDataList 2]
           set priority [lindex $eventDataList 1]
           if { ([lsearch -exact $EMAIL_CLASSES $class] >= 0\
-               && [lsearch -exact $EMAIL_DISABLE_SIDS $sid] < 0)\
+               && [lsearch -exact $EMAIL_DISABLE_SIDS $sigID] < 0)\
                || ([lsearch -exact $EMAIL_PRIORITIES $priority] >= 0\
-               && [lsearch -exact $EMAIL_DISABLE_SIDS $sid] < 0)\
-               || [lsearch -exact $EMAIL_ENABLE_SIDS $sid] >= 0 } {
+               && [lsearch -exact $EMAIL_DISABLE_SIDS $sigID] < 0)\
+               || [lsearch -exact $EMAIL_ENABLE_SIDS $sigID] >= 0 } {
             EmailEvent $eventDataList
           }
         }
@@ -56,14 +63,17 @@ proc EventRcvd { eventDataList } {
 # AddEventToEventArray: Global eventIDArray contains current events.
 #
 proc AddEventToEventArray { eventDataList } {
-  global eventIDArray eventIDList sensorIDList eventIDCountArray
-  set eventID [join [lrange $eventDataList 5 6] .]
-  set eventIDCountArray($eventID) 1
-  set sensorName [lindex $eventDataList 3]
-  set eventIDArray($eventID) $eventDataList
-  # Arrays are not kept in any particular order so we have to keep
-  # a list in order to control the order the clients receive events
-  lappend eventIDList $eventID
+
+    global eventIDArray eventIDList sensorIDList eventIDCountArray
+
+    set eventID [join [lrange $eventDataList 5 6] .]
+    set eventIDCountArray($eventID) 1
+    set sensorName [lindex $eventDataList 3]
+    set eventIDArray($eventID) $eventDataList
+    # Arrays are not kept in any particular order so we have to keep
+    # a list in order to control the order the clients receive events
+    lappend eventIDList $eventID
+
 }
 
 proc DeleteEventIDList { socketID data } {
