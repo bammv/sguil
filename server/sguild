@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.177 2007/05/16 19:06:41 bamm Exp $ #
+# $Id: sguild,v 1.178 2007/05/16 19:54:23 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -549,8 +549,12 @@ foreach agentSidType $agentList {
 
         }
 
-        # Init snort stats array
-        set snortStatsArray($hostname) [list $sid N/A N/A N/A N/A N/A N/A N/A N/A N/A N/A]
+        if { $agent_type == "snort" } {
+
+            # Init snort stats array
+            set snortStatsArray($hostname) [list $sid N/A N/A N/A N/A N/A N/A N/A N/A N/A N/A]
+
+        }
 
     } elseif { $agent_type == "pads" } {
 
