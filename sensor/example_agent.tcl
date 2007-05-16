@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: example_agent.tcl,v 1.1 2007/04/28 23:15:02 bamm Exp $ #
+# $Id: example_agent.tcl,v 1.2 2007/05/16 19:10:48 bamm Exp $ #
 
 # Copyright (C) 2002-2007 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -35,10 +35,10 @@ set VERSION "SGUIL-0.7.0-ALPHA"
 # The template also prepends the agent type in all caps to all event messages.
 set AGENT_TYPE "sshd"
 
-# The generator ID is a unique id for this type of agent.
-# Snort uses those found in gen-msg map. Anything over 1000 should be fine.
-# I am not sure it'll ever be used, but lets play it safe
-set GEN_ID 1001
+# The generator ID is a unique id for a generic agent.
+# If you don't use 10001, then you will not be able to
+# display detail in the client.
+set GEN_ID 10001
 
 # Used internally, you shouldn't need to edit these.
 set CONNECTED 0
