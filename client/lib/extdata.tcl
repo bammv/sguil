@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.44 2007/05/16 19:07:31 bamm Exp $
+# $Id: extdata.tcl,v 1.45 2007/05/17 16:16:02 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -21,14 +21,27 @@ proc GetRuleInfo {} {
 
         set win $CUR_SEL_PANE(name)
         set selectedIndex [$CUR_SEL_PANE(name) curselection]
-        # puts "DEBUG #### genid: [lindex $generatorListMap($win) $selectedIndex]  sigid: [lindex $sigIDListMap($win) $selectedIndex]"
+
+        set genID [lindex $generatorListMap($win) $selectedIndex]
+
+        if { $genID != "1" } {
+
+            # For the detection engine only. Generator ID 1.
+            ErrorMessage "Rules and signatures are not available for the generator ID ${genID}."
+            return
+
+        }
+
+        set sigID [lindex [lindex $sigIDListMap($win) $selectedIndex] 0]
+        set sigRev [lindex [lindex $sigIDListMap($win) $selectedIndex] 1]
+
         set event_id [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID]
-        set message [$CUR_SEL_PANE(name) getcells $selectedIndex,event]
+        #set message [$CUR_SEL_PANE(name) getcells $selectedIndex,event]
         set sensorName [$CUR_SEL_PANE(name) getcells $selectedIndex,sensor]
 
-        if {$DEBUG} {puts "RuleRequest $event_id $sensorName $message"}
+        if {$DEBUG} {puts "RuleRequest $event_id $sensorName "}
 
-        SendToSguild "RuleRequest $event_id $sensorName $message"
+        SendToSguild "RuleRequest $event_id $sensorName $genID $sigID $sigRev"
 
     } else {
 

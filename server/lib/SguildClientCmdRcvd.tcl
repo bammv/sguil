@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.27 2007/05/16 19:06:41 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.28 2007/05/17 16:15:26 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -33,6 +33,7 @@ proc ClientCmdRcvd { socketID } {
     set data3 [string trimleft $data]
     set index3 [ctoken data " "]
     set index4 [ctoken data " "]
+    set index5 [ctoken data " "]
     switch -exact $clientCmd {
       DeleteEventID { $clientCmd $socketID $index1 $index2 }
       DeleteEventIDList { $clientCmd $socketID $data1 }
@@ -47,7 +48,7 @@ proc ClientCmdRcvd { socketID } {
       GetUdpData { $clientCmd $socketID $index1 $index2 }
       MonitorSensors { $clientCmd $socketID $data1 }
       QueryDB { $clientCmd $socketID $index1 $data2 }
-      RuleRequest { $clientCmd $socketID $index1 $index2 $data3 }
+      RuleRequest { $clientCmd $socketID $index1 $index2 $index3 $index4 $index5 }
       SendSensorList { $clientCmd $socketID }
       SendEscalatedEvents { $clientCmd $socketID }
       SendDBInfo { $clientCmd $socketID }
@@ -149,24 +150,14 @@ proc SendDBInfo { socketID } {
 # RuleRequest finds rule based on message. Should change this to
 # use sig ids in the future.
 #
-proc RuleRequest { socketID event_id sensor message } {
+proc RuleRequest { socketID event_id sensor genID sigID sigRev } {
 
     global RULESDIR
                                                                                                             
     set RULEFOUND 0
     set ruleDir $RULESDIR/$sensor
 
-    # Check for an alert with no sid-msg.map (Snort Alert [#:#:#])
-    if { [regexp {Snort Alert \[([0-9]+):([0-9]+):([0-9]+)\]} $message match gen_id rule_id rev] } {
-
-        set search_string "sid:$rule_id"
-
-    } else {
-
-        set search_string "msg:*\"$message\""
-
-    }
-  
+    set search_string "sid:\\s*${sigID}"
 
     if { [file exists $ruleDir] } {
 
@@ -179,7 +170,7 @@ proc RuleRequest { socketID event_id sensor message } {
             while { [gets $ruleFileID data] >= 0 } {
 
                 incr  line
-                if { [string match "*$search_string*" $data] } {
+                if { [ regexp $search_string $data ] } {
                     set RULEFOUND 1
                     InfoMessage "Matching rule found in $ruleFile."
                     break
