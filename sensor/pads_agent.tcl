@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: pads_agent.tcl,v 1.3 2007/03/25 14:31:38 bamm Exp $ #
+# $Id: pads_agent.tcl,v 1.4 2007/05/22 15:12:00 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -84,12 +84,15 @@ proc InitPads {} {
 # * 03,10.10.10.83,168430163,22,6,1100847309
 proc GetFifoData { fifoID } {
 
+    global DEBUG
+
     if { [eof $fifoID] || [catch {gets $fifoID data} tmpError] } {
     
         puts "Lost FIFO"
 
     } else {
             
+        if { $DEBUG } { puts "New line from FIFO: $data" }
         ProcessPadsData $data
 
     }
