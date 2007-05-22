@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.45 2007/05/17 16:16:02 bamm Exp $
+# $Id: extdata.tcl,v 1.46 2007/05/22 15:08:59 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -22,7 +22,8 @@ proc GetRuleInfo {} {
         set win $CUR_SEL_PANE(name)
         set selectedIndex [$CUR_SEL_PANE(name) curselection]
 
-        set genID [lindex $generatorListMap($win) $selectedIndex]
+        set event_id [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID]
+        set genID $generatorListMap($event_id)
 
         if { $genID != "1" } {
 
@@ -32,11 +33,9 @@ proc GetRuleInfo {} {
 
         }
 
-        set sigID [lindex [lindex $sigIDListMap($win) $selectedIndex] 0]
-        set sigRev [lindex [lindex $sigIDListMap($win) $selectedIndex] 1]
+        set sigID [lindex $sigIDListMap($event_id) 0]
+        set sigRev [lindex $sigIDListMap($event_id) 1]
 
-        set event_id [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID]
-        #set message [$CUR_SEL_PANE(name) getcells $selectedIndex,event]
         set sensorName [$CUR_SEL_PANE(name) getcells $selectedIndex,sensor]
 
         if {$DEBUG} {puts "RuleRequest $event_id $sensorName "}

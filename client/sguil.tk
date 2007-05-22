@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.230 2007/05/16 19:07:31 bamm Exp $ #
+# $Id: sguil.tk,v 1.231 2007/05/22 15:08:59 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -411,8 +411,8 @@ proc ValidateEvent { status {c_flag {0}} } {
             # Remove the selected line from the console
             $win delete $selectedIndex
             lappend tmpDeletedEIDList $eventID
-            set sigIDListMap($win) [lreplace $sigIDListMap($win) $selectedIndex $selectedIndex]
-            set generatorListMap($win) [lreplace $generatorListMap($win) $selectedIndex $selectedIndex]
+            unset sigIDListMap($eventID)
+            unset generatorListMap($eventID)
   
         }
     
@@ -744,8 +744,8 @@ proc DisplayEvent { paneName status priority count sensor dateTime eventID messa
     $paneName insert end [list $priority $count $sensor $eventID $dateTime $srcIP $srcPort $dstIP $dstPort $proto $message]
     $paneName cellconfigure end,status -window "EventStatusLabel [list $statusColor $status]"
 
-    lappend generatorListMap($paneName) $genID
-    lappend sigIDListMap($paneName) [list $sigID $sigRev]
+    set generatorListMap($eventID) $genID
+    set sigIDListMap($eventID) [list $sigID $sigRev]
 
 }
 
@@ -1563,10 +1563,9 @@ proc SelectEventPane { win type format } {
 
         set CUR_SEL_EVENT $eventID
 
-        set genID [lindex $generatorListMap($win) $selectedIndex]
-        set sigRevList [lindex $sigIDListMap($win) $selectedIndex]
-        set sigID [lindex $sigRevList 0]
-        set sigRev [lindex $sigRevList 1]
+        set genID $generatorListMap($eventID)
+        set sigID [lindex $sigIDListMap($eventID) 0]
+        set sigRev [lindex $sigIDListMap($eventID) 1]
 
         # Snort uses a gen id of less than 1000
         if { $genID < 1000 } { 
