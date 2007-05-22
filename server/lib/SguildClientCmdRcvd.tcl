@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.28 2007/05/17 16:15:26 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.29 2007/05/22 20:12:26 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -157,7 +157,7 @@ proc RuleRequest { socketID event_id sensor genID sigID sigRev } {
     set RULEFOUND 0
     set ruleDir $RULESDIR/$sensor
 
-    set search_string "sid:\\s*${sigID}"
+    set search_string "sid:\\s*${sigID}\\s*;"
 
     if { [file exists $ruleDir] } {
 
