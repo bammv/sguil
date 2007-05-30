@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.29 2007/05/22 20:12:26 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.30 2007/05/30 18:24:26 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -123,18 +123,18 @@ proc GetCorrelatedEvents { socketID eid winName } {
   global correlatedEventArray eventIDArray
   if { [info exists eventIDArray] } {
     SendSocket $socketID\
-     "InsertQueryResults $winName [eval FormatStdToQuery [lrange $eventIDArray($eid) 0 12]]"
+     "InsertQueryResults $winName [eval FormatStdToQuery $eventIDArray($eid)]"
   }
                                                                                                             
   if { [info exists correlatedEventArray($eid)] } {
     foreach row $correlatedEventArray($eid) {
-      SendSocket $socketID "InsertQueryResults $winName [eval FormatStdToQuery [lrange $row 0 12]]"
+      SendSocket $socketID "InsertQueryResults $winName [eval FormatStdToQuery $row]"
     }
   }
 }
 
-proc FormatStdToQuery { status priority class sensor time sid cid msg sip dip proto sp dp } {
-  return "[list $status $priority $sensor $time $sid $cid $msg $sip $dip $proto $sp $dp]"
+proc FormatStdToQuery { status priority class sensor time sid cid msg sip dip proto sp dp genID sigID rev refID1 refID2 } {
+  return "[list $status $priority $sensor $time $sid $cid $msg $sip $dip $proto $sp $dp $genID $sigID $rev]"
 }
 
 
