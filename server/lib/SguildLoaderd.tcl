@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.24 2007/03/08 05:45:06 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.25 2007/05/30 18:06:00 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -237,10 +237,11 @@ proc InitLoaderd {} {
 
 proc LoadFile { fileName table } {
 
-    global LOADERD_DB_ID DBHOST
+    global LOADERD_DB_ID DBHOST TMP_LOAD_DIR
 
     if { ![file exists $fileName] || ![file readable $fileName] } {
         LogMessage "Non-fatal error: File $fileName does not exist or is not readable."
+        return
     }
 
     if { $DBHOST != "localhost" && $DBHOST != "127.0.0.1" } {
@@ -252,7 +253,28 @@ proc LoadFile { fileName table } {
     }
 
     if [catch {mysqlexec $LOADERD_DB_ID $dbCmd} execResults] {
-        ErrorMessage "ERROR: loaderd: $execResults"
+
+        LogMessage "ERROR: loaderd: $execResults"
+
+        if { ![file exists ${TMP_LOAD_DIR}/failed] } { 
+
+            # Attempt to create it
+            if { [catch {file mkdir ${TMP_LOAD_DIR}/failed} err] } {
+
+                LogMessage "Unable to create failed directory: $err"
+
+            }
+
+        }
+
+        set fName [file tail $fileName]
+        set fDir [file dirname $fileName]
+        if [catch {file copy -force $fileName ${fDir}/failed/${fName}} tmpError] {
+            LogMessage "ERROR: loaderd: $tmpError"
+        } else {
+            LogMessage "ERROR: loaderd: $fName moved to failed directory."
+        }
+
     }
 
     # Delete the tmpfile
@@ -328,9 +350,6 @@ proc LoadSancpFile { sensor filename date } {
     LoadFile $filename $tableName 
     file delete $filename
 
-    #if [catch { puts $loaderdWritePipe [list ConfirmSancpFile $sensor [file tail $filename]] } tmpError] {
-    #    LogMessage "ERROR: $tmpError"
-    #}
     if [catch {flush $loaderdWritePipe} tmpError] {
         LogMessage "ERROR: $tmpError"
     }
