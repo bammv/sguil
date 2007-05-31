@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.19 2007/05/16 19:06:41 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.20 2007/05/31 18:24:21 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -28,8 +28,8 @@ proc EventRcvd { eventDataList } {
       set matchAID [ CorrelateEvent $sensorID [lindex $eventDataList 8] [lindex $eventDataList 7] [lindex $eventDataList 16] [lindex $eventDataList 17]]
       if { $matchAID == 0 } {
         AddEventToEventArray $eventDataList
-        # Clients don't need the sid and rev
-        #SendEvent "[lrange $eventDataList 0 12] 1"
+        # Append the count of 1
+        lappend eventDataList 1
         SendEvent $eventDataList
         if { $EMAIL_EVENTS } {
           #Ug-ly. Things will get better when the rules are in the DB.
