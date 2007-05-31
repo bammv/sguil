@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.232 2007/05/29 13:50:31 bamm Exp $ #
+# $Id: sguil.tk,v 1.233 2007/05/31 17:51:42 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2308,7 +2308,7 @@ $sensorStatusTable columnconfigure 0 -name agentSid -sortmode integer -resizable
 $sensorStatusTable columnconfigure 1 -name agentNetname -sortmode ascii -resizable 1 -stretchable 1
 $sensorStatusTable columnconfigure 2 -name agentHostname -sortmode ascii -resizable 1 -stretchable 1
 $sensorStatusTable columnconfigure 3 -name agentType -sortmode ascii -resizable 1 -stretchable 1
-$sensorStatusTable columnconfigure 4 -name agentLast -sortmode dictionary -resizable 0
+$sensorStatusTable columnconfigure 4 -name agentLast -sortmode dictionary -resizable 1
 $sensorStatusTable columnconfigure 5 -name agentStatus -resizable 0 -sortmode dictionary -formatcommand EmptyString
 
 scrollbar $sensorStatusScroll -orient vertical -width 10 -command [list $sensorStatusTable yview]
