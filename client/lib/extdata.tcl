@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.46 2007/05/22 15:08:59 bamm Exp $
+# $Id: extdata.tcl,v 1.47 2007/05/31 19:08:35 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -1066,6 +1066,8 @@ proc SensorStatusUpdate { statusList } {
 
     global sensorStatusTable
 
+    set yscrollPos [$sensorStatusTable yview]
+
     # Get currently selected index
     set sIndex [$sensorStatusTable curselection]
     # Map it back to a sensor id (in case this is a sort that changes)
@@ -1075,7 +1077,6 @@ proc SensorStatusUpdate { statusList } {
 
     }
 
-
     # And what our last sort was on
     set sortColumn [$sensorStatusTable sortcolumn]
     if { $sortColumn >= 0 } { set sortOrder [$sensorStatusTable sortorder] }
@@ -1083,7 +1084,7 @@ proc SensorStatusUpdate { statusList } {
     array set sensorStatusArray [lindex $statusList 0]
 
     # Clear the current list
-    $sensorStatusTable delete 0 end
+    #$sensorStatusTable delete 0 end
 
     set agentSidIndex [$sensorStatusTable columnindex agentSid]
     set agentNetnameIndex [$sensorStatusTable columnindex agentNetname]
@@ -1102,9 +1103,20 @@ proc SensorStatusUpdate { statusList } {
         set tmpList [lreplace $tmpList $agentLastIndex $agentLastIndex [lindex $sensorStatusArray($sensorID) 3]]
         set tmpList [lreplace $tmpList $agentStatusIndex $agentStatusIndex [lindex $sensorStatusArray($sensorID) 4]]
 
-        $sensorStatusTable insert end $tmpList
-        $sensorStatusTable cellconfigure end,agentStatus -window "CreateStatusLabel [lindex $tmpList $agentStatusIndex]"
-        #$sensorStatusTable cellconfigure end,sensorBY -window "CreateStatusLabel [lindex $tmpList $sensorBYIndex]"
+        set match [lsearch -exact [lindex [$sensorStatusTable getcolumns 0 0] 0] $sensorID]
+        if { $match >= 0 } {
+
+            $sensorStatusTable delete $match $match
+            $sensorStatusTable insert $match $tmpList
+            $sensorStatusTable cellconfigure $match,agentStatus -window "CreateStatusLabel [lindex $tmpList $agentStatusIndex]"
+
+        } else {
+          
+            $sensorStatusTable insert end $tmpList
+            $sensorStatusTable cellconfigure end,agentStatus -window "CreateStatusLabel [lindex $tmpList $agentStatusIndex]"
+            #$sensorStatusTable cellconfigure end,sensorBY -window "CreateStatusLabel [lindex $tmpList $sensorBYIndex]"
+
+        }
 
     }
 
@@ -1121,6 +1133,8 @@ proc SensorStatusUpdate { statusList } {
         if { $newIndex >= 0 } { $sensorStatusTable selection set $newIndex }
 
     }
+
+    $sensorStatusTable yview moveto [lindex $yscrollPos 0]
 
 }
 
