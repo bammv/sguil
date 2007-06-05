@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.47 2007/05/31 19:08:35 bamm Exp $
+# $Id: extdata.tcl,v 1.48 2007/06/05 14:57:47 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -28,7 +28,8 @@ proc GetRuleInfo {} {
         if { $genID != "1" } {
 
             # For the detection engine only. Generator ID 1.
-            ErrorMessage "Rules and signatures are not available for the generator ID ${genID}."
+            ClearRuleText
+            InsertRuleData "Rules and signatures are not available for the generator ID ${genID}."
             return
 
         }
