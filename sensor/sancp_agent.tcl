@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sancp_agent.tcl,v 1.3 2007/03/25 14:31:39 bamm Exp $ #
+# $Id: sancp_agent.tcl,v 1.4 2007/06/07 15:34:55 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -44,7 +44,7 @@ proc SendToSguild { data } {
   } else {
     if {$DEBUG} {puts "Sending sguild ($sguildSocketID) $data"}
     if [catch { puts $sguildSocketID $data } tmpError ] { puts "ERROR: $tmpError : $data" }
-    flush $sguildSocketID
+    catch { flush $sguildSocketID }
     return 1
   }
 }
@@ -310,7 +310,7 @@ proc ConnectToSguilServer {} {
             puts "Unable to send version string: $tmpError"
         }
 
-        flush $sguildSocketID
+        catch { flush $sguildSocketID }
         if {$OPENSSL} { tls::import $sguildSocketID }
 
         fileevent $sguildSocketID readable [list SguildCmdRcvd $sguildSocketID]

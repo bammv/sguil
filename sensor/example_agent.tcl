@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: example_agent.tcl,v 1.2 2007/05/16 19:10:48 bamm Exp $ #
+# $Id: example_agent.tcl,v 1.3 2007/06/07 15:34:55 bamm Exp $ #
 
 # Copyright (C) 2002-2007 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -287,7 +287,7 @@ proc ConnectToSguilServer {} {
             return 0
         }
 
-        flush $sguildSocketID
+        catch { flush $sguildSocketID }
         if {$OPENSSL} { tls::import $sguildSocketID }
 
         set CONNECTED 1
