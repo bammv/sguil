@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.23 2007/03/01 05:06:45 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.24 2007/06/07 15:15:43 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -155,8 +155,16 @@ proc UpdateDBStatusList { tableName whereTmp timestamp uid status } {
 
     InfoMessage "Updating events: $updateString"
 
-    set execResults [mysqlexec $MAIN_DB_SOCKETID $updateString]
-    return $execResults
+    if { [catch {mysqlexec $MAIN_DB_SOCKETID $updateString} execResults] } {
+
+        # Update failed.
+        LogMessage "DB Error during:\n$updateString\n: $execResults"
+
+    } else {
+
+        return $execResults
+
+    }
 
 }
 
