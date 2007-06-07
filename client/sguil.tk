@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.233 2007/05/31 17:51:42 bamm Exp $ #
+# $Id: sguil.tk,v 1.234 2007/06/07 15:14:35 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -167,8 +167,8 @@ proc ServerCommandRcvd { socketID } {
       InsertSancpFlags { $serverCmd $index1 $data2 }
       XscriptDebugMsg { $serverCmd $index1 $data2 }
       XscriptMainMsg { $serverCmd $index1 $data2 }
-      EtherealDataBase64 { $serverCmd $index1 $data2 }
-      EtherealDataPcap { $serverCmd $socketID $index1 $data2 }
+      WiresharkDataBase64 { $serverCmd $index1 $data2 }
+      WiresharkDataPcap { $serverCmd $socketID $index1 $data2 }
       default { puts "Unrecognized command from $socketID: $origData" }
     }
   } 
@@ -2809,8 +2809,8 @@ set eventIDMenut [ menu .eventIDMenut -background $SELECTBACKGROUND -foreground 
 $eventIDMenut add command -label "Event History" -command "GetEventHistory"
 $eventIDMenut add command -label "Transcript" -command "GetXscript xscript 0"
 $eventIDMenut add command -label "Transcript (force new)" -command "GetXscript xscript 1"
-$eventIDMenut add command -label "Ethereal" -command "GetXscript ethereal 0"
-$eventIDMenut add command -label "Ethereal (force new)" -command "GetXscript ethereal 1"
+$eventIDMenut add command -label "Wireshark" -command "GetXscript wireshark 0"
+$eventIDMenut add command -label "Wireshark (force new)" -command "GetXscript wireshark 1"
 
 # IPQuery Menu
 set ipQueryMenu [ menu .ipQueryMenu -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \

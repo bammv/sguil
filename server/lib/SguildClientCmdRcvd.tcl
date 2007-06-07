@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.30 2007/05/30 18:24:26 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.31 2007/06/07 15:14:35 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -60,7 +60,7 @@ proc ClientCmdRcvd { socketID } {
       ReportRequest { ReportBuilder $socketID $index1 $index2 $data3 }
       GetSancpFlagData { $clientCmd $socketID $index1 $index2 }
       XscriptRequest { eval $clientCmd $socketID $data1 }
-      EtherealRequest { eval $clientCmd $socketID $data1 }
+      WiresharkRequest { eval $clientCmd $socketID $data1 }
       AbortXscript { $clientCmd $socketID $index1 }
       LoadNessusReports { $clientCmd $socketID $index1 $index2 $data3 }
       GetOpenPorts { $clientCmd $socketID $index1 $index2 }	

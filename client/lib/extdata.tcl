@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.48 2007/06/05 14:57:47 bamm Exp $
+# $Id: extdata.tcl,v 1.49 2007/06/07 15:14:35 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -581,37 +581,37 @@ proc XscriptDebugMsg { winName data } {
       $winName.debug see end
     }
 }
-proc EtherealDataPcap { socketID fileName bytes } {
-  global ETHEREAL_STORE_DIR ETHEREAL_PATH
-  set outFileID [open $ETHEREAL_STORE_DIR/$fileName w]
+proc WiresharkDataPcap { socketID fileName bytes } {
+  global WIRESHARK_STORE_DIR WIRESHARK_PATH
+  set outFileID [open $WIRESHARK_STORE_DIR/$fileName w]
   fconfigure $outFileID -translation binary
   fconfigure $socketID -translation binary
   fcopy $socketID $outFileID -size $bytes
   close $outFileID
   fconfigure $socketID -encoding utf-8 -translation {auto crlf}
-  eval exec $ETHEREAL_PATH -n -r $ETHEREAL_STORE_DIR/$fileName &
+  eval exec $WIRESHARK_PATH -n -r $WIRESHARK_STORE_DIR/$fileName &
   InfoMessage\
-   "Raw file is stored in $ETHEREAL_STORE_DIR/$fileName. Please delete when finished"
+   "Raw file is stored in $WIRESHARK_STORE_DIR/$fileName. Please delete when finished"
 }
 # Archiving this till I know for sure binary xfers are working correctly
-proc EtherealDataBase64 { fileName data } {
-  global ETHEREAL_PATH ETHEREAL_STORE_DIR b64FileID DEBUG
+proc WiresharkDataBase64 { fileName data } {
+  global WIRESHARK_PATH WIRESHARK_STORE_DIR b64FileID DEBUG
   if { $data == "BEGIN" } {
-    set tmpFileName $ETHEREAL_STORE_DIR/${fileName}.base64
+    set tmpFileName $WIRESHARK_STORE_DIR/${fileName}.base64
     set b64FileID($fileName) [open $tmpFileName w]
   } elseif { $data == "END" } {
     if [info exists b64FileID($fileName)] {
       close $b64FileID($fileName)
-      set outFileID [open $ETHEREAL_STORE_DIR/$fileName w]
-      set inFileID [open $ETHEREAL_STORE_DIR/${fileName}.base64 r]
+      set outFileID [open $WIRESHARK_STORE_DIR/$fileName w]
+      set inFileID [open $WIRESHARK_STORE_DIR/${fileName}.base64 r]
       fconfigure $outFileID -translation binary
       fconfigure $inFileID -translation binary
       puts -nonewline $outFileID [::base64::decode [read -nonewline $inFileID]]
       close $outFileID
       close $inFileID
-      file delete $ETHEREAL_STORE_DIR/${fileName}.base64
-      eval exec $ETHEREAL_PATH -n -r $ETHEREAL_STORE_DIR/$fileName &
-      InfoMessage "Raw file is stored in $ETHEREAL_STORE_DIR/$fileName. Please delete when finished"
+      file delete $WIRESHARK_STORE_DIR/${fileName}.base64
+      eval exec $WIRESHARK_PATH -n -r $WIRESHARK_STORE_DIR/$fileName &
+      InfoMessage "Raw file is stored in $WIRESHARK_STORE_DIR/$fileName. Please delete when finished"
     }
   } else {
     if [info exists b64FileID($fileName)] {
@@ -623,7 +623,7 @@ proc EtherealDataBase64 { fileName data } {
 proc GetXscript { type force } {
 
     global ACTIVE_EVENT SERVERHOST XSCRIPT_SERVER_PORT DEBUG CUR_SEL_PANE XSCRIPTDATARCVD
-    global socketWinName SESSION_STATE ETHEREAL_STORE_DIR
+    global socketWinName SESSION_STATE WIRESHARK_STORE_DIR
 
     if {!$ACTIVE_EVENT} {return}
 
@@ -686,20 +686,20 @@ proc GetXscript { type force } {
             puts "Xscript Request sent: $sensor $sensorID $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
         }
   
-    } elseif { $type == "ethereal" } {
+    } elseif { $type == "wireshark" } {
 
       if {$DEBUG} {
-          puts "Ethereal Request sent: $sensor $sensorID \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
+          puts "Wireshark Request sent: $sensor $sensorID \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
       }
 
-      SendToSguild "EtherealRequest $sensor $sensorID \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
+      SendToSguild "WiresharkRequest $sensor $sensorID \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
 
     }
 
 }
 
 proc CopyDone { socketID tmpFileID tmpFile bytes {error {}} } {
-  global DEBUG ETHEREAL_PATH
+  global DEBUG WIRESHARK_PATH
   close $tmpFileID
   close $socketID
   if {$DEBUG} {puts "Bytes Transfered: $bytes"}
@@ -707,7 +707,7 @@ proc CopyDone { socketID tmpFileID tmpFile bytes {error {}} } {
     ErrorMessage "No data available." 
     file delete $tmpFileID
   } else {
-    eval exec $ETHEREAL_PATH -n -r $tmpFile &
+    eval exec $WIRESHARK_PATH -n -r $tmpFile &
     InfoMessage "Raw file is stored in $tmpFile. Please delete when finished"
   }
 }

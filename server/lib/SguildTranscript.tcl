@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.14 2007/04/18 02:05:24 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.15 2007/06/07 15:14:35 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -39,7 +39,7 @@ proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   return [list $sensorDir $rawDataFileName]
 }
 
-proc EtherealRequest { socketID sensor sensorID timestamp srcIP srcPort dstIP dstPort ipProto force } {
+proc WiresharkRequest { socketID sensor sensorID timestamp srcIP srcPort dstIP dstPort ipProto force } {
   global NEXT_TRANS_ID transInfoArray LOCAL_LOG_DIR
     # Increment the xscript counter. Gives us a unique way to track the xscript
   incr NEXT_TRANS_ID
@@ -53,29 +53,29 @@ proc EtherealRequest { socketID sensor sensorID timestamp srcIP srcPort dstIP ds
   set sensorDir [lindex $rawDataFileNameInfo 0]
   set rawDataFileName [lindex $rawDataFileNameInfo 1]
   # A list of info we'll need when we generate the actual xscript after the rawdata is returned.
-  set transInfoArray($TRANS_ID) [list $socketID null $sensorDir ethereal $sensor $timestamp ]
+  set transInfoArray($TRANS_ID) [list $socketID null $sensorDir wireshark $sensor $timestamp ]
   if { ! [file exists $sensorDir/$rawDataFileName] || $force } {
     # No local archive (first request) or the user has requested we force a check for new data.
-    if { ![GetRawDataFromSensor $TRANS_ID $sensor $sensorID $timestamp $srcIP $srcPort $dstIP $dstPort $ipProto $rawDataFileName ethereal] } {
+    if { ![GetRawDataFromSensor $TRANS_ID $sensor $sensorID $timestamp $srcIP $srcPort $dstIP $dstPort $ipProto $rawDataFileName wireshark] } {
       # This means the sensor_agent for this sensor isn't connected.
       SendSocket $socketID "ErrorMessage ERROR: Unable to request rawdata at this time.\
        The sensor $sensor is NOT connected."
     }
   } else {
     # The data is archived locally.
-    SendEtherealData $sensorDir/$rawDataFileName $TRANS_ID
+    SendWiresharkData $sensorDir/$rawDataFileName $TRANS_ID
   }
                                                                                                             
 }
 
-proc SendEtherealData { fileName TRANS_ID } {
+proc SendWiresharkData { fileName TRANS_ID } {
   global transInfoArray
                                                                                                             
   set clientSocketID [lindex $transInfoArray($TRANS_ID) 0]
-  #puts $clientSocketID "EtherealDataBase64 [file tail $fileName] [file size $fileName]"
+  #puts $clientSocketID "WiresharkDataBase64 [file tail $fileName] [file size $fileName]"
   # Clean up the filename for win32 systems
   regsub -all {:} [file tail $fileName] {_} cleanFileName
-  puts $clientSocketID "EtherealDataPcap $cleanFileName [file size $fileName]"
+  puts $clientSocketID "WiresharkDataPcap $cleanFileName [file size $fileName]"
   set rFileID [open $fileName r]
   fconfigure $rFileID -translation binary
   fconfigure $clientSocketID -translation binary
@@ -85,14 +85,14 @@ proc SendEtherealData { fileName TRANS_ID } {
     LogMessage "Error closing $fileName: $tmpError"
   }
   # Old stuff if we need to revert back to Base64 file xfers (yuck)
-  #sock12 null /snort_data/archive/2004-06-10/gateway ethereal gateway {2004-06-10 17:21:56}
-  #SendSocket $clientSocketID "EtherealDataBase64 [file tail $fileName] BEGIN"
+  #sock12 null /snort_data/archive/2004-06-10/gateway wireshark gateway {2004-06-10 17:21:56}
+  #SendSocket $clientSocketID "WiresharkDataBase64 [file tail $fileName] BEGIN"
   #set inFileID [open $fileName r]
   #fconfigure $inFileID -translation binary
   #foreach line [::base64::encode [read -nonewline $inFileID]] {
-  #  SendSocket $clientSocketID "EtherealDataBase64 [file tail $fileName] $line"
+  #  SendSocket $clientSocketID "WiresharkDataBase64 [file tail $fileName] $line"
   #}
-  #SendSocket $clientSocketID "EtherealDataBase64 [file tail $fileName] END"
+  #SendSocket $clientSocketID "WiresharkDataBase64 [file tail $fileName] END"
   #close $inFileID
 }
 
@@ -180,7 +180,7 @@ proc RawDataFile { socketID fileName TRANS_ID bytes } {
 
     global agentSensorName transInfoArray
 
-    # xscript or ethereal request
+    # xscript or wireshark request
     set type [lindex $transInfoArray($TRANS_ID) 3]
 
     InfoMessage "Receiving rawdata file $fileName."
@@ -194,8 +194,8 @@ proc RawDataFile { socketID fileName TRANS_ID bytes } {
 
     if { $type == "xscript" } {
         GenerateXscript $outfile [lindex $transInfoArray($TRANS_ID) 0] [lindex $transInfoArray($TRANS_ID) 1] $TRANS_ID
-    } elseif { $type == "ethereal" } {
-        SendEtherealData $outfile $TRANS_ID
+    } elseif { $type == "wireshark" } {
+        SendWiresharkData $outfile $TRANS_ID
     }
 }
 
