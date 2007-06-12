@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: pads_agent.tcl,v 1.6 2007/06/07 15:34:55 bamm Exp $ #
+# $Id: pads_agent.tcl,v 1.7 2007/06/12 13:57:03 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -124,7 +124,7 @@ proc ProcessPadsData { dataList } {
         } else {
 
             # Try to send later
-            after 5000 [list ProcessPadsData $data]
+            after 5000 [list ProcessPadsData $dataList]
 
         }
 
