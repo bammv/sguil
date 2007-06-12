@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.234 2007/06/07 15:14:35 bamm Exp $ #
+# $Id: sguil.tk,v 1.235 2007/06/12 21:31:23 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -39,6 +39,20 @@ if [catch {package require sha1} sha1Version] {
 if [catch {package require base64} base64Version] {
     puts "ERROR: The base64 package does NOT appear to be installed on this sysem."
     puts "The base64 package is part of the tcllib extension. A port/package is available for most linux and BSD systems."
+    CleanExit
+}
+
+# Load dns libs from tcllib
+if [catch {package require dns} dnsVersion] {
+    puts "ERROR: The tcllib dns package does NOT appear to be installed on this sysem."
+    puts "The ip package is part of the tcllib extension. A port/package is available for most linux and BSD systems."
+    CleanExit
+}
+
+# Load ip libs from tcllib
+if [catch {package require ip} iplibVersion] {
+    puts "ERROR: The tcllib ip package does NOT appear to be installed on this sysem."
+    puts "The ip package is part of the tcllib extension. A port/package is available for most linux and BSD systems."
     CleanExit
 }
 
@@ -2233,8 +2247,12 @@ $detailTabs select 0
 set ipDataFrame [frame [$detailTabs childsite 0].ipDataFrame]
 
   set dnsDataFrame [frame $ipDataFrame.dnsDataFrame]
-    set dnsButton [checkbutton $dnsDataFrame.dnsButton -text "Reverse DNS" -variable REVERSE_DNS\
-     -command ResolveHosts -foreground navy -anchor w]
+    set dnsActionFrame [frame $dnsDataFrame.dnsActionFrame]
+      set dnsButton [checkbutton $dnsActionFrame.dnsButton -text "Reverse DNS" -variable REVERSE_DNS\
+       -command ResolveHosts -foreground navy -anchor w]
+      set dnsExtButton [checkbutton $dnsActionFrame.dnsExtButton -text "Enable External DNS" -variable EXT_DNS\
+       -command ResolveHosts -foreground navy -anchor w]
+      pack $dnsButton $dnsExtButton -side left
     set srcDnsDataFrame [frame $dnsDataFrame.srcDnsDataFrame -borderwidth 1 -background black]
       set srcDnsDataLabelFrame [frame $srcDnsDataFrame.srcDnsDataLabelFrame]
         label $srcDnsDataLabelFrame.ipLabel -text "Src IP:" -anchor w -width 9 -background lightblue
@@ -2257,7 +2275,7 @@ set ipDataFrame [frame [$detailTabs childsite 0].ipDataFrame]
         pack $dstDnsDataEntryTextFrame.ipText $dstDnsDataEntryTextFrame.nameText -side top -fill x -expand true
       pack $dstDnsDataLabelFrame -side left
       pack $dstDnsDataEntryTextFrame -side left -fill x -expand true
-    pack $dnsButton $srcDnsDataFrame $dstDnsDataFrame -side top -fill x -expand true
+    pack $dnsActionFrame $srcDnsDataFrame $dstDnsDataFrame -side top -fill x -expand true
     pack $dnsDataFrame -side top -fill x
 
   set whoisDataFrame [frame $ipDataFrame.whoisDataFrame]

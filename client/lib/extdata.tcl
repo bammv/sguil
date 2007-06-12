@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.49 2007/06/07 15:14:35 bamm Exp $
+# $Id: extdata.tcl,v 1.50 2007/06/12 21:31:24 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -403,11 +403,58 @@ proc GetWhoisData {} {
 #                May move to a server func in the future
 #
 proc GetHostbyAddr { ip } {
-  if [catch {host_info official_name $ip} hostname] {
-    set hostname "Unknown"
-  }
-  return $hostname
+
+    global EXT_DNS EXT_DNS_SERVER HOME_NET
+
+    if { $EXT_DNS } {
+
+        if { ![info exists EXT_DNS_SERVER] } { 
+
+            ErrorMessage "An external name server has not been configured in sguil.conf. Resolution aborted." 
+            return
+
+        } else {
+
+            set nameserver $EXT_DNS_SERVER
+
+            if { [info exists HOME_NET] } { 
+
+                # Loop thru HOME_NET. If ip matches any networks than use a the locally configured
+                # name server
+                foreach homeNet $HOME_NET {
+
+                    set netMask [ip::mask $homeNet]
+                    if { [ip::equal ${ip}/${netMask} $homeNet] } { set nameserver local }
+
+                }
+
+            }
+
+        }
+
+    } else { 
+
+        set nameserver local
+
+    }
+
+    if { $nameserver == "local" } {
+
+        set tok [dns::resolve $ip]
+
+    } else {
+
+        set tok [dns::resolve $ip -nameserver $nameserver]
+
+    }
+
+    set hostname [dns::name $tok]
+    dns::cleanup $tok
+    if { $hostname == "" } { set hostname "Unknown" }
+    return $hostname
+
 }
+
 #
 # ClearDNSText: Clears the src/dst dns results
 #
