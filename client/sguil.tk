@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.235 2007/06/12 21:31:23 bamm Exp $ #
+# $Id: sguil.tk,v 1.236 2007/06/13 15:19:51 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -43,9 +43,12 @@ if [catch {package require base64} base64Version] {
 }
 
 # Load dns libs from tcllib
-if [catch {package require dns} dnsVersion] {
-    puts "ERROR: The tcllib dns package does NOT appear to be installed on this sysem."
-    puts "The ip package is part of the tcllib extension. A port/package is available for most linux and BSD systems."
+if [catch {package require dns 1.3.1} dnsVersion] {
+    puts "ERROR: The tcllib_dns package version 1.3.1 or higher is requred."
+    puts "The tcllib_dns package is part of the tcllib extension. More information"
+    puts "is available at http://tcllib.sourceforge.net"
+    puts ""
+    puts "$dnsVersion"
     CleanExit
 }
 
