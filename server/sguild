@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.179 2007/05/31 18:22:31 bamm Exp $ #
+# $Id: sguild,v 1.180 2007/06/13 17:05:32 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -502,8 +502,33 @@ fconfigure $mainReadPipe -buffering line
 
 # If emailing of events is enabled, we need to make sure the libs are installed.
 if { [info exists EMAIL_EVENTS] && $EMAIL_EVENTS } {
-    package require mime
+
+    # Load tcllib mime
+    if [catch {package require mime} mimeVersion] {
+
+        puts "ERROR: The tcllib mime extension does NOT appear to be installed on this sysem."
+        puts "Tcllib mime is required when enabling the email events function. Please"
+        puts "download it at http://tcllib.sourceforge.net or disable the emailing of events"
+        puts "in your sguild.email."
+        CleanExit 1
+
+    }
+
+    # Load tcllib mime
+    if [catch {package require smtp 1.4.3} smtpVersion] {
+
+        puts "ERROR: The tcllib smtp extension version 1.4.3 or greater does NOT appear"
+        puts "to be installed on this sysem. Tcllib smtp is required when enabling the"
+        puts "email events function. Please download it at http://tcllib.sourceforge.net"
+        puts "or disable the emailing of events in your sguild.email. A patch for smtp"
+        puts "vesion 1.4.2 (shipped with tcllib-1.9) is available at:"
+        puts "http://tcllib.cvs.sourceforge.net/tcllib/tcllib/modules/mime/smtp.tcl?r1=1.44&r2=1.45&view=patch"
+        CleanExit 1
+
+    }
+
     package require smtp
+
     # Make sure our vars are initialized
     if { ![info exists EMAIL_CLASSES] } { set EMAIL_CLASSES "0" }
     if { ![info exists EMAIL_PRIORITIES] } { set EMAIL_PRIORITIES "0" }
