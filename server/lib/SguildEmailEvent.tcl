@@ -1,4 +1,4 @@
-# $Id: SguildEmailEvent.tcl,v 1.6 2006/01/18 19:23:01 bamm Exp $ #
+# $Id: SguildEmailEvent.tcl,v 1.7 2007/06/13 16:49:43 bamm Exp $ #
 
 proc EmailEvent { dataList } {
 
@@ -30,7 +30,7 @@ proc EmailEvent { dataList } {
     # Build and send the email
     InfoMessage "Sending Email: $tmpMsg"
     set token [mime::initialize -canonical text/plain -string $tmpMsg]
-    if { [info exists tmpSubject] } { mime::setheader $token Subject $tmpSubject }
+    if { [info exists tmpSubject] } { mime::setheader $token Subject $tmpSubject } else { mime::setheader $token Subject "Sguil Event" }
     smtp::sendmessage $token -recipients $EMAIL_RCPT_TO -servers $SMTP_SERVER -originator $EMAIL_FROM
     mime::finalize $token
     InfoMessage "Email sent to: $EMAIL_RCPT_TO"
