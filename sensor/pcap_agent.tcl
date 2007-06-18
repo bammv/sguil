@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: pcap_agent.tcl,v 1.5 2007/06/07 15:34:55 bamm Exp $ #
+# $Id: pcap_agent.tcl,v 1.6 2007/06/18 17:30:27 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -143,21 +143,28 @@ proc CheckLastPcapFile { { onetime {0} } } {
 
     if {$CONNECTED && [info exists SENSOR_ID] } {
 
+        # Get a list of directories containing pcap files.
         set tmpDirList [glob -nocomplain $RAW_LOG_DIR/*]
-        foreach i $tmpDirList { lappend dirList [file tail $i] }
-        set lastDate [lindex [lsort -decreasing $dirList] 0]
-        set checkDir "$RAW_LOG_DIR/$lastDate"
 
-        if { [file exists $checkDir] && [file isdirectory $checkDir] } {
+        # Find the latest pcap file if files exist
+        if { $tmpDirList != "" } {
 
-            # Get the name of the newest file 
-            set logFile [lindex [lsort -decreasing [glob -nocomplain $checkDir/snort.log.*]] 0]
+            foreach i $tmpDirList { lappend dirList [file tail $i] }
+            set lastDate [lindex [lsort -decreasing $dirList] 0]
+            set checkDir "$RAW_LOG_DIR/$lastDate"
+    
+            if { [file exists $checkDir] && [file isdirectory $checkDir] } {
+    
+                # Get the name of the newest file 
+                set logFile [lindex [lsort -decreasing [glob -nocomplain $checkDir/snort.log.*]] 0]
+
+            }
+
+            file stat $logFile fileStat
+            set lastModified [clock format $fileStat(mtime) -gmt true -f "%Y-%m-%d %T"]
+            SendToSguild [list LastPcapTime $lastModified]
 
         }
-
-        file stat $logFile fileStat
-        set lastModified [clock format $fileStat(mtime) -gmt true -f "%Y-%m-%d %T"]
-        SendToSguild [list LastPcapTime $lastModified]
 
     }
 
