@@ -17,9 +17,6 @@ ALTER TABLE sensor ADD COLUMN (
   net_name      VARCHAR(40)
 );
 
-ALTER TABLE history ADD INDEX (
-  sid (sid),
-  cid (cid)
-);
+ALTER TABLE history ADD INDEX sid (sid), cid (cid);
 
 UPDATE version SET version="0.12", installed = now();
