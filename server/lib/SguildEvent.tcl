@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.20 2007/05/31 18:24:21 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.21 2007/07/02 15:33:00 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -182,6 +182,7 @@ proc DeleteEventIDList { socketID data } {
                                                                                                             
   # Finally we update the event table.
   set totalUpdates 0
+  set tmpUpdated 0
   foreach eventTable [array names tmpCidList] {
     # Make sure there are no duplicates
     set tmpCidList($eventTable) [lsort -unique $tmpCidList($eventTable)]
