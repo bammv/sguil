@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.50 2007/06/12 21:31:24 bamm Exp $
+# $Id: extdata.tcl,v 1.51 2007/07/17 16:05:56 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -162,10 +162,10 @@ proc DisplayReference { win start length } {
     set ref [$win get $start $end]
 
     set type ""
-    if ![regexp {^reference:(.*?),(.*?);} $ref match type content] {
+    if ![regexp {^reference:\s*(.*?),(.*?);} $ref match type content] {
 
         # Not a reference, maybe sid. 
-        if [regexp {^(sid):([0-9]*);} $ref match type content] { set foo bar }
+        if [regexp {^(sid):\s*([0-9]*);} $ref match type content] { set foo bar }
 
     }
  
