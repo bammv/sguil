@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.24 2007/06/07 15:15:43 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.25 2007/07/25 17:04:42 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -159,6 +159,7 @@ proc UpdateDBStatusList { tableName whereTmp timestamp uid status } {
 
         # Update failed.
         LogMessage "DB Error during:\n$updateString\n: $execResults"
+        return 0
 
     } else {
 
