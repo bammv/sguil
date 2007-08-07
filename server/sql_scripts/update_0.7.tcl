@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: update_0.7.tcl,v 1.1 2007/06/04 17:37:28 bamm Exp $ #
+# $Id: update_0.7.tcl,v 1.2 2007/08/07 19:53:01 bamm Exp $ #
 
 # Default vars
 set DBHOST localhost
@@ -31,7 +31,9 @@ proc MysqlSelect { dbSocketID query { type {list} } } {
 
 }
 
+proc CleanUpSancp { dbSocketID } {
 
+}
 
 # Load mysql support.
 if [catch {package require mysqltcl} mysqltclVersion] {
@@ -66,7 +68,12 @@ foreach arg $argv {
 puts "This script is used for upgrading from Sguil Version 0.6.x"
 puts "to Sguil Version 0.7.x only."
 puts ""
-puts "Use this script at your own risk. Be sure to back"
+puts "If you are using SANCP and have a relatively large install,"
+puts "it is highly recommended you trim your database prior to"
+puts "running this script. The sancp_cleanup.tcl script can be"
+puts "used to delete old data."
+puts ""
+puts "Use these scripts at your own risk. Be sure to back"
 puts "up your data before proceeding!!"
 puts -nonewline "Do you want to continue? (y/N) "
 flush stdout
@@ -153,9 +160,9 @@ if { $dbVersion != "0.12" } {
     foreach line [split [read $fileID] \n] {
 
         puts -nonewline "."
+        flush stdout
         if { $line != "" && ![regexp {^--} $line] } {
 
-            #puts "LINE: $line"
             if { [regexp {(^.*);\s*$} $line match data] } {
 
                 lappend mysqlCmd $data
@@ -176,10 +183,6 @@ if { $dbVersion != "0.12" } {
     puts "Success."
 
 }
-
-puts -nonewline "Getting a list of current Snort sensors..."
-set sensorList [MysqlSelect $dbSocketID {SELECT sid, hostname FROM sensor} list]
-puts "Success."
 
 puts ""
 puts "WARNING: The next step is important. Please make"
@@ -209,6 +212,11 @@ flush stdout
 set ans [gets stdin]
 puts ""
 puts ""
+
+puts -nonewline "Getting a list of current Snort sensors..."
+set sensorList [MysqlSelect $dbSocketID {SELECT hostname FROM sensor}]
+puts "Success."
+
 foreach sensor $sensorList {
 
     puts [format "%-5s | %-20s | %-20s | %-20s" sid hostname net_name agent_type]
@@ -224,25 +232,38 @@ foreach sensor $sensorList {
     set answer n
     while { ![regexp {^[yY]} $answer] } { 
 
-        set sensorName [lindex $sensor 1]
-        set sid [lindex $sensor 0]
-        puts -nonewline "Please enter a net name for ${sensorName}: "
+        set query "SELECT sid FROM sensor WHERE hostname='$sensor'"
+        set sid [MysqlSelect $dbSocketID $query]
+        puts -nonewline "Please enter a net name for ${sensor}: "
         flush stdout
-        set netName [gets stdin]
-        puts "The net name for $sensorName will be set to ${netName}."
+        set sensorNetName($sensor) [gets stdin]
+        puts "The net name for $sensor will be set to $sensorNetName($sensor)."
         puts -nonewline "Is this correct (y/n)? "
         flush stdout
         set answer [gets stdin]
 
     }
 
-    puts -nonewline "Updating net name and agent type for ${sensorName}..."
+    puts -nonewline "Updating net name and agent type for ${sensor}..."
     flush stdout
-    set query "UPDATE sensor SET net_name='$netName', agent_type='snort' WHERE sid=$sid"
+    set query "UPDATE sensor SET net_name='$sensorNetName($sensor)', agent_type='snort' WHERE sid=$sid"
     set execResults [mysqlexec $dbSocketID $query]
     puts "Success."
 
-    puts -nonewline "Checking for SANCP data from this sensor..."
+}
+
+
+puts ""
+puts "The next step is to modify the sensor IDs for any SANCP data"
+puts "that has already been collected. These updates can take a long time"
+puts "if your database has millions of rows of data."
+puts ""
+
+foreach sensor $sensorList {
+
+    set query "SELECT sid FROM sensor WHERE hostname='$sensor'"
+    set sid [MysqlSelect $dbSocketID $query]
+    puts -nonewline "Checking for SANCP data from sensor ${sensor} and sid ${sid}..."
     flush stdout
     set query "SELECT sid FROM sancp WHERE sid=$sid LIMIT 1"
     set results [MysqlSelect $dbSocketID $query flatlist]
@@ -250,13 +271,13 @@ foreach sensor $sensorList {
 
     if { $results == $sid } {
 
-        puts "Found SANCP data for the sensor $sensorName with an ID of ${sid}."
+        puts "Found SANCP data for the sensor $sensor with an ID of ${sid}."
         puts -nonewline "Adding agent information to the sensor table..."
         flush stdout
-        set query "INSERT INTO sensor (hostname, agent_type, net_name) VALUES ('$sensorName', 'sancp', '$netName')"
+        set query "INSERT INTO sensor (hostname, agent_type, net_name) VALUES ('$sensor', 'sancp', '$sensorNetName($sensor)')"
         set execResults [mysqlexec $dbSocketID $query]
         puts "Success."
-        set query "SELECT sid FROM sensor WHERE hostname='$sensorName' AND agent_type='sancp'"
+        set query "SELECT sid FROM sensor WHERE hostname='$sensor' AND agent_type='sancp'"
         set sancpSid [MysqlSelect $dbSocketID $query flatlist]
         puts -nonewline "Updating SANCP data to reflect new sid ($sancpSid). This could take a bit..."
         flush stdout
@@ -266,7 +287,7 @@ foreach sensor $sensorList {
 
     } else {
 
-        puts "No SANCP data was found for the sensor $sensorName with an ID of ${sid}."
+        puts "No SANCP data was found for the sensor $sensor with an ID of ${sid}."
     
     }
 
