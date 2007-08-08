@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.180 2007/06/13 17:05:32 bamm Exp $ #
+# $Id: sguild,v 1.181 2007/08/08 21:25:51 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -52,15 +52,27 @@ proc DisplayUsage { cmdName } {
   CleanExit
 }
 
+# This catches any errors that aren't caught by catch.
 proc bgerror { errorMsg } {
 
     global errorInfo
 
-    puts "Error: $errorMsg"
-    if { [info exists errorInfo] } {
-        puts $errorInfo
+    # Catch SSL errors and close the appropriate channel.
+    # Else write the error and CleanExit
+    if { [regexp {^SSL channel "(.*)":} $errorMsg match socketID] } { 
+
+        LogMessage "Error from socket $socketID: $errorMsg"
+        LogMessage "Closing socket."
+        catch {close $socketID} closeError
+        CleanUpDisconnectedAgent $socketID
+
+    } else {
+
+        puts "Error: $errorMsg"
+        if { [info exists errorInfo] } { puts $errorInfo }
+        CleanExit 1
+
     }
-    CleanExit 1
 
 }
 
@@ -523,6 +535,8 @@ if { [info exists EMAIL_EVENTS] && $EMAIL_EVENTS } {
         puts "or disable the emailing of events in your sguild.email. A patch for smtp"
         puts "vesion 1.4.2 (shipped with tcllib-1.9) is available at:"
         puts "http://tcllib.cvs.sourceforge.net/tcllib/tcllib/modules/mime/smtp.tcl?r1=1.44&r2=1.45&view=patch"
+        puts ""
+        puts "tclError: $smtpVersion"
         CleanExit 1
 
     }
