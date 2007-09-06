@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.19 2007/03/25 14:31:45 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.20 2007/09/06 19:17:14 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -55,6 +55,8 @@ proc ClientVersionCheck { socketID clientVersion } {
         LogMessage "ERROR: $results"
         close $socketID
         ClientExitClose socketID
+    } else {
+        puts "DEBUG #### results for $socketID ==> $results"
     }
 
   }
@@ -102,7 +104,15 @@ proc AgentVersionCheck { socketID agentVersion } {
         LogMessage "ERROR: $importError"
         catch {close $socketID}
         CleanUpDisconnectedAgent $socketID
+        return
     }
+
+    if { [catch {tls::handshake $socketID} results] } {
+        LogMessage "ERROR: $results"
+        close $socketID
+        ClientExitClose socketID
+    } 
+
   } 
 
 }
