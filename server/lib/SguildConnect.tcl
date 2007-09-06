@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.20 2007/09/06 19:17:14 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.21 2007/09/06 19:26:14 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -55,9 +55,7 @@ proc ClientVersionCheck { socketID clientVersion } {
         LogMessage "ERROR: $results"
         close $socketID
         ClientExitClose socketID
-    } else {
-        puts "DEBUG #### results for $socketID ==> $results"
-    }
+    } 
 
   }
 
