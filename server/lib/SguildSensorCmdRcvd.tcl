@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.25 2007/04/28 23:13:45 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.26 2007/09/07 15:12:49 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global agentSensorNameArray validSensorSockets
@@ -41,7 +41,7 @@ proc SensorCmdRcvd { socketID } {
       AgentLastCidReq    { AgentLastCidReq $socketID [lindex $data 1] [lindex $data 2] }
       BYEventRcvd        { eval BYEventRcvd $socketID [lrange $data 1 end] }
       DiskReport         { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
-      PING               { puts $socketID "PONG"; flush $socketID }
+      PING               { SendSensorAgent $socketID "PONG" }
       PONG               { SensorAgentPongRcvd $socketID }
       XscriptDebugMsg    { $sensorCmd [lindex $data 1] [lindex $data 2] }
       RawDataFile        { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
