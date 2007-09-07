@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: snort_agent.tcl,v 1.4 2007/06/07 15:34:55 bamm Exp $ #
+# $Id: snort_agent.tcl,v 1.5 2007/09/07 15:07:03 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -26,14 +26,24 @@ set OPENSSL 0
 
 proc bgerror { errorMsg } {
                                                                                                                            
-    global errorInfo
+    global errorInfo sguildSocketID
                                                                                                                            
-    puts "Error: $errorMsg"
-    if { [info exists errorInfo] } {
-        puts $errorInfo
-    }
+    # Catch SSL errors, close the channel, and reconnect.
+    # else write the error and exit.
+    if { [regexp {^SSL channel "(.*)":} $errorMsg match socketID] } {
 
-    exit
+        catch { close $sguildSocketID } tmpError
+        ConnectToSguilServer
+
+    } else {
+
+        puts "Error: $errorMsg"
+        if { [info exists errorInfo] } {
+            puts $errorInfo
+        }
+        exit
+
+    }
                                                                                                                            
 }
 

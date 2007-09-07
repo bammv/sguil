@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: pads_agent.tcl,v 1.7 2007/06/12 13:57:03 bamm Exp $ #
+# $Id: pads_agent.tcl,v 1.8 2007/09/07 15:07:03 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -24,15 +24,25 @@ set OPENSSL 0
 
 proc bgerror { errorMsg } {
                                                                                                                            
-    global errorInfo
-                                                                                                                           
-    puts "Error: $errorMsg"
-    if { [info exists errorInfo] } {
-        puts $errorInfo
+    global errorInfo sguildSocketID
+
+    # Catch SSL errors, close the channel, and reconnect.
+    # else write the error and exit.
+    if { [regexp {^SSL channel "(.*)":} $errorMsg match socketID] } {
+
+        catch { close $sguildSocketID } tmpError
+        ConnectToSguilServer
+
+    } else {
+
+        puts "Error: $errorMsg"
+        if { [info exists errorInfo] } {
+            puts $errorInfo
+        }
+        exit
+
     }
 
-    exit
-                                                                                                                           
 }
 
 proc InitPads {} {
