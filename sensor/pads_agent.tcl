@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: pads_agent.tcl,v 1.8 2007/09/07 15:07:03 bamm Exp $ #
+# $Id: pads_agent.tcl,v 1.9 2007/09/19 20:01:14 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -98,7 +98,12 @@ proc GetFifoData { fifoID } {
 
     if { [eof $fifoID] || [catch {gets $fifoID data} tmpError] } {
     
-        puts "Lost FIFO"
+        if { [info exists tmpError] } { 
+            puts "Error with FIFO: $tmpError"
+        } else { 
+            puts "Error with FIFO: Caught EOF"
+        }
+        exit
 
     } else {
             
