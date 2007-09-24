@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.37 2007/05/16 19:07:31 bamm Exp $ #
+# $Id: qrylib.tcl,v 1.38 2007/09/24 14:49:43 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -59,7 +59,12 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 
 	if { ( $queryType == "srcip" || $queryType == "dstip" || $queryType == "src2dst" ) && $incidentCat == "hour" } {
 
-            set starttime [clock scan "30 min ago" -base [clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,starttime]]]
+            if { $CUR_SEL_PANE(type) == "SANCP" } {
+                set starttime [clock scan "30 min ago" -base [clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,starttime]]]
+            } else {
+                set starttime [clock scan "30 min ago" -base [clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,date]]]
+            }
+
 	    set endtime [expr $starttime + 3600]
 	    set tminus [clock format $starttime -f "%Y-%m-%d %T"]
 	    set tplus [clock format $endtime -f "%Y-%m-%d %T"]
