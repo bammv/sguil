@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.52 2007/09/25 14:13:36 bamm Exp $
+# $Id: extdata.tcl,v 1.53 2007/09/25 14:43:09 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -800,7 +800,7 @@ proc NessusReport { arg } {
 	$reportButtonBox add ok -text "Show Report" -command "set RETURN_FLAG 1"
 	$reportButtonBox add cancel -text "Cancel" -command "set RETURN_FLAG 0"
 	set REPORT_RESULTS {}
-	SendToSguild "ReportRequest NESSUS $ip NULL"
+	SendToSguild "ReportRequest NESSUS $ipAddr NULL"
 	
 	# wait for the response to fill in
 	tkwait variable REPORT_DONE
@@ -856,7 +856,7 @@ proc NessusReport { arg } {
 	
 	
 	# Report meta info (ip, date, etc)
-	set reportHTML "${reportHTML}<tr><td class=default width=\"20%\">${ip}</td>
+	set reportHTML "${reportHTML}<tr><td class=default width=\"20%\">${ipAddr}</td>
 	<td class=default width=\"30%\">${sdate}</a></td>
 	<td class=default width=\"30%\">${edate}</td>
 	<td class=default width=\"30%\">${uid}</td></tr>
@@ -866,7 +866,7 @@ proc NessusReport { arg } {
 	# The actual report data
 	set reportHTML "${reportHTML}<table bgcolor=\"#a1a1a1\" cellpadding=0 cellspacing=0 border=0 width=\"75%\">
 	<tbody><tr><td><table cellpadding=2 cellspacing=1 border=0 width=\"100%\">
-	<td class=title colspan=3>Security Issues and Fixes: ${ip}</td></tr><tr>
+	<td class=title colspan=3>Security Issues and Fixes: ${ipAddr}</td></tr><tr>
 	<td class=sub width=\"10%\">Type</td><td class=sub width=\"10%\">Port</td>
 	<td class=sub width=\"80%\">Issue and Fix</td></tr><tr>"
 	
