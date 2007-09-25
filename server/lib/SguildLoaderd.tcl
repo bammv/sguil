@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.25 2007/05/30 18:06:00 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.26 2007/09/25 14:17:13 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -299,8 +299,6 @@ proc LoadNessusData { fileName loadCmd } {
         ErrorMessage "ERROR: loaderd: $tmpError"
     }
                                                                                                                                    
-    InfoMessage "loaderd: Loaded $fileName into the table $table."
-
 }            
 
 proc LoadPSFile { sensor filename } {
