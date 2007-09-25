@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.51 2007/07/17 16:05:56 bamm Exp $
+# $Id: extdata.tcl,v 1.52 2007/09/25 14:13:36 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -794,7 +794,7 @@ proc NessusReport { arg } {
 	}
 	toplevel $nessusWin
 	wm geometry $nessusWin +200+200
-	wm title $nessusWin "Nessus Reports for $ip"
+	wm title $nessusWin "Nessus Reports for $ipAddr"
 	set reportListBox [scrolledlistbox $nessusWin.reportListBox -labeltext "Reports" -selectmode single]
 	set reportButtonBox [buttonbox $nessusWin.reportButtonBox]
 	$reportButtonBox add ok -text "Show Report" -command "set RETURN_FLAG 1"
