@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.53 2007/09/25 14:43:09 bamm Exp $
+# $Id: extdata.tcl,v 1.54 2007/10/04 19:17:46 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -727,19 +727,19 @@ proc GetXscript { type force } {
          "Your request has been sent to the server.\nPlease be patient as this can take some time."
         $xscriptWinName.sText configure -cursor watch
         set XSCRIPTDATARCVD($xscriptWinName) 0
-        SendToSguild "XscriptRequest $sensor $sensorID $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
+        SendToSguild [list XscriptRequest $sensor $sensorID $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force]
 
         if {$DEBUG} {
-            puts "Xscript Request sent: $sensor $sensorID $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force"
+            puts "Xscript Request sent: [list $sensor $sensorID $xscriptWinName $timestamp $srcIP $srcPort $dstIP $dstPort $force]"
         }
   
     } elseif { $type == "wireshark" } {
 
       if {$DEBUG} {
-          puts "Wireshark Request sent: $sensor $sensorID \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
+          puts "Wireshark Request sent: [list $sensor $sensorID $timestamp $srcIP $srcPort $dstIP $dstPort $proto $force]"
       }
 
-      SendToSguild "WiresharkRequest $sensor $sensorID \{$timestamp\} $srcIP \{$srcPort\} $dstIP \{$dstPort\} $proto $force"
+      SendToSguild [list WiresharkRequest $sensor $sensorID $timestamp $srcIP $srcPort $dstIP $dstPort $proto $force]
 
     }
 
