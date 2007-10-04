@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.54 2007/10/04 19:17:46 bamm Exp $
+# $Id: extdata.tcl,v 1.55 2007/10/04 19:44:12 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -727,7 +727,7 @@ proc GetXscript { type force } {
          "Your request has been sent to the server.\nPlease be patient as this can take some time."
         $xscriptWinName.sText configure -cursor watch
         set XSCRIPTDATARCVD($xscriptWinName) 0
-        SendToSguild [list XscriptRequest $sensor $sensorID $xscriptWinName \{$timestamp\} $srcIP $srcPort $dstIP $dstPort $force]
+        SendToSguild [list XscriptRequest $sensor $sensorID $xscriptWinName $timestamp $srcIP $srcPort $dstIP $dstPort $force]
 
         if {$DEBUG} {
             puts "Xscript Request sent: [list $sensor $sensorID $xscriptWinName $timestamp $srcIP $srcPort $dstIP $dstPort $force]"
