@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.31 2007/06/07 15:14:35 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.32 2008/01/16 16:25:26 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -343,10 +343,13 @@ proc MonitorSensors { socketID ClientSensorList } {
     # Find this socketID in other sensors and delete it 
     foreach sensor $sensorList {
 	if [info exists clientMonitorSockets($sensor)] {
-            set clientMonitorSockets($sensor) [ldelete $clientMonitorSockets($sensor) $socketID]
-	}
-	if [info exists sensorUsers($sensor)] {
-            set sensorUsers($sensor) [ldelete $sensorUsers($sensor) $userName]
+            if {[lsearch -exact $clientMonitorSockets($sensor) $socketID] >= 0} {
+              set clientMonitorSockets($sensor) [ldelete $clientMonitorSockets($sensor) $socketID]
+              # Delete the user name from sensorUsers if the socket use to monitor that sensor.
+	      if [info exists sensorUsers($sensor)] {
+                set sensorUsers($sensor) [ldelete $sensorUsers($sensor) $userName]
+	      }
+           }
 	}
     }
 
