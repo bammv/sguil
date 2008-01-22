@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.55 2007/10/04 19:44:12 bamm Exp $
+# $Id: extdata.tcl,v 1.56 2008/01/22 18:32:43 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -181,7 +181,7 @@ proc DisplayReference { win start length } {
                      if { $content < 1000000 } {
                          exec $BROWSER_PATH http://www.snort.org/pub-bin/sigs.cgi?sid=$content &
                      } else {
-                         exec $BROWSER_PATH http://doc.bleedingthreats.net/$content &
+                         exec $BROWSER_PATH http://doc.emergingthreats.net/$content &
                      }
         }
         default    { InfoMessage "Unknown reference in rule: $ref" }
