@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.56 2008/01/22 18:32:43 bamm Exp $
+# $Id: extdata.tcl,v 1.57 2008/01/23 15:46:23 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -670,7 +670,7 @@ proc WiresharkDataBase64 { fileName data } {
 proc GetXscript { type force } {
 
     global ACTIVE_EVENT SERVERHOST XSCRIPT_SERVER_PORT DEBUG CUR_SEL_PANE XSCRIPTDATARCVD
-    global socketWinName SESSION_STATE WIRESHARK_STORE_DIR
+    global socketWinName SESSION_STATE WIRESHARK_STORE_DIR WIRESHARK_PATH
 
     if {!$ACTIVE_EVENT} {return}
 
@@ -735,11 +735,24 @@ proc GetXscript { type force } {
   
     } elseif { $type == "wireshark" } {
 
-      if {$DEBUG} {
-          puts "Wireshark Request sent: [list $sensor $sensorID $timestamp $srcIP $srcPort $dstIP $dstPort $proto $force]"
-      }
+        # If WIRESHARK_PATH isn't set use the default location /usr/sbin/wireshark
+        if { ![info exists WIRESHARK_PATH] } { set WIRESHARK_PATH /usr/sbin/wireshark }
 
-      SendToSguild [list WiresharkRequest $sensor $sensorID $timestamp $srcIP $srcPort $dstIP $dstPort $proto $force]
+        # Make sure the file exists and is executable.
+        if { ![file exists $WIRESHARK_PATH] || ![file executable $WIRESHARK_PATH] } {
+
+            tk_messageBox -type ok -icon warning -message \
+             "Unable to find wireshark to process this request. Looked in $WIRESHARK_PATH. Please \
+              check your sguil.conf."
+            return
+
+        }
+
+        if {$DEBUG} {
+            puts "Wireshark Request sent: [list $sensor $sensorID $timestamp $srcIP $srcPort $dstIP $dstPort $proto $force]"
+        }
+
+        SendToSguild [list WiresharkRequest $sensor $sensorID $timestamp $srcIP $srcPort $dstIP $dstPort $proto $force]
 
     }
 
