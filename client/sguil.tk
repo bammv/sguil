@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.236 2007/06/13 15:19:51 bamm Exp $ #
+# $Id: sguil.tk,v 1.237 2008/01/29 05:05:10 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -192,19 +192,18 @@ proc ServerCommandRcvd { socketID } {
 }
 
 proc ConnectToSguild {} {
-  global SERVERPORT OPENSSL VERSION TLS_PATH DEBUG CONNECTED SERVERHOSTSELECTED
+
+  global SERVERPORT VERSION TLS_PATH DEBUG CONNECTED SERVERHOSTSELECTED
 
   if [catch {socket $SERVERHOSTSELECTED $SERVERPORT} socketID ] {
     return -code error "Unable to connect to $SERVERHOSTSELECTED on port $SERVERPORT"
   } else {
     set CONNECTED 1
     fconfigure $socketID -buffering line
+ 
     # Version checking
-    if {$OPENSSL} {
-      set tmpVERSION "$VERSION OPENSSL ENABLED"
-    } else {
-      set tmpVERSION "$VERSION OPENSSL DISABLED"
-    }     
+    set tmpVERSION "$VERSION OPENSSL ENABLED"
+          
     if [catch {gets $socketID} serverVersion] {
       puts "ERROR: $serverVersion"
       catch {close $socketID}
@@ -219,11 +218,16 @@ proc ConnectToSguild {} {
           return -code error "Mismatched versions.\nSERVER: ($serverVersion)\nCLIENT: ($tmpVERSION)"
     }
     puts $socketID "VersionInfo $tmpVERSION"
-    if {$OPENSSL} {
-      if { [info exists TLS_PATH] } { load $TLS_PATH }
-      package require tls
-      tls::import $socketID
+    # OpenSSL is required now
+    if { [info exists TLS_PATH] } { load $TLS_PATH }
+
+    # Fail and return if we cant load tls
+    if { [catch {package require tls} tmpError] } {
+        return -code error "Error: Unable to load TLS: $tmpError"
     }
+
+    tls::import $socketID
+
     after 1000
     if {$DEBUG} {puts "Sending PING"}
     puts $socketID "PING"
@@ -1711,7 +1715,6 @@ proc GetUserName {} {
   pack $welcomeLabel -ipadx 5 -ipady 5
   pack $welcomeFrame -side top -padx 5 -pady 10
   set promptFrame [frame $getUserNameWin.promptFrame -background black -borderwidth 1]
-    set osslSelect [checkbutton $promptFrame.osslSelect -text "Enable OpenSSL" -variable OPENSSL]
     set userLabel [label $promptFrame.userLabel -text "Please Login" -foreground navy]
     set sguildHost [combobox $promptFrame.sguildHost -labeltext "Sguild Host: "\
      -textvariable SERVERHOSTSELECTED -editable true ]
@@ -1730,7 +1733,7 @@ proc GetUserName {} {
     set userBB [buttonbox $promptFrame.userBB]
       $userBB add ok -text "Ok" -command "destroy $getUserNameWin"
       $userBB add exit -text "Exit" -command "CleanExit"
-    pack $userLabel $sguildHost $sguildPort $userName $userPasswd $osslSelect $userBB\
+    pack $userLabel $sguildHost $sguildPort $userName $userPasswd $userBB \
      -side top -fill both -expand true
   pack $promptFrame -side bottom -pady 5
   focus -force $userName
