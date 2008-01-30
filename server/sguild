@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.181 2007/08/08 21:25:51 bamm Exp $ #
+# $Id: sguild,v 1.182 2008/01/30 03:44:20 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -29,7 +29,7 @@ set NEXT_TRANS_ID 0
 ########################## PROCS ####################################
 
 proc DisplayUsage { cmdName } {
-  puts "Usage: $cmdName \[-D\] \[-h\] \[-o\] \[-c <filename>\] \[-u <filename>\] \[-P <filename>\]"
+  puts "Usage: $cmdName \[-D\] \[-h\] \[-c <filename>\] \[-u <filename>\] \[-P <filename>\]"
   puts "         \[-O <filename>\] \[-C <directory\]"
   puts "       $cmdName \[-u <filename\] \[-adduser <username>\] \[-deluser <username\]"
   puts "  -c <filename>: PATH to the sguild config (sguild.conf) file."
@@ -39,7 +39,6 @@ proc DisplayUsage { cmdName } {
   puts "  -P <filename>: Name of file to write the PID to."
   puts "                 Default is /var/run/sguild.pid"
   puts "  -l <filepath>: PATH to sguild libraries."
-  puts "  -o Require OpenSSL for clients"
   puts "  -s Require OpenSSL for sensor agents"
   puts "  -O <filename>: Define PATH to tls (tcl openssl) lib (libtls1.x.so)"
   puts "  -C <directory>: Directory that contains sguild.pem and sguild.key"
@@ -188,7 +187,6 @@ foreach arg $argv {
         -D { set DAEMON_CONF_OVERRIDE 1 }
         -P { set state pid_file }
         -O { set state openssl }
-        -o { set OPENSSL 1 }
         -s { set AGENT_OPENSSL 1 }
         -C { set state certs }
         -A { set state accessfile }
@@ -215,51 +213,60 @@ foreach arg $argv {
   }
 }
 
-# if client ssl isn't defined, turn it off.
-if { ![info exists OPENSSL] } { set OPENSSL 0 }
 # if agent ssl isn't defined, turn it off.
 if { ![info exists AGENT_OPENSSL] } { set AGENT_OPENSSL 0 }
 
-if {$OPENSSL} {
-    set VERSION "$VERSION OPENSSL ENABLED"
-} else {
-    set VERSION "$VERSION OPENSSL DISABLED"
-}
+# OpenSSL is a requirement
+set VERSION "$VERSION OPENSSL ENABLED"
+
 if {$AGENT_OPENSSL} {
     set AGENT_VERSION "$AGENT_VERSION OPENSSL ENABLED"
 } else {
     set AGENT_VERSION "$AGENT_VERSION OPENSSL DISABLED"
 }
-# Load the SSL foo if either are enabled.
-if { $OPENSSL || $AGENT_OPENSSL } {
-  # Need a path to the tls libs
-  if { [info exists TLS_PATH] } {
+
+# Need a path to the tls libs
+if { [info exists TLS_PATH] } {
+
     if [catch {load $TLS_PATH} tlsError] {
-      puts "ERROR: Unable to load tls libs ($TLS_PATH): $tlsError"
-      DisplayUsage $argv0
+
+        puts "ERROR: Unable to load tls libs ($TLS_PATH): $tlsError"
+        DisplayUsage $argv0
+
     }
-  }
-  package require tls
-  # Check for certs
-  if {![info exists CERTS_PATH]} {
+
+}
+
+package require tls
+# Check for certs
+if {![info exists CERTS_PATH]} {
+
     set CERTS_PATH /etc/sguild/certs
-  }
-  if {![file exists $CERTS_PATH] || ![file isdirectory $CERTS_PATH]} {
+
+}
+
+if {![file exists $CERTS_PATH] || ![file isdirectory $CERTS_PATH]} {
+
     puts "ERROR: $CERTS_PATH does not exist or is not a directory"
     DisplayUsage $argv0
-  }
-  # Need sguild.key and sguild.pem
-  set PEM [file join $CERTS_PATH sguild.pem]
-  set KEY [file join $CERTS_PATH sguild.key]
-  if {![file exists $PEM] || ![file readable $PEM] } {
+
+}
+
+# Need sguild.key and sguild.pem
+set PEM [file join $CERTS_PATH sguild.pem]
+set KEY [file join $CERTS_PATH sguild.key]
+if {![file exists $PEM] || ![file readable $PEM] } {
+
     puts "ERROR: $PEM does not exist or is not readable"
     DisplayUsage $argv0
-  }
-  if {![file exists $KEY] || ![file readable $KEY] } {
+
+}
+
+if {![file exists $KEY] || ![file readable $KEY] } {
+
     puts "ERROR: $KEY does not exist or is not readable"
     DisplayUsage $argv0
-  }
-  # If we get this far we should be good.
+
 }
 
 if { ![info exists CONF_FILE] } {
