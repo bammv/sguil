@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.21 2007/09/06 19:26:14 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.22 2008/01/30 04:07:13 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -31,7 +31,7 @@ proc ClientConnect { socketID IPAddr port } {
 proc ClientVersionCheck { socketID clientVersion } {
 
   global socketInfo VERSION
-  global OPENSSL KEY PEM
+  global KEY PEM
 
   if { $clientVersion != $VERSION } {
     catch {close $socketID} tmpError
@@ -43,27 +43,23 @@ proc ClientVersionCheck { socketID clientVersion } {
     return
   }
 
-  if {$OPENSSL} {
-    #tls::import $socketID -server true -keyfile $KEY -certfile $PEM
-    if { [catch {tls::import $socketID -server true -keyfile $KEY -certfile $PEM} importError] } {
+  if { [catch {tls::import $socketID -server true -keyfile $KEY -certfile $PEM} importError] } {
         LogMessage "ERROR: $importError"
         close $socketID
         ClientExitClose $socketID
-    }
+  }
 
-    if { [catch {tls::handshake $socketID} results] } {
+  if { [catch {tls::handshake $socketID} results] } {
         LogMessage "ERROR: $results"
         close $socketID
         ClientExitClose socketID
-    } 
-
-  }
+  } 
 
 }
 
 proc SensorConnect { socketID IPAddr port } {
 
-  global VERSION AGENT_OPENSSL AGENT_VERSION KEY PEM
+  global VERSION AGENT_VERSION KEY PEM
 
   LogMessage "Sensor agent connect from $IPAddr:$port $socketID"
 
@@ -87,7 +83,7 @@ proc SensorConnect { socketID IPAddr port } {
 
 proc AgentVersionCheck { socketID agentVersion } {
 
-  global VERSION AGENT_OPENSSL AGENT_VERSION KEY PEM
+  global VERSION AGENT_VERSION KEY PEM
 
   if { $agentVersion != $AGENT_VERSION } {
     catch {close $socketID} 
@@ -97,20 +93,17 @@ proc AgentVersionCheck { socketID agentVersion } {
     return
   }
 
-  if {$AGENT_OPENSSL} {
-    if { [catch {tls::import $socketID -server true -keyfile $KEY -certfile $PEM} importError] } {
+  if { [catch {tls::import $socketID -server true -keyfile $KEY -certfile $PEM} importError] } {
         LogMessage "ERROR: $importError"
         catch {close $socketID}
         CleanUpDisconnectedAgent $socketID
         return
-    }
+  }
 
-    if { [catch {tls::handshake $socketID} results] } {
+  if { [catch {tls::handshake $socketID} results] } {
         LogMessage "ERROR: $results"
         close $socketID
         ClientExitClose socketID
-    } 
-
   } 
 
 }

@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: pads_agent.tcl,v 1.9 2007/09/19 20:01:14 bamm Exp $ #
+# $Id: pads_agent.tcl,v 1.10 2008/01/30 04:07:13 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -20,7 +20,6 @@ exec tclsh "$0" "$@"
 # Don't touch these
 set VERSION "SGUIL-0.7.0-ALPHA"
 set CONNECTED 0
-set OPENSSL 0
 
 proc bgerror { errorMsg } {
                                                                                                                            
@@ -185,7 +184,7 @@ proc PingServer {} {
 # Initialize connection to sguild
 proc ConnectToSguilServer {} {
 
-    global sguildSocketID HOSTNAME CONNECTED OPENSSL
+    global sguildSocketID HOSTNAME CONNECTED 
     global SERVER_HOST SERVER_PORT DEBUG BYCONNECT VERSION
 
     # Connect
@@ -205,11 +204,7 @@ proc ConnectToSguilServer {} {
         fconfigure $sguildSocketID -buffering line
 
         # Version checks
-        if {$OPENSSL} {
-            set tmpVERSION "$VERSION OPENSSL ENABLED"
-        } else {
-            set tmpVERSION "$VERSION OPENSSL DISABLED"
-        }
+        set tmpVERSION "$VERSION OPENSSL ENABLED"
 
         if [catch {gets $sguildSocketID} serverVersion] {
             puts "ERROR: $serverVersion"
@@ -238,7 +233,7 @@ proc ConnectToSguilServer {} {
         }
 
         catch { flush $sguildSocketID }
-        if {$OPENSSL} { tls::import $sguildSocketID }
+        tls::import $sguildSocketID
 
         fileevent $sguildSocketID readable [list SguildCmdRcvd $sguildSocketID]
         set CONNECTED 1
@@ -315,7 +310,6 @@ proc SguildCmdRcvd { socketID } {
 proc DisplayUsage { cmdName } {
   puts "Usage: $cmdName \[-D\] \[-c\] \[-o\] <filename>"
   puts "  -c <filename>: PATH to config (pads_agent.conf) file."
-  puts "  -o Enable OpenSSL"
   puts "  -D Runs sensor_agent in daemon mode."
   exit
 }
@@ -376,7 +370,6 @@ foreach arg $argv {
         -- { set state flag }
         -D { set DAEMON_CONF_OVERRIDE 1 }
         -c { set state conf }
-        -o { set OPENSSL 1 }
         -O { set state sslpath }
         default { DisplayUsage $argv0 }
       }
@@ -428,16 +421,22 @@ if { [info exists CONF_FILE] } {
 if {[info exists DAEMON_CONF_OVERRIDE] && $DAEMON_CONF_OVERRIDE} { set DAEMON 1}
 if {[info exists DAEMON] && $DAEMON} {Daemonize}
 
-# Check for OPENSSL
-if { $OPENSSL } {
-  # Need path?
-  if { [info exists TLS_PATH] } {
+# OpenSSL is required
+if { [info exists TLS_PATH] } {
+
     if [catch {load $TLS_PATH} tlsError] {
-      puts "ERROR: Unable to load tls libs ($TLS_PATH): $tlsError"
-      DisplayUsage $argv0
+
+        puts "ERROR: Unable to load tls libs ($TLS_PATH): $tlsError"
+        DisplayUsage $argv0
+
     }
-  }
-  package require tls
+
+}
+if { [catch {package require tls} tmpError] }  {
+
+    puts "ERROR: Unable to load tls package: $tmpError"
+    DisplayUsage $argv0
+
 }
 
 ConnectToSguilServer

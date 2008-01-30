@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: example_agent.tcl,v 1.4 2007/09/07 15:07:03 bamm Exp $ #
+# $Id: example_agent.tcl,v 1.5 2008/01/30 04:07:13 bamm Exp $ #
 
 # Copyright (C) 2002-2007 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -42,7 +42,6 @@ set GEN_ID 10001
 
 # Used internally, you shouldn't need to edit these.
 set CONNECTED 0
-set OPENSSL 0
 
 
 proc DisplayUsage { cmdName } {
@@ -51,7 +50,6 @@ proc DisplayUsage { cmdName } {
     puts "  -i <ipaddr>: IP address to associate alert with (required)."
     puts "  -c <filename>: PATH to config (pads_agent.conf) file."
     puts "  -f <filename>: PATH to syslog file to monitor."
-    puts "  -o Enable OpenSSL"
     puts "  -D Runs sensor_agent in daemon mode."
     exit
 
@@ -246,7 +244,7 @@ proc ProcessData { line } {
 # Initialize connection to sguild
 proc ConnectToSguilServer {} {
 
-    global sguildSocketID HOSTNAME CONNECTED OPENSSL
+    global sguildSocketID HOSTNAME CONNECTED
     global SERVER_HOST SERVER_PORT DEBUG VERSION
     global AGENT_ID NEXT_EVENT_ID
     global AGENT_TYPE NET_GROUP
@@ -265,11 +263,7 @@ proc ConnectToSguilServer {} {
         fconfigure $sguildSocketID -buffering line
 
         # Version checks
-        if {$OPENSSL} {
-            set tmpVERSION "$VERSION OPENSSL ENABLED"
-        } else {
-            set tmpVERSION "$VERSION OPENSSL DISABLED"
-        }
+        set tmpVERSION "$VERSION OPENSSL ENABLED"
 
         if [catch {gets $sguildSocketID} serverVersion] {
             puts "ERROR: $serverVersion"
@@ -298,7 +292,7 @@ proc ConnectToSguilServer {} {
         }
 
         catch { flush $sguildSocketID }
-        if {$OPENSSL} { tls::import $sguildSocketID }
+        tls::import $sguildSocketID
 
         set CONNECTED 1
         if {$DEBUG} {puts "Connected to $SERVER_HOST"}
@@ -448,7 +442,6 @@ foreach arg $argv {
                 -- { set state flag }
                 -D { set DAEMON_CONF_OVERRIDE 1 }
                 -c { set state conf }
-                -o { set OPENSSL 1 }
                 -O { set state sslpath }
                 -f { set state filename }
                 -i { set state ipaddr }
@@ -541,22 +534,23 @@ if { [info exists CONF_FILE] } {
 if {[info exists DAEMON_CONF_OVERRIDE] && $DAEMON_CONF_OVERRIDE} { set DAEMON 1}
 if {[info exists DAEMON] && $DAEMON} {Daemonize}
 
-# Check for OPENSSL
-if { $OPENSSL } {
+# OpenSSL is required
+# Need path?
+if { [info exists TLS_PATH] } {
 
-    # Need path?
-    if { [info exists TLS_PATH] } {
+    if [catch {load $TLS_PATH} tlsError] {
 
-        if [catch {load $TLS_PATH} tlsError] {
-
-            puts "ERROR: Unable to load tls libs ($TLS_PATH): $tlsError"
-            DisplayUsage $argv0
-
-        }
+        puts "ERROR: Unable to load tls libs ($TLS_PATH): $tlsError"
+        DisplayUsage $argv0
 
     }
 
-    package require tls
+}
+
+if { [catch {package require tls} tmpError] }  {
+
+    puts "ERROR: Unable to load tls package: $tmpError"
+    DisplayUsage $argv0
 
 }
 
