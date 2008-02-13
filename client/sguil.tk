@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.237 2008/01/29 05:05:10 bamm Exp $ #
+# $Id: sguil.tk,v 1.238 2008/02/13 04:14:38 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -251,25 +251,13 @@ proc ReconnectToSguild {} {
   } else {
     set CONNECTED 1
     InfoMessage "Reconnected to sguild. Press 'OK' to Reauthenticate client."
-    SendToSguild "ValidateUser $USERNAME"
-    set saltNonce [gets $socketID]
-    set tmpSalt [lindex $saltNonce 0]
-    set tmpNonce [lindex $saltNonce 1]
-    set passwdHash [::sha1::sha1 "${PASSWD}${tmpSalt}"]
-    set finalCheck [::sha1::sha1 "${tmpNonce}${tmpSalt}${passwdHash}"]
-    SendToSguild $finalCheck
+    SendToSguild [list ValidateUser $USERNAME $PASSWD]
     set USERID [lindex [gets $socketID] 1]
     while { $USERID == "INVALID" } {
       set PASSWD ""
       ErrorMessage "Invalid USERNAME and/or PASSWORD"
       GetUserName 
-      SendToSguild "ValidateUser $USERNAME"
-      set saltNonce [gets $socketID]
-      set tmpSalt [lindex $saltNonce 0]
-      set tmpNonce [lindex $saltNonce 1]
-      set passwdHash [::sha1::sha1 "${PASSWD}${tmpSalt}"]
-      set finalCheck [::sha1::sha1 "${tmpNonce}${tmpSalt}${passwdHash}"]
-      SendToSguild $finalCheck
+      SendToSguild [list ValidateUser $USERNAME $PASSWD]
       set USERID [lindex [gets $socketID] 1]
     } 
     set CONNECTED 1
@@ -3219,13 +3207,8 @@ while {$CONNECTED == 0} {
 set SERVERHOST [linsert [ldelete $SERVERHOST $SERVERHOSTSELECTED] 0 $SERVERHOSTSELECTED]
 # This saves our last list of hosts to .sguilrc
 SaveNewFonts
-if [catch {puts $socketID "ValidateUser $USERNAME"} tmpError] { ErrorMessage "Fatal: $tmpError" }
-set saltNonce [gets $socketID]
-set tmpSalt [lindex $saltNonce 0]
-set tmpNonce [lindex $saltNonce 1]
-set passwdHash [::sha1::sha1 "${PASSWD}${tmpSalt}"]
-set finalCheck [::sha1::sha1 "${tmpNonce}${tmpSalt}${passwdHash}"]
-if [catch {puts $socketID $finalCheck} tmpError] { ErrorMessage "Fatal: $tmpError" }
+set msg [list ValidateUser $USERNAME $PASSWD]
+if [catch {puts $socketID $msg} tmpError] { ErrorMessage "Fatal: $tmpError" }
 set USERID [lindex [gets $socketID] 1]
 
 while { $USERID == "INVALID" } {
@@ -3247,13 +3230,8 @@ while { $USERID == "INVALID" } {
             break
         } 
     }
-    if [catch {puts $socketID "ValidateUser $USERNAME"} tmpError] { ErrorMessage "Fatal: $tmpError" }
-    set saltNonce [gets $socketID]
-    set tmpSalt [lindex $saltNonce 0]
-    set tmpNonce [lindex $saltNonce 1]
-    set passwdHash [::sha1::sha1 "${PASSWD}${tmpSalt}"]
-    set finalCheck [::sha1::sha1 "${tmpNonce}${tmpSalt}${passwdHash}"]
-    if [catch {puts $socketID $finalCheck} tmpError] { ErrorMessage "Fatal: $tmpError" }
+    set msg [list ValidateUser $USERNAME $PASSWD]
+    if [catch {puts $socketID $msg} tmpError] { ErrorMessage "Fatal: $tmpError" }
     set USERID [lindex [gets $socketID] 1]
 
 } 

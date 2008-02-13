@@ -1,4 +1,4 @@
-# $Id: SguildAccess.tcl,v 1.5 2008/01/30 04:07:13 bamm Exp $ #
+# $Id: SguildAccess.tcl,v 1.6 2008/02/13 04:10:23 bamm Exp $ #
 
 # Load up the access lists.
 proc LoadAccessFile { filename } {
@@ -170,59 +170,90 @@ proc AddUser { userName USERS_FILE } {
   close $fileID
   puts "User \'$userName\' added successfully"
 }
-proc ValidateUser { socketID username } {
-  global USERS_FILE validSockets socketInfo userIDArray
-  fileevent $socketID readable {}
-  fconfigure $socketID -buffering line
-  if { ![file exists $USERS_FILE] } {
-    ErrorMessage "Fatal Error! Cannot access $USERS_FILE."
-  }
-  set VALID 0
-  set nonce [format "%c%c%c" [GetRandAlphaNumInt] [GetRandAlphaNumInt] [GetRandAlphaNumInt] ]
-  for_file line $USERS_FILE {
-    if { ![regexp ^# $line] && ![regexp ^$ $line] } {
-      # Probably should check for corrupted info here
-      set tmpUserName [ctoken line "(.)(.)"]
-      set tmpSaltHash [ctoken line "(.)(.)"]
-      if { $tmpUserName == $username } {
-        set VALID 1
-        set tmpSalt [string range $tmpSaltHash 0 1]
-        set finalCheck [::sha1::sha1 "${nonce}${tmpSaltHash}"]
-        break
-      }
+
+proc ValidateUser { socketID username password } {
+
+    global USERS_FILE validSockets socketInfo userIDArray
+
+    # Configure the socket
+    fileevent $socketID readable {}
+    fconfigure $socketID -buffering line
+
+    # Check for a password file
+    if { ![file exists $USERS_FILE] } {
+
+        ErrorMessage "Fatal Error! Cannot access $USERS_FILE."
+
     }
-  }
-  if {$VALID} {
-    puts $socketID "$tmpSalt $nonce"
-    set finalClient [gets $socketID]
-    if { $finalClient == $finalCheck } {
-      set userIDArray($socketID) [GetUserID $username]
-      DBCommand\
-       "UPDATE user_info SET last_login='[GetCurrentTimeStamp]' WHERE uid=$userIDArray($socketID)"
-      lappend validSockets $socketID
-      catch { SendSocket $socketID "UserID $userIDArray($socketID)" } tmpError
-      SendSystemInfoMsg sguild "User $username logged in from [lindex $socketInfo($socketID) 0]"
-      lappend socketInfo($socketID) $username
+
+    # Initialize our validation flag
+    set VALID_USER 0
+
+    # Loop thru the password file and find the appropriate user line
+    for_file line $USERS_FILE {
+
+        if { ![regexp ^# $line] && ![regexp ^$ $line] } {
+
+            # Probably should check for corrupted info here
+            set tmpUserName [ctoken line "(.)(.)"]
+            set tmpSaltHash [ctoken line "(.)(.)"]
+
+            if { $tmpUserName == $username } {
+
+                set VALID_USER 1
+                set tmpSalt [string range $tmpSaltHash 0 1]
+                set tmpHash [string range $tmpSaltHash 2 end]
+                break
+
+            }
+
+        }
+
+    }
+
+    if {$VALID_USER} {
+    
+    # Hash the user provided password with salt
+    set hashPasswd [::sha1::sha1 "${password}${tmpSalt}"]
+  
+        # Compare the two hashes
+        if { $hashPasswd == $tmpHash } {
+
+            # Get a the userid from the db and update the userIDArray
+            set userIDArray($socketID) [GetUserID $username]
+
+            # Update the last login info in the DB
+            DBCommand\
+             "UPDATE user_info SET last_login='[GetCurrentTimeStamp]' WHERE uid=$userIDArray($socketID)"
+
+            # Mark the socket as valid
+            lappend validSockets $socketID
+            # Send the client socket its user ID
+            catch { SendSocket $socketID "UserID $userIDArray($socketID)" } tmpError
+            # Log message
+            SendSystemInfoMsg sguild "User $username logged in from [lindex $socketInfo($socketID) 0]"
+            # Update the socket information array
+            lappend socketInfo($socketID) $username
+
+        } else {
+
+      
+            # Password is bad
+            set validSockets [ldelete $validSockets $socketID]
+            catch {SendSocket $socketID "UserID INVALID"} tmpError
+            SendSystemInfoMsg sguild "User $username denied access from [lindex $socketInfo($socketID) 0]"
+
+        }
+
     } else {
-      set validSockets [ldelete $validSockets $socketID]
-      catch {SendSocket $socketID "UserID INVALID"} tmpError
-      SendSystemInfoMsg sguild "User $username denied access from [lindex $socketInfo($socketID) 0]"
+
+        #Not a valid user.
+        set validSockets [ldelete $validSockets $socketID]
+        catch {SendSocket $socketID "UserID INVALID"} tmpError
+        SendSystemInfoMsg sguild "User $username denied access from [lindex $socketInfo($socketID) 0]"
+
     }
-  } else {
-    #Not a valid user. Make up info.
-    set tmpSalt [format "%c%c" [GetRandAlphaNumInt] [GetRandAlphaNumInt] ]
-    set finalCheck [::sha1::sha1 "${nonce}${tmpSalt}"]
-    puts $socketID "$tmpSalt $nonce"
-    set finalClient [gets $socketID]
-    set validSockets [ldelete $validSockets $socketID]
-    catch {SendSocket $socketID "UserID INVALID"} tmpError
-    SendSystemInfoMsg sguild "User $username denied access from [lindex $socketInfo($socketID) 0]"
-  }
-  fileevent $socketID readable [list ClientCmdRcvd $socketID]
+
+    fileevent $socketID readable [list ClientCmdRcvd $socketID]
+
 }
-
-
-
-
-
-

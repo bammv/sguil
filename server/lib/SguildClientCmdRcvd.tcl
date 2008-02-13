@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.32 2008/01/16 16:25:26 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.33 2008/02/13 04:10:23 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -12,7 +12,12 @@ proc ClientCmdRcvd { socketID } {
     ClientExitClose $socketID
     LogMessage "Socket $socketID closed" 
   } else {
-    InfoMessage "Client Command Received: $data"
+
+    # I commented out this super chatty debug msg because it will
+    # print passwds in plaintext. Only uncomment if you know what you
+    # are doing.
+    #InfoMessage "Client Command Received: $data"
+
     set origData $data
     set clientCmd [ctoken data " "]
     # Check to make the client validated itself
@@ -52,7 +57,7 @@ proc ClientCmdRcvd { socketID } {
       SendSensorList { $clientCmd $socketID }
       SendEscalatedEvents { $clientCmd $socketID }
       SendDBInfo { $clientCmd $socketID }
-      ValidateUser { ValidateUser $socketID $index1 }
+      ValidateUser { ValidateUser $socketID $index1 $index2 }
       PING { puts $socketID "PONG" }
       UserMessage { UserMsgRcvd $socketID $data1 }
       SendGlobalQryList { SendSocket $socketID "GlobalQryList $GLOBAL_QRY_LIST" }
