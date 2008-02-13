@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.33 2008/02/13 04:10:23 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.34 2008/02/13 04:23:43 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -13,10 +13,12 @@ proc ClientCmdRcvd { socketID } {
     LogMessage "Socket $socketID closed" 
   } else {
 
-    # I commented out this super chatty debug msg because it will
-    # print passwds in plaintext. Only uncomment if you know what you
-    # are doing.
-    #InfoMessage "Client Command Received: $data"
+    # Don't display the user passwds
+    if { [regexp ^ValidateUser $data] } {
+        InfoMessage "Client Command Received: [lrange $data 0 1] ********"
+    } else { 
+        InfoMessage "Client Command Received: $data"
+    }
 
     set origData $data
     set clientCmd [ctoken data " "]
