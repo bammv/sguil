@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.183 2008/01/30 04:07:13 bamm Exp $ #
+# $Id: sguild,v 1.184 2008/02/13 02:59:13 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -227,7 +227,11 @@ if { [info exists TLS_PATH] } {
 
 }
 
-package require tls
+if { [catch {package require tls} tlsError] } {
+    puts "ERROR: The tcl tls package does NOT appear to be installed on this sysem."
+    puts "Please see http://tls.sourceforge.net/ for more info."
+    CleanExit 1
+}
 # Check for certs
 if {![info exists CERTS_PATH]} {
 
