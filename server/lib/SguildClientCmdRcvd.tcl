@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.35 2008/02/20 06:06:19 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.36 2008/02/20 20:53:55 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -274,7 +274,7 @@ proc GetTcpData { socketID sid cid } {
    WHERE sid=$sid and cid=$cid"
   set queryResults [FlatDBQuery $query]
   set portQuery [FlatDBQuery "SELECT src_port, dst_port FROM event WHERE sid=$sid AND cid=$cid"]
-  catch {SendSocket $socketID [list InsertTcpHdr [join $queryResults $portQuery]]} tmpError
+  catch {SendSocket $socketID [list InsertTcpHdr $queryResults $portQuery]} tmpError
 }
 proc GetIcmpData { socketID sid cid } {
   set query\
