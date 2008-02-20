@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.240 2008/02/20 20:54:27 bamm Exp $ #
+# $Id: sguil.tk,v 1.241 2008/02/20 21:58:35 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -152,15 +152,15 @@ proc ServerCommandRcvd { socketID } {
       NewSnortStats { $serverCmd [lindex $data 1] }
       UpdateSnortStats { $serverCmd [lindex $data 1] }
       InsertEvent { $serverCmd [lindex $data 1] [lindex $data 2] }
-      IncrEvent { $serverCmd [lindex $data 1] }
+      IncrEvent { $serverCmd [lrange $data 1 end] }
       InsertSystemInfoMsg { $serverCmd [lindex $data 1] [lindex $data 2] }
       InsertRuleData { $serverCmd [lindex $data 1] }
       DeleteEventID { $serverCmd [lindex $data 1] }
       DeleteEventIDList { $serverCmd [lindex $data 1] }
-      InsertTcpHdr { $serverCmd [lindex $data 1] [lindex $data 2]}
+      InsertTcpHdr { $serverCmd [lindex $data 1] [lindex $data 2] }
       InsertIPHdr { $serverCmd [lindex $data 1] }
-      InsertUdpHdr { $serverCmd [lindex $data 1] }
-      InsertIcmpHdr { $serverCmd [lindex $data 1] [lindex $data 2]}
+      InsertUdpHdr { $serverCmd [lindex $data 1] [lindex $data 2] }
+      InsertIcmpHdr { $serverCmd [lindex $data 1] [lindex $data 2] }
       InsertPayloadData { $serverCmd [lindex $data 1] }
       InsertPadsBanner { $serverCmd [lindex $data 1] }
       InsertGenericDetail { $serverCmd [lindex $data 1] }

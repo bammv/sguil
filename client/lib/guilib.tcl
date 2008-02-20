@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.24 2008/02/20 20:54:27 bamm Exp $
+# $Id: guilib.tcl,v 1.25 2008/02/20 21:58:36 bamm Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -311,10 +311,10 @@ proc InsertTcpHdr { data ports} {
   $tcpchksumTcpHdrFrame.text insert 0.0 [lindex $data 7]
   
 }
-proc InsertUdpHdr { data } {
+proc InsertUdpHdr { data ports } {
   global sPortUdpHdrFrame dPortUdpHdrFrame udplenUdpHdrFrame udpchksumUdpHdrFrame
-  $sPortUdpHdrFrame.text insert 0.0 [lindex $data 2]
-  $dPortUdpHdrFrame.text insert 0.0 [lindex $data 3]
+  $sPortUdpHdrFrame.text insert 0.0 [lindex $ports 0]
+  $dPortUdpHdrFrame.text insert 0.0 [lindex $ports 1]
   $udplenUdpHdrFrame.text insert 0.0 [lindex $data 0]
   $udpchksumUdpHdrFrame.text insert 0.0 [lindex $data 1]
 }
