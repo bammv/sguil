@@ -1,4 +1,4 @@
-# $Id: SguildUtils.tcl,v 1.12 2007/04/28 23:13:45 bamm Exp $ #
+# $Id: SguildUtils.tcl,v 1.13 2008/02/20 06:06:19 bamm Exp $ #
 
 proc Daemonize {} {
     global PID_FILE env LOGGER
@@ -51,8 +51,8 @@ proc HupTrapped {} {
     set REPORT_QRY_LIST none
   }
   foreach clientSocket $clientList {
-    SendSocket $clientSocket "GlobalQryList $GLOBAL_QRY_LIST"
-    SendSocket $clientSocket "ReportQryList $REPORT_QRY_LIST"
+    SendSocket $clientSocket [list GlobalQryList $GLOBAL_QRY_LIST]
+    SendSocket $clientSocket [list ReportQryList $REPORT_QRY_LIST]
   }
   LoadAccessFile $ACCESS_FILE
 }

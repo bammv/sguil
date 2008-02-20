@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.21 2007/07/02 15:33:00 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.22 2008/02/20 06:06:19 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -88,7 +88,7 @@ proc DeleteEventIDList { socketID data } {
     # Problem is, we could delete a correlated event parent without
     # deleting the children thus leaving alerts that haven't been
     # dealt with.
-    catch {SendSocket $socket "DeleteEventIDList $eidList"} tmpError
+    catch {SendSocket $socket [list DeleteEventIDList $eidList]} tmpError
   }
                                                                                                             
   # First we need to split up the update based on uniques sids
@@ -168,7 +168,7 @@ proc DeleteEventIDList { socketID data } {
          "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.sid=[lindex [split $tmpEid .] 0] AND event.cid=[lindex [split $tmpEid .] 1]"]
       }
       foreach socket $clientList {
-        catch {SendSocket $socket "InsertEscalatedEvent $escalateArray($tmpEid)"} tmpError
+        catch {SendSocket $socket [list InsertEscalatedEvent $escalateArray($tmpEid)]} tmpError
       }
     }
     # Cleanup
@@ -194,7 +194,7 @@ proc DeleteEventIDList { socketID data } {
   # See if the number of rows updated matched the number of events we
   # meant to update
   if { $totalUpdates != $eidListSize } {
-    catch {SendSocket $socketID "ErrorMessage ERROR: Some events may not have been updated. Event(s) may be missing from DB. See sguild output for more information."} tmpError
+    catch {SendSocket $socketID [list ErrorMessage "ERROR: Some events may not have been updated. Event(s) may be missing from DB. See sguild output for more information."]} tmpError
     LogMessage "ERROR: Number of updates mismatched number of events. \
 	    Number of EVENTS:  $eidListSize \
 	    Number of UPDATES: $totalUpdates Update List: $tmpEidList"
@@ -216,14 +216,14 @@ proc DeleteEventID { socketID eventID status } {
                                                                                                             
   foreach socket $clientList {
     # See comments in DeleteEventIDList
-    catch {SendSocket $socket "DeleteEventID $eventID"} tmpError
+    catch {SendSocket $socket [list DeleteEventID $eventID]} tmpError
   }
   # If status == 2 then escalate
   if { $status == 2 } {
     lappend escalateIDList $eventID
     set escalateArray($eventID) $eventIDArray($eventID)
     foreach socket $clientList {
-      catch {SendSocket $socket "InsertEscalatedEvent $escalateArray($eventID)"} tmpError
+      catch {SendSocket $socket [list InsertEscalatedEvent $escalateArray($eventID)]} tmpError
     }
   }
   if { [info exists escalateArray($eventID)] } { unset escalateArray($eventID) }

@@ -1,4 +1,4 @@
-# $Id: SguildReportBuilder.tcl,v 1.3 2007/03/24 20:31:44 bamm Exp $ #
+# $Id: SguildReportBuilder.tcl,v 1.4 2008/02/20 06:06:19 bamm Exp $ #
 
 #
 # ReportBuilder:  Receive multiple data requests from the client for report building
@@ -77,7 +77,7 @@ proc ReportBuilder { socketID type sid cid } {
             set timestart [lindex [lindex $cid 1] 0]
             set timeend [lindex [lindex $cid 1] 1]
             if { ![regexp -nocase "^select" $sql] } {
-               SendSocket $socketID "ErrorMessage Only SELECT queries are valid in the Report Builder"
+               SendSocket $socketID [list ErrorMessage "Only SELECT queries are valid in the Report Builder"]
                return
             }
             # Macro replacements

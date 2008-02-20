@@ -1,4 +1,4 @@
-# $Id: SguildSendComms.tcl,v 1.6 2007/03/08 15:38:38 bamm Exp $ #
+# $Id: SguildSendComms.tcl,v 1.7 2008/02/20 06:06:19 bamm Exp $ #
 
 #
 # SendSocket: Send command to client
@@ -26,7 +26,7 @@ proc SendEvent { eventDataList } {
   set netName $sidNetNameMap($sensorID)
   if { [info exists clientMonitorSockets($netName)] } {
     foreach clientSocket $clientMonitorSockets($netName) {
-      catch {SendSocket $clientSocket "InsertEvent $eventDataList"} tmpError
+      catch {SendSocket $clientSocket [list InsertEvent $eventDataList]} tmpError
     }
   } else {
     InfoMessage "No clients to send alert to."
@@ -39,7 +39,7 @@ proc SendIncrEvent { eid sensorName count priority} {
   set netName $sidNetNameMap($sensorID)
   if { [info exists clientMonitorSockets($netName)] } {
     foreach clientSocket $clientMonitorSockets($netName) {
-      catch {SendSocket $clientSocket "IncrEvent $eid $count $priority"} tmpError
+      catch {SendSocket $clientSocket [list IncrEvent $eid $count $priority]} tmpError
     }
   } else {
     InfoMessage "No clients to send msg to."
@@ -49,7 +49,7 @@ proc SendSystemInfoMsg { sensor msg } {
   global clientList
   if { [info exists clientList] && [llength $clientList] > 0 } {
     foreach clientSocket $clientList {
-      catch {SendSocket $clientSocket "InsertSystemInfoMsg $sensor $msg"} tmpError
+      catch {SendSocket $clientSocket [list InsertSystemInfoMsg $sensor $msg]} tmpError
     }
   } else {
     InfoMessage "No clients to send info msg to."

@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.25 2007/07/25 17:04:42 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.26 2008/02/20 06:06:19 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -86,15 +86,15 @@ proc ExecDB { socketID query } {
     }
   InfoMessage "Sending DB Query: $query"
   if [catch {mysqlexec $MAIN_DB_SOCKETID $query} execResults] {
-        catch {SendSocket $socketID "InfoMessage \{ERROR running query, perhaps you don't have permission. Error:$execResults\}"} tmpError
+        catch {SendSocket $socketID [list InfoMessage "ERROR running query, perhaps you don't have permission. Error:$execResults"]} tmpError
   } else {
       if { [lindex $query 0] == "DELETE" } {
-          catch {SendSocket $socketID "InfoMessage Query deleted $execResults rows."} tmpError
+          catch {SendSocket $socketID [list InfoMessage "Query deleted $execResults rows."]} tmpError
       } elseif { [lindex $query 0] == "OPTIMIZE" } {
-          catch {SendSocket $socketID "InfoMessage Database Command Completed."} tmpError
+          catch {SendSocket $socketID [list InfoMessage "Database Command Completed."]} tmpError
           SendSystemInfoMsg sguild "Table Optimization Completed."
       } else {
-          catch {SendSocket $socketID "InfoMessge Database Command Completed."} tmpError
+          catch {SendSocket $socketID [list InfoMessge "Database Command Completed."]} tmpError
       }
   }
 }

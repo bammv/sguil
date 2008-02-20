@@ -1,4 +1,4 @@
-# $Id: SguildAccess.tcl,v 1.6 2008/02/13 04:10:23 bamm Exp $ #
+# $Id: SguildAccess.tcl,v 1.7 2008/02/20 06:06:19 bamm Exp $ #
 
 # Load up the access lists.
 proc LoadAccessFile { filename } {
@@ -229,7 +229,7 @@ proc ValidateUser { socketID username password } {
             # Mark the socket as valid
             lappend validSockets $socketID
             # Send the client socket its user ID
-            catch { SendSocket $socketID "UserID $userIDArray($socketID)" } tmpError
+            catch { SendSocket $socketID [list UserID $userIDArray($socketID)] } tmpError
             # Log message
             SendSystemInfoMsg sguild "User $username logged in from [lindex $socketInfo($socketID) 0]"
             # Update the socket information array
@@ -240,7 +240,7 @@ proc ValidateUser { socketID username password } {
       
             # Password is bad
             set validSockets [ldelete $validSockets $socketID]
-            catch {SendSocket $socketID "UserID INVALID"} tmpError
+            catch {SendSocket $socketID [list UserID INVALID]} tmpError
             SendSystemInfoMsg sguild "User $username denied access from [lindex $socketInfo($socketID) 0]"
 
         }
@@ -249,7 +249,7 @@ proc ValidateUser { socketID username password } {
 
         #Not a valid user.
         set validSockets [ldelete $validSockets $socketID]
-        catch {SendSocket $socketID "UserID INVALID"} tmpError
+        catch {SendSocket $socketID [list UserID INVALID]} tmpError
         SendSystemInfoMsg sguild "User $username denied access from [lindex $socketInfo($socketID) 0]"
 
     }

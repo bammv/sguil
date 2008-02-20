@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.57 2008/01/23 15:46:23 bamm Exp $
+# $Id: extdata.tcl,v 1.58 2008/02/20 06:06:57 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -1142,7 +1142,7 @@ proc SensorStatusUpdate { statusList } {
     set sortColumn [$sensorStatusTable sortcolumn]
     if { $sortColumn >= 0 } { set sortOrder [$sensorStatusTable sortorder] }
 
-    array set sensorStatusArray [lindex $statusList 0]
+    array set sensorStatusArray $statusList
 
     # Clear the current list
     #$sensorStatusTable delete 0 end

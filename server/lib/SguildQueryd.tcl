@@ -1,4 +1,4 @@
-# $Id: SguildQueryd.tcl,v 1.3 2005/06/03 22:35:43 bamm Exp $ #
+# $Id: SguildQueryd.tcl,v 1.4 2008/02/20 06:06:19 bamm Exp $ #
 
 proc ForkQueryd {} {
 
@@ -37,16 +37,16 @@ proc ForkQueryd {} {
         InfoMessage "Sending DB Query: $query"
         set dbSocketID [eval $dbCmd]
         if [catch {mysqlsel $dbSocketID "$query" -list} selResults] {
-          puts $outPipeID "$clientSocketID InfoMessage $selResults"
+          puts $outPipeID [list $clientSocketID InfoMessage $selResults]
         } else {
           set count 0
           foreach row $selResults {
-            puts $outPipeID "$clientSocketID $ClientCommand $clientWinName $row"
+            puts $outPipeID [list $clientSocketID $ClientCommand $clientWinName $row]
             incr count
           }
-          if { $ClientCommand != "ReportResponse" } {puts $outPipeID "$clientSocketID InfoMessage Query returned $count row(s)."}
+          if { $ClientCommand != "ReportResponse" } {puts $outPipeID [list $clientSocketID InfoMessage "Query returned $count row(s)."]}
         }
-        puts $outPipeID "$clientSocketID $ClientCommand $clientWinName done"
+        puts $outPipeID [list $clientSocketID $ClientCommand $clientWinName done]
         flush $outPipeID
         mysqlclose $dbSocketID
       }

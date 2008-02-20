@@ -131,7 +131,7 @@ proc GetAssetData { socketID sid asset_id } {
     set tmpQuery "SELECT hex_payload FROM pads WHERE sid='$sid' AND asset_id='$asset_id'"
     set qResults [FlatDBQuery $tmpQuery]
 
-    catch {SendSocket $socketID "InsertPadsBanner $qResults"} tmpError
+    catch {SendSocket $socketID [list InsertPadsBanner $qResults]} tmpError
 
 }
 

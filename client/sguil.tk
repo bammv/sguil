@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.238 2008/02/13 04:14:38 bamm Exp $ #
+# $Id: sguil.tk,v 1.239 2008/02/20 06:06:56 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -138,55 +138,54 @@ proc ServerCommandRcvd { socketID } {
   } else {
     if {$DEBUG} {puts "Server Command Recieved: $data"}
     # store $data in $origData because ctoken changes the var it is working on.
-    set origData $data
-    set serverCmd [ctoken data " "]
-    set data1 [string trimleft $data]
+    #set origData $data
+    #set serverCmd [ctoken data " "]
+    #set data1 [string trimleft $data]
     # data1 has indices 1 on etc etc
-    set index1 [ctoken data " "]
-    set data2 [string trimleft $data]
+    #set index1 [ctoken data " "]
+    #set data2 [string trimleft $data]
+
+    set serverCmd [lindex $data 0]
    
     switch -exact -- $serverCmd {
-      SensorStatusUpdate { $serverCmd [lrange $origData 1 end] }
-      NewSnortStats { $serverCmd [lindex $origData 1] }
-      UpdateSnortStats { $serverCmd [lindex $origData 1] }
-      InsertEvent { $serverCmd $data1 }
-      IncrEvent { $serverCmd $data1 }
-      InsertSystemInfoMsg { $serverCmd $index1 $data2 }
-      InsertRuleData { $serverCmd $data1 }
-      DeleteEventID { $serverCmd $data1 }
-      DeleteEventIDList { $serverCmd $data1 }
-      InsertTcpHdr { $serverCmd $data1 }
-      InsertIPHdr { $serverCmd $data1 }
-      InsertUdpHdr { $serverCmd $data1 }
-      # due to the funky ranges in InsertIcmpHeader, ctoken will not work.
-      # since it is Icmp Header data, it should be predictable and not
-      # subject to user input, so lrange is fine
-      InsertIcmpHdr { $serverCmd [lrange $origData 1 5] [lrange $origData 6 end]}
-      InsertPayloadData { $serverCmd $data1 }
-      InsertPadsBanner { $serverCmd $data1 }
-      InsertGenericDetail { $serverCmd $data1 }
-      InsertOpenPortsData { $serverCmd $data1 }
-      InsertQueryResults { $serverCmd $index1 $data2 }
-      InfoMessage { $serverCmd $data1 }
-      ErrorMessage { $serverCmd $data1 }
-      PSDataResults { InsertPSData $data1 }
-      InsertEscalatedEvent { $serverCmd $data1 }
-      SensorList { $serverCmd $data1 }
-      TableNameList { $serverCmd $data1 }
-      TableColumns { $serverCmd $index1 $data2 }
-      InsertHistoryResults { $serverCmd $index1 $data2 }
-      InsertEmailIPHdr { set EMAIL_RESULTS $data1 }
-      UserMessage { $serverCmd $index1 $data2 }
+      SensorStatusUpdate { $serverCmd [lindex $data 1] }
+      NewSnortStats { $serverCmd [lindex $data 1] }
+      UpdateSnortStats { $serverCmd [lindex $data 1] }
+      InsertEvent { $serverCmd [lindex $data 1] [lindex $data 2] }
+      IncrEvent { $serverCmd [lindex $data 1] }
+      InsertSystemInfoMsg { $serverCmd [lindex $data 1] [lindex $data 2] }
+      InsertRuleData { $serverCmd [lindex $data 1] }
+      DeleteEventID { $serverCmd [lindex $data 1] }
+      DeleteEventIDList { $serverCmd [lindex $data 1] }
+      InsertTcpHdr { $serverCmd [lindex $data 1] }
+      InsertIPHdr { $serverCmd [lindex $data 1] }
+      InsertUdpHdr { $serverCmd [lindex $data 1] }
+      InsertIcmpHdr { $serverCmd [lindex $data 1] [lindex $data 2]}
+      InsertPayloadData { $serverCmd [lindex $data 1] }
+      InsertPadsBanner { $serverCmd [lindex $data 1] }
+      InsertGenericDetail { $serverCmd [lindex $data 1] }
+      InsertOpenPortsData { $serverCmd [lindex $data 1] }
+      InsertQueryResults { $serverCmd [lindex $data 1] [lindex $data 2] }
+      InfoMessage { $serverCmd [lindex $data 1] }
+      ErrorMessage { $serverCmd [lindex $data 1] }
+      PSDataResults { InsertPSData [lrange $data 1 end] }
+      InsertEscalatedEvent { $serverCmd [lindex $data 1] }
+      SensorList { $serverCmd [lrange $data 1 end] }
+      TableNameList { $serverCmd [lindex $data 1] }
+      TableColumns { $serverCmd [lindex $data 1] [lindex $data 2] }
+      InsertHistoryResults { $serverCmd [lindex $data 1] [lindex $data 2] }
+      InsertEmailIPHdr { set EMAIL_RESULTS [lindex $data 1] }
+      UserMessage { $serverCmd [lindex $data 1] [lindex $data 2] }
       PONG { if {$DEBUG} {puts "Comm test successful"} }
-      GlobalQryList { set GLOBAL_QRY_LIST $data1 }
-      ReportQryList { set REPORT_QRY_LIST $data1 }
-      ReportResponse { $serverCmd $index1 $data2 }
-      InsertSancpFlags { $serverCmd $index1 $data2 }
-      XscriptDebugMsg { $serverCmd $index1 $data2 }
-      XscriptMainMsg { $serverCmd $index1 $data2 }
-      WiresharkDataBase64 { $serverCmd $index1 $data2 }
-      WiresharkDataPcap { $serverCmd $socketID $index1 $data2 }
-      default { puts "Unrecognized command from $socketID: $origData" }
+      GlobalQryList { set GLOBAL_QRY_LIST [lindex $data 1] }
+      ReportQryList { set REPORT_QRY_LIST [lindex $data 1] }
+      ReportResponse { $serverCmd [lindex $data 1] [lindex $data 2] }
+      InsertSancpFlags { $serverCmd [lindex $data 1] [lindex $data 2] }
+      XscriptDebugMsg { $serverCmd [lindex $data 1] [lindex $data 2] }
+      XscriptMainMsg { $serverCmd [lindex $data 1] [lindex $data 2] }
+      WiresharkDataBase64 { $serverCmd [lindex $data 1] [lindex $data 2] }
+      WiresharkDataPcap { $serverCmd $socketID [lindex $data 1] [lindex $data 2] }
+      default { puts "Unrecognized command from $socketID: $data" }
     }
   } 
 }
@@ -558,7 +557,7 @@ proc DeleteEventIDList { eventIDList } {
 #
 # InsertEvent: Parses eventData, locates the correct windowPane calls DisplayEvent
 #
-proc InsertEvent { eventData } {
+proc InsertEvent { eventData count } {
 
     global DEBUG rtPaneArray eventArray SLEEP SOUND RT_SORT
     global generatorListMap sigIDListMap
@@ -569,7 +568,7 @@ proc InsertEvent { eventData } {
     set insertPane [GetPaneNameByPriority $priority]
     set eventID [join [lrange $eventData 5 6] .]
     set status RT
-    set count [lindex $eventData 18]
+    #set count [lindex $eventData 18]
     set sensor [lindex $eventData 3]
     set dateTime [lindex $eventData 4]
     set message [lindex $eventData 7]

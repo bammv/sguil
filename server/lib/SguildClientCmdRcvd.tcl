@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.34 2008/02/13 04:23:43 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.35 2008/02/20 06:06:19 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -26,7 +26,7 @@ proc ClientCmdRcvd { socketID } {
     if { $clientCmd != "ValidateUser" && $clientCmd != "PING" && $clientCmd != "VersionInfo" } {
       if { [lsearch -exact $validSockets $socketID] < 0 } {
         catch {SendSocket $socketID\
-         "InfoMessage {Client does not appear to be logged in. Please exit and log back in.}"} tmpError
+         [list InfoMessage "Client does not appear to be logged in. Please exit and log back in."} tmpError
       return
       }
     }
@@ -62,8 +62,8 @@ proc ClientCmdRcvd { socketID } {
       ValidateUser { ValidateUser $socketID $index1 $index2 }
       PING { puts $socketID "PONG" }
       UserMessage { UserMsgRcvd $socketID $data1 }
-      SendGlobalQryList { SendSocket $socketID "GlobalQryList $GLOBAL_QRY_LIST" }
-      SendReportQryList { SendSocket $socketID "ReportQryList $REPORT_QRY_LIST" }
+      SendGlobalQryList { SendSocket $socketID [list GlobalQryList $GLOBAL_QRY_LIST] }
+      SendReportQryList { SendSocket $socketID [list ReportQryList $REPORT_QRY_LIST] }
       ReportRequest { ReportBuilder $socketID $index1 $index2 $data3 }
       GetSancpFlagData { $clientCmd $socketID $index1 $index2 }
       XscriptRequest { eval $clientCmd $socketID $data1 }
@@ -75,6 +75,7 @@ proc ClientCmdRcvd { socketID } {
       GetAssetData { $clientCmd $socketID $index1 $index2 }
       GetGenericDetail { $clientCmd $socketID $index1 $index2 }
       VersionInfo { ClientVersionCheck $socketID $data1 }
+      QuickScript { $clientCmd $socketID $index1 }
       default { InfoMessage "Unrecognized command from $socketID: $origData" }
     }
   }
@@ -135,7 +136,7 @@ proc GetCorrelatedEvents { socketID eid winName } {
                                                                                                             
   if { [info exists correlatedEventArray($eid)] } {
     foreach row $correlatedEventArray($eid) {
-      SendSocket $socketID "InsertQueryResults $winName [eval FormatStdToQuery $row]"
+      SendSocket $socketID [list InsertQueryResults $winName [eval FormatStdToQuery $row]]
     }
   }
 }
@@ -147,9 +148,9 @@ proc FormatStdToQuery { status priority class sensor time sid cid msg sip dip pr
 
 proc SendDBInfo { socketID } {
   global tableNameList tableArray
-  catch {SendSocket $socketID "TableNameList $tableNameList"} tmpError
+  catch {SendSocket $socketID [list TableNameList $tableNameList]} tmpError
   foreach tableName $tableNameList {
-    catch {SendSocket $socketID "TableColumns $tableName $tableArray($tableName)"} tmpError
+    catch {SendSocket $socketID [list TableColumns $tableName $tableArray($tableName)]} tmpError
   }
 }
 
@@ -198,12 +199,12 @@ proc RuleRequest { socketID event_id sensor genID sigID sigRev } {
 
     if {$RULEFOUND} {
 
-        catch {SendSocket $socketID "InsertRuleData $data"} tmpError
-        catch {SendSocket $socketID "InsertRuleData $ruleFile: Line $line"} tmpError
+        catch {SendSocket $socketID [list InsertRuleData $data]} tmpError
+        catch {SendSocket $socketID [list InsertRuleData $ruleFile: Line $line]} tmpError
 
     } else {
 
-        catch {SendSocket $socketID "InsertRuleData Unable to find matching rule in $ruleDir."} tmpError
+        catch {SendSocket $socketID [list InsertRuleData Unable to find matching rule in $ruleDir.]} tmpError
 
     }
 
@@ -225,10 +226,10 @@ proc GetPSData { socketID timestamp srcIP MAX_PS_ROWS } {
     set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
   }
   foreach row [mysqlsel $dbSocketID "$query" -list] {
-    catch {SendSocket $socketID "PSDataResults $row"} tmpError
+    catch {SendSocket $socketID [list PSDataResults $row]} tmpError
   }
   mysqlclose $dbSocketID
-  catch {SendSocket $socketID "PSDataResults DONE"} tmpError
+  catch {SendSocket $socketID [list PSDataResults DONE]} tmpError
 }
 
 proc EventHistoryRequest { socketID winName sid cid } {
@@ -240,21 +241,21 @@ proc EventHistoryRequest { socketID winName sid cid } {
   }
   set query "SELECT history.sid, history.cid, user_info.username, history.timestamp, history.status, status.description, history.comment FROM history, user_info, status WHERE history.uid=user_info.uid AND history.status=status.status_id AND history.sid=$sid and history.cid=$cid"
   if [catch {mysqlsel $dbSocketID "$query" -list} selResults] {
-    catch {SendSocket $socketID "InfoMessage $selResults"} tmpError
+    catch {SendSocket $socketID [list InfoMessage $selResults]} tmpError
   } else {
     foreach row $selResults {
-      catch {SendSocket $socketID "InsertHistoryResults $winName $row"} tmpError
+      catch {SendSocket $socketID [list InsertHistoryResults $winName $row]} tmpError
     }
   }
   mysqlclose $dbSocketID
-  catch {SendSocket $socketID "InsertHistoryResults $winName done"} tmpError
+  catch {SendSocket $socketID [list InsertHistoryResults $winName done]} tmpError
 }
 
 proc GetSancpFlagData { socketID sensorID xid } {
   set query\
    "SELECT src_flags, dst_flags FROM sancp WHERE sancp.sid=$sensorID AND sancp.sancpid=$xid"
    set queryResults [FlatDBQuery $query]
-   catch {SendSocket $socketID "InsertSancpFlags $queryResults"}
+   catch {SendSocket $socketID [list InsertSancpFlags $queryResults]}
 }
 proc GetIPData { socketID sid cid } {
   set query\
@@ -264,7 +265,7 @@ proc GetIPData { socketID sid cid } {
    WHERE sid=$sid and cid=$cid"
                                                                                                             
   set queryResults [FlatDBQuery $query]
-  catch {SendSocket $socketID "InsertIPHdr $queryResults"} tmpError
+  catch {SendSocket $socketID [list InsertIPHdr $queryResults]} tmpError
 }
 proc GetTcpData { socketID sid cid } {
   set query\
@@ -273,7 +274,7 @@ proc GetTcpData { socketID sid cid } {
    WHERE sid=$sid and cid=$cid"
   set queryResults [FlatDBQuery $query]
   set portQuery [FlatDBQuery "SELECT src_port, dst_port FROM event WHERE sid=$sid AND cid=$cid"]
-  catch {SendSocket $socketID "InsertTcpHdr $queryResults $portQuery"} tmpError
+  catch {SendSocket $socketID [list InsertTcpHdr [join $queryResults $portQuery]]} tmpError
 }
 proc GetIcmpData { socketID sid cid } {
   set query\
@@ -288,14 +289,14 @@ proc GetIcmpData { socketID sid cid } {
                                                                                                             
   set plqueryResults [FlatDBQuery $query]
                                                                                                             
-  catch {SendSocket $socketID "InsertIcmpHdr $queryResults $plqueryResults"} tmpError
+  catch {SendSocket $socketID [list InsertIcmpHdr $queryResults $plqueryResults]} tmpError
 }
 proc GetPayloadData { socketID sid cid } {
   set query\
    "SELECT data_payload FROM data WHERE sid=$sid and cid=$cid"
                                                                                                             
   set queryResults [FlatDBQuery $query]
-  catch {SendSocket $socketID "InsertPayloadData \{$queryResults\}"} tmpError
+  catch {SendSocket $socketID [list InsertPayloadData $queryResults]} tmpError
 }
 proc GetUdpData { socketID sid cid } {
   set query\
@@ -303,7 +304,7 @@ proc GetUdpData { socketID sid cid } {
                                                                                                             
   set queryResults [FlatDBQuery $query]
   set portQuery [FlatDBQuery "SELECT src_port, dst_port FROM event WHERE sid=$sid AND cid=$cid"]
-  catch {SendSocket $socketID "InsertUdpHdr $queryResults $portQuery"} tmpError
+  catch {SendSocket $socketID [list InsertUdpHdr [join $queryResults $portQuery]]} tmpError
 }
 
 proc GetOpenPorts { socketID sid cid } {
@@ -319,16 +320,16 @@ proc GetOpenPorts { socketID sid cid } {
 	"SELECT unified_event_id FROM event WHERE sid=$sid and cid=$cid"
     set event_id [lindex [FlatDBQuery $query] 0]
     if { $event_id == "" } { 
-	catch {SendSocket $socketID "InsertOpenPortsData DONE"} tmpError
+	catch {SendSocket $socketID [list InsertOpenPortsData DONE]} tmpError
 	return
     }
     set query\
 	"SELECT INET_NTOA(event.dst_ip), data.data_payload from event, data WHERE event.sid=data.sid AND event.cid=data.cid AND event.unified_event_ref=$event_id"
     foreach row [mysqlsel $dbSocketID "$query" -list] {
-    catch {SendSocket $socketID "InsertOpenPortsData $row"} tmpError
+    catch {SendSocket $socketID [list InsertOpenPortsData $row]} tmpError
     }
     mysqlclose $dbSocketID
-    catch {SendSocket $socketID "InsertOpenPortsData DONE"} tmpError
+    catch {SendSocket $socketID [list InsertOpenPortsData DONE]} tmpError
 }
 #
 # MonitorSensors: Sends current events to client. Adds client to clientList
@@ -386,7 +387,7 @@ proc SendEscalatedEvents { socketID } {
   global escalateIDList escalateArray
   if [info exists escalateIDList] {
     foreach escalateID $escalateIDList {
-      catch {SendSocket $socketID "InsertEscalatedEvent $escalateArray($escalateID)"} tmpError
+      catch {SendSocket $socketID [list InsertEscalatedEvent $escalateArray($escalateID)]} tmpError
     }
   }
 }
@@ -408,10 +409,9 @@ proc SendCurrentEvents { socketID } {
             if { [info exists clientMonitorSockets($netName)] } {
 
                 if { [lsearch -exact $clientMonitorSockets($netName) $socketID] >= 0} {
-                    #SendSocket $socketID "InsertEvent [lrange $eventIDArray($eventID) 0 12] $eventIDCountArray($eventID)"
                     InfoMessage "Sending client $socketID: InsertEvent $eventIDArray($eventID) $eventIDCountArray($eventID)" 
                     catch {\
-                     SendSocket $socketID "InsertEvent $eventIDArray($eventID) $eventIDCountArray($eventID)" \
+                     SendSocket $socketID [list InsertEvent $eventIDArray($eventID) $eventIDCountArray($eventID)] \
                     } tmpError
 
                 }
