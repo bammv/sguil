@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.23 2007/05/16 19:07:31 bamm Exp $
+# $Id: guilib.tcl,v 1.24 2008/02/20 20:54:27 bamm Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -241,15 +241,15 @@ proc InsertIPHdr { data } {
   $ttlIPHdrFrame.text insert 0.0 [lindex $data 9]
   $chksumIPHdrFrame.text insert 0.0 [lindex $data 10]
 }
-proc InsertTcpHdr { data } {
+proc InsertTcpHdr { data ports} {
   global r1TcpHdrFrame r0TcpHdrFrame urgTcpHdrFrame ackTcpHdrFrame
   global pshTcpHdrFrame rstTcpHdrFrame synTcpHdrFrame finTcpHdrFrame
   global windowTcpHdrFrame urpTcpHdrFrame tcpchksumTcpHdrFrame
   global sPortTcpHdrFrame dPortTcpHdrFrame seqTcpHdrFrame
   global acknoTcpHdrFrame tcpoffsetTcpHdrFrame resTcpHdrFrame
 
-  $sPortTcpHdrFrame.text insert 0.0 [lindex $data 8]
-  $dPortTcpHdrFrame.text insert 0.0 [lindex $data 9]
+  $sPortTcpHdrFrame.text insert 0.0 [lindex $ports 0]
+  $dPortTcpHdrFrame.text insert 0.0 [lindex $ports 1]
   $seqTcpHdrFrame.text insert 0.0 [lindex $data 0]
   $acknoTcpHdrFrame.text insert 0.0 [lindex $data 1]
   $tcpoffsetTcpHdrFrame.text insert 0.0 [lindex $data 2]
