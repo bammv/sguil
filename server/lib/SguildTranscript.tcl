@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.16 2008/02/20 06:06:19 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.17 2008/02/21 17:30:45 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -220,13 +220,13 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
   set srcMask [TcpFlowFormat $srcIP $srcPort $dstIP $dstPort]
   set dstMask [TcpFlowFormat $dstIP $dstPort $srcIP $srcPort]
   SendSocket $clientSocketID [list XscriptMainMsg $winName HDR]
-  SendSocket $clientSocketID [list XscriptMainMsg $winName Sensor Name:\t[lindex $transInfoArray($TRANS_ID) 4]]
-  SendSocket $clientSocketID [list XscriptMainMsg $winName Timestamp:\t[lindex $transInfoArray($TRANS_ID) 5]]
-  SendSocket $clientSocketID [list XscriptMainMsg $winName Connection ID:\t$winName]
-  SendSocket $clientSocketID [list XscriptMainMsg $winName Src IP:\t\t$srcIP\t([GetHostbyAddr $srcIP])]
-  SendSocket $clientSocketID [list XscriptMainMsg $winName Dst IP:\t\t$dstIP\t([GetHostbyAddr $dstIP])]
-  SendSocket $clientSocketID [list XscriptMainMsg $winName Src Port:\t\t$srcPort]
-  SendSocket $clientSocketID [list XscriptMainMsg $winName Dst Port:\t\t$dstPort]
+  SendSocket $clientSocketID [list XscriptMainMsg $winName "Sensor Name:\t[lindex $transInfoArray($TRANS_ID) 4]"]
+  SendSocket $clientSocketID [list XscriptMainMsg $winName "Timestamp:\t[lindex $transInfoArray($TRANS_ID) 5]"]
+  SendSocket $clientSocketID [list XscriptMainMsg $winName "Connection ID:\t$winName"]
+  SendSocket $clientSocketID [list XscriptMainMsg $winName "Src IP:\t\t$srcIP\t([GetHostbyAddr $srcIP])"]
+  SendSocket $clientSocketID [list XscriptMainMsg $winName "Dst IP:\t\t$dstIP\t([GetHostbyAddr $dstIP])"]
+  SendSocket $clientSocketID [list XscriptMainMsg $winName "Src Port:\t\t$srcPort"]
+  SendSocket $clientSocketID [list XscriptMainMsg $winName "Dst Port:\t\t$dstPort"]
   if {$P0F} {
     if { ![file exists $P0F_PATH] || ![file executable $P0F_PATH] } {
       SendSocket $clientSocketID [list XscriptDebugMsg $winName "Cannot find p0f in: $P0F_PATH"]
