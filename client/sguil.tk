@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.241 2008/02/20 21:58:35 bamm Exp $ #
+# $Id: sguil.tk,v 1.242 2008/02/21 22:51:38 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -151,7 +151,7 @@ proc ServerCommandRcvd { socketID } {
       SensorStatusUpdate { $serverCmd [lindex $data 1] }
       NewSnortStats { $serverCmd [lindex $data 1] }
       UpdateSnortStats { $serverCmd [lindex $data 1] }
-      InsertEvent { $serverCmd [lindex $data 1] [lindex $data 2] }
+      InsertEvent { $serverCmd [lindex $data 1] }
       IncrEvent { $serverCmd [lrange $data 1 end] }
       InsertSystemInfoMsg { $serverCmd [lindex $data 1] [lindex $data 2] }
       InsertRuleData { $serverCmd [lindex $data 1] }
@@ -557,7 +557,7 @@ proc DeleteEventIDList { eventIDList } {
 #
 # InsertEvent: Parses eventData, locates the correct windowPane calls DisplayEvent
 #
-proc InsertEvent { eventData count } {
+proc InsertEvent { eventData } {
 
     global DEBUG rtPaneArray eventArray SLEEP SOUND RT_SORT
     global generatorListMap sigIDListMap
@@ -568,7 +568,7 @@ proc InsertEvent { eventData count } {
     set insertPane [GetPaneNameByPriority $priority]
     set eventID [join [lrange $eventData 5 6] .]
     set status RT
-    #set count [lindex $eventData 18]
+    set count [lindex $eventData 18]
     set sensor [lindex $eventData 3]
     set dateTime [lindex $eventData 4]
     set message [lindex $eventData 7]
