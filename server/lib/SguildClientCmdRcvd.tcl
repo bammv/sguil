@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.37 2008/02/21 17:29:44 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.38 2008/02/21 22:50:52 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -411,7 +411,7 @@ proc SendCurrentEvents { socketID } {
                 if { [lsearch -exact $clientMonitorSockets($netName) $socketID] >= 0} {
                     InfoMessage "Sending client $socketID: InsertEvent $eventIDArray($eventID) $eventIDCountArray($eventID)" 
                     catch {\
-                     SendSocket $socketID [list InsertEvent $eventIDArray($eventID) $eventIDCountArray($eventID)] \
+                     SendSocket $socketID [list InsertEvent "$eventIDArray($eventID) $eventIDCountArray($eventID)"] \
                     } tmpError
 
                 }
