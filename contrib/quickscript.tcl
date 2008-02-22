@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: quickscript.tcl,v 1.1 2008/02/20 06:09:50 bamm Exp $ #
+# $Id: quickscript.tcl,v 1.2 2008/02/22 21:12:32 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -250,9 +250,10 @@ while { 1 } {
         exit 1
 
     }
-
+  
     # Strip the command and faux winname from the msg
-    set data [lrange $msg 2 end]
+    set data [lindex $msg 2]
+
 
     switch -exact -- $data {
 
