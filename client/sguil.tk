@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.242 2008/02/21 22:51:38 bamm Exp $ #
+# $Id: sguil.tk,v 1.243 2008/02/25 23:17:28 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -1139,8 +1139,16 @@ proc CreatePadsLists { baseFrame } {
 
     set bindWin [$currentPane bodytag]
 
+    # Grab button press/motion and make sure we aren't busy
+    bind $bindWin <ButtonPress-1> { global BUSY; if { $BUSY } { bell; break } }
+    bind $bindWin <Button1-Motion> { global BUSY; if { $BUSY } { break } }
+
     # Left button was released on a list.
     bind $bindWin <ButtonRelease-1> {
+
+        global BUSY
+
+        if { $BUSY } { bell; break } 
 
         foreach {tablelist::W tablelist::x tablelist::y} \
             [tablelist::convEventFields %W %x %y] {}
@@ -1209,6 +1217,10 @@ proc CreateSessionLists { baseFrame } {
     pack $baseFrame -expand true -fill both
 
     set bindWin [$currentPane bodytag]
+
+    # Grab button press/motion and make sure we aren't busy
+    bind $bindWin <ButtonPress-1> { global BUSY; if { $BUSY } { bell; break } }
+    bind $bindWin <Button1-Motion> { global BUSY; if { $BUSY } { break } }
 
     # Left button was released on a list.
     bind $bindWin <ButtonRelease-1> {
@@ -1333,8 +1345,16 @@ proc CreateEventLists { baseFrame {movable {1}} {rtpane {0}} } {
 
     set bindWin [$currentPane bodytag]
 
+    # Grab button press/motion and make sure we aren't busy
+    bind $bindWin <ButtonPress-1> { global BUSY; if { $BUSY } { bell; break } }
+    bind $bindWin <Button1-Motion> { global BUSY; if { $BUSY } { break } }
+
     # Left button was released on a list.
     bind $bindWin <ButtonRelease-1> { 
+
+        global BUSY
+
+        if { $BUSY } { break } 
 
         foreach {tablelist::W tablelist::x tablelist::y} \
             [tablelist::convEventFields %W %x %y] {}
@@ -1543,7 +1563,9 @@ proc SelectEventPane { win type format } {
 
     global CUR_SEL_PANE CUR_SEL_EVENT ACTIVE_EVENT BUSY MULTI_SELECT DISPLAYEDDETAIL
     global portscanDataFrame packetDataFrame sancpFrame padsFrame genericFrame
-    global generatorListMap sigIDListMap
+    global generatorListMap sigIDListMap BUSY
+
+    #if { $BUSY } { bell; return }
 
     set CUR_SEL_PANE(name) $win
     set CUR_SEL_PANE(type) $type
@@ -3004,65 +3026,101 @@ $validateMenu add command -label "Cat VII: Add Comment"\
 
 # F8 deletes the highlighted event
 bind . <F8> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 1
 }
 bind . <Shift-Key-F8> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 1 1
 }
 # F1 deletes the highlighted event and marks the event as 11 (CatI)
 bind . <F1> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 11
 }
 bind . <Shift-Key-F1> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 11 1
 }
 # F2 deletes the highlighted event and marks the event as 12 (CatII)
 bind . <F2> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 12
 }
 bind . <Shift-Key-F2> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 12 1
 }
 # F3 deletes the highlighted event and marks the event as 13 (CatIII)
 bind . <F3> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 13
 }
 bind . <Shift-Key-F3> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 13 1
 }
 # F4 deletes the highlighted event and marks the event as 14 (CatIV)
 bind . <F4> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 14
 }
 bind . <Shift-Key-F4> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 14 1
 }
 # F5 deletes the highlighted event and marks the event as 15 (CatV)
 bind . <F5> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 15
 }
 bind . <Shift-Key-F5> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 15 1
 }
 # F6 deletes the highlighted event and marks the event as 16 (CatVI)
 bind . <F6> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 16
 }
 bind . <Shift-Key-F6> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 16 1
 }
 # F7 deletes the highlighted event and marks the event as 17 (CatVII)
 bind . <F7> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 17
 }
 bind . <Shift-Key-F7> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 17 1
 }
 # F9 Escalates the event
 bind . <F9> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 2
 }
 bind . <Shift-Key-F9> {
+    global BUSY
+    if { $BUSY } { bell; break }
   ValidateEvent 2 1
 }
 # Ctl-s initiates Sleep function.
@@ -3080,10 +3138,14 @@ bind . <Control-Key-f> {
 
 # Up arrow moves selected event up one.
 bind . <Key-Up> {
+    global BUSY
+    if { $BUSY } { bell; break }
     if {$ACTIVE_EVENT && !$MULTI_SELECT} { SelectUp }
 }
 
 bind . <Key-Down> {
+    global BUSY
+    if { $BUSY } { bell; break }
     if {$ACTIVE_EVENT && !$MULTI_SELECT} { SelectDown }
 }
 
