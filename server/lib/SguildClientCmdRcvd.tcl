@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.38 2008/02/21 22:50:52 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.39 2008/02/29 04:13:39 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -131,7 +131,7 @@ proc GetCorrelatedEvents { socketID eid winName } {
   global correlatedEventArray eventIDArray
   if { [info exists eventIDArray] } {
     SendSocket $socketID\
-     "InsertQueryResults $winName [eval FormatStdToQuery $eventIDArray($eid)]"
+     [list InsertQueryResults $winName [eval FormatStdToQuery $eventIDArray($eid)]]
   }
                                                                                                             
   if { [info exists correlatedEventArray($eid)] } {
@@ -200,7 +200,7 @@ proc RuleRequest { socketID event_id sensor genID sigID sigRev } {
     if {$RULEFOUND} {
 
         catch {SendSocket $socketID [list InsertRuleData $data]} tmpError
-        catch {SendSocket $socketID [list InsertRuleData $ruleFile: Line $line]} tmpError
+        catch {SendSocket $socketID [list InsertRuleData "$ruleFile: Line $line"]} tmpError
 
     } else {
 
