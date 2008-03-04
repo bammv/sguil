@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.17 2008/02/21 17:30:45 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.18 2008/03/04 18:08:46 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -298,7 +298,7 @@ proc QuickScript { clientSocketID alertID } {
 
     } else {
     
-        SendSocket $clientSocketID [list XscriptMainMsg "Unable to find alert $alertID in array"]
+        SendSocket $clientSocketID [list XscriptMainMsg foo "Unable to find alert $alertID in RealTime array"]
         SendSocket $clientSocketID [list XscriptMainMsg foo DONE]
 
     }
