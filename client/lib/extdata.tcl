@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.58 2008/02/20 06:06:57 bamm Exp $
+# $Id: extdata.tcl,v 1.59 2008/03/05 16:45:57 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -180,8 +180,11 @@ proc DisplayReference { win start length } {
         sid        { 
                      if { $content < 1000000 } {
                          exec $BROWSER_PATH http://www.snort.org/pub-bin/sigs.cgi?sid=$content &
-                     } else {
+                     } elseif { $content > 1999999 && $content < 30000000} {
                          exec $BROWSER_PATH http://doc.emergingthreats.net/$content &
+                     } else {
+                         tk_messageBox -type ok -icon warning -message\
+                          "Sid $content is a locally managed signature/rule."
                      }
         }
         default    { InfoMessage "Unknown reference in rule: $ref" }
