@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.59 2008/03/05 16:45:57 bamm Exp $
+# $Id: extdata.tcl,v 1.60 2008/03/05 16:51:03 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -251,58 +251,6 @@ proc GetDshieldPort { arg } {
               to point your favorite browser."
             puts "Error: $BROWSER_PATH does not exist or is not executable."
         }
-
-    }
-
-}
-proc GetReference {} {
-  global DEBUG ruleText BROWSER_PATH
-  
-  set signature [$ruleText get 0.0 end]
-  # parse the sig for the sid
-  regexp {sid:\s*([0-9]+)\s*;} $signature match sid
-  if {$sid > 1000000} {
-    # Local Rule
-    tk_messageBox -type ok -icon warning -message\
-     "Sid $sid is a locally managed signature/rule."
-    puts "Error: Sid $sid is a locally managed signature/rule."
-  } elseif { $sid <= 100 } {
-    tk_messageBox -type ok -icon warning -message\
-     "Sid $sid is reserved for future use. Is there an error in the sig file?"
-    puts "Error: Sid $sid is reserved for future use. Error?."
-  } else {
-    if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
-      exec $BROWSER_PATH http://www.snort.org/pub-bin/sigs.cgi?sid=$sid &
-      if {$DEBUG} {puts "$BROWSER_PATH http://www.snort.org/pub-bin/sigs.cgi?sid=$sid launched."}
-    } else {
-      tk_messageBox -type ok -icon warning -message\
-       "$BROWSER_PATH does not exist or is not executable. Please update the BROWSER_PATH variable\
-        to point your favorite browser."
-      puts "Error: $BROWSER_PATH does not exist or is not executable."
-    }
-  }
-}
-proc GetIcat {} {
-
-    global DEBUG ruleText BROWSER_PATH
-
-    set signature [$ruleText get 0.0 end]
-
-    # parse the sig for the cve
-    regexp {cve,([^;]*)} $signature match cve
-
-    if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
-
-        exec $BROWSER_PATH http://nvd.nist.gov/nvd.cfm?cvename=CAN-$cve &
-        if {$DEBUG} {puts "$BROWSER_PATH http://nvd.nist.gov/nvd.cfm?cvename=CAN-$cve launched."}
-
-    } else {
-
-        tk_messageBox -type ok -icon warning -message\
-         "$BROWSER_PATH does not exist or is not executable.\
-          Please update the BROWSER_PATH variable\
-          to point your favorite browser."
-        puts "Error: $BROWSER_PATH does not exist or is not executable."
 
     }
 

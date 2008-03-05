@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.243 2008/02/25 23:17:28 bamm Exp $ #
+# $Id: sguil.tk,v 1.244 2008/03/05 16:51:03 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2618,10 +2618,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
       set displayRuleButton [checkbutton $ruleButtonFrame.displayRuleButton\
        -text "Show Rule" -variable SHOWRULE -command GetRuleInfo]
         set referenceButton [button $ruleButtonFrame.referenceButton\
-     -text "www.snort.org" -command "GetReference" -state disabled]
-        set icatButton [button $ruleButtonFrame.icatButton\
-         -text "nvd.nist.gov" -command "GetIcat" -state disabled]
-      pack $displayPacketButton $displayRuleButton $referenceButton $icatButton -side left
+      pack $displayPacketButton $displayRuleButton $referenceButton -side left
     set ruleText [scrolledtext $ruleFrame.ruleText -hscrollmode none -visibleitems 10x2\
      -sbwidth 10 -vscrollmode dynamic -wrap word]
     $ruleText component text configure -state disabled
