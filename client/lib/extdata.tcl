@@ -3,11 +3,11 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.60 2008/03/05 16:51:03 bamm Exp $
+# $Id: extdata.tcl,v 1.61 2008/03/05 16:54:43 bamm Exp $
 
 proc GetRuleInfo {} {
 
-    global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG referenceButton icatButton MULTI_SELECT
+    global CUR_SEL_PANE ACTIVE_EVENT SHOWRULE socketID DEBUG MULTI_SELECT
     global CONNECTED eventArray generatorListMap sigIDListMap
 
     ClearRuleText
@@ -43,11 +43,6 @@ proc GetRuleInfo {} {
 
         SendToSguild "RuleRequest $event_id $sensorName $genID $sigID $sigRev"
 
-    } else {
-
-        $referenceButton configure -state disabled
-        $icatButton configure -state disabled
-
     }
 
 }
@@ -63,7 +58,7 @@ proc ClearRuleText {} {
 }
 proc InsertRuleData { ruleData } {
 
-    global ruleText referenceButton icatButton
+    global ruleText 
 
     $ruleText component text configure -state normal
 
@@ -77,17 +72,6 @@ proc InsertRuleData { ruleData } {
 
         # This is the actual rule
         $ruleText component text insert end "$ruleData\n"
-        $referenceButton configure -state normal
-
-        if [regexp {cve,([^;]*)} $ruleData] {
-
-            $icatButton configure -state normal
-
-        } else {
-
-            $icatButton configure -state disabled
-
-        }
 
         set w [$ruleText component text]
 
