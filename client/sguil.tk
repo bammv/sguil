@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.245 2008/03/05 16:54:43 bamm Exp $ #
+# $Id: sguil.tk,v 1.246 2008/03/07 19:33:46 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -58,6 +58,22 @@ if [catch {package require ip} iplibVersion] {
     puts "The ip package is part of the tcllib extension. A port/package is available for most linux and BSD systems."
     CleanExit
 }
+
+# Load tcllib mime
+if [catch {package require smtp 1.4.3} smtpVersion] {
+
+    puts "ERROR: The tcllib smtp extension version 1.4.3 or greater does NOT appear"
+    puts "to be installed on this sysem. Tcllib smtp is required when enabling the"
+    puts "email events function. Please download it at http://tcllib.sourceforge.net"
+    puts "or disable the emailing of events in your sguild.email. A patch for smtp"
+    puts "vesion 1.4.2 (shipped with tcllib-1.9) is available at:"
+    puts "http://tcllib.cvs.sourceforge.net/tcllib/tcllib/modules/mime/smtp.tcl?r1=1.44&r2=1.45&view=patch"
+    puts ""
+    puts "tclError: $smtpVersion"
+    CleanExit
+
+}
+
 
 # Load iwidgets and namespaces
 if [catch {package require Iwidgets} iwidgetsVersion] {

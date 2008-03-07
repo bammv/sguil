@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.37 2007/03/24 20:51:09 bamm Exp $ #
+# $Id: report.tcl,v 1.38 2008/03/07 19:33:46 bamm Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -56,8 +56,6 @@ proc EmailEvents { detail sanitize } {
 	tkwait variable RETURN_FLAG
 	if {$RETURN_FLAG} {
 	    global HOSTNAME MAILSERVER
-	    #load /usr/local/lib/email17.tcl
-	    package require EMail 1.7
 	    set EmailTo [$toBox get]
 	    set EmailCC [$ccBox get]
 	    set EmailBCC [$bccBox get]
@@ -85,16 +83,11 @@ proc EmailEvents { detail sanitize } {
             if { ![info exists HOSTNAME] } {
               set HOSTNAME [info hostname]
             }
-	    EMail::Init $EmailFrom $HOSTNAME $MAILSERVER
-	    set EMailToken [EMail::Send $EmailTo $EmailCC $EmailBCC $EmailSubj $EmailBody -waitquit 1]
-	    # EMail::Finish $EMailToken
-	    EMail::Query $EMailToken
-	    set EMailError [EMail::GetError $EMailToken]
-	    if { $EMailError != "unknown" && $EMailError != "" } {
-		ErrorMessage "Error $EMailError sending mail."
-		return
-	    }
-	    EMail::Discard $EMailToken
+            # Build and send the email here
+            set token [mime::initialize -canonical text/plain -string $EmailBody]
+            mime::setheader $token Subject $EmailSubj
+            smtp::sendmessage $token -recipients $EmailTo -servers $MAILSERVER -originator $EmailFrom
+            mime::finalize $token
 	}  
 	destroy $editEmail
 	return
