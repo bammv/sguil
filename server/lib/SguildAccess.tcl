@@ -1,4 +1,4 @@
-# $Id: SguildAccess.tcl,v 1.7 2008/02/20 06:06:19 bamm Exp $ #
+# $Id: SguildAccess.tcl,v 1.8 2008/03/11 15:34:17 bamm Exp $ #
 
 # Load up the access lists.
 proc LoadAccessFile { filename } {
@@ -174,6 +174,11 @@ proc AddUser { userName USERS_FILE } {
 proc ValidateUser { socketID username password } {
 
     global USERS_FILE validSockets socketInfo userIDArray
+
+    # Temp fix to make sure curly brackets are stripped from 
+    # the password. The client sends it correctly with [list]
+    # but we use ctoken (bad) to strip the passwd from the comms 
+    set password [lindex $password 0]
 
     # Configure the socket
     fileevent $socketID readable {}
