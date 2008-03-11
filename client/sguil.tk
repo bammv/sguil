@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.246 2008/03/07 19:33:46 bamm Exp $ #
+# $Id: sguil.tk,v 1.247 2008/03/11 14:44:26 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -196,7 +196,7 @@ proc ServerCommandRcvd { socketID } {
       GlobalQryList { set GLOBAL_QRY_LIST [lindex $data 1] }
       ReportQryList { set REPORT_QRY_LIST [lindex $data 1] }
       ReportResponse { $serverCmd [lindex $data 1] [lindex $data 2] }
-      InsertSancpFlags { $serverCmd [lindex $data 1] [lindex $data 2] }
+      InsertSancpFlags { $serverCmd [lindex $data 1] }
       XscriptDebugMsg { $serverCmd [lindex $data 1] [lindex $data 2] }
       XscriptMainMsg { $serverCmd [lindex $data 1] [lindex $data 2] }
       WiresharkDataBase64 { $serverCmd [lindex $data 1] [lindex $data 2] }

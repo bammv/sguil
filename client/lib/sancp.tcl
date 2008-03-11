@@ -1,4 +1,4 @@
-# $Id: sancp.tcl,v 1.12 2007/03/19 02:10:05 bamm Exp $ 
+# $Id: sancp.tcl,v 1.13 2008/03/11 14:44:26 bamm Exp $ 
 #
 # Build a sancp query tab and send the query to sguild.
 #
@@ -133,7 +133,7 @@ proc ClearSancpFlags {} {
     }
 
 }
-proc InsertSancpFlags { srcFlags dstFlags } {
+proc InsertSancpFlags { flagsList } {
 
     global r2SrcSancpFrame r1SrcSancpFrame urgSrcSancpFrame ackSrcSancpFrame
     global pshSrcSancpFrame rstSrcSancpFrame synSrcSancpFrame finSrcSancpFrame 
@@ -141,6 +141,8 @@ proc InsertSancpFlags { srcFlags dstFlags } {
     global pshdstSancpFrame rstdstSancpFrame syndstSancpFrame findstSancpFrame 
   
     set frameName SrcSancpFrame.text
+    set srcFlags [lindex $flagsList 0]
+    set dstFlags [lindex $flagsList 1]
     foreach flags [list $srcFlags $dstFlags] {
 
         set r1Flag "."
