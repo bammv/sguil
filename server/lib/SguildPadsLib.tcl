@@ -14,7 +14,12 @@ proc ProcessPadsAsset { dataList } {
     set timestamp [clock format $intTime -gmt true -f "%Y-%m-%d %T"]
 
     # Check for new assest
-    set tmpQuery "SELECT timestamp, application FROM pads WHERE sid=$sid AND ip=$d_intIP AND port=$d_port AND ip_proto=$ip_proto ORDER BY timestamp DESC"
+    set tmpQuery \
+      "SELECT timestamp, application \
+      FROM pads \
+      WHERE sid=$sid AND ip=$d_intIP AND port=$d_port AND ip_proto=$ip_proto \
+      ORDER BY timestamp DESC"
+
     set results [MysqlSelect $tmpQuery]
 
     if { [llength $results] == 0 } { 
@@ -31,9 +36,20 @@ proc ProcessPadsAsset { dataList } {
         if { ![array exists PADS_CID] || ![info exists PADS_CID($sid)] } { set PADS_CID($sid) [GetMaxCid $sid] }
         incr PADS_CID($sid)
 
-        InsertAsset $sensorName $sid $PADS_CID($sid) $timestamp $d_intIP $service $d_port $ip_proto $app $hex_payload
-        # RT Alert
-        AlertAsset new-asset $sensorName $sid $PADS_CID($sid) $timestamp $intTime $s_inetIP $s_intIP $d_inetIP $d_intIP $s_port $d_port $service $ip_proto $app
+        # Insert data into the asset DB
+        if { [catch {InsertAsset $sensorName $sid $PADS_CID($sid) $timestamp \
+         $d_intIP $service $d_port $ip_proto $app $hex_payload} insertError] } {
+
+            # INSERT failed. Log a message and try reprocess the asset.
+            LogMessage "Error inserting PADS data: $insertError"
+            ProcessPadsAsset $dataList
+            return
+            
+        }
+
+        # Send RT Alert
+        AlertAsset new-asset $sensorName $sid $PADS_CID($sid) $timestamp \
+         $intTime $s_inetIP $s_intIP $d_inetIP $d_intIP $s_port $d_port $service $ip_proto $app
 
     } else {
 
@@ -57,8 +73,20 @@ proc ProcessPadsAsset { dataList } {
             if { ![array exists PADS_CID] || ![info exists PADS_CID($sid)] } { set PADS_CID($sid) [GetMaxCid $sid] }
             incr PADS_CID($sid)
 
-            InsertAsset $sensorName $sid $PADS_CID($sid) $timestamp $d_intIP $service $d_port $ip_proto $app $hex_payload
-            AlertAsset changed-asset $sensorName $sid $PADS_CID($sid) $timestamp $intTime $s_inetIP $s_intIP $d_inetIP $d_intIP $s_port $d_port $service $ip_proto $app
+            # Insert data into the asset DB
+            if { [catch {InsertAsset $sensorName $sid $PADS_CID($sid) $timestamp \
+             $d_intIP $service $d_port $ip_proto $app $hex_payload} insertError] } {
+
+                # INSERT failed. Log a message and try reprocess the asset.
+                LogMessage "Error inserting PADS data: $insertError"
+                ProcessPadsAsset $dataList
+                return
+            
+            }
+
+            # Send RT Alert
+            AlertAsset changed-asset $sensorName $sid $PADS_CID($sid) $timestamp \
+             $intTime $s_inetIP $s_intIP $d_inetIP $d_intIP $s_port $d_port $service $ip_proto $app
 
         }
 
@@ -119,8 +147,8 @@ proc InsertAsset { sensorName sid aid timestamp intIP service port ip_proto app 
 
     if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
 
-        # ErrorMessage calls exit
-        ErrorMessage $tmpError
+        # INSERT failed
+        return -code error $tmpError
 
     }
 
