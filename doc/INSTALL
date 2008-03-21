@@ -1,4 +1,4 @@
-# $Id: INSTALL,v 1.22 2008/03/21 17:16:11 bamm Exp $ #
+# $Id: INSTALL,v 1.23 2008/03/21 17:36:12 bamm Exp $ #
 
 NOTE: If you are upgrading from an older version of 
 Sguil to version 0.7.0, please use the UPGRADE document
@@ -47,8 +47,7 @@ mysql and use that account for your sguil installation.
     shell> mysql -u root -p mysql
     Enter password:
     mysql> GRANT ALL PRIVILEGES ON sguildb.*
-           TO sguil@localhost IDENTIFIED BY 'sguilpasswd'
-           WITH GRANT OPTION;
+           TO sguil@localhost IDENTIFIED BY 'sguilpasswd';
     mysql> FLUSH PRIVILEGES;
 ######## End Security Note ########
   
@@ -57,36 +56,19 @@ below methods now, or skip to 'Installing sguild',
 section where it will prompt to create the DB structure
 for you on init.
 
-NOTE: If you choose to let sguild create the DB for you,
-then you still need to use 'GRANT' to give privledges
-for each sensor to INSERT,SELECT in the database.
-
-NOTE-2: It's highly recommended that you set your time-
+NOTE: It's highly recommended that you set your time-
 zone (TZ) to GMT prior to starting mysqld. This can
 often be done inside your mysqld init script.
 
 If you want to create the sguild database prior to starting
 sguild for the first time then use these instructions:
   Bamm@syn# mysql -u sguil -p -e "CREATE DATABASE sguildb"
-Make sure each sensor has INSERT and SELECT privledges:
-  Bamm@syn# mysql -u sguil -p -e "GRANT INSERT,SELECT on sguildb.* to <user>@<sensorip>"
 Build the required tables:
   Bamm@syn# mysql -u sguil -p -D sguildb < ./server/sql_scripts/create_sguildb.sql
   *NOTE: Verify all is well with: mysql -u root -p -e "show tables". As of Sguil 
          version 0.6.0, you will no longer see event, tcphdr, udphdr, icmphdr,
          data, and sancp tables after a fresh install. They will be created by
          sguild as data comes in from sensor_agent.
-  +-------------------+
-  | Tables_in_sguildb |
-  +-------------------+
-  | history           |
-  | portscan          |
-  | sensor            |
-  | sessions          |
-  | status            |
-  | user_info         |
-  | version           |
-  +-------------------+
 
 ##########################################
 #Step 2: Install the GUI server (sguild).#
@@ -131,40 +113,43 @@ prior to the line:
   package require mysqltcl
 in order for the tcl/tk interpreter to find the package.)
 
-4) On startup sguild will attempt to use the tcl interpreter
+4) Sguild now REQUIRES openssl. Please see the file
+OPENSSL.readme for configuration instructions.
+
+5) On startup sguild will attempt to use the tcl interpreter
 (tclsh) from your PATH. You may need to create a link from
 tclsh8.3 (or similar) to tclsh in the appropriate directory.
 (i.e. `ln -s /usr/local/bin/tclsh8.3 /usr/local/bin/tclsh)
 
-5) Configure options within sguild.conf. Pay particular attention
+6) Configure options within sguild.conf. Pay particular attention
 to the PATH you define for sguild to look for snort rules.  In the
 future, rules will be localized in the DB, for now each rule file
 must be kept on the sguild server based on the hostname. Don't
 forget to copy these rule files over after installing the sensor.
 As of version 0.4.1, the xscript functions were moved into sguild.
 
-6) Add users to sguild.users file by running `sguild -adduser <username>`
+7) Add users to sguild.users file by running `sguild -adduser <username>`
 If you want your users/passwd file to be somewhere other than
 /etc/sguild/sguild.users or ./sguild.users, then use the
  -u <path> switch. You can delete users using `sguild -deluser <username>`
 Again, specify the path of sguild.users if it is in a non
 default location.
 
-7) By default the sguild.access file allows any sensor and client
+8) By default the sguild.access file allows any sensor and client
 to connect to sguild. Update this file if you want to add access
 lists.
 
-8) Other configuration files are included with instructions on
+9) Other configuration files are included with instructions on
 their use in the file itself. These include sguild.email, 
 sguild.reports, sguild.conf, autocat.conf, and sguild.queries.
 
-9) Now it is time to start sguild. The command `sguild --help`
+10) Now it is time to start sguild. The command `sguild --help`
 will generate a short list of available switches. If you have
 placed your config files in a default location (/etc/sguild or
 ./) then you shouldn't need to specify any paths. Command line
-switches like -o (enable OpenSSL) and -D (run as a daemon) 
-override the sguild.conf. If a database has not been created
-yet, you will be prompted to create it at this point:
+switches like -D (run as a daemon) override the sguild.conf. 
+If a database has not been created yet, you will be prompted 
+to create it at this point:
 
     shell> ./sguild
     Error: mysqluse/db server: Unknown database 'sguildb'
@@ -188,7 +173,8 @@ some distros package tclx with the standard tcl libs), incr tcl (itcl)
 3.2 (including the iwidgets 2.2 set - see http://www.tcltk.com/iwidgets/
 for more info), and the tcllib extension (http://tcllib.sf.net). The
 client - sguil.tk - also runs under win32 using the ActiveState tcl
-libraries (http://www.activestate.com/Products/ActiveTcl/).
+libraries (http://www.activestate.com/Products/ActiveTcl/). Tcl/tk
+version 8.5 is NOT supported at this time.
 
 On startup, sguil.tk reads the options in sguil.conf. If a path to
 the sguil.conf file is not provided, it will look in the users home
