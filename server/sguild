@@ -2,9 +2,9 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.184 2008/02/13 02:59:13 bamm Exp $ #
+# $Id: sguild,v 1.185 2008/03/21 16:13:41 bamm Exp $ #
 
-# Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
+# Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
 # This program is distributed under the terms of version 1.0 of the 
 # Q Public License.  See LICENSE.QPL for further details.
@@ -15,8 +15,8 @@ exec tclsh "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.7.0-ALPHA"
-set AGENT_VERSION "SGUIL-0.7.0-ALPHA"
+set VERSION "SGUIL-0.7.0-RC1"
+set AGENT_VERSION "SGUIL-0.7.0-RC1"
 # DB Version
 set DB_VERSION "0.12"
 # Counter for tracking xscript transactions

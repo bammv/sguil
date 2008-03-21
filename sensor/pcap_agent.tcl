@@ -2,9 +2,9 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: pcap_agent.tcl,v 1.8 2008/01/30 04:07:13 bamm Exp $ #
+# $Id: pcap_agent.tcl,v 1.9 2008/03/21 16:13:41 bamm Exp $ #
 
-# Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
+# Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
 # This program is distributed under the terms of version 1.0 of the
 # Q Public License.  See LICENSE.QPL for further details.
@@ -18,7 +18,7 @@ exec tclsh "$0" "$@"
 #
 
 # Don't touch these
-set VERSION "SGUIL-0.7.0-ALPHA"
+set VERSION "SGUIL-0.7.0-RC1"
 set CONNECTED 0
 
 proc bgerror { errorMsg } {

@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.26 2008/03/05 16:54:44 bamm Exp $
+# $Id: guilib.tcl,v 1.27 2008/03/21 16:13:41 bamm Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -34,7 +34,7 @@ proc AboutBox {} {
 	    -foreground navy -text "\
 	    Sguil Version: $VERSION\n\
 	    \n\
-	    Copyright (C) 2002-2003 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
+	    Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
 	    \n\
 	    This program is distributed under the terms of version 1.0 of the\n\
 	    Q Public License.  See LICENSE.QPL for further details.\n\

@@ -2,9 +2,9 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: example_agent.tcl,v 1.5 2008/01/30 04:07:13 bamm Exp $ #
+# $Id: example_agent.tcl,v 1.6 2008/03/21 16:13:41 bamm Exp $ #
 
-# Copyright (C) 2002-2007 Robert (Bamm) Visscher <bamm@sguil.net>
+# Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ exec tclsh "$0" "$@"
 #
 
 # Make sure you define the version this agent will work with. 
-set VERSION "SGUIL-0.7.0-ALPHA"
+set VERSION "SGUIL-0.7.0-RC1"
 
 # Define the agent type here. It will be used to register the agent with sguild.
 # The template also prepends the agent type in all caps to all event messages.

@@ -2,9 +2,9 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: xscriptd,v 1.22 2004/06/10 17:55:52 shalligan Exp $ #
+# $Id: xscriptd,v 1.23 2008/03/21 16:13:41 bamm Exp $ #
 
-# Copyright (C) 2002-2004 Robert (Bamm) Visscher <bamm@satx.rr.com>
+# Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@satx.rr.com>
 #
 # This program is distributed under the terms of version 1.0 of the
 # Q Public License.  See LICENSE.QPL for further details.

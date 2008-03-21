@@ -2,13 +2,13 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.247 2008/03/11 14:44:26 bamm Exp $ #
+# $Id: sguil.tk,v 1.248 2008/03/21 16:13:41 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
 ####################################################################
 
-# Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
+# Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
 # This program is distributed under the terms of version 1.0 of the 
 # Q Public License.  See LICENSE.QPL for further details.
@@ -19,7 +19,7 @@ exec wish "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.7.0-ALPHA"
+set VERSION "SGUIL-0.7.0-RC1"
 
 # Load extended tcl
 if [catch {package require Tclx} tclxVersion] {
@@ -1729,7 +1729,7 @@ proc GetUserName {} {
    -foreground navy -text \
    "Sguil - A tcl/tk interface for network security monitoring\n\
    \n\
-   Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>\n\
+   Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>\n\
    \n\
    This program is distributed under the terms of version 1.0 of the\n\
    Q Public License.  See LICENSE.QPL for further details.\n\
@@ -1799,7 +1799,7 @@ proc SensorList { sensorList } {
    -foreground navy -text\
   "Sguil - A tcl/tk interface for network security monitoring\n\
    \n\
-   Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>\n\
+   Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>\n\
    \n\
    This program is distributed under the terms of version 1.0 of the\n\
    Q Public License.  See LICENSE.QPL for further details.\n\
