@@ -1,7 +1,7 @@
-# $Id: INSTALL,v 1.21 2006/02/10 18:10:10 bamm Exp $ #
+# $Id: INSTALL,v 1.22 2008/03/21 17:16:11 bamm Exp $ #
 
 NOTE: If you are upgrading from an older version of 
-guil to version 0.6.0, please use the UPGRADE document
+Sguil to version 0.7.0, please use the UPGRADE document
 as your guide.
  
 Sguil should be installed in the following order:
@@ -57,10 +57,9 @@ below methods now, or skip to 'Installing sguild',
 section where it will prompt to create the DB structure
 for you on init.
 
-NOTE: If you choose to let sguild
-create the DB for you, then you still need to use 'GRANT'
-to give privledges for each sensor to INSERT,SELECT in
-the database.
+NOTE: If you choose to let sguild create the DB for you,
+then you still need to use 'GRANT' to give privledges
+for each sensor to INSERT,SELECT in the database.
 
 NOTE-2: It's highly recommended that you set your time-
 zone (TZ) to GMT prior to starting mysqld. This can
@@ -103,9 +102,7 @@ that account.
 1) Create the directory /etc/sguild. I recommend using this
 directory for storing all the sguild config files. Copy
 sguild.users, sguild.conf, sguild.queries, sguild.access,
-and autocat.conf to the /etc/sguild directory. If you plan
-on using OpenSSL between the servers and client, don't forget
-to read the README.openssl file in the docs directory.
+and autocat.conf to the /etc/sguild directory.
 
 2) Make sure tcl is installed along with the extended (tclx)
 libs (http://tclx.sourceforge.net). Tclx is a common tcl
@@ -222,67 +219,34 @@ A. Begin by installing snort -
   etc). This allows us to run multiple snort, barnyard, and
   sensor_agent.tcl instances without munging data together.
 
-  Two patches for snort are included in the the sguil tarball. These 
-  patches are NOT required for sguil to function. Instead, they are 
-  used to provide more data to analyst that he/she can view from the
-  sguil console. The two patches include one for spp_stream4 and 
-  another for spp_portscan. The patch for spp_stream4 allows you to
-  configure snort to write session data in a pipe delimiated text
-  file for easy loading by sensor_agent.tcl into the DB. The 
-  spp_stream4 patch can still be used, but sancp is recommended. The 
-  patch for spp_portscan adds a configuration option to write portscan
-  data to a pipe deliminated file, again for easy loading into the
-  DB. The spp_portscan patch also facilitates the logging of portscan
-  events to log_unified as well as establishes a 'priority' of 5 to
-  those alerts.
- 
+  Two patches for snort were once included in Sguil releases. Those
+  patches have been depriciated by the use of SANCP and sf_portscan.
   
   First, download the source for snort from http://www.snort.org/dl.
-  Untar the package. If you wish to utilize the sguil patches,
-  change to the preprocessors directory and make a
-  back up of the portscan and stream4 preprocessor:
-    Bamm@syn# cd src/preprocessors
-    Bamm@syn# cp spp_portscan.c spp_portscan.c.bak
-    Bamm@syn# cp spp_stream4.c spp_stream4.c.bak
-  Then copy the patch files from the sguil source tree to the snort
-  source tree and patch the preprocessors:
-    Bamm@syn# cp <sguil-src>/sensors/snort_mods/2_1/spp_portscan_sguil.patch .
-    Bamm@syn# cp <sguil-src>/sensors/snort_mods/2_1/spp_stream4.patch .
-    Bamm@syn# patch spp_portscan.c < spp_portscan_sguil.patch
-    Bamm@syn# patch spp_stream4.c < spp_stream4_sguil.patch
-  
-  Now, compile and install snort as normal. You do NOT need to enable
-  mysql when compiling snort as barnyard will handle that function.
-
-  Next, configure snort to use the new portscan and stream4 preprocessors
-  and the log_unified output plugin:
-
-    Format for the portscan mod is:
-      preprocessor portscan: $HOME_NET <ports> <secs> <logdir> <sensorname>
-        <logdir> must exists and will be read by portscan_loader.tcl
-    EXAMPLE:
-      preprocessor portscan: $HOME_NET 4 3 /snort_data/<sensorname>/portscans syn
-
-    Format for the stream4 (keepstats) mod is:
-      keepstats db <log path>
-    EXAMPLE:
-      preprocessor stream4: detect_scans, disable_evasion_alerts, keepstats db /snort_data/<sensorname>/ssn_logs
-    
-    Enable unified logging with this line:
-      output log_unified: filename snort.log, limit 128
-
+  During the configure, make sure you enable snort statistics via the
+  option --enable-perfprofiling. Please read the documentation for
+  Snort for adding other options you may need. Sguil does NOT require
+  mysql to be enabled for Snort.
+ 
     If you want to have access to snort statistics from Sguil, enable the perfmonitor
     preprocessor.
     EXAMPLE:
       preprocessor perfmonitor: time 300 file /snort_data/<sensorname>/snort.stats pktcnt 10000
+
+     Enable unified logging with this line:
+       output log_unified: filename snort.log_unified, limit 128
+
+       NOTE: The default example shipped with snort uses the filename 
+       prefix "snort.log". The pcap (binary) output mechanism also uses
+       this naming convention. If pcap files are inadvertantly created with
+       the same prefix as unified are, it can cause spool readers like
+       Barnyard to crash.
 
   Make sure all the config files for snort are copied to the appropriate
   directory (ie /etc/snort) and create the appropriate log dirs if you are
   using the sguil patches.
     Bamm@syn# ls /etc/snort/
     gen-msg.map snort.conf classification.config reference.config sid-msg.map
-    Bamm@syn# ls /snort_data/<sensorname>/
-    portscans  ssn_logs
    
   Finally, start snort (best to run snort as a non-root user too. we use -m 122
   so barnyard can read the unfied_log files without root privs.):
@@ -312,7 +276,7 @@ deleting/archiving old data at this time.
 
 c. Now install Barnyard -
 
-  Instructions for patching barnyard-0.2.0 to work with sguil-0.6.0 are 
+  Instructions for patching barnyard-0.2.0 to work with sguil-0.7.0 are 
   in the sensor/barnyard_mods/README file of this src. Once you have
   patched and compiled barnyard according to those instructions, continue
   with the configuration below.
@@ -322,25 +286,52 @@ c. Now install Barnyard -
     output sguil
 
   Start Barnyard:
-    sguil@syn: /usr/local/bin/barnyard -c /etc/snort/barnyard.conf -d /snort_data/<sensorname>\
-    -g /etc/snort/gen-msg.map -s /etc/snort/sid-msg.map -f snort.log -w /etc/snort/waldo.file
+    sguil@syn: /usr/local/bin/barnyard -c /etc/snort/barnyard.conf \
+    -d /snort_data/<sensorname> -g /etc/snort/gen-msg.map -s /etc/snort/sid-msg.map \
+    -f snort.log_unified -w /etc/snort/waldo.file
 
-B. Next install and start the sensor_agent.tcl from the ./sensor directory.
-The configuration file sensor_agent.conf should be configured appropriately.
-You can define the location of the config file with the -c switch. By default
-sensor_agent.tcl will look in /etc and the current working directory if the -c
-switch is not specified. On startup sensor_agent.tcl will attempt to use the
-tcl interpreter (tclsh) from your PATH. You may need to create a link from
-tclsh8.3 (or similar) to tclsh in the appropriate directory.  (i.e.`ln -s
-/usr/local/bin/tclsh8.3 /usr/local/bin/tclsh). The sensor agent forwards
-portscan, session, and sancp files to sguild for loading to the DB. It also is
-the main communications link between the sensor and sguild as well as 
-receives alerts from barnyard and passes them up to sguild for insertion.
+B. Next install and start the various agent scripts from the ./sensor directory.
+The configuration files for each agent (i.e. snort_agent.conf, pcap_agent.conf, etc)
+contain comments in them to help you configure them properly.  You can define the 
+location of each config file with the -c switch. By default the agents will look 
+in /etc and the current working directory if the -c switch is not specified. On 
+startup the agents will attempt to use the tcl interpreter (tclsh) from your PATH. 
+You may need to create a link from tclsh8.3 (or similar) to tclsh in the appropriate
+directory.  (i.e.`ln -s /usr/local/bin/tclsh8.3 /usr/local/bin/tclsh). A brief 
+description of each sensor agent is below.
+
+snort_agent.tcl:   The snort agent creates a socket on localhost and accepts connections
+                   from barnyard over it. Barnyard sends realtime alerts from snort via
+                   this communication path. The snort agent also tails the snort stats 
+                   file and forwards the lines up to sguild.
+
+pcap_agent.tcl:    The pcap agent connects to sguild and waits for raw data requests from
+                   it. I uses tcpdump to parse pcap files based on a filter and sends
+                   the binary files to sguild.
+
+sancp_agent.tcl:   The sancp agent monitors the specified directory for SANCP stats files.
+                   When available, it copies those files up to sguild. Sguild writes those
+                   files to a new directory and a loader process comes by and LOADs them
+                   into the Mysql database.
+
+ pads_agent.tcl:   The pads agent is still considered alpha. It listens to a FIFO and reads
+                   data written by PADS (http://passive.sourceforge.net/). New assets are
+                   forwarded to sguild. Sguild processes the information and determines 
+                   whether an alert for either a new or changed asset should be created.
+                   Please see the PADS.readme for more information.
+
+example_agent.tcl: Sguil now supports a simple interface for new agent types. Example 
+                   agent documents how one might go about creating an agent to provide
+                   alerts from other sources (OSSEC, syslog, etc). More documention
+                   will be provided later. If you have any questions about the example
+                   agent and how you can create your own agent, please use the sguil-devel
+                   mailing list or join #snort-gui on irc.freenode.net. 
 
 ############
 #   DONE!  #
 ############
-Read the USAGE for information about using sguil.tk.
+
+Please read the USAGE for information about using the Sguil client (sguil.tk)
 
 Bammkkkk
 
