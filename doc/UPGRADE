@@ -1,4 +1,4 @@
-# $Id: UPGRADE,v 1.4 2008/03/25 03:41:14 bamm Exp $ #
+# $Id: UPGRADE,v 1.5 2008/03/25 16:21:06 bamm Exp $ #
 
 The following are instructions for upgrading Sguil version 
 0.6.x to version 0.7.0. If this is a new install, then please
@@ -29,6 +29,10 @@ mailing list or in the IRC channel #snort-gui on irc.freenode.net.
 
 BE SURE TO BACK UP YOUR SGUIL DATABASE BEFORE RUNNING THE SCRIPT
 OR RISK LOSING YOUR DATA!
+
+Once the script has finished, you will be able to replace the
+sensor_agent script with the individual agents as described
+in the INSTALL document. 
 
 
 Happy F8ing,
