@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sancp_agent.tcl,v 1.7 2008/03/21 16:13:41 bamm Exp $ #
+# $Id: sancp_agent.tcl,v 1.8 2008/03/25 15:59:35 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -18,7 +18,7 @@ exec tclsh "$0" "$@"
 #
 
 # Don't touch these
-set VERSION "SGUIL-0.7.0-RC1"
+set VERSION "SGUIL-0.7.0"
 set CONNECTED 0
 set SANCPFILEWAIT 0
 

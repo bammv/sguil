@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.185 2008/03/21 16:13:41 bamm Exp $ #
+# $Id: sguild,v 1.186 2008/03/25 15:59:35 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -15,8 +15,8 @@ exec tclsh "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.7.0-RC1"
-set AGENT_VERSION "SGUIL-0.7.0-RC1"
+set VERSION "SGUIL-0.7.0"
+set AGENT_VERSION "SGUIL-0.7.0"
 # DB Version
 set DB_VERSION "0.12"
 # Counter for tracking xscript transactions
