@@ -1,81 +1,34 @@
-# $Id: UPGRADE,v 1.3 2007/03/25 15:33:51 bamm Exp $ #
+# $Id: UPGRADE,v 1.4 2008/03/25 03:41:14 bamm Exp $ #
 
-The following are instructions for upgrading a previous sguil
-install to version 0.6.0.  If you are installing fresh, please
-use the INSTALL document.
+The following are instructions for upgrading Sguil version 
+0.6.x to version 0.7.0. If this is a new install, then please
+see the INSTALL document. If you are upgrading from a version
+older than 0.6.x, then you need to follow the upgrade path
+to 0.6.1 before upgrading to version 0.7.0.
 
+Overview:
 
-Sguil version 0.6.0 takes advantage of MySQL's MERGE table
-type (MRG_MyISAM). With MRG_MyISAM, it's possible to have
-a database containing hundreds of millions of rows of data,
-yet still return queries in a reasonable time frame. The 
-MRG_MyISAM schema also makes archiving and extracting 
-previously archived data simpler and quicker.
+The functions of the old sensor agent have been split out into
+separate agents (snort_agent, pcap_agent, sancp_agent, and
+pads_agent). Each agent requires its own sensor id (sid). Older
+Sguil installs used the same sid for Snort alerts and SANCP
+flows. The separation of these agents also allows you to place
+agents on different pieces of hardware.
 
+Net names are used to correlate data between these agents. For
+example, when an analyst requests the pcap associated with
+hosts from a specific alert, sguild will use the net name to
+determine which pcap agent to make the request too (each agent
+registers its net name when it connects)."
 
-* A Quick Explanation Of How The New Schema Works. *
+The upgrade script (update_0.7.tcl) included in the server/sql_scripts
+directory automates the process for you. Please pay careful 
+attention to the information provided by the script. If you 
+run into any problems, help can be found on the sguil-users
+mailing list or in the IRC channel #snort-gui on irc.freenode.net.
 
-Older versions of Sguil used a single table to store event,
-header, data, and sancp information. While this was the simplist
-schema to use, it lead to scalability issues. Queries 
-began to slow down as the number of rows in a single table
-grew beyond 5 to 10 millon. MRG_MyISAM allows us to split 
-these tables up into many, as long as the column information
-and indexes mirror each other. For example, we place all 
-event data into a seperate table based on the date and the
-sensor (event_sensor1_20051030) then create a MRG_MyISAM 
-table named 'event' that encompasses all the event_* tables.
-The same is done with the tcphdr, udphdr, icmphdr, data,
-and sancp tables. Using this schema, I have scaled my sancp
-table to contain over 400 million records and still have
-queries return in a reasonable amount of time.
-
-The new schema also makes archiving older data more 
-manageable.  In the old schema, we used the archive_sguildb.tcl
-script to pull data from the event, tcphdr, udphdr, icmphdr,
-and data tables.  In a large table, this process could take hours.
-We then had to delete those old rows and run optimize/analyze
-to regain disk space and performance increases. With the new
- schema, we can simply stop sguild and mysql, move the desired
-tables to the archive destination, and finally restart sguild
-and mysql. The same procedure can be used to restore the
-archived data (move the tables from the archive to the DB
-directory).
-
-
-
-* How To Migrate Old Data To The New Schema *
-
-Note: Before you run the migration scripts, make sure you
-DB is using Version 0.11 of the schema (mysql> SELECT * 
-FROM version;). If it is not, then run the update_sguildb
-scripts from the server/sql_scripts directory.
-
-Two migration scripts are included with sguil version 0.6.0.
-Both migrate_sancp.tcl and migrate_event.tcl are available
-in the server/sql_scripts directory. Both scripts will
-interactively walk you through the migration process. Variables
-for the DB can be modified directly in the script or by using
-the command line directives as noted using --help argument.
-The --startdate and --enddate arguments are optional. If they
-are not provided, the scripts will query for the oldest and
-newest dates for that table and prompt you to use those or
-enter something different.
-IT IS HIGHLY RECOMMENDED YOU BACK YOUR DATABASE UP PRIOR TO 
-RUNNING EITHER OF THE MIGRATION SCRIPTS!!
-Neither of the migration scripts delete any data. Once you have
-confirmed that the migration scripts worked, it is up to you 
-to drop the old tables. Sguild will exit with an error if you
-forget.
-AGAIN, IT IS HIGHLY RECOMMENDED THAT YOU BACK UP YOUR DATABASE
-BEFORE DROPPING ANY TABLES.
-
-Please report any problems you have to any of the sguil 
-mailing lists, to me (bamm@sguil.net), or to the irc support
-channel #snort-gui on irc.freenode.net.
-
-Once your migration is complete, you should be able to use
-Sguil version 0.6.0 with previously logged data.
+BE SURE TO BACK UP YOUR SGUIL DATABASE BEFORE RUNNING THE SCRIPT
+OR RISK LOSING YOUR DATA!
 
 
 Happy F8ing,
