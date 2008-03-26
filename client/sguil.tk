@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.249 2008/03/25 15:59:34 bamm Exp $ #
+# $Id: sguil.tk,v 1.250 2008/03/26 17:32:20 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -343,8 +343,6 @@ proc bgerror { errorMsg } {
 proc UserMessage { user userMsg } {
 
     global userMsgText detailTabs MESSAGE_TAB USER_MSG_SCROLL
-
-    set userMsg [lindex $userMsg 0]
 
     # Make the text box editable
     $userMsgText component text configure -state normal
