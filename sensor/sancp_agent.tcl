@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sancp_agent.tcl,v 1.8 2008/03/25 15:59:35 bamm Exp $ #
+# $Id: sancp_agent.tcl,v 1.9 2008/03/28 17:17:43 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -12,10 +12,6 @@ exec tclsh "$0" "$@"
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-#
-# Config options moved to sensor_agent.conf.
-#
 
 # Don't touch these
 set VERSION "SGUIL-0.7.0"
@@ -412,7 +408,7 @@ proc Daemonize {} {
     id process group set
     if {[fork]} {exit 0}
     set PID [id process]
-    if { ![info exists PID_FILE] } { set PID_FILE "/var/run/sensor_agent.pid" }
+    if { ![info exists PID_FILE] } { set PID_FILE "/var/run/sancp_agent.pid" }
     set PID_DIR [file dirname $PID_FILE]
 
     if { ![file exists $PID_DIR] || ![file isdirectory $PID_DIR] || ![file writable $PID_DIR] } {
@@ -480,16 +476,16 @@ foreach arg $argv {
   }
 }
 # Parse the config file here
-# Default location is /etc/sensor_agent.conf or pwd
+# Default location is /etc/sancp_agent.conf or pwd
 if { ![info exists CONF_FILE] } {
   # No conf file specified check the defaults
-  if { [file exists /etc/sensor_agent.conf] } {
-    set CONF_FILE /etc/sensor_agent.conf
-  } elseif { [file exists ./sensor_agent.conf] } {
-    set CONF_FILE ./sensor_agent.conf
+  if { [file exists /etc/sancp_agent.conf] } {
+    set CONF_FILE /etc/sancp_agent.conf
+  } elseif { [file exists ./sancp_agent.conf] } {
+    set CONF_FILE ./sancp_agent.conf
   } else {
-    puts "Couldn't determine where the sensor_agent.tcl config file is"
-    puts "Looked for /etc/sensor_agent.conf and ./sensor_agent.conf."
+    puts "Couldn't determine where the sancp_agent.tcl config file is"
+    puts "Looked for /etc/sancp_agent.conf and ./sancp_agent.conf."
     DisplayUsage $argv0
   }
 }
