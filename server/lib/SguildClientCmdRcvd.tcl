@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.39 2008/02/29 04:13:39 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.40 2008/03/28 23:15:29 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -83,7 +83,9 @@ proc ClientCmdRcvd { socketID } {
 
 proc ClientExitClose { socketID } {
   global clientList  clientMonitorSockets validSockets socketInfo sensorUsers
+
   set userName [lindex $socketInfo($socketID) 2]
+
   if { [info exists clientList] } {
     set clientList [ldelete $clientList $socketID]
   }
@@ -204,7 +206,7 @@ proc RuleRequest { socketID event_id sensor genID sigID sigRev } {
 
     } else {
 
-        catch {SendSocket $socketID [list InsertRuleData Unable to find matching rule in $ruleDir.]} tmpError
+        catch {SendSocket $socketID [list InsertRuleData "Unable to find matching rule in $ruleDir."]} tmpError
 
     }
 
