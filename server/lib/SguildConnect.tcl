@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.22 2008/01/30 04:07:13 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.23 2008/04/02 17:58:37 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -52,7 +52,7 @@ proc ClientVersionCheck { socketID clientVersion } {
   if { [catch {tls::handshake $socketID} results] } {
         LogMessage "ERROR: $results"
         close $socketID
-        ClientExitClose socketID
+        ClientExitClose $socketID
   } 
 
 }
@@ -103,7 +103,7 @@ proc AgentVersionCheck { socketID agentVersion } {
   if { [catch {tls::handshake $socketID} results] } {
         LogMessage "ERROR: $results"
         close $socketID
-        ClientExitClose socketID
+        ClientExitClose $socketID
   } 
 
 }
@@ -155,11 +155,11 @@ proc CleanUpDisconnectedAgent { socketID } {
 proc HandShake { socketID cmd } {
   if {[eof $socketID]} {
     close $socketID
-    ClientExitClose socketID
+    ClientExitClose $socketID
   } elseif { [catch {tls::handshake $socketID} results] } {
     LogMessage "ERROR: $results"
     close $socketID
-    ClientExitClose socketID
+    ClientExitClose $socketID
   } elseif {$results == 1} {
     InfoMessage "Handshake complete for $socketID"
     fileevent $socketID readable [list $cmd $socketID]
