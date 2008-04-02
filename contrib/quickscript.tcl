@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: quickscript.tcl,v 1.2 2008/02/22 21:12:32 bamm Exp $ #
+# $Id: quickscript.tcl,v 1.3 2008/04/02 16:33:52 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -15,7 +15,7 @@ exec tclsh "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.7.0-ALPHA OPENSSL ENABLED"
+set VERSION "SGUIL-0.7.0 OPENSSL ENABLED"
 
 set SERVER localhost
 set PORT 7734
@@ -23,6 +23,20 @@ set PORT 7734
 #########################################################################
 # Get cmd line args
 #########################################################################
+
+proc DisplayUsage { cmdName } {
+
+    puts "Usage: $cmdName \[-s <server>\] \[-p <port>\] \[-u <username>\]"
+    puts "    \[-a <alertid>\] \[-o <filename>\]"
+    puts "  -s <servername>: Hostname of sguild server."
+    puts "  -p <port>: Port of sguild server."
+    puts "  -u <username>: Username to connect as."
+    puts "  -a <alertid>: Alert ID (1.12345)"
+    puts "  -o <filename>: PATH to tls libraries if needed."
+    exit 1
+
+}
+
 
 set state flag
 
@@ -36,7 +50,7 @@ foreach arg $argv {
                 -p { set state port }
                 -u { set state username }
                 -a { set state alertid }
-                -O { set state openssl }
+                -o { set state openssl }
                 default { DisplayUsage $argv0 }
             }
         }
