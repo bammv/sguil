@@ -1,84 +1,120 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.40 2008/03/28 23:15:29 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.41 2008/04/09 04:20:52 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
 #
 proc ClientCmdRcvd { socketID } {
-  global clientList validSockets GLOBAL_QRY_LIST REPORT_QRY_LIST
-                                                                                                            
-  if { [eof $socketID] || [catch {gets $socketID data}] } {
-    # Socket closed
-    close $socketID
-    ClientExitClose $socketID
-    LogMessage "Socket $socketID closed" 
-  } else {
 
-    # Don't display the user passwds
-    if { [regexp ^ValidateUser $data] } {
-        InfoMessage "Client Command Received: [lrange $data 0 1] ********"
-    } else { 
-        InfoMessage "Client Command Received: $data"
+    global clientList validSockets GLOBAL_QRY_LIST REPORT_QRY_LIST
+                                                                                                            
+    if { [eof $socketID] || [catch {gets $socketID data}] } {
+
+        # Socket closed
+        close $socketID
+        ClientExitClose $socketID
+        LogMessage "Socket $socketID closed" 
+
+    } else {
+
+        # Don't display the user passwds
+        if { [regexp ^ValidateUser $data] } {
+            InfoMessage "Client Command Received: [lrange $data 0 1] ********"
+        } else { 
+            InfoMessage "Client Command Received: $data"
+        }
+
+    if [catch {lindex $data 0} clientCmd] {
+
+        LogMessage "Error: Received poorly formatted message from $socketID => $clientCmd"
+        return
+
     }
 
-    set origData $data
-    set clientCmd [ctoken data " "]
     # Check to make the client validated itself
     if { $clientCmd != "ValidateUser" && $clientCmd != "PING" && $clientCmd != "VersionInfo" } {
-      if { [lsearch -exact $validSockets $socketID] < 0 } {
-        catch {SendSocket $socketID\
-         [list InfoMessage "Client does not appear to be logged in. Please exit and log back in."} tmpError
-      return
-      }
+
+        if { [lsearch -exact $validSockets $socketID] < 0 } {
+
+            catch {SendSocket $socketID\
+             [list InfoMessage "Client does not appear to be logged in. Please exit and log back in."} tmpError
+
+            return
+
+        }
+
     }
-    set data1 [string trimleft $data]
-    # data1 will contain the list from index 1 on.
-    set index1 [ctoken data " "]
-    set data2 [string trimleft $data]
-    # data2 now contains only indices 2 on, because ctoken chops tokens off
-    set index2 [ctoken data " "]
-    # data3 now contains indicies 3 on
-    set data3 [string trimleft $data]
-    set index3 [ctoken data " "]
-    set index4 [ctoken data " "]
-    set index5 [ctoken data " "]
+
     switch -exact $clientCmd {
-      DeleteEventID { $clientCmd $socketID $index1 $index2 }
-      DeleteEventIDList { $clientCmd $socketID $data1 }
-      EventHistoryRequest { $clientCmd $socketID $index1 $index2 $data3 }
-      ExecDB { $clientCmd $socketID $data1 }
-      GetCorrelatedEvents { $clientCmd $socketID $index1 $index2 }
-      GetIcmpData { $clientCmd $socketID $index1 $index2 }
-      GetIPData { $clientCmd $socketID $index1 $index2 }
-      GetPayloadData { $clientCmd $socketID $index1 $index2 }
-      GetPSData { $clientCmd $socketID $index1 $index2 $data3 }
-      GetTcpData { $clientCmd $socketID $index1 $index2 }
-      GetUdpData { $clientCmd $socketID $index1 $index2 }
-      MonitorSensors { $clientCmd $socketID $data1 }
-      QueryDB { $clientCmd $socketID $index1 $data2 }
-      RuleRequest { $clientCmd $socketID $index1 $index2 $index3 $index4 $index5 }
-      SendSensorList { $clientCmd $socketID }
+
+      DeleteEventIDList   { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data3 ] }
+
+      EventHistoryRequest { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+
+      GetCorrelatedEvents { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+
+      GetIcmpData         { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+
+      GetIPData           { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+
+      GetPayloadData      { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+
+      GetTcpData          { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+
+      GetUdpData          { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+
+      MonitorSensors      { $clientCmd $socketID [lindex $data 1] }
+
+      QueryDB             { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+
+      RuleRequest         { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] \
+                            [lindex $data 4] [lindex $data 5] }
+
+      SendSensorList      { $clientCmd $socketID }
+
       SendEscalatedEvents { $clientCmd $socketID }
-      SendDBInfo { $clientCmd $socketID }
-      ValidateUser { ValidateUser $socketID $index1 $index2 }
-      PING { puts $socketID "PONG" }
-      UserMessage { UserMsgRcvd $socketID $data1 }
-      SendGlobalQryList { SendSocket $socketID [list GlobalQryList $GLOBAL_QRY_LIST] }
-      SendReportQryList { SendSocket $socketID [list ReportQryList $REPORT_QRY_LIST] }
-      ReportRequest { ReportBuilder $socketID $index1 $index2 $data3 }
-      GetSancpFlagData { $clientCmd $socketID $index1 $index2 }
-      XscriptRequest { eval $clientCmd $socketID $data1 }
-      WiresharkRequest { eval $clientCmd $socketID $data1 }
-      AbortXscript { $clientCmd $socketID $index1 }
-      LoadNessusReports { $clientCmd $socketID $index1 $index2 $data3 }
-      GetOpenPorts { $clientCmd $socketID $index1 $index2 }	
+
+      SendDBInfo          { $clientCmd $socketID }
+
+      ValidateUser        { ValidateUser $socketID [lindex $data 1] [lindex $data 2] }
+
+      PING                { puts $socketID "PONG" }
+
+      UserMessage         { UserMsgRcvd $socketID [lindex $data 1] }
+
+      SendGlobalQryList   { SendSocket $socketID [list GlobalQryList $GLOBAL_QRY_LIST] }
+
+      SendReportQryList   { SendSocket $socketID [list ReportQryList $REPORT_QRY_LIST] }
+
+      ReportRequest       { ReportBuilder $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+
+      GetSancpFlagData    { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+
+      XscriptRequest      { eval $clientCmd $socketID [lrange $data 1 end] }
+
+      WiresharkRequest    { eval $clientCmd $socketID [lrange $data 1 end] }
+
+      AbortXscript        { $clientCmd $socketID [lindex $data 1] }
+
+      LoadNessusReports   { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
+
+      GetOpenPorts        { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+
       SendClientSensorStatusInfo { $clientCmd $socketID }
-      GetAssetData { $clientCmd $socketID $index1 $index2 }
-      GetGenericDetail { $clientCmd $socketID $index1 $index2 }
-      VersionInfo { ClientVersionCheck $socketID $data1 }
-      QuickScript { $clientCmd $socketID $index1 }
-      default { InfoMessage "Unrecognized command from $socketID: $origData" }
+
+      GetAssetData        { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+
+      GetGenericDetail    { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+
+      VersionInfo         { ClientVersionCheck $socketID [lindex $data 1] }
+
+      QuickScript         { $clientCmd $socketID [lindex $data 1] }
+
+      default { InfoMessage "Unrecognized command from $socketID: $data" }
+
     }
+
   }
+
 }
 
 proc ClientExitClose { socketID } {

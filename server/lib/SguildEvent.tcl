@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.22 2008/02/20 06:06:19 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.23 2008/04/09 04:20:52 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -76,11 +76,11 @@ proc AddEventToEventArray { eventDataList } {
 
 }
 
-proc DeleteEventIDList { socketID data } {
+proc DeleteEventIDList { socketID status comment eidList } {
+
   global eventIDArray eventIDList clientList escalateArray escalateIDList
   global userIDArray correlatedEventArray eventIDCountArray
                                                                                                             
-  regexp {^(.*)::(.*)::(.*)$} $data allMatch status comment eidList
   set updateTmp ""
   foreach socket $clientList {
     # Sending a DeleteEventID to the originating client allows us

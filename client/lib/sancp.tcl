@@ -1,4 +1,4 @@
-# $Id: sancp.tcl,v 1.13 2008/03/11 14:44:26 bamm Exp $ 
+# $Id: sancp.tcl,v 1.14 2008/04/09 04:20:52 bamm Exp $ 
 #
 # Build a sancp query tab and send the query to sguild.
 #
@@ -75,7 +75,7 @@ proc SancpQueryRequest { selectedTable whereList } {
     $queryFrame configure -cursor watch
     if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
 
-    SendToSguild "QueryDB $queryFrame.tablelist $selectQuery"
+    SendToSguild [list QueryDB $queryFrame.tablelist $selectQuery]
 
 }
 
@@ -106,7 +106,7 @@ proc GetSancpData {} {
 	set sensorID [lindex $cnxInfo 0]
         set cnxID [lindex $cnxInfo 1]
 
-        SendToSguild "GetSancpFlagData $sensorID $cnxID"
+        SendToSguild [list GetSancpFlagData $sensorID $cnxID]
 
     }
 

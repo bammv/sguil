@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.38 2007/09/24 14:49:43 bamm Exp $ #
+# $Id: qrylib.tcl,v 1.39 2008/04/09 04:20:52 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -244,7 +244,7 @@ proc SsnQueryRequest { whereStatement } {
   pack $queryFrame -side bottom -fill both
   $queryFrame configure -cursor watch
   if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
-  SendToSguild "QueryDB $queryFrame $selectQuery"
+  SendToSguild [list QueryDB $queryFrame $selectQuery]
 }
 #
 # Build an event query tab and send the query to sguild.

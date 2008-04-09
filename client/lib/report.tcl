@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.38 2008/03/07 19:33:46 bamm Exp $ #
+# $Id: report.tcl,v 1.39 2008/04/09 04:20:52 bamm Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -465,7 +465,7 @@ proc BuildPHBReport { sensors datetimestart datetimeend sName sDesc sType sSql s
     for {set i 0 } { $i < $k } {incr i} {
 	if { $Type($i) == "query" } {
 	    set REPORT_RESULTS {}
-	    SendToSguild "ReportRequest BUILDER $Name($i) $datalist"
+	    SendToSguild [list ReportRequest BUILDER $Name($i) $datalist]
     
 	    # wait for the response to fill in
 	    tkwait variable REPORT_DONE
@@ -540,7 +540,7 @@ proc HumanText { detail sanitize winname curselection } {
 	    # Get the IP hdr details
 	    #
 	    # Send the Report Request to the server
-	    SendToSguild "ReportRequest IP [lindex $eventID 0] [lindex $eventID 1]"
+	    SendToSguild [list ReportRequest IP [lindex $eventID 0] [lindex $eventID 1]]
 	    
 	    # wait for the response to fill in
 	    tkwait variable REPORT_DONE
@@ -574,7 +574,7 @@ proc HumanText { detail sanitize winname curselection } {
 		#
 		if {[$winname getcells $selectedIndex,ipproto] == "6"} {
 		    # Send the Report Request to the server
-		    SendToSguild "ReportRequest TCP [lindex $eventID 0] [lindex $eventID 1]"
+		    SendToSguild [list ReportRequest TCP [lindex $eventID 0] [lindex $eventID 1]]
 		    
 		    # wait for the response to fill in
 		    tkwait variable REPORT_DONE
@@ -668,7 +668,7 @@ proc HumanText { detail sanitize winname curselection } {
 		#
 		if {[$winname getcells $selectedIndex,ipproto] == "17"} {
 		    # Send the Report Request to the server
-		    SendToSguild "ReportRequest UDP [lindex $eventID 0] [lindex $eventID 1]"
+		    SendToSguild [list ReportRequest UDP [lindex $eventID 0] [lindex $eventID 1]]
 		    
 		    # wait for the response to fill in
 		    tkwait variable REPORT_DONE
@@ -690,7 +690,7 @@ proc HumanText { detail sanitize winname curselection } {
 	    #
 	    if {[$winname getcells $selectedIndex,ipproto] == "1"} {
 		# Send the Report Request to the server
-		SendToSguild "ReportRequest ICMP [lindex $eventID 0] [lindex $eventID 1]"
+		SendToSguild [list ReportRequest ICMP [lindex $eventID 0] [lindex $eventID 1]]
 		
 		# wait for the response to fill in
 		tkwait variable REPORT_DONE
@@ -739,7 +739,7 @@ proc HumanText { detail sanitize winname curselection } {
 	    # Get and insert the pack payload all pretty like if detail is set to 1
 	    if { $detail == "1" } {
 		# Send the Report Request to the server
-		SendToSguild "ReportRequest PAYLOAD [lindex $eventID 0] [lindex $eventID 1]"
+		SendToSguild [list ReportRequest PAYLOAD [lindex $eventID 0] [lindex $eventID 1]]
 		
 		# wait for the response to fill in
 		tkwait variable REPORT_DONE
@@ -784,8 +784,8 @@ proc HumanText { detail sanitize winname curselection } {
 	    }
 	} else {
 	    # Send the Report Request to the server
-	    SendToSguild "ReportRequest PORTSCAN [lindex [$winname getcells $selectedIndex,date] 0]\
-		    [$winname getcells $selectedIndex,srcip]"
+	    SendToSguild [list ReportRequest PORTSCAN [lindex [$winname getcells $selectedIndex,date] 0]\
+		    [$winname getcells $selectedIndex,srcip]]
 	    
 	    # wait for the response to fill in
 	    tkwait variable REPORT_DONE

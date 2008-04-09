@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.61 2008/03/05 16:54:43 bamm Exp $
+# $Id: extdata.tcl,v 1.62 2008/04/09 04:20:52 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -39,9 +39,9 @@ proc GetRuleInfo {} {
 
         set sensorName [$CUR_SEL_PANE(name) getcells $selectedIndex,sensor]
 
-        if {$DEBUG} {puts "RuleRequest $event_id $sensorName "}
+        if {$DEBUG} {puts "[list RuleRequest $event_id $sensorName]"}
 
-        SendToSguild "RuleRequest $event_id $sensorName $genID $sigID $sigRev"
+        SendToSguild [list RuleRequest $event_id $sensorName $genID $sigID $sigRev]
 
     }
 
@@ -468,7 +468,7 @@ proc CreateXscriptWin { winName } {
 }
 proc AbortXscript { winName } {
   $winName.termButtonsFrame.abortButton configure -state disabled
-  SendToSguild "AbortXscript $winName"
+  SendToSguild [list AbortXscript $winName]
 }
 
 proc SearchXscript { winName } {
@@ -748,7 +748,7 @@ proc NessusReport { arg } {
 	$reportButtonBox add ok -text "Show Report" -command "set RETURN_FLAG 1"
 	$reportButtonBox add cancel -text "Cancel" -command "set RETURN_FLAG 0"
 	set REPORT_RESULTS {}
-	SendToSguild "ReportRequest NESSUS $ipAddr NULL"
+	SendToSguild [list ReportRequest NESSUS $ipAddr NULL]
 	
 	# wait for the response to fill in
 	tkwait variable REPORT_DONE
@@ -777,7 +777,7 @@ proc NessusReport { arg } {
 	destroy $nessusWin
 	
 	
-	SendToSguild "ReportRequest NESSUS_DATA $rid NULL"
+	SendToSguild [list ReportRequest NESSUS_DATA $rid NULL]
 	
 	# wait for the response to fill in
 	tkwait variable REPORT_DONE
@@ -919,7 +919,7 @@ proc NessusLoad { } {
     # send the data file to the server for loading
     set filename [file tail $nessusOutFile]
     set filesize [file size $nessusOutFile]
-    puts $socketID "LoadNessusReports $filename data $filesize"
+    puts $socketID [list LoadNessusReports $filename data $filesize]
     set rFileID [open $nessusOutFile r]
     fconfigure $rFileID -translation binary
     fconfigure $socketID -translation binary
@@ -943,7 +943,7 @@ proc NessusLoad { } {
 
     set filename [file tail $nessusOutFile]
     set filesize [file size $nessusOutFile]
-    puts $socketID "LoadNessusReports $filename main $filesize"
+    puts $socketID [list LoadNessusReports $filename main $filesize]
     set rFileID [open $nessusOutFile r]
     fconfigure $rFileID -translation binary
     fconfigure $socketID -translation binary

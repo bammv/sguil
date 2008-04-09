@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.250 2008/03/26 17:32:20 bamm Exp $ #
+# $Id: sguil.tk,v 1.251 2008/04/09 04:20:51 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -232,7 +232,7 @@ proc ConnectToSguild {} {
           catch {close $socketID}
           return -code error "Mismatched versions.\nSERVER: ($serverVersion)\nCLIENT: ($tmpVERSION)"
     }
-    puts $socketID "VersionInfo $tmpVERSION"
+    puts $socketID [list VersionInfo $tmpVERSION]
     # OpenSSL is required now
     if { [info exists TLS_PATH] } { load $TLS_PATH }
 
@@ -278,7 +278,7 @@ proc ReconnectToSguild {} {
     set CONNECTED 1
     ClearAllEventLists
     fileevent $socketID readable [list ServerCommandRcvd $socketID]
-    SendToSguild "MonitorSensors $monitorList"
+    SendToSguild [list MonitorSensors $monitorList]
     SendToSguild "SendEscalatedEvents"
     SendToSguild "SendGlobalQryList"
     UpdateUserName "$USERNAME" $USERID
@@ -322,7 +322,7 @@ proc SendToSguild { data } {
 proc SendUserMsg {} {
   global USERMSG userMsgEntry
 
-  SendToSguild "[list UserMessage $USERMSG]"
+  SendToSguild [list UserMessage $USERMSG]
   [$userMsgEntry component entry] delete 0 end
 }
 
@@ -449,9 +449,9 @@ proc ValidateEvent { status {c_flag {0}} } {
 
         if { [info exists tmpDeletedEIDList] && $tmpDeletedEIDList != "" } {
 
-            SendToSguild "DeleteEventIDList ${status}::${eventComment}::${tmpDeletedEIDList}"
+            SendToSguild [list DeleteEventIDList $status $eventComment $tmpDeletedEIDList"
             if {$DEBUG} {
-                puts "Sending Server: DeleteEventIDList ${eventComment}::${status}::${tmpDeletedEIDList}"
+                puts "Sending Server: [list DeleteEventIDList $eventComment $status $tmpDeletedEIDList]"
             }
 
         }
@@ -877,7 +877,7 @@ proc DisplayPadsBanner {} {
         set aid [lindex [split $eventID .] 1]
 
         Working
-        SendToSguild "GetAssetData $sid $aid"
+        SendToSguild [list GetAssetData $sid $aid]
 
     }
 
@@ -902,7 +902,7 @@ proc DisplayGenericDetail {} {
         set aid [lindex [split $eventID .] 1]
 
         Working
-        SendToSguild "GetGenericDetail $sid $aid"
+        SendToSguild [list GetGenericDetail $sid $aid]
 
     }
 
@@ -927,7 +927,7 @@ proc DisplayPortscanData {} {
         set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
         set timestamp [lindex [$CUR_SEL_PANE(name) getcells $selectedIndex,date] 0]
 
-        SendToSguild "GetPSData $timestamp $srcIP $MAX_PS_ROWS"
+        SendToSguild [list GetPSData $timestamp $srcIP $MAX_PS_ROWS]
         $portscanDataFrame configure -cursor watch
 
     } elseif { !$PSINFO } {
@@ -1004,28 +1004,28 @@ proc GetPacketInfo {} {
         set sid [lindex [split $eventID .] 0]
         set cid [lindex [split $eventID .] 1]
 
-        SendToSguild "GetIPData $sid $cid"
+        SendToSguild [list GetIPData $sid $cid]
 
         if {$protocol == "17" } {
 
-          SendToSguild "GetUdpData $sid $cid"
+          SendToSguild [list GetUdpData $sid $cid]
 
         } elseif { $protocol == "1" } {
  
-          SendToSguild "GetIcmpData $sid $cid"
+          SendToSguild [list GetIcmpData $sid $cid]
 
         } elseif { $protocol == "255" } {
 
-          SendToSguild "GetOpenPorts $sid $cid"
+          SendToSguild [list GetOpenPorts $sid $cid]
           $sfpOPDataFrame configure -cursor watch
 
         } elseif { $protocol == "6" } {
 
-          SendToSguild "GetTcpData $sid $cid"
+          SendToSguild [list GetTcpData $sid $cid]
 
         } 
 
-        SendToSguild "GetPayloadData $sid $cid"
+        SendToSguild [list GetPayloadData $sid $cid]
     }
 
 }
@@ -1067,7 +1067,7 @@ proc DisplayCorrelatedEvents {} {
     pack $correlateFrame -side bottom
 
     # Correlation/aggregation is done on the server now
-    SendToSguild "GetCorrelatedEvents $eventID $correlateFrame.tablelist"
+    SendToSguild [list GetCorrelatedEvents $eventID $correlateFrame.tablelist]
 
 }
 
@@ -1859,7 +1859,7 @@ proc MonitorSensors { winName } {
   }
   if { [info exists monitorList] } {
     if {$DEBUG} { puts "Sending Server: MonitorSensors $monitorList"}
-    SendToSguild "MonitorSensors $monitorList"
+    SendToSguild [list MonitorSensors $monitorList]
   } else {
     InfoMessage "You did not select any sensors to monitor and will NOT recieve any events."
   }
@@ -1907,7 +1907,7 @@ proc GetEventHistory {} {
 
     set tmpWin [CreateHistoryWin $historyWinName]
     $tmpWin configure -cursor watch
-    SendToSguild "EventHistoryRequest $tmpWin $sid $cid"
+    SendToSguild [list EventHistoryRequest $tmpWin $sid $cid]
 
 }
 
