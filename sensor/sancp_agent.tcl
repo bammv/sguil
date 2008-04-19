@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sancp_agent.tcl,v 1.9 2008/03/28 17:17:43 bamm Exp $ #
+# $Id: sancp_agent.tcl,v 1.10 2008/04/19 20:50:28 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -81,34 +81,43 @@ proc CheckForSancpFiles {} {
         if { [file exists $fileName] && [file size $fileName] > 0 } {
 
 
-            foreach fdPair [ParseSsnSancpFiles $fileName] {
+            if { [catch {ParseSsnSancpFiles $fileName} newFiles ] } {
 
-                set tmpFile [lindex $fdPair 0]
-                set tmpDate [lindex $fdPair 1]
-                set fileBytes [file size $tmpFile]
-                set SANCPFILEWAIT $tmpFile
+                # Parse failed.
+                if { [file exists $fileName] } { file rename $newFiles FAILED-$newFiles }
+           
+            } else {
 
-                if { $CONNECTED } {
+                foreach fdPair $newFiles {
 
-                    # Tell sguild it has a file coming
-                    SendToSguild [list SancpFile $HOSTNAME [file tail $tmpFile] $tmpDate $fileBytes] 
-                    if { [BinCopyToSguild $tmpFile] } {
-
-                        # Check to see that that file was confirmed after 10 secs
-                        after 5000 CheckSancpConfirmation $tmpFile
-                        vwait SANCPFILEWAIT
-                   
+                    set tmpFile [lindex $fdPair 0]
+                    set tmpDate [lindex $fdPair 1]
+                    set fileBytes [file size $tmpFile]
+                    set SANCPFILEWAIT $tmpFile
+    
+                    if { $CONNECTED } {
+    
+                        # Tell sguild it has a file coming
+                        SendToSguild [list SancpFile $HOSTNAME [file tail $tmpFile] $tmpDate $fileBytes] 
+                        if { [BinCopyToSguild $tmpFile] } {
+    
+                            # Check to see that that file was confirmed after 10 secs
+                            after 5000 CheckSancpConfirmation $tmpFile
+                            vwait SANCPFILEWAIT
+                       
+                        } else {
+    
+                            if { $DEBUG } { puts "Error copying $tmpFile to sguild." }
+    
+                        }
+    
                     } else {
-
-                        if { $DEBUG } { puts "Error copying $tmpFile to sguild." }
-
+    
+                        # Lost our cnx
+                        break
+    
                     }
-
-                } else {
-
-                    # Lost our cnx
-                    break
-
+    
                 }
 
             }
@@ -247,7 +256,16 @@ proc ParseSsnSancpFiles { fileName } {
         lappend tmpFileNames [list $outFile($date) $date]
     }
     
-    return $tmpFileNames
+    if { ![info exists tmpFileNames] } {
+
+        # It doesn't appear the file had any good data
+        return -code error $fileName
+   
+    } else {
+ 
+        return $tmpFileNames
+
+    }
 
 }
 

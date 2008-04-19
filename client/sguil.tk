@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.252 2008/04/14 23:51:45 bamm Exp $ #
+# $Id: sguil.tk,v 1.253 2008/04/19 20:50:28 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -449,7 +449,7 @@ proc ValidateEvent { status {c_flag {0}} } {
 
         if { [info exists tmpDeletedEIDList] && $tmpDeletedEIDList != "" } {
 
-            SendToSguild [list DeleteEventIDList $status $eventComment $tmpDeletedEIDList"]
+            SendToSguild [list DeleteEventIDList $status $eventComment $tmpDeletedEIDList]
 
             if {$DEBUG} {
                 puts "Sending Server: [list DeleteEventIDList $eventComment $status $tmpDeletedEIDList]"

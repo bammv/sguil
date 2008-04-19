@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.39 2008/04/09 04:20:52 bamm Exp $ #
+# $Id: qrylib.tcl,v 1.40 2008/04/19 20:50:28 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -409,7 +409,7 @@ proc PadsQueryRequest { table where } {
     $queryFrame configure -cursor watch
     if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
 
-    SendToSguild "QueryDB $queryFrame.tablelist $selectQuery"
+    SendToSguild [list QueryDB $queryFrame.tablelist $selectQuery]
 
 }
 

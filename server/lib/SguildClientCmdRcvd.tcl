@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.41 2008/04/09 04:20:52 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.42 2008/04/19 20:50:28 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -46,7 +46,7 @@ proc ClientCmdRcvd { socketID } {
 
     switch -exact $clientCmd {
 
-      DeleteEventIDList   { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data3 ] }
+      DeleteEventIDList   { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
 
       EventHistoryRequest { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
 
