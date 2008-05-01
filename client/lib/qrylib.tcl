@@ -1,4 +1,4 @@
-# $Id: qrylib.tcl,v 1.40 2008/04/19 20:50:28 bamm Exp $ #
+# $Id: qrylib.tcl,v 1.41 2008/05/01 19:15:59 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
 # It's job is to massage the data into the meat of 
@@ -243,7 +243,7 @@ proc SsnQueryRequest { whereStatement } {
   pack $buttonFrame -side top -fill x
   pack $queryFrame -side bottom -fill both
   $queryFrame configure -cursor watch
-  if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
+  if {$DEBUG} { puts "Sending Server: [list QueryDB $queryFrame $selectQuery]" }
   SendToSguild [list QueryDB $queryFrame $selectQuery]
 }
 #
@@ -352,7 +352,7 @@ proc DBQueryRequest { selectedTable whereList {winTitle {none} } } {
     pack $topFrame -side top -fill x
     pack $queryFrame -side bottom -fill both
     $queryFrame configure -cursor watch
-    SendToSguild "QueryDB $queryFrame.tablelist $selectQuery"
+    SendToSguild [list QueryDB $queryFrame.tablelist $selectQuery]
 
 }
 
@@ -407,7 +407,7 @@ proc PadsQueryRequest { table where } {
     pack $queryFrame -side bottom -fill both
 
     $queryFrame configure -cursor watch
-    if {$DEBUG} { puts "Sending Server: QueryDB $queryFrame $selectQuery" }
+    if {$DEBUG} { puts "Sending Server: [list QueryDB $queryFrame.tablelist $selectQuery]" }
 
     SendToSguild [list QueryDB $queryFrame.tablelist $selectQuery]
 
