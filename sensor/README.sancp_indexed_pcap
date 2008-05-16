@@ -1,0 +1,96 @@
+By default, the Sguil packet logging subsystem is based on Snort.  However,
+this isn't the only game in town.  If you feel like it, you can replace
+this with a system based on SANCP (http://nsmwiki.org/SANCP).  This
+will probably only be very useful if you're logging lots of data and
+need to address problems with retrieval times.
+
+ADVANTAGES
+
+SANCP is actually a pretty good packet logger, and contains several
+advanced options.  For example, it can easily be configured to track
+the number of bytes that are transferred in each network session, and
+to only capture the first N bytes of big data transfers.  Not only
+does this speed up the capture process itself, but it saves a lot of
+disk space as well, while still giving you enough forensic information
+to peform a good NSM analysis.
+
+Another very nice feature is that SANCP can write packet indices to
+disk as it's logging pcap data.  When it comes time to retrieve
+packets, the pcap agent can consult the indices, which contain byte
+offsets into the capture files that correspond to the start of that
+individual packet.  Therefore, using a special perl script that comes
+with SANCP, you can retrieve the packets by seeking directly to their
+location instead of applying a BPF filter to the entire file.  For
+small files, this probably isn't such a big deal, but if your capture
+files are more than a few gigabytes each, this can big a big time
+saver. 
+
+DISADVANTAGES
+
+SANCP will write one index entry per packet, and if you have a lot of
+packets, this can really add up.  In the production environment in
+which this was tested, the indices were between 25% and 35% the size
+of the actual pcap files themselves.  They say "disk is cheap", so I
+hope they're right. 
+
+HOW TO INSTALL & CONFIGURE
+
+In order to use the SANCP indexed pcap subsystem, you will need to
+replace your existing log_packets.sh, your pcap_agent.tcl and your
+pcap_agent.conf file.  You'll also need a separate config file for the
+packet logging instance of SANCP, /etc/sguil/sancp-indexed.conf (or
+wherever you put these things).  You can use the default config file
+in this directory, as it should not need to be modified.
+
+You will, however, need to modify log_packets-sancp.sh.  Pay special
+attention to the HOSTNAME, LOGGER_PATH, CONFIG_FILE and INTERFACE
+variables. 
+
+You will also need to modify pcap_agent-sancp.conf.  Pay special
+attention to the SERVER_HOST, HOSTNAME, NET_GROUP, EGREP and GETPCAP
+variables.  
+
+Once you have started the new logging subsystem, you should see two
+types of files, "pcap.$iface.$timestamp" and
+"index.$iface.$timestamp", where $iface is the name of the monitored
+network interface.  
+
+
+OTHER NOTES
+
+You will need to use SANCP 1.6.2 release candidate C6 or newer in
+order to take advantage of this new pcap subsystem.  Older versions do
+not have the proper index support.
+
+By default, SANCP actually does something a little weird.  It
+guarantees that all packets for a particular session are contained
+inside the same pcap (and index) file(s).  For short sessions, this
+really doesn't make any difference.  However, SANCP tries to start
+writing to a new pcap file every so often, and although new sessions
+will go into the new files, long-running sessions may still be written
+to previous files.  In fact, it's very normal to see more than one set
+of pcap/index files open by SANCP at any one time.  
+
+This causes a problem for the pcap_agent.  For efficiency's sake, it
+tries to find the exact pcap file that would contain the session,
+based on the event time supplied by sguild and on the timestamp in the
+filename.  If the event occurred well into a long-running session,
+it's possible that SANCP would write those packets to a different
+(older) file than the pcap agent would look in.  Of course, we could
+get around this by searching *all* index records for the traffic, but
+this has the twin disadvantages of being very slow and of potentially
+offering a lot of extra packets belonging to similar sessions between
+the two hosts (especially when TCP/UDP port numbers are not
+available).  
+
+So instead, we have created a nasty hack.  In the sancp-indexed.conf
+file, we have set the flush_interval to be 2 hours.  In other words,
+SANCP will only start a new pcap/index file every 2 hours.  In cron,
+however, we have to make sure to restart the SANCP logger at some
+regular interval that's *less than* 2 hours.  Restarting it this way
+keeps SANCP from holding open and writing to older pcap files.  Thus,
+pcap agent can find the traffic it's looking for.  Feel free to tinker
+with the flush_interval and the restart schedule, just be sure that
+flush_interval > restart interval, or you'll probably find yourself
+mysteriously missing some packets.
+
