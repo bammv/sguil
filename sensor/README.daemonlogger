@@ -1,0 +1,40 @@
+By default, the Sguil packet logging subsystem is based on Snort.  However,
+this isn't the only game in town.  If you feel like it, you can replace
+this with a system based on daemonlogger (http://nsmwiki.org/DaemonLogger).
+
+ADVANTAGES
+
+Daemonlogger is optimized for packet logging, without all of the
+overhead associated with Snort's IDS features.  As such, the code is
+smaller, simpler to verify (if you're into that) and potentially a bit
+more efficient.  
+
+On top of that, daemonlogger has some nice output features, such as
+the ability to do automatic roll-over of pcap files on a schedule, or
+when they reach a certain size.  This can really help out a lot, since
+retrieving the packets from multi-gigabyte captures files can be
+terribly slow.
+
+DISADVANTAGES
+
+There are no known disadvantages to using daemonlogger rather than
+snort. 
+
+HOW TO INSTALL & CONFIGURE
+
+Replace your existing log_packets.sh script with
+log_packets-daemonlogger.sh, then edit the configuration variables at
+the top of the script to match your environment.  In particular, take
+a look at HOSTNAME, LOGGER_PATH, LOG_DIR, MAX_DISK, INTERFACE and
+ROLLOVER_SIZE.  You can also tinker with the OPTIONS variable a bit,
+but be careful!  See "OTHER NOTES" for important information about
+this variable.
+
+OTHER NOTES
+
+The daemonlogger version of log_packets actually writes the output to
+disk in a fashion that's compatible with Sguil's default method, and
+therefore it's fully compatible with the regular pcap_agent.tcl.  Just
+be sure you have "-n snort.log" specified in the OPTIONS variable, or
+this compatibility will break.  
+
