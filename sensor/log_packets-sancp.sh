@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: log_packets-sancp.sh,v 1.1 2008/05/16 18:02:56 hanashi Exp $ #
+# $Id: log_packets-sancp.sh,v 1.2 2008/05/20 13:44:38 hanashi Exp $ #
 
 ################################################
 #                                              #
@@ -181,7 +181,7 @@ cleandisk() {
         rm -f $OLDEST_FILE
       else
         echo "  Removing empty dir: $OLDEST_DIR"
-        cd ..; rmdir $LOG_DIR/$OLDEST_DIR
+        cd ..; rm -f $LOG_DIR/$OLDEST_DIR/.cnxid ; rmdir $LOG_DIR/$OLDEST_DIR
       fi
       # Run cleandisk again as rm'ing one file might been enough
       # but we wait 5 secs in hopes any open writes are done.
