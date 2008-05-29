@@ -55,10 +55,14 @@ types of files, "pcap.$iface.$timestamp" and
 "index.$iface.$timestamp", where $iface is the name of the monitored
 network interface.  
 
+In order to actually fetch the packets, you'll need to make sure you have
+the getpcapfromsancpindex.pl utility, usually found in SANCP's "contrib"
+directory.  Your pcap_agent-sancp.conf file points to this with the 
+GETPCAP variable.
 
 OTHER NOTES
 
-You will need to use SANCP 1.6.2 release candidate C6 or newer in
+You will need to use SANCP 1.6.2 release candidate C7 or newer in
 order to take advantage of this new pcap subsystem.  Older versions do
 not have the proper index support.
 

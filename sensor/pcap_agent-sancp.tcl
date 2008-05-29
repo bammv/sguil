@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: pcap_agent-sancp.tcl,v 1.1 2008/05/16 18:02:56 hanashi Exp $ #
+# $Id: pcap_agent-sancp.tcl,v 1.2 2008/05/29 19:25:50 hanashi Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -437,17 +437,11 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
      }
 
 
-     if {$proto != "6" && $proto != "17"} {
+    set grepFilter "($srcIP:$srcPort\_$dstIP:$dstPort-$proto)|($dstIP:$dstPort\_$srcIP:$srcPort-$proto)"
 
- 	set grepFilter "(\\\\|$srcIP\\\\|$dstIP\\\\|$proto\\\\|)|(\\\\|$dstIP\\\\|$srcIP\\\\|$proto\\\\|)"
+    set monitoringInterface [lindex [split $indexFileName .] 1]
 
-     } else {
-
- 	set grepFilter "(\\\\|$srcIP\\\\|$dstIP\\\\|$proto\\\\|$srcPort\\\\|$dstPort\$)|(\\\\|$dstIP\\\\|$srcIP\\\\|$proto\\\\|$dstPort\\\\|$srcPort\$)"
-
-     }
-
-    set fetchPcapCommand "$EGREP $grepFilter  $indexFileName | tee /tmp/debug.txt |  $GETPCAP $TMP_DIR/$rawDataFileName "
+    set fetchPcapCommand "$EGREP $grepFilter  $indexFileName | $GETPCAP iprefix $RAW_LOG_DIR/$date/pcap.$monitoringInterface. oprefix $TMP_DIR/$rawDataFileName "
 
     if { $type == "xscript" } {
 	
