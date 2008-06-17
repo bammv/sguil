@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: log_packets-daemonlogger.sh,v 1.1 2008/05/16 17:09:42 hanashi Exp $ #
+# $Id: log_packets-daemonlogger.sh,v 1.2 2008/06/17 14:22:47 hanashi Exp $ #
 
 ################################################
 #                                              #
@@ -67,6 +67,9 @@ GREP="/usr/bin/grep"
 
 TZ=GMT
 export TZ
+
+# Make sure all the permissions come out right.
+umask 077
 
 # Make sure our default logging dir is there.
 if [ ! -d $LOG_DIR/$HOSTNAME ]; then
