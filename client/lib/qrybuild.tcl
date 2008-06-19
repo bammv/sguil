@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.44 2008/06/19 16:39:49 hanashi Exp $ #
+# $Id: qrybuild.tcl,v 1.45 2008/06/19 19:11:25 hanashi Exp $ #
 proc QryBuild { tableSelected whereTmp } {
 
     global RETURN_FLAG SELECTEDTABLE SELECT_LIMIT
@@ -193,6 +193,11 @@ update
 
     # Do INET_ATON/INET_NTOA substitutions
     regsub -all {\#(\d+\.\d+\.\d+\.\d+)\#} $returnWhere {INET_ATON("\1")} returnWhere
+
+    # Do the #hostname# subsitution
+    set RE {(#[a-zA-Z0-9_\.]+#)}
+    set substitution {[GetSQLAddrsFromHostname "\1"]}
+    set returnWhere [subst [regsub -all $RE $returnWhere $substitution]]
 
     return $returnWhere  
 

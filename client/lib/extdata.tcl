@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.62 2008/04/09 04:20:52 bamm Exp $
+# $Id: extdata.tcl,v 1.63 2008/06/19 19:11:25 hanashi Exp $
 
 proc GetRuleInfo {} {
 
@@ -332,6 +332,82 @@ proc GetWhoisData {} {
     $whoisText configure -state disabled
 
 }
+
+proc GetSQLAddrsFromHostname { hostname } {
+
+    set addrs [GetHostbyName $hostname]
+
+    if { $addrs == "Unknown" } {
+	ErrorMessage "The hostname $hostname could not be resolved."
+	return $hostname
+    } else {
+	regsub -all {(\d+\.\d+\.\d+\.\d+)} $addrs {INET_ATON("\1"), } addrs
+	regsub {,\s*$} $addrs {} addrs
+    }
+
+    return $addrs
+}
+
+
+#
+# GetHostbyName: uses extended tcl (wishx) to get an hostname's IP, or list
+# of IPs (space-separated)
+#
+proc GetHostbyName { hostname } {
+
+    global EXT_DNS EXT_DNS_SERVER HOME_DOMAINS
+
+    # In case there are any # chars in the hostname (from the Query Builder
+    # substitutions) get rid of them.
+    regsub -all {#} $hostname {} hostname
+
+    if { $EXT_DNS } {
+
+        if { ![info exists EXT_DNS_SERVER] } { 
+
+            ErrorMessage "An external name server has not been configured in sgu
+il.conf. Resolution aborted." 
+            return
+
+        } else {
+	    set nameserver $EXT_DNS_SERVER
+
+	    if { [info exists HOME_DOMAINS] } { 
+		# Loop through HOME_DOMAINS.  If lookup domain matches
+		# any of these home domains, use the locally configured
+		# nameserver
+		foreach homeDomain $HOME_DOMAINS {
+		    if {[regexp "$homeDomain$" $hostname]} { set nameserver local}
+		}
+	    }
+
+	    # If there are no '.' chars in the hostname, assume it's local
+	    # In reality, the tcllib DNS resolver usually doesn't look up
+	    # unqualified hostnames anyway, so this will most likely result
+	    # in an error later.  But at least the names won't be leaked
+	    # to an external DNS server.
+	    if { ![regexp "\\." $hostname] } { set nameserver local }
+
+	}
+    }  else {
+	set nameserver local
+    }
+
+    if { $nameserver == "local" } {
+	set tok [dns::resolve $hostname]
+    } else {
+	set tok [dns::resolve $hostname -nameserver $nameserver]
+    }
+
+    set ip [dns::address $tok]
+    dns::cleanup $tok
+    if { $ip == "" } { set ip "Unknown" }
+    return $ip
+
+}
+
+
+
 
 #
 # GetHostbyAddr: uses extended tcl (wishx) to get an ips hostname
