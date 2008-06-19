@@ -1,4 +1,4 @@
-# $Id: qrybuild.tcl,v 1.43 2007/03/17 02:43:37 bamm Exp $ #
+# $Id: qrybuild.tcl,v 1.44 2008/06/19 16:39:49 hanashi Exp $ #
 proc QryBuild { tableSelected whereTmp } {
 
     global RETURN_FLAG SELECTEDTABLE SELECT_LIMIT
@@ -190,6 +190,9 @@ update
     destroy $qryBldWin
 
     set whereBoxList ""
+
+    # Do INET_ATON/INET_NTOA substitutions
+    regsub -all {\#(\d+\.\d+\.\d+\.\d+)\#} $returnWhere {INET_ATON("\1")} returnWhere
 
     return $returnWhere  
 
