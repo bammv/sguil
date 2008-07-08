@@ -1,0 +1,36 @@
+This is a very simple example of an OSSEC agent for Sguil 0.7.0.  It reads
+the OSSEC alert log (/var/ossec/logs/alerts/alerts.log) looking for events
+with a priority greater than or equal to 7 (use the -p option to modify this).
+When it finds such an alert, it sends it to the Sguil server as a Sguil alert.
+You'll be able to tell which events came from OSSEC, because the event
+description will start with "[OSSEC]".  
+
+Here's an important note:  Sguil shows SrcIP and DstIP for each alert,
+though they are handled a little differently for OSSEC events.  The
+agent will set the SrcIP to be the source IP of the OSSEC alert, but
+OSSEC doesn't include information about destination IPs.  Therefore,
+the agent will fill in the DstIP field with the IP address of the OSSEC
+agent that is recording the event (or, if the event came from syslog,
+the address of the host that logged the event).  In either case, if 
+the agent is unable to resolve the IP addresses, they'll be set to 0.0.0.0.
+
+To use it, set SERVER_HOST, SERVER_PORT and DNS in the ossec_agent.conf
+file, then start it up from the command line.  Options are:
+
+Usage: ./ossec_agent.tcl [-D] [-o] [-c <config filename>] [-f <syslog filename>] -i <ipaddr>
+  -i <ipaddr>: IP address to associate alert with (required).
+  -c <filename>: PATH to config (ossec_agent.conf) file.
+  -f <filename>: PATH to OSSEC alert log to monitor.
+  -o Enable OpenSSL
+  -D Runs ossec_agent in daemon mode.
+  -p <int>: Minimum OSSEC event priority on which to alert.
+
+For example, if you want to send Sguil alerts for all OSSEC events of 
+priority 5 and above, you could do something like:
+
+  % ossec_agent.tcl -p 5 
+
+For bug reports, feature requests, general commentary and whatnot, contact
+David J. Bianco <david@vorant.com>.
+
+
