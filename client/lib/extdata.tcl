@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.63 2008/06/19 19:11:25 hanashi Exp $
+# $Id: extdata.tcl,v 1.64 2008/07/11 13:20:10 hanashi Exp $
 
 proc GetRuleInfo {} {
 
@@ -226,7 +226,7 @@ proc GetDshieldPort { arg } {
         if {[file exists $BROWSER_PATH] && [file executable $BROWSER_PATH]} {
 
             # Launch browser
-	    exec $BROWSER_PATH http://www.dshield.org/port_report.php?port=$ipPort &
+	    exec $BROWSER_PATH http://www.dshield.org/port.html?port=$ipPort &
 
         } else {
 
