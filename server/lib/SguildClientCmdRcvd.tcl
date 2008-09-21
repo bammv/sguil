@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.42 2008/04/19 20:50:28 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.43 2008/09/21 02:58:49 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -19,7 +19,12 @@ proc ClientCmdRcvd { socketID } {
         # Don't display the user passwds
         if { [regexp ^ValidateUser $data] } {
             InfoMessage "Client Command Received: [lrange $data 0 1] ********"
-        } else { 
+        } elseif { [lindex $data 0] == "ChangePass" } { 
+
+            InfoMessage "Client Command Received: [lrange $data 0 1] ******** ********"
+
+        } else {
+
             InfoMessage "Client Command Received: $data"
         }
 
@@ -108,6 +113,8 @@ proc ClientCmdRcvd { socketID } {
       VersionInfo         { ClientVersionCheck $socketID [lindex $data 1] }
 
       QuickScript         { $clientCmd $socketID [lindex $data 1] }
+ 
+      ChangePass          { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
 
       default { InfoMessage "Unrecognized command from $socketID: $data" }
 

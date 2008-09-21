@@ -1,4 +1,4 @@
--- $Id: create_sguildb.sql,v 1.18 2007/03/17 02:43:37 bamm Exp $
+-- $Id: create_sguildb.sql,v 1.19 2008/09/21 02:58:49 bamm Exp $
 -- Users may want to use a different DB name.
 -- CREATE DATABASE IF NOT EXISTS sguildb;
 -- USE sguildb;
@@ -167,7 +167,8 @@ CREATE TABLE user_info
 (
   uid		INT UNSIGNED	NOT NULL AUTO_INCREMENT,
   username	VARCHAR(16)	NOT NULL,
-  last_login	DATETIME	NOT NULL,
+  last_login	DATETIME,
+  password	VARCHAR(42),
   PRIMARY KEY (uid)
 );
 

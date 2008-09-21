@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.186 2008/03/25 15:59:35 bamm Exp $ #
+# $Id: sguild,v 1.187 2008/09/21 02:58:49 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -18,7 +18,7 @@ exec tclsh "$0" "$@"
 set VERSION "SGUIL-0.7.0"
 set AGENT_VERSION "SGUIL-0.7.0"
 # DB Version
-set DB_VERSION "0.12"
+set DB_VERSION "0.13"
 # Counter for tracking xscript transactions
 set NEXT_TRANS_ID 0
 
@@ -29,13 +29,12 @@ set NEXT_TRANS_ID 0
 ########################## PROCS ####################################
 
 proc DisplayUsage { cmdName } {
-  puts "Usage: $cmdName \[-D\] \[-h\] \[-c <filename>\] \[-u <filename>\] \[-P <filename>\]"
+  puts "Usage: $cmdName \[-D\] \[-h\] \[-c <filename>\] \[-P <filename>\]"
   puts "         \[-O <filename>\] \[-C <directory\]"
   puts "       $cmdName \[-u <filename\] \[-adduser <username>\] \[-deluser <username\]"
   puts "  -c <filename>: PATH to the sguild config (sguild.conf) file."
   puts "  -a <filename>: PATH to the autocat config (autocat.conf) file."
   puts "  -g <filename>: PATH to the sguild global queries (sguild.queries) file."
-  puts "  -u <filename>: PATH to the sguild users (sguild.users) file."
   puts "  -P <filename>: Name of file to write the PID to."
   puts "                 Default is /var/run/sguild.pid"
   puts "  -l <filepath>: PATH to sguild libraries."
@@ -199,7 +198,6 @@ foreach arg $argv {
     conf { set CONF_FILE $arg; set state flag }
     autocat { set AUTOCAT_FILE $arg; set state flag }
     gquery { set GLOBAL_QRY_FILE $arg; set state flag }
-    users_file { set USERS_FILE $arg; set state flag }
     pid_file { set PID_FILE $arg; set state flag }
     openssl { set TLS_PATH $arg; set state flag }
     certs { set CERTS_PATH $arg; set state flag }
@@ -351,37 +349,9 @@ foreach sguildLib $sourceLibs {
   }
 }
 
-# Check for a valid USERS file
-if { ![info exists USERS_FILE] } {
-  # No users file was specified. Go with the defaults
-  if { [file exists /etc/sguild/sguild.users] } {
-    set USERS_FILE "/etc/sguild/sguild.users"
-  } elseif { [file exists ./sguild.users] } {
-    set USERS_FILE "./sguild.users"
-  } else {
-    if { [info exists ADDUSER] && $ADDUSER } {
-      CreateUsersFile "/etc/sguild/sguild.users"
-    } else {
-      set DEBUG 2
-      LogMessage "ERROR: Could not find a sguild.users file."
-      LogMessage "       Checked in ./ and /etc/sguild/"
-      DisplayUsage $argv0
-    }
-  }
-} else {
-  if { ![file exists $USERS_FILE] } {
-    if { [info exists ADDUSER] && $ADDUSER } {
-      CreateUsersFile $USERS_FILE
-    } else {
-      set DEBUG 2
-      LogMessage "ERROR: $USERS_FILE does not exist"
-      DisplayUsage $argv0
-    }
-  }
-}
 # Called in to add a user only
 if { [info exists ADDUSER] && $ADDUSER } {
-  AddUser $userName $USERS_FILE
+  AddUser $userName
   CleanExit
 }
 # Called in to delete a user only
