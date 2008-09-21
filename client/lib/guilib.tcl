@@ -3,7 +3,7 @@
 # Note:  Selection and Multi-Selection procs       #
 # have their own file (sellib.tcl)                 #
 ####################################################
-# $Id: guilib.tcl,v 1.27 2008/03/21 16:13:41 bamm Exp $
+# $Id: guilib.tcl,v 1.28 2008/09/21 02:59:26 bamm Exp $
 ######################## GUI PROCS ##################################
 
 proc LabelText { winFrame width labelText { height {1} } { bgColor {lightblue} } } {
@@ -635,6 +635,88 @@ proc WheelEvent { x y delta } {
         # Make sure we activate the scrollbar's command
         set cmd "[$scroller cget -command] scroll [expr -int($delta/(120*$factor))] units"
         eval $cmd
+    }
+
+}
+
+proc LaunchPassChange {} {
+
+    global USERNAME OLDPASS NEWPASS1 NEWPASS2
+
+    set passChangeWin .passChangeWin
+  
+    # If the win exists, pop it to the front
+    if [winfo exists $passChangeWin] {
+
+        wm withdraw $passChangeWin
+        wm deiconify $passChangeWin
+        return
+
+    }
+
+
+    # Build the window.
+    toplevel $passChangeWin
+    wm title $passChangeWin "Change Password ($USERNAME)"
+
+    # Frame
+    set inputFrame [frame $passChangeWin.inputFrame]
+
+    # Entry Fields
+    set oldEntry [entryfield $inputFrame.oldEntry -labeltext "Old Password:" -textvariable OLDPASS -show *]
+    set new1Entry [entryfield $inputFrame.new1Entry -labeltext "New Password:" -textvariable NEWPASS1 -show *]
+    set new2Entry [entryfield $inputFrame.new2Entry -labeltext "Re-enter New Password:" -textvariable NEWPASS2 -show *]
+    iwidgets::Labeledwidget::alignlabels $oldEntry $new1Entry $new2Entry
+
+    pack $oldEntry $new1Entry $new2Entry \
+     -side top -fill x -expand true
+
+    # Buttons
+    set buttons [buttonbox $passChangeWin.b]
+    $buttons add ok -text "Submit" -command "ChangePass; destroy $passChangeWin"
+    $buttons add exit -text "Cancel" -command "destroy $passChangeWin"
+   
+    pack $inputFrame -fill both -expand true -side top
+    pack $buttons -side top
+
+}
+
+proc ChangePass {} {
+
+    global USERNAME OLDPASS NEWPASS1 NEWPASS2 PASSWD
+
+    # Check the provided pass vs the stored pass
+    if { $OLDPASS != $PASSWD } {
+
+        ErrorMessage "Authentication failed."
+        return
+
+    }
+
+    if { $NEWPASS1 != $NEWPASS2 } {
+
+        ErrorMessage "Passwords did not match"
+        return
+
+    }
+
+    SendToSguild [list ChangePass $USERNAME $OLDPASS $NEWPASS1]
+ 
+}
+
+proc PassChange { status passwd } {
+
+    global PASSWD
+
+    if { $status} {
+
+        set PASSWD $passwd
+        InfoMessage "Password changed successfully."
+
+    } else {
+
+        ErrorMessage "Passwword change failed."
+
     }
 
 }

@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.253 2008/04/19 20:50:28 bamm Exp $ #
+# $Id: sguil.tk,v 1.254 2008/09/21 02:59:25 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -153,13 +153,6 @@ proc ServerCommandRcvd { socketID } {
     ReconnectToSguild
   } else {
     if {$DEBUG} {puts "Server Command Recieved: $data"}
-    # store $data in $origData because ctoken changes the var it is working on.
-    #set origData $data
-    #set serverCmd [ctoken data " "]
-    #set data1 [string trimleft $data]
-    # data1 has indices 1 on etc etc
-    #set index1 [ctoken data " "]
-    #set data2 [string trimleft $data]
 
     set serverCmd [lindex $data 0]
    
@@ -201,6 +194,7 @@ proc ServerCommandRcvd { socketID } {
       XscriptMainMsg { $serverCmd [lindex $data 1] [lindex $data 2] }
       WiresharkDataBase64 { $serverCmd [lindex $data 1] [lindex $data 2] }
       WiresharkDataPcap { $serverCmd $socketID [lindex $data 1] [lindex $data 2] }
+      PassChange { $serverCmd [lindex $data 1] [lindex $data 2] }
       default { puts "Unrecognized command from $socketID: $data" }
     }
   } 
@@ -2167,6 +2161,7 @@ set topFrame [frame .topFrame]
   }
   set fileList [menu $fileMenu.menu -tearoff 0]
     $fileList add command -label "Display Incident Categories" -command DisplayIncidentCats  
+    $fileList add command -label "Change Password" -command LaunchPassChange  
     $fileList add command -label "Sleep (Ctrl-s)" -command "GoToSleep"
     $fileList add command -label "Change Monitored Network(s)" -command "ChangeSensors"
     $fileList add cascade -label "Change Font" -menu $fileList.font
