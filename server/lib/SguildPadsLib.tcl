@@ -143,7 +143,7 @@ proc AlertAsset { type sensorName sid aid timestamp intTime s_inetIP s_intIP d_i
 proc InsertAsset { sensorName sid aid timestamp intIP service port ip_proto app hex_payload } {
 
     set tmpQuery "INSERT INTO pads (hostname, sid, asset_id, timestamp, ip, service, port, ip_proto, application, hex_payload) \
-                  VALUES ('$sensorName', '$sid', '$aid', '$timestamp', '$intIP', '$service', '$port', '$ip_proto', '$app', '$hex_payload')" 
+                  VALUES ('$sensorName', '$sid', '$aid', '$timestamp', '$intIP', '$service', '$port', '$ip_proto', '[MysqlEscapeString $app]', '$hex_payload')" 
 
     if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
 

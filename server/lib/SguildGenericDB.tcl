@@ -1,4 +1,4 @@
-# $Id: SguildGenericDB.tcl,v 1.26 2008/02/20 06:06:19 bamm Exp $ #
+# $Id: SguildGenericDB.tcl,v 1.27 2010/03/02 04:05:49 bamm Exp $ #
 
 proc GetUserID { username } {
   set uid [FlatDBQuery "SELECT uid FROM user_info WHERE username='$username'"]
@@ -337,5 +337,17 @@ proc InsertDataPayload { tablePostfix sid cid data_payload } {
         return -code error $tmpError
 
     }
+
+}
+
+# Escape backslash, single quote, and double quote
+
+proc MysqlEscapeString { tmpStr } {
+
+    regsub -all {\\} $tmpStr {\\\\} tmpStr 
+    regsub -all {\'} $tmpStr {\'} tmpStr
+    regsub -all {\"} $tmpStr {\"} tmpStr
+
+    return $tmpStr
 
 }
