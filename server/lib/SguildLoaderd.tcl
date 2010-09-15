@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.26 2007/09/25 14:17:13 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.27 2010/09/15 23:41:09 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -225,7 +225,8 @@ proc InitLoaderd {} {
     } else {
         # Make sure its a MERGE table and not the old monster
         set tableStatus [mysqlsel $LOADERD_DB_ID {SHOW TABLE STATUS LIKE 'sancp'} -flatlist]
-        if { [lindex $tableStatus 1] != "MRG_MyISAM" } {
+        if { $tableStatus != "" && ![ string equal -nocase [lindex $tableStatus 1] "MRG_MyISAM" ] } {
+
             ErrorMessage "ERROR: loaderd: You appear to be using an old version of the\n\
                           sguil database schema that does not support the MERGE sancp\n\
                           table. Please see the CHANGES document for more information\n."
@@ -248,7 +249,8 @@ proc LoadFile { fileName table } {
         set dbCmd "LOAD DATA CONCURRENT LOCAL INFILE '$fileName' INTO TABLE `$table`\
                    FIELDS TERMINATED BY '|'"
     } else {
-        set dbCmd "LOAD DATA CONCURRENT INFILE '$fileName' INTO TABLE `$table`\
+        #set dbCmd "LOAD DATA CONCURRENT INFILE '$fileName' INTO TABLE `$table`
+        set dbCmd "LOAD DATA CONCURRENT LOCAL INFILE '$fileName' INTO TABLE `$table`\
                    FIELDS TERMINATED BY '|'"
     }
 

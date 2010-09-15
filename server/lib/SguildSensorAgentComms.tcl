@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.27 2007/05/16 19:06:41 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.28 2010/09/15 23:41:11 bamm Exp $ #
 
 # Get the sid and cid for the agent. Create it if it doesn't exist. 
 # Send the agent [AgentSid {type} {sid}]
@@ -44,9 +44,8 @@ proc RegisterAgent { socketID type sensorName netName } {
         set agentStatusList($sensorID) [list $netName $sensorName $type N/A 1]
 
     }
-    SendAllSensorStatusInfo
 
-    #SendSystemInfoMsg $sensorName "Agent connected."
+    SendAllSensorStatusInfo
 
 }
 

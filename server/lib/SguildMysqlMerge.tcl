@@ -9,7 +9,7 @@ proc InitializeMysqlMergeTables {} {
         set tmpQry "SHOW TABLE STATUS LIKE '$tableName'"
         set tableStatus [mysqlsel $MAIN_DB_SOCKETID $tmpQry -flatlist]
 
-        if { $tableStatus != "" && [lindex $tableStatus 1] != "MRG_MyISAM" } {
+        if { $tableStatus != "" && ![ string equal -nocase [lindex $tableStatus 1] "MRG_MyISAM" ] } {
 
             # Non MERGE table found.
             set errorMsg "\n*************************************************************\n
