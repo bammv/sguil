@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.18 2008/03/04 18:08:46 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.19 2011/02/17 02:13:50 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -190,13 +190,19 @@ proc RawDataFile { socketID fileName TRANS_ID bytes } {
     }
 
     set outfile [lindex $transInfoArray($TRANS_ID) 2]/$fileName
-    RcvBinCopy $socketID $outfile $bytes
 
     if { $type == "xscript" } {
-        GenerateXscript $outfile [lindex $transInfoArray($TRANS_ID) 0] [lindex $transInfoArray($TRANS_ID) 1] $TRANS_ID
-    } elseif { $type == "wireshark" } {
-        SendWiresharkData $outfile $TRANS_ID
+
+        set callback [list GenerateXscript $outfile [lindex $transInfoArray($TRANS_ID) 0] [lindex $transInfoArray($TRANS_ID) 1] $TRANS_ID]
+
+    } else { 
+
+        set callback [list SendWiresharkData $outfile $TRANS_ID]
+
     }
+
+    RcvBinCopy $socketID $outfile $bytes $callback
+
 }
 
 proc XscriptDebugMsg { TRANS_ID msg } {

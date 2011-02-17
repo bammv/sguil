@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: pcap_agent.tcl,v 1.10 2008/03/25 15:59:35 bamm Exp $ #
+# $Id: pcap_agent.tcl,v 1.11 2011/02/17 02:12:37 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -45,16 +45,22 @@ proc bgerror { errorMsg } {
 }
 
 proc SendToSguild { data } {
-  global sguildSocketID CONNECTED DEBUG
-  if {!$CONNECTED} {
-     if {$DEBUG} { puts "Not connected to sguild. Unable to process this request." }
-     return 0
-  } else {
-    if {$DEBUG} {puts "Sending sguild ($sguildSocketID) $data"}
-    if [catch { puts $sguildSocketID $data } tmpError ] { puts "ERROR: $tmpError : $data" }
-    catch { flush $sguildSocketID }
-    return 1
-  }
+
+    global sguildSocketID CONNECTED DEBUG
+    if {!$CONNECTED} {
+
+        if {$DEBUG} { puts "Not connected to sguild. Unable to process this request." }
+        return 0
+
+    } else {
+
+        if {$DEBUG} {puts "Sending sguild ($sguildSocketID) $data"}
+        if [catch { puts $sguildSocketID $data } tmpError ] { puts "ERROR: $tmpError : $data" }
+        catch { flush $sguildSocketID }
+        return 1
+
+    }
+
 }
 
 proc CleanMsg { msg } {
@@ -64,9 +70,92 @@ proc CleanMsg { msg } {
 
 }
 
-proc BinCopyToSguild { fileName } {
+proc UploadRawFile { fileName TRANS_ID fileSize } {
 
-    global sguildSocketID
+    global SERVER_HOST SERVER_PORT DEBUG VERSION HOSTNAME NET_GROUP TMP_DIR
+
+    # Connect to server and establish the data channel
+    if { [catch {set dataChannelID [socket $SERVER_HOST $SERVER_PORT]} ] > 0} {
+
+        # Connection failed #
+
+        if {$DEBUG} { puts "ERROR: Failed to open data channel" }
+        if {$DEBUG} { puts "Trying again in 15 seconds" }
+        after 15000 UploadRawFile $fileName $TRANS_ID $fileSize
+
+    } else {
+
+        # Connection Successful #
+
+        # Configure the socket to line buffer for version checks
+        fconfigure $dataChannelID -buffering line
+
+        # Send version checks
+        set tmpVERSION "$VERSION OPENSSL ENABLED"
+
+        if [catch {gets $dataChannelID} serverVersion] {
+
+            puts "ERROR: $serverVersion"
+            catch {close $dataChannelID}
+
+        }
+
+        if { $serverVersion == "Connection Refused." } {
+
+            puts $serverVersion
+            catch {close $dataChannelID}
+
+        } elseif { $serverVersion != $tmpVERSION } {
+
+            catch {close $dataChannelID}
+            puts "Mismatched versions.\nSERVER: ($serverVersion)\nAGENT: ($tmpVERSION)"
+
+        }
+
+        if [catch {puts $dataChannelID [list VersionInfo $tmpVERSION]} tmpError] {
+
+            catch {close $dataChannelID}
+            puts "Unable to send version string: $tmpError"
+
+        }
+
+        catch { flush $dataChannelID }
+        tls::import $dataChannelID
+
+        #
+        # Connected and version checks finished.
+        #
+
+        # Register as a data agent
+        if [catch {puts $dataChannelID [list RegisterAgent data $HOSTNAME $NET_GROUP]} tmpError] {
+
+            catch {close $dataChannelID}
+            puts "Error registering data agent: $tmpError"
+            exit
+
+        }
+ 
+        # Notify sguild a raw data is coming.
+        if {$DEBUG} { puts "Sending Sguild: [list RawDataFile $fileName $TRANS_ID $fileSize]" }
+        if [catch {puts $dataChannelID [list RawDataFile [file tail $fileName] $TRANS_ID $fileSize]} tmpError] {
+
+            # Copy failed
+            if {$DEBUG} { puts "ERROR: Raw copy failed: $tmpError" }
+            catch {close $dataChannelID}
+            # Try again
+            after 15000 UploadRawFile $fileName $TRANS_ID $fileSize
+
+        } else {
+
+            BinCopyToSguild $dataChannelID $fileName
+
+        }
+
+    }
+
+}
+
+proc BinCopyToSguild { dataChannelID fileName } {
 
     if [ catch {open $fileName r} rFileID ] {
 
@@ -74,68 +163,79 @@ proc BinCopyToSguild { fileName } {
       
         puts "ERROR: Opening $fileName: $rFileID"
         catch {close $rFileID} tmpError
-        return 0
+        return -code error "Error opening file $fileName"
 
     }
 
+    # Configure the socket for a binary xfer
     fconfigure $rFileID -translation binary
-    fconfigure $sguildSocketID -translation binary
+    fconfigure $dataChannelID -translation binary
 
-    set RETURN 1
-    if [ catch {fcopy $rFileID $sguildSocketID} tmpError ] {
+    if [ catch {fcopy $rFileID $dataChannelID -command [list BinCopyFinished $rFileID $dataChannelID $fileName] } tmpError ] {
 
         # fcopy failed.
-        set RETURN 0
-        set CONNECTED 0
-        catch { close $sguildSocketID } tmpError
-        ConnectToSguilServer
+        catch { close $dataChannelID }
+        return -code error "Error transferring $fileName: $tmpError"
 
-    } else {
+    } 
 
-        fconfigure $sguildSocketID -encoding utf-8 -translation {auto crlf}
+}
+
+proc BinCopyFinished { fileID dataChannelID fileName bytes {error  {}} } {
+
+    # Copy finished
+    catch {close $fileID}
+    catch {close $dataChannelID}
+
+    if { [string length $error] != 0 } {
+
+        # Error during copy - resend?
 
     }
 
-    catch {close $rFileID} tmpError
-
-    return $RETURN
+    catch {file delete $fileName}
 
 }
 
 # Received a request for rawdata
 proc RawDataRequest { socketID TRANS_ID sensor timestamp srcIP dstIP srcPort dstPort proto rawDataFileName type } {
 
-    global SERVER_HOST SERVER_PORT DEBUG HOSTNAME
+    global SERVER_HOST SERVER_PORT DEBUG HOSTNAME TMP_DIR
 
-    # Create the data file.
-    set tmpRawDataFile [CreateRawDataFile $TRANS_ID $timestamp\
-      $srcIP $srcPort $dstIP $dstPort $proto $rawDataFileName $type]
+    # Make sure the request isn't being worked.
+    if { [file exists $TMP_DIR/$rawDataFileName] } {
 
-    if { $tmpRawDataFile != "error" } {
+        set tmpError "Request for pcap already in queue. Pls try again later"
 
-        # Copy the file up to sguild.
-        SendToSguild [list RawDataFile $rawDataFileName $TRANS_ID [file size $tmpRawDataFile]]
+        if { $type == "xscript" } {
 
-        if { ![BinCopyToSguild $tmpRawDataFile] } {
+            SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $tmpError]]
 
-            # Copy failed
-            if {$DEBUG} { puts "Error sending $tmpRawDataFile to sguild" }
+        } else {
+
+            SendToSguild [list SystemMessage $tmpError]
 
         }
 
-        file delete $tmpRawDataFile
+        return
 
-    } else {
+    }
+
+    # Create the data file.
+    if { [catch {CreateRawDataFile $TRANS_ID $timestamp \
+      $srcIP $srcPort $dstIP $dstPort $proto $rawDataFileName $type} tmpError] } {
 
         set tmpMsg "Error creating raw data file: $rawDataFileName"
 
-        if {$DEBUG} { puts $tmpMsg }
+        if {$DEBUG} { puts $tmpError }
 
         if { $type == "xscript" } {
-            SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $tmpMsg]]
+
+            SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $tmpError]]
+
         } else {
 
-            SendToSguild [list SystemMessage $tmpMsg]
+            SendToSguild [list SystemMessage $tmpError]
 
         }
 
@@ -187,6 +287,7 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
     global RAW_LOG_DIR DEBUG TCPDUMP TMP_DIR VLAN
 
     set date [lindex $timestamp 0]
+
     if { [file exists $RAW_LOG_DIR/$date] && [file isdirectory $RAW_LOG_DIR/$date] } {
 
         if { $type == "xscript" } {
@@ -205,16 +306,23 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
 
         if { $type == "xscript" } {
 
-            SendToSguild [list XscriptDebugMsg $TRANS_ID "$RAW_LOG_DIR/$date does not exist. Make sure log_packets.sh is configured correctly."]
+            SendToSguild [list XscriptDebugMsg $TRANS_ID \
+             "$RAW_LOG_DIR/$date does not exist. Make sure log_packets.sh is configured correctly."]
 
         } else {
 
-            SendToSguild [list SystemMessage "$RAW_LOG_DIR/$date does not exist. Make sure log_packets.sh is configured correctly."]
+            SendToSguild [list SystemMessage \
+             "$RAW_LOG_DIR/$date does not exist. Make sure log_packets.sh is configured correctly."]
 
         }
 
-        if {$DEBUG} {puts "$RAW_LOG_DIR/$date does not exist. Make sure log_packets.sh is configured correctly."}
-        return error
+        if {$DEBUG} {
+
+           puts "$RAW_LOG_DIR/$date does not exist. Make sure log_packets.sh is configured correctly."
+
+        }
+
+        return -code error
 
     }
 
@@ -248,7 +356,7 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
 
         }
 
-        return error
+        return -code error
     }
 
     set sLogFileTimes [lsort -decreasing $logFileTimes]
@@ -267,6 +375,7 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
     }
 
     set eventTime [clock scan $timestamp -gmt true]
+
     # The first file we find with a time >= to ours should have our packets.
     foreach logFileTime $sLogFileTimes {
 
@@ -285,22 +394,21 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
 
             puts "ERROR: Unable to find the matching pcap file based on the time."
             puts "       The requested event time is: $eventTime"
+        }
 
-            if { $type == "xscript" } {
+        if { $type == "xscript" } {
 
-                SendToSguild [list XscriptDebugMsg $TRANS_ID "ERROR: Unable to find the matching pcap file based on the time."]
-                SendToSguild [list XscriptDebugMsg $TRANS_ID "The requested event time is: $eventTime"]
+            SendToSguild [list XscriptDebugMsg $TRANS_ID "ERROR: Unable to find the matching pcap file based on the time."]
+            SendToSguild [list XscriptDebugMsg $TRANS_ID "The requested event time is: $eventTime"]
 
-            } else {
+        } else {
 
-                SendToSguild [list SystemMessage "ERROR: Unable to find the matching pcap file based on the time."]
-                SendToSguild [list SystemMessage "The requested event time is: $eventTime"]
-
-            }
+            SendToSguild [list SystemMessage "ERROR: Unable to find the matching pcap file based on the time."]
+            SendToSguild [list SystemMessage "The requested event time is: $eventTime"]
 
         }
 
-        return error
+        return -code error
 
     }
 
@@ -325,6 +433,7 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
     }
 
     set tcpdumpCmd "$TCPDUMP -r $RAW_LOG_DIR/$date/$logFileName -w $TMP_DIR/$rawDataFileName $tcpdumpFilter"
+
     if { $type == "xscript" } {
 
         SendToSguild [list XscriptDebugMsg $TRANS_ID "Creating unique data file: $tcpdumpCmd"]
@@ -335,28 +444,64 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
 
     }
 
-    if [catch { eval exec $tcpdumpCmd } tcpdumpError] {
+    if [catch { open "| $tcpdumpCmd" r } cmdID] {
 
-        set tmpMsg "Error running $tcpdumpCmd: $tcpdumpError"
+        set tmpMsg "Error running $tcpdumpCmd: $cmdID"
         if { $type == "xscript" } {
 
-            SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $tmpMsg]]
+            SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $cmdID]]
 
         } else {
 
-            SendToSguild [list SystemMessage $tmpMsg]
+            SendToSguild [list SystemMessage $cmdID]
 
         }
 
+    } else {
+
+        fileevent $cmdID readable [list ProcessTcpdump $cmdID $TMP_DIR/$rawDataFileName $TRANS_ID $type]
+
     }
 
-    if { [file exists $TMP_DIR/$rawDataFileName] } {
+}
 
-        return $TMP_DIR/$rawDataFileName
+proc ProcessTcpdump { cmdID fileName TRANS_ID type } {
+
+    if { [eof $cmdID] || [catch {gets $socketID data}] } {
+
+        # Socket closed
+        catch {close $cmdID}
+
+        if { [file exists $fileName] } {
+
+            # Copy the file up to sguild via a data channel.
+            UploadRawFile $fileName $TRANS_ID [file size $fileName]
+
+        } else {
+
+            if { $type == "xscript" } {
+
+                SendToSguild [list XscriptDebugMsg $TRANS_ID "Error creating file: $fileName"]
+
+            } else {
+
+                SendToSguild [list SystemMessage "Error creating file: $fileName"]
+
+            }
+
+        }
 
     } else {
 
-        return error
+        if { $type == "xscript" } {
+
+            SendToSguild [list XscriptDebugMsg $TRANS_ID "tcpdump: $data"]
+
+        } else {
+
+            SendToSguild [list SystemMessage "tcpdump: $data"]
+
+        }
 
     }
 

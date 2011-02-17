@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sancp_agent.tcl,v 1.10 2008/04/19 20:50:28 bamm Exp $ #
+# $Id: sancp_agent.tcl,v 1.11 2011/02/17 02:12:37 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -96,21 +96,15 @@ proc CheckForSancpFiles {} {
                     set SANCPFILEWAIT $tmpFile
     
                     if { $CONNECTED } {
-    
-                        # Tell sguild it has a file coming
-                        SendToSguild [list SancpFile $HOSTNAME [file tail $tmpFile] $tmpDate $fileBytes] 
-                        if { [BinCopyToSguild $tmpFile] } {
-    
-                            # Check to see that that file was confirmed after 10 secs
-                            after 5000 CheckSancpConfirmation $tmpFile
-                            vwait SANCPFILEWAIT
-                       
-                        } else {
-    
-                            if { $DEBUG } { puts "Error copying $tmpFile to sguild." }
-    
+
+                      
+                        if { [catch {UploadSancpFile $tmpFile $fileBytes} tmpError] } { 
+                            if {$DEBUG} { 
+                                puts "Error uploading $tmpFile: $tmpError"
+                                break 
+                            }
                         }
-    
+
                     } else {
     
                         # Lost our cnx
@@ -134,6 +128,89 @@ proc CheckForSancpFiles {} {
     }
 
     after $SANCP_CHECK_DELAY_IN_MSECS CheckForSancpFiles
+
+}
+
+proc UploadSancpFile { filePath fileSize } {
+
+    global SERVER_HOST SERVER_PORT DEBUG VERSION HOSTNAME NET_GROUP TMP_DIR
+
+    # Connect to server and establish the data channel
+    if { [catch {set dataChannelID [socket $SERVER_HOST $SERVER_PORT]} ] > 0} {
+
+        # Connection failed #
+        if {$DEBUG} { puts "ERROR: Failed to open data channel" }
+        return -code error
+
+    } else {
+
+        # Connection Successful #
+
+        # Configure the socket to line buffer for version checks
+        fconfigure $dataChannelID -buffering line
+
+        # Send version checks
+        set tmpVERSION "$VERSION OPENSSL ENABLED"
+
+        if [catch {gets $dataChannelID} serverVersion] {
+
+            puts "ERROR: $serverVersion"
+            catch {close $dataChannelID}
+ 
+        }
+ 
+        if { $serverVersion == "Connection Refused." } {
+ 
+            puts $serverVersion
+            catch {close $dataChannelID}
+ 
+        } elseif { $serverVersion != $tmpVERSION } {
+ 
+            catch {close $dataChannelID}
+            puts "Mismatched versions.\nSERVER: ($serverVersion)\nAGENT: ($tmpVERSION)"
+ 
+        }
+ 
+        if [catch {puts $dataChannelID [list VersionInfo $tmpVERSION]} tmpError] {
+
+            catch {close $dataChannelID}
+            puts "Unable to send version string: $tmpError"
+
+        }
+
+        catch { flush $dataChannelID }
+        tls::import $dataChannelID
+
+        #
+        # Connected and version checks finished.
+        #
+
+        # Register as a data agent
+        if [catch {puts $dataChannelID [list RegisterAgent data $HOSTNAME $NET_GROUP]} tmpError] {
+
+            catch {close $dataChannelID}
+            puts "Error registering data agent: $tmpError"
+            exit
+
+        }
+
+        # Notify sguild a raw data is coming.
+        set cmd [list SancpFile [file tail $filePath] $fileSize]
+        if {$DEBUG} { puts "Sending Sguild: $cmd" }
+        if [catch {puts $dataChannelID $cmd} tmpError] {
+
+            # Copy failed
+            if {$DEBUG} { puts "ERROR: Raw copy failed: $tmpError" }
+            catch {close $dataChannelID}
+            return -code error
+
+        } else {
+
+            BinCopyToSguild $dataChannelID $filePath
+
+        }
+
+    }
 
 }
 
@@ -169,44 +246,47 @@ proc ConfirmSancpFile { fileName } {
 
 }
 
-proc BinCopyToSguild { fileName } {
-
-    global sguildSocketID
+proc BinCopyToSguild { dataChannelID fileName } {
 
     if [ catch {open $fileName r} rFileID ] {
 
         # Error opening file
-      
+
         puts "ERROR: Opening $fileName: $rFileID"
         catch {close $rFileID} tmpError
-        return 0
+        return -code error "Error opening file $fileName"
 
     }
 
+    # Configure the socket for a binary xfer
     fconfigure $rFileID -translation binary
-    fconfigure $sguildSocketID -translation binary
+    fconfigure $dataChannelID -translation binary
 
-    set RETURN 1
-    if [ catch {fcopy $rFileID $sguildSocketID} tmpError ] {
+    if [ catch {fcopy $rFileID $dataChannelID -command [list BinCopyFinished $rFileID $dataChannelID $fileName] } tmpError ] {
 
         # fcopy failed.
-        set RETURN 0
-        set CONNECTED 0
-        catch { close $sguildSocketID } tmpError
-        ConnectToSguilServer
-
-    } else {
-
-        fconfigure $sguildSocketID -encoding utf-8 -translation {auto crlf}
+        catch { close $dataChannelID }
+        return -code error "Error transferring $fileName: $tmpError"
 
     }
-
-    catch {close $rFileID} tmpError
-
-    return $RETURN
 
 }
 
+proc BinCopyFinished { fileID dataChannelID fileName bytes {error  {}} } {
+
+    # Copy finished
+    catch {close $fileID}
+    catch {close $dataChannelID}
+
+    if { [string length $error] != 0 } {
+
+        # Error during copy - resend?
+
+    }
+
+    catch {file delete $fileName}
+
+}
 
 #
 #  Parses std sancp files. Prepends sensorID and puts each

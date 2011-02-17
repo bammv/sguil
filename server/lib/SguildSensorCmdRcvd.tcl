@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.26 2007/09/07 15:12:49 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.27 2011/02/17 02:13:50 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global agentSensorNameArray validSensorSockets
@@ -33,8 +33,7 @@ proc SensorCmdRcvd { socketID } {
       RegisterAgent      { RegisterAgent $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
       GenericEvent       { GenericEvent $socketID [lrange $data 1 end] }
       PadsAsset          { ProcessPadsAsset [lindex $data 1] }
-      SsnFile            { RcvSsnFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
-      SancpFile          { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] [lindex $data 4] }
+      SancpFile          { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] }
       PSFile             { RcvPortscanFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
       AgentInit          { AgentInit $socketID [lindex $data 1] [lindex $data 2] }
       BarnyardInit       { BarnyardInit $socketID [lindex $data 1] [lindex $data 2] }
@@ -56,46 +55,47 @@ proc SensorCmdRcvd { socketID } {
   }
 }
 
-proc RcvBinCopy { socketID outFile bytes } {
+proc RcvBinCopy { socketID outFile bytes {callback {}} } {
 
     set outFileID [open $outFile w]
     fconfigure $outFileID -translation binary
     fconfigure $socketID -translation binary
-    fcopy $socketID $outFileID -size $bytes
-    close $outFileID
-    fconfigure $socketID -encoding utf-8 -translation {auto crlf}
+
+    fcopy $socketID $outFileID -command [list BinCopyFinished $socketID $outFileID $outFile $callback]
 
 }
 
-proc RcvSsnFile { socketID sensorName fileName date bytes } {
+proc BinCopyFinished { socketID outFileID outFile {callback {}} {error {}} } {
 
-    global TMPDATADIR sguildWritePipe
-
-    set ssnFile $TMPDATADIR/$fileName
-    RcvBinCopy $socketID $ssnFile $bytes
-    
-    # The loader child proc does the LOAD for us.
-    puts $sguildWritePipe [list LoadSsnFile $sensorName $ssnFile $date]
-    flush $sguildWritePipe
+    catch {close $outFileID}
+    CleanUpDisconnectedAgent $socketID
+    if { $callback != ""} { eval $callback }
 
 }
 
-proc RcvSancpFile { socketID sensorName fileName date bytes } {
+proc RcvSancpFile { socketID fileName bytes } {
 
-    global TMPDATADIR TMP_LOAD_DIR sguildWritePipe agentStatusList
-    global agentSocketInfo
+    global TMP_LOAD_DIR 
 
     set sancpFile $TMP_LOAD_DIR/$fileName
+    set callback [list ProcessSancpUpload $sancpFile socketID]
     RcvBinCopy $socketID $sancpFile $bytes
 
-    SendSensorAgent $socketID [list ConfirmSancpFile $fileName]
-    # Update last load time
-    set sid [lindex $agentSocketInfo($socketID) 0]
-    if [info exists agentStatusList($sid)] {
-        set agentStatusList($sid) [lreplace $agentStatusList($sid) 3 3 [GetCurrentTimeStamp]]
-    }
+}
 
- 
+# Not used right now
+proc ProccessSancpUpload { fileName socketID } {
+
+    global agentSocketInfo agentStatusList
+
+    catch {close $socketID}
+
+    # Update last load time
+    #set sid [lindex $agentSocketInfo($socketID) 0]
+    #if [info exists agentStatusList($sid)] {
+    #    set agentStatusList($sid) [lreplace $agentStatusList($sid) 3 3 [GetCurrentTimeStamp]]
+    #}
+
 }
 
 proc RcvPortscanFile { socketID sensorName fileName bytes } {

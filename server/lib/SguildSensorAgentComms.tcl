@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.28 2010/09/15 23:41:11 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.29 2011/02/17 02:13:50 bamm Exp $ #
 
 # Get the sid and cid for the agent. Create it if it doesn't exist. 
 # Send the agent [AgentSid {type} {sid}]
@@ -9,17 +9,24 @@ proc RegisterAgent { socketID type sensorName netName } {
     global pcapSocket sancpSocket padsSocket sancpSocket snortSocket
     global agentSocketInfo
 
-    set sensorID [GetSensorID $sensorName $type $netName]
-    set maxCid [GetMaxCid $sensorID]
-
     # Add agent to a list of valid sockets
     lappend validSensorSockets $socketID
-    # Send agent id to the agent
-    SendSensorAgent $socketID [list AgentInfo $sensorName $type $netName $sensorID $maxCid]
+
+    if { $type != "data" } {
+
+        set sensorID [GetSensorID $sensorName $type $netName]
+        set maxCid [GetMaxCid $sensorID]
+
+        # Send agent id to the agent
+        SendSensorAgent $socketID [list AgentInfo $sensorName $type $netName $sensorID $maxCid]
+
+        # Sid NetName Map
+        set sidNetNameMap($sensorID) $netName
+
+    }
+
     # SensorName to SocketID mapping
     set agentSensorNameArray($socketID) $sensorName
-    # Sid NetName Map
-    set sidNetNameMap($sensorID) $netName
 
     # Update various array info
     switch -exact $type {
@@ -28,9 +35,13 @@ proc RegisterAgent { socketID type sensorName netName } {
         pcap { set pcapSocket($netName) $socketID }
         sancp { set sancpSocket($netName) $socketID }
         snort { set snortSocket($netName) $socketID }
+        data { set dataSocket($netName) $socketID }
         default { set foo bar }
 
     }
+
+    # Data cnx stop here
+    if { $type == "data" } { return }
 
     set agentSocketInfo($socketID) [list $sensorID $sensorName $netName $type]
 
