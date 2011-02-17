@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.255 2011/02/17 03:49:37 bamm Exp $ #
+# $Id: sguil.tk,v 1.256 2011/02/17 03:57:51 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2889,15 +2889,12 @@ set ipQueryMenu [ menu .ipQueryMenu -background $SELECTBACKGROUND -foreground $S
 .ipQueryMenu add cascade -label "Quick Query" -menu $ipQueryMenu.quickMenu
 .ipQueryMenu add cascade -label "Advanced Query" -menu $ipQueryMenu.advancedMenu
 .ipQueryMenu add cascade -label "Dshield IP Lookup" -menu $ipQueryMenu.dshieldIPMenu
-.ipQueryMenu add cascade -label "Nessus Report Lookup" -menu $ipQueryMenu.nessusMenu
 
 menu $ipQueryMenu.quickMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
 -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
 menu $ipQueryMenu.advancedMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
 -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
 menu $ipQueryMenu.dshieldIPMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
--activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
-menu $ipQueryMenu.nessusMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
 -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
 
 foreach { currentMenu subcommand } { .ipQueryMenu.quickMenu "quick" .ipQueryMenu.advancedMenu "build" } {
@@ -2941,8 +2938,6 @@ $ipQueryMenu.advancedMenu.padsMenu add command -label "Query Dst IP" -command "Q
 
 $ipQueryMenu.dshieldIPMenu add command -label "SrcIP" -command "GetDshieldIP srcip"
 $ipQueryMenu.dshieldIPMenu add command -label "DstIP" -command "GetDshieldIP dstip"
-$ipQueryMenu.nessusMenu add command -label "SrcIP" -command "NessusReport srcip"
-$ipQueryMenu.nessusMenu add command -label "DstIP" -command "NessusReport dstip"
 
 # PADS Menus
 set padsIPQueryMenu [ menu .padsIPQueryMenu -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \

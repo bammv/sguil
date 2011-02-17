@@ -1,4 +1,4 @@
-# $Id: report.tcl,v 1.39 2008/04/09 04:20:52 bamm Exp $ #
+# $Id: report.tcl,v 1.40 2011/02/17 03:57:51 bamm Exp $ #
 
 # sguil functions for generating reports for events (Just email at this point)
 # note:  This is just the sguil-specific code, the actual emailing is done by
@@ -225,8 +225,6 @@ proc ReportResponse { type data } {
 	    set REPORT_RESULTS $data
 	}
 	BUILDER -
-	NESSUS -
-	NESSUS_DATA -
 	PORTSCAN {
 	    # We gotta get tricky here since this data is going to 
 	    # come back in more than one response
