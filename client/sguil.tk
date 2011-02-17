@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.254 2008/09/21 02:59:25 bamm Exp $ #
+# $Id: sguil.tk,v 1.255 2011/02/17 03:49:37 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -19,7 +19,7 @@ exec wish "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.7.0"
+set VERSION "SGUIL-0.8.0"
 
 # Load extended tcl
 if [catch {package require Tclx} tclxVersion] {
@@ -1714,49 +1714,81 @@ proc ParseFontInfo { fontInfo } {
 }
 
 proc GetUserName {} {
-  global USERNAME PASSWD VERSION SERVERHOST SERVERPORT SERVERHOSTSELECTED
-  set getUserNameWin [toplevel .getUserNameWin -background white]
-  wm title $getUserNameWin "$VERSION"
-  set welcomeFrame [frame $getUserNameWin.welcomeFrame -borderwidth 1 -background black]
-  set welcomeLabel [label $welcomeFrame.welcomeLabel -background lightblue\
-   -foreground navy -text \
-   "Sguil - A tcl/tk interface for network security monitoring\n\
-   \n\
-   Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>\n\
-   \n\
-   This program is distributed under the terms of version 1.0 of the\n\
-   Q Public License.  See LICENSE.QPL for further details.\n\
-   \n\
-   This program is distributed in the hope that it will be useful,\n\
-   but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."]
-  pack $welcomeLabel -ipadx 5 -ipady 5
-  pack $welcomeFrame -side top -padx 5 -pady 10
-  set promptFrame [frame $getUserNameWin.promptFrame -background black -borderwidth 1]
-    set userLabel [label $promptFrame.userLabel -text "Please Login" -foreground navy]
-    set sguildHost [combobox $promptFrame.sguildHost -labeltext "Sguild Host: "\
-     -textvariable SERVERHOSTSELECTED -editable true ]
-    foreach host $SERVERHOST {
-	$sguildHost insert list end $host
+
+    global USERNAME PASSWD VERSION SERVERHOST SERVERPORT SERVERHOSTSELECTED SGUILLIB
+
+    set getUserNameWin [toplevel .getUserNameWin]
+    wm title $getUserNameWin "$VERSION"
+    #set welcomeFrame [frame $getUserNameWin.welcomeFrame -background black -borderwidth 1]
+    set welcomeFrame [frame $getUserNameWin.welcomeFrame]
+
+    if { [file exists $SGUILLIB/images/sguil_logo_h.gif] } {
+
+        # Display the Sguil logo
+        set sguilLogo [image create photo -file $SGUILLIB/images/sguil_logo_h.gif]
+        set welcomeLabel [label $welcomeFrame.welcomeLabel -image $sguilLogo]
+
+        pack $welcomeLabel -fill both -expand true
+        pack $welcomeFrame -fill both -expand true -padx 5 -pady 5
+
+    } else {
+
+        set welcomeLabel [label $welcomeFrame.welcomeLabel \
+          -background lightblue \
+          -foreground navy \
+          -text "\nSguil - A tcl/tk interface for network security monitoring\n"]
+
+          pack $welcomeLabel -ipadx 5 -ipady 5
+          pack $welcomeFrame -side top -padx 5 -pady 10
+
     }
-    set sguildPort [entryfield $promptFrame.sguildPort -labeltext "Sguild Port: "\
-     -textvariable SERVERPORT]
-    set userName [entryfield $promptFrame.userName -validate alphanumeric\
-      -labeltext "Username:"\
-      -invalid {ErrorMessage "Please use alphanumeric characters only."}\
-      -textvariable USERNAME]
-    set userPasswd [entryfield $promptFrame.userPasswd\
-      -labeltext "Password:" -textvariable PASSWD -show *]
-    iwidgets::Labeledwidget::alignlabels $sguildHost $sguildPort $userName $userPasswd
-    set userBB [buttonbox $promptFrame.userBB]
-      $userBB add ok -text "Ok" -command "destroy $getUserNameWin"
-      $userBB add exit -text "Exit" -command "CleanExit"
-    pack $userLabel $sguildHost $sguildPort $userName $userPasswd $userBB \
-     -side top -fill both -expand true
-  pack $promptFrame -side bottom -pady 5
-  focus -force $userName
-  bind [$userPasswd component entry] <Return> { destroy .getUserNameWin }
-  tkwait window $getUserNameWin
+
+    #set promptFrame [frame $getUserNameWin.promptFrame -background black -borderwidth 1]
+    set promptFrame [frame $getUserNameWin.promptFrame]
+
+        set sguildHost [combobox $promptFrame.sguildHost \
+          -labeltext "Sguild Host: " \
+          -textvariable SERVERHOSTSELECTED \
+          -editable true ]
+
+        foreach host $SERVERHOST {
+
+            $sguildHost insert list end $host
+
+        }
+
+        set sguildPort [entryfield $promptFrame.sguildPort \
+          -labeltext "Sguild Port: " \
+          -textvariable SERVERPORT]
+
+        set userName [entryfield $promptFrame.userName \
+          -validate alphanumeric \
+          -labeltext "Username:" \
+          -invalid {ErrorMessage "Please use alphanumeric characters only."} \
+          -textvariable USERNAME]
+
+        set userPasswd [entryfield $promptFrame.userPasswd \
+          -labeltext "Password:" \
+          -textvariable PASSWD \
+          -show *]
+
+        iwidgets::Labeledwidget::alignlabels $sguildHost $sguildPort $userName $userPasswd
+
+        set userBB [buttonbox $promptFrame.userBB]
+          $userBB add ok -text "Ok" -command "destroy $getUserNameWin"
+          $userBB add exit -text "Exit" -command "CleanExit"
+
+        pack $sguildHost $sguildPort $userName $userPasswd $userBB \
+          -side top  \
+          -fill both \
+          -expand true
+
+    pack $promptFrame -side bottom -fill both -expand true
+
+    focus -force $userName
+    bind [$userPasswd component entry] <Return> { destroy .getUserNameWin }
+    tkwait window $getUserNameWin
+
 }
 
 proc CreateSensorCheckButton { winName sensorName userList } {
