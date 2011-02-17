@@ -1,4 +1,4 @@
-# $Id: SguildAccess.tcl,v 1.9 2008/09/21 02:58:49 bamm Exp $ #
+# $Id: SguildAccess.tcl,v 1.10 2011/02/17 04:26:20 bamm Exp $ #
 
 # Load up the access lists.
 proc LoadAccessFile { filename } {
@@ -195,6 +195,86 @@ proc AddUser { userName } {
         puts "User \'$userName\' added successfully"
 
    }
+
+}
+
+proc ChangeUserPW { userName } {
+
+    global MAIN_DB_SOCKETID DBHOST DBUSER DBPORT DBPASS DBNAME
+
+    # Check and initialize the DB
+    if { $DBPASS == "" } {
+
+        set connectCmd "-host $DBHOST -user $DBUSER -port $DBPORT"
+
+    } else {
+
+        set connectCmd "-host $DBHOST -user $DBUSER -port $DBPORT -password $DBPASS"
+
+    }
+
+    if [catch {eval mysqlconnect $connectCmd} MAIN_DB_SOCKETID] {
+
+        puts "ERROR: Unable to connect to $DBHOST on $DBPORT: Make sure mysql is running."
+        puts "$MAIN_DB_SOCKETID"
+        exit
+
+    }
+
+    # See if the DB we want to use exists
+    if { [catch {mysqluse $MAIN_DB_SOCKETID $DBNAME} noDBError] } {
+
+        puts "Error: $noDBError"
+        exit
+
+    }
+
+    # Make sure the user exists
+    set validUser [FlatDBQuery "SELECT username FROM user_info WHERE username='$userName'"]
+    if { $validUser == "" } {
+
+        puts "ERROR: User \'$userName\' does not exist."
+        return
+
+    }
+
+    # Get a passwd
+    puts -nonewline "Please enter a new passwd for $userName: "
+    flush stdout
+    exec stty -echo
+    set passwd1 [gets stdin]
+    exec stty echo
+    puts -nonewline "\nRetype passwd: "
+    flush stdout
+    exec stty -echo
+    set passwd2 [gets stdin]
+    exec stty echo
+    puts ""
+
+    if { $passwd1 != $passwd2} {
+
+        puts "ERROR: Passwords didn't match."
+        puts "User's passwd was NOT changed."
+        return
+
+    }
+
+    set salt [format "%c%c" [GetRandAlphaNumInt] [GetRandAlphaNumInt] ]
+    # make a hashed passwd
+    set hashPasswd [::sha1::sha1 "${passwd1}${salt}"]
+
+    # Add the user to the DB
+    set query "UPDATE user_info SET password='${salt}${hashPasswd}' WHERE username='$userName'"
+    if { [catch {SafeMysqlExec $query} tmpError] } {
+
+        puts "ERROR: Failed to change user's password: $tmpError"
+
+    } else {
+
+        puts "User \'$userName\' passwd was changed successfully"
+
+   }
+
 
 }
 

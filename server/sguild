@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.188 2011/02/17 02:55:48 bamm Exp $ #
+# $Id: sguild,v 1.189 2011/02/17 04:26:20 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -31,7 +31,7 @@ set NEXT_TRANS_ID 0
 proc DisplayUsage { cmdName } {
   puts "Usage: $cmdName \[-D\] \[-h\] \[-c <filename>\] \[-P <filename>\]"
   puts "         \[-O <filename>\] \[-C <directory\]"
-  puts "       $cmdName \[-u <filename\] \[-adduser <username>\] \[-deluser <username\]"
+  puts "       $cmdName \[-u <filename\] \[-adduser <username>\] \[-changepasswd <username>\]"
   puts "  -c <filename>: PATH to the sguild config (sguild.conf) file."
   puts "  -a <filename>: PATH to the autocat config (autocat.conf) file."
   puts "  -g <filename>: PATH to the sguild global queries (sguild.queries) file."
@@ -41,8 +41,8 @@ proc DisplayUsage { cmdName } {
   puts "  -O <filename>: Define PATH to tls (tcl openssl) lib (libtls1.x.so)"
   puts "  -C <directory>: Directory that contains sguild.pem and sguild.key"
   puts "  -D Runs sguild in daemon mode."
-  puts "  -adduser <username>: Add user to sguild.users"
-  puts "  -deluser <username>: Delete user from sguild.users"
+  puts "  -adduser <username>: Add user to sguild."
+  puts "  -changepasswd <username>: Change user's password."
   puts "  -A <filename>: PATH to sguild.access file."
   puts "  -d <0|1|2>: Set DEBUG level"
   puts "  -h Display this help"
@@ -190,7 +190,7 @@ foreach arg $argv {
         -l { set state sguild_lib }
         -d { set state debug_level }
         -adduser { set state adduser }
-        -deluser { set state deluser }
+        -changepasswd { set state changepasswd }
         default { DisplayUsage $argv0 }
       }
     }
@@ -202,7 +202,7 @@ foreach arg $argv {
     openssl { set TLS_PATH $arg; set state flag }
     certs { set CERTS_PATH $arg; set state flag }
     adduser { set ADDUSER 1; set userName $arg; set state flag }
-    deluser { set DELUSER 1; set userName $arg; set state flag }
+    changepasswd { set CHANGEPASSWD 1; set userName $arg; set state flag }
     accessfile { set ACCESS_FILE $arg; set state flag }
     debug_level { set DEBUG_OVERRIDE 1; set DEBUG_LEVEL $arg; set DEBUG $arg; set state flag }
     default { DisplayUsage $argv0 }
@@ -354,9 +354,9 @@ if { [info exists ADDUSER] && $ADDUSER } {
   AddUser $userName
   CleanExit
 }
-# Called in to delete a user only
-if { [info exists DELUSER] && $DELUSER} {
-  DelUser $userName $USERS_FILE
+# Called in to change a users passwd.
+if { [info exists CHANGEPASSWD] && $CHANGEPASSWD} {
+  ChangeUserPW $userName
   CleanExit
 }
 # Load accessfile

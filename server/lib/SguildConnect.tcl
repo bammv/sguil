@@ -1,30 +1,50 @@
-# $Id: SguildConnect.tcl,v 1.23 2008/04/02 17:58:37 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.24 2011/02/17 04:26:20 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
 #
 proc ClientConnect { socketID IPAddr port } {
-  global socketInfo VERSION
 
-  LogMessage "Client Connect: $IPAddr $port $socketID"
+    global CLIENT_PIDS
+
+    LogMessage "Client Connect: $IPAddr $port $socketID"
   
-  # Check the client access list
-  if { ![ValidateClientAccess $IPAddr] } {
-    SendSocket $socketID "Connection Refused."
-    catch {close $socketID} tmpError
-    LogMessage "Invalid access attempt from $IPAddr"
-    return
-  }
-  LogMessage "Valid client access: $IPAddr"
-  set socketInfo($socketID) [list $IPAddr $port]
-  fconfigure $socketID -buffering line
-  fileevent $socketID readable [list ClientCmdRcvd $socketID]
-  # Send version info
-  if [catch {SendSocket $socketID "$VERSION"} sendError ] {
-    return
-  }
-  # Give the user 90 seconds to send login info
-  after 90000 CheckLoginStatus $socketID $IPAddr $port
+    # Check the client access list
+    if { ![ValidateClientAccess $IPAddr] } {
+
+        SendSocket $socketID "Connection Refused."
+        catch {close $socketID} tmpError
+        LogMessage "Invalid access attempt from $IPAddr"
+        return
+
+    }
+
+    set childPid [ForkClient $socketID $IPAddr $port]
+    if { $childPid != 0 } { lappend CLIENT_PIDS $childPid }
+
+}
+
+proc ForkClient { socketID IPAddr port } {
+
+    global socketInfo VERSION
+
+    if { [set childPid [fork]] == 0 } { 
+
+        # In the child now
+        LogMessage "Valid client access: $IPAddr"
+        set socketInfo($socketID) [list $IPAddr $port]
+        fconfigure $socketID -buffering line
+        fileevent $socketID readable [list ClientCmdRcvd $socketID]
+
+        # Send version info
+        if [catch {SendSocket $socketID "$VERSION"} sendError ] { return }
+
+        # Give the user 90 seconds to send login info
+        after 90000 CheckLoginStatus $socketID $IPAddr $port
+
+    }
+
+    return $childPid
 
 }
 

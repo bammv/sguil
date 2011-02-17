@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.45 2011/02/17 03:13:52 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.46 2011/02/17 04:26:20 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -123,6 +123,7 @@ proc ClientCmdRcvd { socketID } {
 }
 
 proc ClientExitClose { socketID } {
+
   global clientList  clientMonitorSockets validSockets socketInfo sensorUsers
 
   set userName [lindex $socketInfo($socketID) 2]
