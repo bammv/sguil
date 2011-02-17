@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.65 2011/02/17 03:57:51 bamm Exp $
+# $Id: extdata.tcl,v 1.66 2011/02/17 04:15:06 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -525,21 +525,17 @@ proc CreateXscriptWin { winName } {
     $winName.sText tag configure hdrTag -foreground black -background "#00FFFF"
     $winName.sText tag configure srcTag -foreground blue
     $winName.sText tag configure dstTag -foreground red
-    set dataSearchFrame [frame $winName.dataSearchFrame -bd 0]
-    set dataSearchText [entryfield $dataSearchFrame.dataSearchText -width 20 -background white]
-    set dataSearchButton [button $dataSearchFrame.dataSearchButton -text "Search Transcript"\
-	    -command "SearchXscript $winName"]
-    set dataSearchCaseCheck [checkbutton $dataSearchFrame.dataSearchCaseCheck -variable dataSearchCase -text "NoCase"]
-    pack $dataSearchText $dataSearchButton $dataSearchCaseCheck -side left -fill x
     
   scrolledtext $winName.debug -vscrollmode dynamic -hscrollmode none -wrap word\
    -visibleitems 85x5 -sbwidth 10 -labeltext "Debug Messages" -textbackground lightblue
   set termButtonFrame [frame $winName.termButtonsFrame]
+    button $termButtonFrame.searchButton -text "Search" -command "SearchDialog $winName" 
     button $termButtonFrame.abortButton -text "Abort " -command "AbortXscript $winName" 
-    button $termButtonFrame.closeButton -text "Close" -command "destroy $winName"
-    pack $termButtonFrame.abortButton $termButtonFrame.closeButton -side left -padx 0 -expand true
+    button $termButtonFrame.closeButton -text "Close" -command "CleanupXscriptWin $winName"
+    pack $termButtonFrame.searchButton $termButtonFrame.abortButton $termButtonFrame.closeButton \
+     -side left -padx 0 -expand true
   pack $winName.menubutton -side top -anchor w
-  pack $winName.sText $termButtonFrame $winName.debug $winName.dataSearchFrame\
+  pack $winName.sText $termButtonFrame $winName.debug \
    -side top -fill both -expand true
 }
 proc AbortXscript { winName } {
@@ -547,51 +543,33 @@ proc AbortXscript { winName } {
   SendToSguild [list AbortXscript $winName]
 }
 
-proc SearchXscript { winName } {
-    global dataSearchCase
-    set searchWidget $winName.sText
-    $searchWidget tag delete highlight
-    set searchtext [$winName.dataSearchFrame.dataSearchText get]
-    if {$searchtext == "" || $searchtext == "\n"} {
-	return
-    }
-    regsub -all {\n} $searchtext {} searchtext
-    set searchRegexp ""
-    for {set i 0} { $i < [string length $searchtext] } { incr i } {
-	set searchRegexp "${searchRegexp}[string range $searchtext $i $i]\\n*"
-    }
-    set stop 1
-    set nextchar 0
-    set textinds {}
-    while {$stop == 1} {
-	set inds {}
-	if { $dataSearchCase == 0 } {
-	    set stop [regexp -start $nextchar  -indices -- $searchRegexp [$searchWidget get 0.0 end-1c] inds]
-	} else {
-	    set stop [regexp -nocase -start $nextchar  -indices -- $searchRegexp [$searchWidget get 0.0 end-1c] inds]
-	}
-	set nextchar [expr [lindex $inds 1] +1]
-	if {$stop == 1 } {
-	    foreach index $inds {
-		lappend textinds [$searchWidget index "1.0 +$index chars"]
-	    }
-	}
-    }    
-    set i 0
-    puts $textinds
-    if { [llength $textinds] == 0 } { 
-	InfoMessage "Search string $searchtext not found."
-	return 
-    }
+proc SearchDialog { winName } {
 
-    while {$i < [llength $textinds] } {
-	$searchWidget tag add highlight [lindex $textinds $i] "[lindex $textinds [expr $i + 1]] + 1 chars"
-    set i [expr $i + 2] 
+    set dg ${winName}dg
+
+    if { ![winfo exists $dg] } {
+
+        iwidgets::finddialog $dg \
+         -textwidget $winName.sText \
+         -patternbackground yellow \
+         -patternforeground red
+
+        wm title $dg "$winName - Search"
+
     }
     
-    $searchWidget tag configure highlight -background yellow
-    $searchWidget see [lindex $textinds 0]
+    $dg activate
+
 }
+
+proc CleanupXscriptWin { winName } {
+
+    if { [winfo exists $winName] } { destroy $winName }
+    set dg ${winName}dg
+    if { [winfo exists $dg] } { destroy $dg }
+
+}
+
 proc XscriptMainMsg { winName data } {
   global XSCRIPTDATARCVD SESSION_STATE
   if { ! [winfo exist $winName] } {
