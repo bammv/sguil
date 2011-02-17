@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.28 2011/02/17 03:13:52 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.29 2011/02/17 03:53:00 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global agentSensorNameArray validSensorSockets
@@ -33,7 +33,7 @@ proc SensorCmdRcvd { socketID } {
       RegisterAgent      { RegisterAgent $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
       GenericEvent       { GenericEvent $socketID [lrange $data 1 end] }
       PadsAsset          { ProcessPadsAsset [lindex $data 1] }
-      SancpFile          { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] }
+      SancpFile          { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
       AgentInit          { AgentInit $socketID [lindex $data 1] [lindex $data 2] }
       BarnyardInit       { BarnyardInit $socketID [lindex $data 1] [lindex $data 2] }
       AgentLastCidReq    { AgentLastCidReq $socketID [lindex $data 1] [lindex $data 2] }
@@ -72,13 +72,16 @@ proc BinCopyFinished { socketID outFileID outFile {callback {}} {error {}} } {
 
 }
 
-proc RcvSancpFile { socketID fileName bytes } {
+proc RcvSancpFile { socketID sensorID fileName bytes } {
 
-    global TMP_LOAD_DIR 
+    global TMP_LOAD_DIR agentStatusList
 
     set sancpFile $TMP_LOAD_DIR/$fileName
     set callback [list ProcessSancpUpload $sancpFile socketID]
     RcvBinCopy $socketID $sancpFile $bytes
+    if [info exists agentStatusList($sensorID)] {
+        set agentStatusList($sensorID) [lreplace $agentStatusList($sensorID) 3 3 [GetCurrentTimeStamp]]
+    }
 
 }
 

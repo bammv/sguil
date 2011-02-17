@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sancp_agent.tcl,v 1.12 2011/02/17 02:55:48 bamm Exp $ #
+# $Id: sancp_agent.tcl,v 1.13 2011/02/17 03:53:00 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -64,7 +64,7 @@ proc CleanMsg { msg } {
 proc CheckForSancpFiles {} {
 
     global DEBUG SANCP_DIR SENSOR_ID CONNECTED SANCP_CHECK_DELAY_IN_MSECS
-    global HOSTNAME SANCPFILEWAIT
+    global HOSTNAME SANCPFILEWAIT 
 
     # Have to have a sensor ID before we can send a sancp file.
     if { ![info exists SENSOR_ID] || !$CONNECTED } {
@@ -133,7 +133,7 @@ proc CheckForSancpFiles {} {
 
 proc UploadSancpFile { filePath fileSize } {
 
-    global SERVER_HOST SERVER_PORT DEBUG VERSION HOSTNAME NET_GROUP TMP_DIR
+    global SERVER_HOST SERVER_PORT DEBUG VERSION HOSTNAME NET_GROUP TMP_DIR SENSOR_ID
 
     # Connect to server and establish the data channel
     if { [catch {set dataChannelID [socket $SERVER_HOST $SERVER_PORT]} ] > 0} {
@@ -195,7 +195,7 @@ proc UploadSancpFile { filePath fileSize } {
         }
 
         # Notify sguild a raw data is coming.
-        set cmd [list SancpFile [file tail $filePath] $fileSize]
+        set cmd [list SancpFile $SENSOR_ID [file tail $filePath] $fileSize]
         if {$DEBUG} { puts "Sending Sguild: $cmd" }
         if [catch {puts $dataChannelID $cmd} tmpError] {
 
