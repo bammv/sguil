@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.29 2011/02/17 02:13:50 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.30 2011/02/17 03:15:42 bamm Exp $ #
 
 # Get the sid and cid for the agent. Create it if it doesn't exist. 
 # Send the agent [AgentSid {type} {sid}]
@@ -231,38 +231,6 @@ proc UpdateLastPcapTime { socketID timestamp } {
 
         set agentStatusList($sid) [lreplace $agentStatusList($sid) 3 3 $timestamp]
 
-    }
-
-}
-
-proc ConfirmSsnFile { sensorName fileName } {
-
-    global agentSocketArray agentSensorNameArray
-
-    if { [array exists agentSocketArray] && [info exists agentSocketArray($sensorName)]} {
-    
-        SendSensorAgent $agentSocketArray($sensorName) [list ConfirmSsnFile $fileName]
-    
-    } else { 
-    
-        after 5000 ConfirmSsnFile $sensorName $fileName
-    
-    }
-
-}
-
-proc ConfirmPortscanFile { sensorName fileName } {
-
-    global agentSocketArray agentSensorNameArray
-
-    if { [array exists agentSocketArray] && [info exists agentSocketArray($sensorName)]} {
-    
-        SendSensorAgent $agentSocketArray($sensorName) [list ConfirmPortscanFile $fileName]
-    
-    } else { 
-    
-        after 5000 ConfirmPortscanFile $sensorName $fileName
-    
     }
 
 }

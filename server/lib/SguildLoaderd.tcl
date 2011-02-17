@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.29 2011/02/17 03:13:52 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.30 2011/02/17 03:15:42 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -38,7 +38,6 @@ proc ForkLoader {} {
                 # Here the cmds the loaderd knows
                 switch -exact -- $cmd {
   
-                    LoadSsnFile    { LoadSsnFile [lindex $data 1] [lindex $data 2] [lindex $data 3] }
                     LoadSancpFile  { LoadSancpFile [lindex $data 1] [lindex $data 2] [lindex $data 3] }
                     default        { LogMessage "Unknown command received from sguild: $cmd" }
 
@@ -80,7 +79,6 @@ proc ForkLoader {} {
                 switch -exact -- $cmd {
   
                     ConfirmSancpFile    { ConfirmSancpFile [lindex $data 1] [lindex $data 2] }
-                    ConfirmSsnFile      { ConfirmSsnFile [lindex $data 1] [lindex $data 2] }
                     default             { LogMessage "Unknown command received from loaderd: $cmd" }
 
                 }
@@ -282,22 +280,6 @@ proc LoadFile { fileName table } {
     }
 
     InfoMessage "loaderd: Loaded $fileName into the table $table."
-
-}
-
-proc LoadSsnFile { sensor filename date } {
-
-    global loaderdWritePipe
-
-    # Not doing anything with the date yet
-    LoadFile $filename sessions
-
-    if [catch { puts $loaderdWritePipe [list ConfirmSsnFile $sensor [file tail $filename]] } tmpError] {
-        LogMessage "ERROR: $tmpError"
-    }
-    if [catch {flush $loaderdWritePipe} tmpError] {
-        LogMessage "ERROR: $tmpError"
-    }
 
 }
 
