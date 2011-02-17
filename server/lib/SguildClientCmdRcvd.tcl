@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.43 2008/09/21 02:58:49 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.44 2011/02/17 03:09:09 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -99,8 +99,6 @@ proc ClientCmdRcvd { socketID } {
       WiresharkRequest    { eval $clientCmd $socketID [lrange $data 1 end] }
 
       AbortXscript        { $clientCmd $socketID [lindex $data 1] }
-
-      LoadNessusReports   { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
 
       GetOpenPorts        { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
 
@@ -467,44 +465,3 @@ proc SendCurrentEvents { socketID } {
     }
 
 }
-
-proc LoadNessusReports { socketID filename table bytes} {
-    global TMPDATADIR sguildWritePipe userIDArray
-    InfoMessage "Receiving nessus file $filename."
-    set NESSUS_OUTFILE $TMPDATADIR/$filename
-    set outFileID [open $NESSUS_OUTFILE w]
-    fconfigure $outFileID -translation binary
-    fconfigure $socketID -translation binary
-    fcopy $socketID $outFileID -size $bytes
-    close $outFileID
-    fconfigure $socketID -encoding utf-8 -translation {auto crlf}
-    InfoMessage "Loading $filename into DB."
-    if { $table == "main" } {
-	set NESSUS_OUTFILE2 "$TMPDATADIR/tmp${filename}"
-	set outFileID [open $NESSUS_OUTFILE2 w]
-	set uid $userIDArray($socketID)
-	for_file line $NESSUS_OUTFILE {
-	    if {$line != ""} {
-		regsub {^\|\|} $line "||${uid}|" line
-		puts $outFileID $line
-	    }
-	}
-	close $outFileID
-	file delete $NESSUS_OUTFILE
-	file copy -force $NESSUS_OUTFILE2 $NESSUS_OUTFILE
-	
-        set cmd "LOAD DATA LOCAL INFILE '$NESSUS_OUTFILE' INTO TABLE nessus FIELDS TERMINATED\
-                BY '|' LINES TERMINATED BY '||' STARTING BY '||'"
-    } else {
-        set cmd "LOAD DATA LOCAL INFILE '$NESSUS_OUTFILE' INTO TABLE nessus_data FIELDS TERMINATED\
-                 BY '|' LINES TERMINATED BY '||'STARTING BY '||'"
-    }
-
-    # The loader child proc does the LOAD for us.
-    puts $sguildWritePipe [list LoadNessusData $NESSUS_OUTFILE $cmd]
-    flush $sguildWritePipe
-    puts $socketID "InfoMessage Nessus Data sent to loader.  Check server debug for any loading errors."
-
-}
-
-

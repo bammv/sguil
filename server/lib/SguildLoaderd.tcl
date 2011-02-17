@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.27 2010/09/15 23:41:09 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.28 2011/02/17 03:09:09 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -41,7 +41,6 @@ proc ForkLoader {} {
                     LoadPSFile     { LoadPSFile [lindex $data 1] [lindex $data 2] }
                     LoadSsnFile    { LoadSsnFile [lindex $data 1] [lindex $data 2] [lindex $data 3] }
                     LoadSancpFile  { LoadSancpFile [lindex $data 1] [lindex $data 2] [lindex $data 3] }
-                    LoadNessusData { LoadNessusData [lindex $data 1] [lindex $data 2] }
                     default        { LogMessage "Unknown command received from sguild: $cmd" }
 
                 }
@@ -287,21 +286,6 @@ proc LoadFile { fileName table } {
     InfoMessage "loaderd: Loaded $fileName into the table $table."
 
 }
-
-proc LoadNessusData { fileName loadCmd } {
-
-    global  LOADERD_DB_ID
-
-    if [catch {mysqlexec $LOADERD_DB_ID $loadCmd} execResults] {
-        ErrorMessage "ERROR: loaderd: $execResults"
-    }
-                                                                                                                                   
-    # Delete the tmpfile
-    if [catch {file delete $fileName} tmpError] {
-        ErrorMessage "ERROR: loaderd: $tmpError"
-    }
-                                                                                                                                   
-}            
 
 proc LoadPSFile { sensor filename } {
 
