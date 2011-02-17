@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.256 2011/02/17 03:57:51 bamm Exp $ #
+# $Id: sguil.tk,v 1.257 2011/02/17 04:01:06 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2204,7 +2204,6 @@ set topFrame [frame .topFrame]
     $fileList add command -label "Exit" -command CleanExit
   set queryList [menu $queryMenu.menu -tearoff 0]
     $queryList add command -label "Query Event Table" -command "QueryRequest event empty"
-    #$queryList add command -label "Query Sessions Table" -command "QueryRequest sessions empty"
     $queryList add command -label "Query Sancp Table" -command "QueryRequest sancp empty"
     $queryList add command -label "Standard Queries" -command "StdQuery"
     $queryList add command -label "Query Builder" -command "InvokeQryBuild empty empty"
@@ -2899,12 +2898,9 @@ menu $ipQueryMenu.dshieldIPMenu -tearoff 0 -background $SELECTBACKGROUND -foregr
 
 foreach { currentMenu subcommand } { .ipQueryMenu.quickMenu "quick" .ipQueryMenu.advancedMenu "build" } {
     $currentMenu add cascade -label "Query Event Table" -menu $currentMenu.eventMenu
-    #$currentMenu add cascade -label "Query Sessions Table" -menu $currentMenu.sessionsMenu
     $currentMenu add cascade -label "Query Sancp Table" -menu $currentMenu.sancpMenu
     $currentMenu add cascade -label "Query PADS Table" -menu $currentMenu.padsMenu
     menu $currentMenu.eventMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
-        -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
-    menu $currentMenu.sessionsMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
         -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
     menu $currentMenu.sancpMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
         -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
@@ -2917,12 +2913,6 @@ foreach { currentMenu subcommand } { .ipQueryMenu.quickMenu "quick" .ipQueryMenu
     $currentMenu.eventMenu add command -label "Query RT SrcIP" -command "QueryRequest event srcip RT $subcommand"
     $currentMenu.eventMenu add command -label "Query RT DstIP" -command "QueryRequest event dstip RT $subcommand"
     $currentMenu.eventMenu add command -label "Query RT Src To Dst" -command "QueryRequest event src2dst RT $subcommand"
-    $currentMenu.sessionsMenu add command -label "Query SrcIP" -command "QueryRequest sessions srcip normal $subcommand"
-    $currentMenu.sessionsMenu add command -label "Query SrcIP/1 hour" -command "QueryRequest sessions srcip hour $subcommand"
-    $currentMenu.sessionsMenu add command -label "Query DstIP" -command "QueryRequest sessions dstip normal $subcommand"
-    $currentMenu.sessionsMenu add command -label "Query DstIP/1 hour" -command "QueryRequest sessions dstip hour $subcommand"
-    $currentMenu.sessionsMenu add command -label "Query Src To Dst" -command "QueryRequest sessions src2dst normal $subcommand"
-    $currentMenu.sessionsMenu add command -label "Query Src To Dst/1 hour" -command "QueryRequest sessions src2dst hour $subcommand"
     $currentMenu.sancpMenu add command -label "Query SrcIP" -command "QueryRequest sancp srcip normal $subcommand"
     $currentMenu.sancpMenu add command -label "Query SrcIP/1 Hour" -command "QueryRequest sancp srcip hour $subcommand"
     $currentMenu.sancpMenu add command -label "Query DstIP" -command "QueryRequest sancp dstip normal $subcommand"
