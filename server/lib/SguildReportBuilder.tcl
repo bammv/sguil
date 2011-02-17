@@ -1,4 +1,4 @@
-# $Id: SguildReportBuilder.tcl,v 1.4 2008/02/20 06:06:19 bamm Exp $ #
+# $Id: SguildReportBuilder.tcl,v 1.5 2011/02/17 03:13:52 bamm Exp $ #
 
 #
 # ReportBuilder:  Receive multiple data requests from the client for report building
@@ -37,19 +37,6 @@ proc ReportBuilder { socketID type sid cid } {
 
             QueryDB $socketID {REPORT PAYLOAD} $query
         }
-        PORTSCAN {
-            set MAX_PS_ROWS 200
-            set timestamp $sid
-            set srcIP $cid
-            if { $MAX_PS_ROWS == 0 } {
-                set query\
-                    "SELECT * FROM portscan WHERE timestamp > '$timestamp' AND src_ip='$srcIP'"
-            } else {
-                set query\
-                    "SELECT * FROM portscan WHERE timestamp > '$timestamp' AND src_ip='$srcIP' LIMIT $MAX_PS_ROWS"
-            }
-            QueryDB $socketID {REPORT PORTSCAN} $query
-       }
        IP {
             set query\
                 "SELECT INET_NTOA(src_ip), INET_NTOA(dst_ip), ip_ver, ip_hlen, ip_tos, ip_len, ip_id,\

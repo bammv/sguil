@@ -1,4 +1,4 @@
-# $Id: SguildLoaderd.tcl,v 1.28 2011/02/17 03:09:09 bamm Exp $ #
+# $Id: SguildLoaderd.tcl,v 1.29 2011/02/17 03:13:52 bamm Exp $ #
 
 proc ForkLoader {} {
 
@@ -38,7 +38,6 @@ proc ForkLoader {} {
                 # Here the cmds the loaderd knows
                 switch -exact -- $cmd {
   
-                    LoadPSFile     { LoadPSFile [lindex $data 1] [lindex $data 2] }
                     LoadSsnFile    { LoadSsnFile [lindex $data 1] [lindex $data 2] [lindex $data 3] }
                     LoadSancpFile  { LoadSancpFile [lindex $data 1] [lindex $data 2] [lindex $data 3] }
                     default        { LogMessage "Unknown command received from sguild: $cmd" }
@@ -82,7 +81,6 @@ proc ForkLoader {} {
   
                     ConfirmSancpFile    { ConfirmSancpFile [lindex $data 1] [lindex $data 2] }
                     ConfirmSsnFile      { ConfirmSsnFile [lindex $data 1] [lindex $data 2] }
-                    ConfirmPortscanFile { ConfirmPortscanFile [lindex $data 1] [lindex $data 2] }
                     default             { LogMessage "Unknown command received from loaderd: $cmd" }
 
                 }
@@ -287,24 +285,6 @@ proc LoadFile { fileName table } {
 
 }
 
-proc LoadPSFile { sensor filename } {
-
-    global loaderdWritePipe
-
-    if { ![file exists $filename] } { return }
-
-    # Not doing anything with the date yet
-    LoadFile $filename portscan
-
-    if [catch { puts $loaderdWritePipe [list ConfirmPortscanFile $sensor [file tail $filename]] } tmpError] {
-        LogMessage "ERROR: $tmpError"
-    }
-    if [catch {flush $loaderdWritePipe} tmpError] {
-        LogMessage "ERROR: $tmpError"
-    }
-
-}
-
 proc LoadSsnFile { sensor filename date } {
 
     global loaderdWritePipe
@@ -364,17 +344,6 @@ proc CheckLoaderDir {} {
         LoadSancpFile $sensorName $fileName $date
 
     }
-
-
-    # Load portscan files
-    foreach fileName [glob -nocomplain $TMP_LOAD_DIR/*portscan_log*] {
-
-        set splitFile [split [file tail $fileName] .]
-        set sensorName [lindex $splitFile 0]
-        LoadPSFile $sensorName $fileName
-
-    }
-
 
     after 5000 CheckLoaderDir
  

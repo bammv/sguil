@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.27 2011/02/17 02:13:50 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.28 2011/02/17 03:13:52 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global agentSensorNameArray validSensorSockets
@@ -34,7 +34,6 @@ proc SensorCmdRcvd { socketID } {
       GenericEvent       { GenericEvent $socketID [lrange $data 1 end] }
       PadsAsset          { ProcessPadsAsset [lindex $data 1] }
       SancpFile          { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] }
-      PSFile             { RcvPortscanFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
       AgentInit          { AgentInit $socketID [lindex $data 1] [lindex $data 2] }
       BarnyardInit       { BarnyardInit $socketID [lindex $data 1] [lindex $data 2] }
       AgentLastCidReq    { AgentLastCidReq $socketID [lindex $data 1] [lindex $data 2] }
@@ -95,22 +94,6 @@ proc ProccessSancpUpload { fileName socketID } {
     #if [info exists agentStatusList($sid)] {
     #    set agentStatusList($sid) [lreplace $agentStatusList($sid) 3 3 [GetCurrentTimeStamp]]
     #}
-
-}
-
-proc RcvPortscanFile { socketID sensorName fileName bytes } {
-
-    global TMPDATADIR TMP_LOAD_DIR sguildWritePipe
-
-    InfoMessage "Receiving portscan file $fileName."
-    set PS_OUTFILE $TMP_LOAD_DIR/${sensorName}.${fileName}
-    # Copy file from sensor_agent
-    RcvBinCopy $socketID $PS_OUTFILE $bytes
-    ConfirmPortscanFile $sensorName $fileName
-
-    # The loader child proc does the LOAD for us.
-    #puts $sguildWritePipe [list LoadPSFile $sensorName $PS_OUTFILE]
-    #flush $sguildWritePipe
 
 }
 

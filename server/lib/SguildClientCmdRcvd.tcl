@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.44 2011/02/17 03:09:09 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.45 2011/02/17 03:13:52 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -251,28 +251,6 @@ proc RuleRequest { socketID event_id sensor genID sigID sigRev } {
 
     }
 
-}
-
-proc GetPSData { socketID timestamp srcIP MAX_PS_ROWS } {
-  global DBNAME DBUSER DBPASS DBPORT DBHOST
-  if { $MAX_PS_ROWS == 0 } {
-    set query\
-    "SELECT * FROM portscan WHERE timestamp > '$timestamp' AND src_ip='$srcIP'"
-  } else {
-    set query\
-    "SELECT * FROM portscan WHERE timestamp > '$timestamp' AND src_ip='$srcIP' LIMIT $MAX_PS_ROWS"
-  }
-  InfoMessage "Getting PS data: $query"
-  if {$DBPASS == ""} {
-    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT]
-  } else {
-    set dbSocketID [mysqlconnect -host $DBHOST -db $DBNAME -user $DBUSER -port $DBPORT -password $DBPASS]
-  }
-  foreach row [mysqlsel $dbSocketID "$query" -list] {
-    catch {SendSocket $socketID [list PSDataResults $row]} tmpError
-  }
-  mysqlclose $dbSocketID
-  catch {SendSocket $socketID [list PSDataResults DONE]} tmpError
 }
 
 proc EventHistoryRequest { socketID winName sid cid } {
