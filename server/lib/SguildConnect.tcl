@@ -1,11 +1,12 @@
-# $Id: SguildConnect.tcl,v 1.24 2011/02/17 04:26:20 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.25 2011/02/18 23:30:55 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
 #
 proc ClientConnect { socketID IPAddr port } {
 
-    global CLIENT_PIDS
+    global socketInfo VERSION 
+    #global CLIENT_PIDS
 
     LogMessage "Client Connect: $IPAddr $port $socketID"
   
@@ -19,11 +20,26 @@ proc ClientConnect { socketID IPAddr port } {
 
     }
 
-    set childPid [ForkClient $socketID $IPAddr $port]
-    if { $childPid != 0 } { lappend CLIENT_PIDS $childPid }
+    # Valid client
+    LogMessage "Valid client access: $IPAddr"
+    
+    set socketInfo($socketID) [list $IPAddr $port]
+    fconfigure $socketID -buffering line
+    fileevent $socketID readable [list ClientCmdRcvd $socketID]
+
+    # Send version info
+    if [catch {SendSocket $socketID "$VERSION"} sendError ] { return }
+
+    # Give the user 90 seconds to send login info
+    after 90000 CheckLoginStatus $socketID $IPAddr $port
+
+    # Not used yet
+    #set childPid [ForkClient $socketID $IPAddr $port]
+    #if { $childPid != 0 } { lappend CLIENT_PIDS $childPid }
 
 }
 
+# Not used yet
 proc ForkClient { socketID IPAddr port } {
 
     global socketInfo VERSION

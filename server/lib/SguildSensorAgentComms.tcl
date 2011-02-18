@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.30 2011/02/17 03:15:42 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.31 2011/02/18 23:30:55 bamm Exp $ #
 
 # Get the sid and cid for the agent. Create it if it doesn't exist. 
 # Send the agent [AgentSid {type} {sid}]
@@ -226,6 +226,7 @@ proc UpdateLastPcapTime { socketID timestamp } {
     global agentStatusList agentSocketInfo
 
     set sid [lindex $agentSocketInfo($socketID) 0]
+
     # Update last pcap written time
     if [info exists agentStatusList($sid)] {
 
