@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.260 2011/02/21 21:54:11 bamm Exp $ #
+# $Id: sguil.tk,v 1.261 2011/02/21 22:02:45 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -97,6 +97,7 @@ if [catch {package require Iwidgets} iwidgetsVersion] {
 namespace import -force iwidgets::panedwindow
 namespace import -force iwidgets::tabnotebook
 namespace import -force iwidgets::scrolledtext
+namespace import -force iwidgets::scrolledframe
 namespace import -force iwidgets::optionmenu
 namespace import -force iwidgets::buttonbox
 namespace import -force iwidgets::entryfield
@@ -1847,11 +1848,9 @@ proc SensorList { sensorList } {
   pack $welcomeFrame -side top -padx 5 -pady 10
   if { $sensorList != "0none0" } {
     # Now a frame to contain the checkbutton frames
-    set checkButtonFrame [frame $sensorSelectWindow.checkButtonFrame -borderwidth 1 -background black]
-    pack $checkButtonFrame -side top -padx 5 -pady 10
-    set winLabel [label $checkButtonFrame.label -text "Select Network(s) to Monitor"\
-     -foreground navy]
-    pack $winLabel -side top -fill both -expand true
+    set checkButtonSFrame [scrolledframe $sensorSelectWindow.checkButtonFrame -borderwidth 1 -vscrollmode dynamic -hscrollmode none -sbwidth 10 -labeltext "Select Network(s) to Monitor"]
+    pack $checkButtonSFrame -side top -expand 1 -fill both
+    set checkButtonFrame [$checkButtonSFrame childsite]
     # We create a new frame for every 5 sensors to keep the look clean.
     set i 0
     set frameNumber 0
