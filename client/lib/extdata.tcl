@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.66 2011/02/17 04:15:06 bamm Exp $
+# $Id: extdata.tcl,v 1.67 2011/02/21 14:07:31 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -399,6 +399,9 @@ il.conf. Resolution aborted."
 	set tok [dns::resolve $hostname -nameserver $nameserver]
     }
 
+    # Wait for the request to finish
+    dns::wait $tok
+
     set ip [dns::address $tok]
     dns::cleanup $tok
     if { $ip == "" } { set ip "Unknown" }
@@ -458,6 +461,9 @@ proc GetHostbyAddr { ip } {
         set tok [dns::resolve $ip -nameserver $nameserver]
 
     }
+
+    # Wait for the request to finish
+    dns::wait $tok
 
     set hostname [dns::name $tok]
     dns::cleanup $tok

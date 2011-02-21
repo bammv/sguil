@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.258 2011/02/21 12:50:16 bamm Exp $ #
+# $Id: sguil.tk,v 1.259 2011/02/21 14:07:31 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -50,6 +50,20 @@ if [catch {package require dns 1.3.1} dnsVersion] {
     puts ""
     puts "$dnsVersion"
     CleanExit
+
+}
+
+# Configure dns to use udp if tcludp exists
+if { [catch {package require udp} udpVersion] } {
+
+    puts "DEBUG #### Using tcp dns"
+    ::dns::configure -protocol tcp -port 53 -search {} -timeout 30000
+
+} else {
+
+    puts "DEBUG #### Using udp dns"
+    ::dns::configure -protocol udp -port 53 -search {} -timeout 30000
+
 }
 
 # Load ip libs from tcllib
@@ -73,7 +87,6 @@ if [catch {package require smtp 1.4.3} smtpVersion] {
     CleanExit
 
 }
-
 
 # Load iwidgets and namespaces
 if [catch {package require Iwidgets} iwidgetsVersion] {
