@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.261 2011/02/21 22:02:45 bamm Exp $ #
+# $Id: sguil.tk,v 1.262 2011/02/21 22:48:36 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2253,7 +2253,6 @@ set topFrame [frame .topFrame]
       $summaryMenu add command -label "Normal" -command {EmailEvents 0 0}
       $summaryMenu add command -label "Sanitized" -command {EmailEvents 0 1}
     $reportList add command -label "Custom Reports" -command "PHBReport"
-    $reportList add command -label "Import Nessus Report" -command "NessusLoad"
   #$menuList add command -label "License" -command "DisplayLicense"
 
 
