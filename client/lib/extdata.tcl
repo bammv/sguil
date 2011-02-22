@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.67 2011/02/21 14:07:31 bamm Exp $
+# $Id: extdata.tcl,v 1.68 2011/02/22 13:27:11 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -419,6 +419,8 @@ il.conf. Resolution aborted."
 proc GetHostbyAddr { ip } {
 
     global EXT_DNS EXT_DNS_SERVER HOME_NET
+
+    if { $ip == "" } { return }
 
     if { $EXT_DNS } {
 
