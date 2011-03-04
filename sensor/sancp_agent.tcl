@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sancp_agent.tcl,v 1.13 2011/02/17 03:53:00 bamm Exp $ #
+# $Id: sancp_agent.tcl,v 1.14 2011/03/04 02:12:44 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -17,6 +17,7 @@ exec tclsh "$0" "$@"
 set VERSION "SGUIL-0.8.0"
 set CONNECTED 0
 set SANCPFILEWAIT 0
+set ACTIVE_COPY 0
 
 proc bgerror { errorMsg } {
                                                                                                                            
@@ -64,7 +65,7 @@ proc CleanMsg { msg } {
 proc CheckForSancpFiles {} {
 
     global DEBUG SANCP_DIR SENSOR_ID CONNECTED SANCP_CHECK_DELAY_IN_MSECS
-    global HOSTNAME SANCPFILEWAIT 
+    global HOSTNAME SANCPFILEWAIT ACTIVE_COPY MAX_COPY
 
     # Have to have a sensor ID before we can send a sancp file.
     if { ![info exists SENSOR_ID] || !$CONNECTED } {
@@ -77,7 +78,6 @@ proc CheckForSancpFiles {} {
 
     foreach fileName [glob -nocomplain $SANCP_DIR/stats.*.*] {
 
-
         if { [file exists $fileName] && [file size $fileName] > 0 } {
 
 
@@ -89,6 +89,9 @@ proc CheckForSancpFiles {} {
             } else {
 
                 foreach fdPair $newFiles {
+
+                    if { $ACTIVE_COPY >= $MAX_COPY } { vwait ACTIVE_COPY }
+                    incr ACTIVE_COPY
 
                     set tmpFile [lindex $fdPair 0]
                     set tmpDate [lindex $fdPair 1]
@@ -274,6 +277,8 @@ proc BinCopyToSguild { dataChannelID fileName } {
 
 proc BinCopyFinished { fileID dataChannelID fileName bytes {error  {}} } {
 
+    global ACTIVE_COPY
+
     # Copy finished
     catch {close $fileID}
     catch {close $dataChannelID}
@@ -285,6 +290,8 @@ proc BinCopyFinished { fileID dataChannelID fileName bytes {error  {}} } {
     }
 
     catch {file delete $fileName}
+    incr ACTIVE_COPY -1
+    puts "DEBUG #### Removed $fileName from queue ==> $ACTIVE_COPY"
 
 }
 
