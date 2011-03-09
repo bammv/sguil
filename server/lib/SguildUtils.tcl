@@ -1,4 +1,4 @@
-# $Id: SguildUtils.tcl,v 1.13 2008/02/20 06:06:19 bamm Exp $ #
+# $Id: SguildUtils.tcl,v 1.14 2011/03/09 04:59:12 bamm Exp $ #
 
 proc Daemonize {} {
     global PID_FILE env LOGGER
@@ -64,6 +64,25 @@ proc GetRandAlphaNumInt {} {
      set x [expr [random 74] + 48]
   }
   return $x
+}
+
+# Return a list of chars of length
+proc RandomString { length } {
+
+    # Characters that can be used to create the string
+    set chars "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789!@#$%^&*()"
+    # Number of chars
+    set num [string length $chars]
+
+    for {set i 0} {$i<$num} {incr i} {
+
+        set char [string index $chars [expr {int(rand()*$num)}]]
+        append results $char
+
+    }
+
+    return $results
+
 }
 
 #

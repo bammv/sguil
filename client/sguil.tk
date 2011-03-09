@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.262 2011/02/21 22:48:36 bamm Exp $ #
+# $Id: sguil.tk,v 1.263 2011/03/09 05:00:04 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -206,6 +206,7 @@ proc ServerCommandRcvd { socketID } {
       XscriptMainMsg { $serverCmd [lindex $data 1] [lindex $data 2] }
       WiresharkDataBase64 { $serverCmd [lindex $data 1] [lindex $data 2] }
       WiresharkDataPcap { $serverCmd $socketID [lindex $data 1] [lindex $data 2] }
+      PcapAvailable { $serverCmd $socketID [lindex $data 1] [lindex $data 2] }
       PassChange { $serverCmd [lindex $data 1] [lindex $data 2] }
       default { puts "Unrecognized command from $socketID: $data" }
     }

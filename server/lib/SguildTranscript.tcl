@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.19 2011/02/17 02:13:50 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.20 2011/03/09 04:59:12 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -63,9 +63,78 @@ proc WiresharkRequest { socketID sensor sensorID timestamp srcIP srcPort dstIP d
     }
   } else {
     # The data is archived locally.
-    SendWiresharkData $sensorDir/$rawDataFileName $TRANS_ID
+    PcapAvailable $sensorDir/$rawDataFileName $TRANS_ID
   }
                                                                                                             
+}
+
+# When a request pcap becomes available, notify the client
+proc PcapAvailable { fileName TRANS_ID } {
+
+    global transInfoArray pcapKeys
+
+    # Create a session key for the download
+    set sKey [RandomString 30]
+  
+    # Send the client a session key and file name to download
+    set clientSocketID [lindex $transInfoArray($TRANS_ID) 0]
+    SendSocket $clientSocketID [list PcapAvailable $sKey [file tail $fileName]] 
+
+    set pcapKeys(fileName,$sKey) $fileName
+    set pcapKeys(socketID,$sKey) $clientSocketID
+
+}
+
+proc SendPcap { socketID sKey } {
+
+    global pcapKeys
+
+    set fileName $pcapKeys(fileName,$sKey)
+    if { [catch {open $fileName r} fileID] } {
+
+        # Failed to open file
+        SendSocket $pcapKeys(socketID,$sKey) [list ErrorMessage "Failed to open ${fileName}: ${fileID}"]
+        unset pcapKeys(socketID,$sKey)
+        unset pcapKeys(fileName,$sKey)
+        return
+
+    }
+
+    fconfigure $socketID -translation binary
+    fconfigure $fileID -translation binary
+
+    if { [catch {fcopy $fileID $socketID \
+      -command [list PcapCopyFinished $fileID $socketID $sKey]} tmpError] } {
+
+        # fcopy failed
+        SendSocket $pcapKeys(socketID,$sKey) [list ErrorMessage "Failed to copy ${fileName}: ${tmpError}"]
+        catch {close $socketID}
+        unset pcapKeys(socketID,$sKey)
+        unset pcapKeys(fileName,$sKey)
+
+    } 
+
+}
+
+proc PcapCopyFinished { fileID socketID sKey bytes {error {}} } {
+
+    global pcapKeys
+
+    # Data copy finished
+    catch {close $fileID}
+    catch {close $socketID}
+
+    if { [string length $error] != 0 } {
+
+        # Error during copy
+        set fileName $pcapKeys(fileName,$sKey)
+        SendSocket $pcapKeys(socketID,$sKey) [list ErrorMessage "Failed to copy file ${fileName}: ${error}"]
+
+    }
+
+    unset pcapKeys(socketID,$sKey)
+    unset pcapKeys(fileName,$sKey)
+
 }
 
 proc SendWiresharkData { fileName TRANS_ID } {
@@ -197,7 +266,7 @@ proc RawDataFile { socketID fileName TRANS_ID bytes } {
 
     } else { 
 
-        set callback [list SendWiresharkData $outfile $TRANS_ID]
+        set callback [list PcapAvailable $outfile $TRANS_ID]
 
     }
 

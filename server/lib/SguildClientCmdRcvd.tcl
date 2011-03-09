@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.46 2011/02/17 04:26:20 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.47 2011/03/09 04:59:12 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -36,12 +36,15 @@ proc ClientCmdRcvd { socketID } {
     }
 
     # Check to make the client validated itself
-    if { $clientCmd != "ValidateUser" && $clientCmd != "PING" && $clientCmd != "VersionInfo" } {
+    if { $clientCmd != "ValidateUser" && \
+         $clientCmd != "PING" && \
+         $clientCmd != "VersionInfo" && \
+         $clientCmd != "SendPcap" } {
 
         if { [lsearch -exact $validSockets $socketID] < 0 } {
 
-            catch {SendSocket $socketID\
-             [list InfoMessage "Client does not appear to be logged in. Please exit and log back in."} tmpError
+            catch {SendSocket $socketID \
+             [list InfoMessage "Client does not appear to be logged in. Please exit and log back in."]} tmpError
 
             return
 
@@ -97,6 +100,8 @@ proc ClientCmdRcvd { socketID } {
       XscriptRequest      { eval $clientCmd $socketID [lrange $data 1 end] }
 
       WiresharkRequest    { eval $clientCmd $socketID [lrange $data 1 end] }
+
+      SendPcap            { $clientCmd $socketID [lindex $data 1] }
 
       AbortXscript        { $clientCmd $socketID [lindex $data 1] }
 

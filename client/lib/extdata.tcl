@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.68 2011/02/22 13:27:11 bamm Exp $
+# $Id: extdata.tcl,v 1.69 2011/03/09 05:00:05 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -625,6 +625,66 @@ proc XscriptDebugMsg { winName data } {
       $winName.debug see end
     }
 }
+
+proc PcapAvailable { socketID sKey fileName } {
+
+    global WIRESHARK_STORE_DIR WIRESHARK_PATH
+
+    set fileName $WIRESHARK_STORE_DIR/$fileName
+    if { [catch {open $fileName w} outfileID] } {
+
+        ErrorMessage "Error opening $fileName. $outfileID"
+        return
+
+    }
+
+    # Make a new connection to sguild.
+    if { [catch {ConnectToSguild} dataSocketID] } {
+
+        ErrorMessage "Failed to connect to sguild. Cannot copy pcap $fileName\n\n$dataSocketID"
+        return
+
+    }
+
+    puts $dataSocketID [list SendPcap $sKey]
+
+    fconfigure $dataSocketID -translation binary
+    fconfigure $outfileID -translation binary
+
+    if { [catch {fcopy $dataSocketID $outfileID \
+      -command [list PcapCopyFinished $fileName $outfileID $dataSocketID]} tmpError] } {
+
+        # fcopy failed
+        ErrorMessage "Failed to copy file. $tmpError"
+        catch {close $outfileID}
+        catch {close $dataSocketID}
+
+    }
+
+}
+
+proc PcapCopyFinished { fileName outfileID dataSocketID bytes {error {}} } {
+
+    global WIRESHARK_PATH
+
+    # Data copy finished
+    catch {close $outfileID}
+    catch {close $dataSocketID}
+
+    if { [string length $error] != 0 } {
+
+        ErrorMessage "Error during copy to $fileName. $error"
+
+    }
+
+    
+    eval exec $WIRESHARK_PATH -n -r $fileName &
+
+    InfoMessage\
+     "Raw file is stored in $fileName. Please delete when finished"
+
+}
+
 proc WiresharkDataPcap { socketID fileName bytes } {
   global WIRESHARK_STORE_DIR WIRESHARK_PATH
   set outFileID [open $WIRESHARK_STORE_DIR/$fileName w]
