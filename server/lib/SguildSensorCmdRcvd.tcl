@@ -1,10 +1,11 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.29 2011/02/17 03:53:00 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.30 2011/03/10 22:03:33 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global agentSensorNameArray validSensorSockets
-  if { [eof $socketID] || [catch {gets $socketID data}] } {
+  if { [eof $socketID] || [catch {gets $socketID data} getsError] } {
     # Socket closed
     catch { close $socketID } closeError
+    if { [info exists getsError] } { LogMessage "Error from $socketID: $getsError" }
     InfoMessage "Socket $socketID closed"
     if { [info exists agentSensorNameArray($socketID)] } {
       CleanUpDisconnectedAgent $socketID
@@ -56,18 +57,29 @@ proc SensorCmdRcvd { socketID } {
 
 proc RcvBinCopy { socketID outFile bytes {callback {}} } {
 
-    set outFileID [open $outFile w]
-    fconfigure $outFileID -translation binary
-    fconfigure $socketID -translation binary
+    # Turn off the fileevent handler
+    fileevent $socketID readable {}
 
-    fcopy $socketID $outFileID -command [list BinCopyFinished $socketID $outFileID $outFile $callback]
+    # Open the output file for writing
+    set outFileID [open $outFile w]
+
+    # Binary transfer
+    fconfigure $outFileID -translation binary -encoding binary
+    fconfigure $socketID -translation binary -encoding binary
+
+    # Copy in the background
+    fcopy $socketID $outFileID -size $bytes -command [list BinCopyFinished $socketID $outFileID $outFile $callback]
 
 }
 
-proc BinCopyFinished { socketID outFileID outFile {callback {}} {error {}} } {
+proc BinCopyFinished { socketID outFileID outFile callback bytes {error {}} } {
+
+    if { $error != "" } { LogMessage "Error during background copy: $error" }
 
     catch {close $outFileID}
     CleanUpDisconnectedAgent $socketID
+
+    # Callback is what we do after the copy is finished.
     if { $callback != ""} { eval $callback }
 
 }

@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sancp_agent.tcl,v 1.14 2011/03/04 02:12:44 bamm Exp $ #
+# $Id: sancp_agent.tcl,v 1.15 2011/03/10 22:03:33 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -92,6 +92,7 @@ proc CheckForSancpFiles {} {
 
                     if { $ACTIVE_COPY >= $MAX_COPY } { vwait ACTIVE_COPY }
                     incr ACTIVE_COPY
+                    if { $DEBUG } { puts "$fileName started. $ACTIVE_COPY transfers in queue." }
 
                     set tmpFile [lindex $fdPair 0]
                     set tmpDate [lindex $fdPair 1]
@@ -277,7 +278,7 @@ proc BinCopyToSguild { dataChannelID fileName } {
 
 proc BinCopyFinished { fileID dataChannelID fileName bytes {error  {}} } {
 
-    global ACTIVE_COPY
+    global ACTIVE_COPY DEBUG
 
     # Copy finished
     catch {close $fileID}
@@ -291,7 +292,7 @@ proc BinCopyFinished { fileID dataChannelID fileName bytes {error  {}} } {
 
     catch {file delete $fileName}
     incr ACTIVE_COPY -1
-    puts "DEBUG #### Removed $fileName from queue ==> $ACTIVE_COPY"
+    if { $DEBUG } { puts "$fileName finished. $ACTIVE_COPY transfers in queue." }
 
 }
 

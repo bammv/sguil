@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: pcap_agent.tcl,v 1.12 2011/02/17 02:55:48 bamm Exp $ #
+# $Id: pcap_agent.tcl,v 1.13 2011/03/10 22:03:33 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -157,6 +157,8 @@ proc UploadRawFile { fileName TRANS_ID fileSize } {
 
 proc BinCopyToSguild { dataChannelID fileName } {
 
+    puts "DEBUG #### Sending file via $dataChannelID"
+
     if [ catch {open $fileName r} rFileID ] {
 
         # Error opening file
@@ -168,8 +170,8 @@ proc BinCopyToSguild { dataChannelID fileName } {
     }
 
     # Configure the socket for a binary xfer
-    fconfigure $rFileID -translation binary
-    fconfigure $dataChannelID -translation binary
+    fconfigure $rFileID -translation binary -encoding binary
+    fconfigure $dataChannelID -translation binary -encoding binary
 
     if [ catch {fcopy $rFileID $dataChannelID -command [list BinCopyFinished $rFileID $dataChannelID $fileName] } tmpError ] {
 
@@ -183,6 +185,8 @@ proc BinCopyToSguild { dataChannelID fileName } {
 
 proc BinCopyFinished { fileID dataChannelID fileName bytes {error  {}} } {
 
+    global DEBUG
+
     # Copy finished
     catch {close $fileID}
     catch {close $dataChannelID}
@@ -194,6 +198,7 @@ proc BinCopyFinished { fileID dataChannelID fileName bytes {error  {}} } {
     }
 
     catch {file delete $fileName}
+    if {$DEBUG} { puts "$fileName: Data copy finished. bytes -> $bytes" }
 
 }
 

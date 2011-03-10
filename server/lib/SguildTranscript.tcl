@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.20 2011/03/09 04:59:12 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.21 2011/03/10 22:03:33 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -269,6 +269,8 @@ proc RawDataFile { socketID fileName TRANS_ID bytes } {
         set callback [list PcapAvailable $outfile $TRANS_ID]
 
     }
+
+    puts "DEBUG #### callback -> $callback"
 
     RcvBinCopy $socketID $outfile $bytes $callback
 
