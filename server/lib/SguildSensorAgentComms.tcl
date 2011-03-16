@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.31 2011/02/18 23:30:55 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.32 2011/03/16 22:00:30 bamm Exp $ #
 
 # Get the sid and cid for the agent. Create it if it doesn't exist. 
 # Send the agent [AgentSid {type} {sid}]
@@ -12,18 +12,17 @@ proc RegisterAgent { socketID type sensorName netName } {
     # Add agent to a list of valid sockets
     lappend validSensorSockets $socketID
 
-    if { $type != "data" } {
+    # Data cnx stop here
+    if { $type == "data" } { return }
 
-        set sensorID [GetSensorID $sensorName $type $netName]
-        set maxCid [GetMaxCid $sensorID]
+    set sensorID [GetSensorID $sensorName $type $netName]
+    set maxCid [GetMaxCid $sensorID]
 
-        # Send agent id to the agent
-        SendSensorAgent $socketID [list AgentInfo $sensorName $type $netName $sensorID $maxCid]
+    # Send agent id to the agent
+    SendSensorAgent $socketID [list AgentInfo $sensorName $type $netName $sensorID $maxCid]
 
-        # Sid NetName Map
-        set sidNetNameMap($sensorID) $netName
-
-    }
+    # Sid NetName Map
+    set sidNetNameMap($sensorID) $netName
 
     # SensorName to SocketID mapping
     set agentSensorNameArray($socketID) $sensorName
@@ -40,8 +39,6 @@ proc RegisterAgent { socketID type sensorName netName } {
 
     }
 
-    # Data cnx stop here
-    if { $type == "data" } { return }
 
     set agentSocketInfo($socketID) [list $sensorID $sensorName $netName $type]
 

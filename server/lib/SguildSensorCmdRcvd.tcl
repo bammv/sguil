@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.30 2011/03/10 22:03:33 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.31 2011/03/16 22:00:30 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global agentSensorNameArray validSensorSockets
@@ -74,10 +74,18 @@ proc RcvBinCopy { socketID outFile bytes {callback {}} } {
 
 proc BinCopyFinished { socketID outFileID outFile callback bytes {error {}} } {
 
-    if { $error != "" } { LogMessage "Error during background copy: $error" }
+    global validSensorSockets
+
+    # Remove the agent socket from the valid (registered) list.
+    if [info exists validSensorSockets] {
+        set validSensorSockets [ldelete $validSensorSockets $socketID]
+    }
 
     catch {close $outFileID}
-    CleanUpDisconnectedAgent $socketID
+    catch {close $socketID}
+
+    if { $error != "" } { LogMessage "Error during background copy: $error" }
+
 
     # Callback is what we do after the copy is finished.
     if { $callback != ""} { eval $callback }
