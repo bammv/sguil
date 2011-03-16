@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.189 2011/02/17 04:26:20 bamm Exp $ #
+# $Id: sguild,v 1.190 2011/03/16 23:31:26 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -189,6 +189,9 @@ foreach arg $argv {
         -A { set state accessfile }
         -l { set state sguild_lib }
         -d { set state debug_level }
+        -U { set state user }
+        -G { set state group }
+        -L { set state log_dir }
         -adduser { set state adduser }
         -changepasswd { set state changepasswd }
         default { DisplayUsage $argv0 }
@@ -205,9 +208,18 @@ foreach arg $argv {
     changepasswd { set CHANGEPASSWD 1; set userName $arg; set state flag }
     accessfile { set ACCESS_FILE $arg; set state flag }
     debug_level { set DEBUG_OVERRIDE 1; set DEBUG_LEVEL $arg; set DEBUG $arg; set state flag }
+    user { set USER $arg; set state flag }
+    group { set GROUP $arg; set state flag }
+    log_dir { set LOG_DIR $arg; set state flag }
     default { DisplayUsage $argv0 }
   }
 }
+
+##################################
+
+# Do all priv account actions here.
+# Open log files/etc. Privs will be dropped after.
+
 
 # OpenSSL is a requirement
 set VERSION "$VERSION OPENSSL ENABLED"
@@ -293,6 +305,35 @@ if { [info exists CONF_FILE] } {
   }
 } else {
   DisplayUsage $argv0
+}
+
+##################################
+# Drop privs
+
+# Group first
+if { [info exists GROUP] } { 
+
+    if { [catch {id group $GROUP} tmpError] } {
+
+        # Failed
+        puts "ERROR: Unable to change group privs to $GROUP : $tmpError"
+        CleanExit 1
+
+    }
+
+}
+
+# Then user
+if { [info exists USER] } { 
+
+    if { [catch {id user $USER} tmpError] } {
+
+        # Failed
+        puts "ERROR: Unable to change user privs to $USER : $tmpError"
+        CleanExit 1
+
+    }
+
 }
 
 # Set sensor aggregation to 1 if not specified
