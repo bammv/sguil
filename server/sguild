@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.190 2011/03/16 23:31:26 bamm Exp $ #
+# $Id: sguild,v 1.191 2011/03/17 02:39:28 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -220,6 +220,49 @@ foreach arg $argv {
 # Do all priv account actions here.
 # Open log files/etc. Privs will be dropped after.
 
+set LOG_PATH /var/log/sguild
+if { ![file exists $LOG_PATH] } {
+
+    if { [catch {file mkdir $LOG_PATH} dirError] } {
+
+        puts "ERROR: Unable to create log dir $LOG_PATH : $dirError"
+        CleanExit 1
+
+    }
+
+}
+
+# Create client access log
+set CLIENT_LOG "$LOG_PATH/user.log"
+if { [catch {open $CLIENT_LOG a} createError] } {
+
+    puts "ERROR: Unable to create $CLIENT_LOG : $createError"
+    CleanExit 1
+
+}
+catch {close $CLIENT_LOG}
+
+# Change perms
+if { [info exists USER] } { 
+
+    if { [catch {chown $USER $CLIENT_LOG} tmpError] } {
+
+        puts "ERROR: Unable change owner to $USER for $CLIENT_LOG : $tmpError"
+        CleanExit 1
+
+    }
+
+}
+if { [info exists GROUP] } { 
+
+    if { [catch {chgrp $GROUP $CLIENT_LOG} tmpError] } {
+
+        puts "ERROR: Unable change group to $USER for $CLIENT_LOG : $tmpError"
+        CleanExit 1
+
+    }
+
+}
 
 # OpenSSL is a requirement
 set VERSION "$VERSION OPENSSL ENABLED"

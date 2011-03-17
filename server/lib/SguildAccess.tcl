@@ -1,4 +1,4 @@
-# $Id: SguildAccess.tcl,v 1.10 2011/02/17 04:26:20 bamm Exp $ #
+# $Id: SguildAccess.tcl,v 1.11 2011/03/17 02:39:29 bamm Exp $ #
 
 # Load up the access lists.
 proc LoadAccessFile { filename } {
@@ -312,6 +312,23 @@ proc ValidUserPassword { username password } {
 
 }
 
+proc LogClientAccess { message } {
+
+    global CLIENT_LOG
+
+    if { [catch {open $CLIENT_LOG a} fileID] } {
+
+        puts "ERROR: Unable to log access -> $message"
+        puts "ERROR: $fileID"
+        return
+
+    }
+
+    puts $fileID $message
+    catch {close $fileID}
+
+}
+
 proc ValidateUser { socketID username password } {
 
     global USERS_FILE validSockets socketInfo userIDArray
@@ -328,6 +345,9 @@ proc ValidateUser { socketID username password } {
         # Update the last login info in the DB
         DBCommand\
          "UPDATE user_info SET last_login='[GetCurrentTimeStamp]' WHERE uid=$userIDArray($socketID)"
+
+        # Log the access
+        LogClientAccess "[GetCurrentTimeStamp]: $socketID - $username logged in from $socketInfo($socketID)"
 
         # Mark the socket as valid
         lappend validSockets $socketID

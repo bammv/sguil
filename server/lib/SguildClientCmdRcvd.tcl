@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.47 2011/03/09 04:59:12 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.48 2011/03/17 02:39:29 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -133,6 +133,8 @@ proc ClientExitClose { socketID } {
 
   set userName [lindex $socketInfo($socketID) 2]
 
+  LogClientAccess "[GetCurrentTimeStamp]: $socketID - $userName logged out"
+
   if { [info exists clientList] } {
     set clientList [ldelete $clientList $socketID]
   }
@@ -154,6 +156,7 @@ proc ClientExitClose { socketID } {
     unset socketInfo($socketID)
     SendSystemInfoMsg sguild "User $tmpUserName has disconnected."
   }
+
 }
 
 proc UserMsgRcvd { socketID userMsg } {
