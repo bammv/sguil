@@ -1,4 +1,4 @@
-# $Id: SguildUtils.tcl,v 1.14 2011/03/09 04:59:12 bamm Exp $ #
+# $Id: SguildUtils.tcl,v 1.15 2011/05/29 15:17:32 bamm Exp $ #
 
 proc Daemonize {} {
     global PID_FILE env LOGGER
@@ -281,7 +281,7 @@ proc ErrorMessage { msg } {
     if { $DAEMON && [string length $LOGGER] > 0 } {
 	Syslog $msg err
     } else {
-	puts $msg
+	puts "[GetCurrentTimeStamp] $msg"
     }
     CleanExit 1
 }
@@ -295,7 +295,7 @@ proc InfoMessage { msg } {
 	if { $DAEMON && [string length $LOGGER] > 0 } {
 	    Syslog $msg info
 	} else {
-	    puts "pid([pid])  $msg"
+	    puts "[GetCurrentTimeStamp] pid([pid])  $msg"
 	}
     }
 }
@@ -309,7 +309,7 @@ proc LogMessage { msg } {
 	if { $DAEMON && [string length $LOGGER] > 0 } {
 	    Syslog $msg notice
 	} else {
-	    puts "pid([pid])  $msg"
+	    puts "[GetCurrentTimeStamp] pid([pid])  $msg"
 	}
     }
 }

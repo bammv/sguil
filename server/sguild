@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.191 2011/03/17 02:39:28 bamm Exp $ #
+# $Id: sguild,v 1.192 2011/05/29 15:17:32 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -191,7 +191,7 @@ foreach arg $argv {
         -d { set state debug_level }
         -U { set state user }
         -G { set state group }
-        -L { set state log_dir }
+        -L { set state log_path }
         -adduser { set state adduser }
         -changepasswd { set state changepasswd }
         default { DisplayUsage $argv0 }
@@ -210,7 +210,7 @@ foreach arg $argv {
     debug_level { set DEBUG_OVERRIDE 1; set DEBUG_LEVEL $arg; set DEBUG $arg; set state flag }
     user { set USER $arg; set state flag }
     group { set GROUP $arg; set state flag }
-    log_dir { set LOG_DIR $arg; set state flag }
+    log_path { set LOG_PATH $arg; set state flag }
     default { DisplayUsage $argv0 }
   }
 }
@@ -220,7 +220,8 @@ foreach arg $argv {
 # Do all priv account actions here.
 # Open log files/etc. Privs will be dropped after.
 
-set LOG_PATH /var/log/sguild
+if { ![info exists LOG_PATH] } { set LOG_PATH /var/log/sguild }
+
 if { ![file exists $LOG_PATH] } {
 
     if { [catch {file mkdir $LOG_PATH} dirError] } {
