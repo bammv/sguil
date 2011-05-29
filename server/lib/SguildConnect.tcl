@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.25 2011/02/18 23:30:55 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.26 2011/05/29 15:41:16 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -98,15 +98,19 @@ proc SensorConnect { socketID IPAddr port } {
   global VERSION AGENT_VERSION KEY PEM
 
   LogMessage "Sensor agent connect from $IPAddr:$port $socketID"
+  LogAgentAccess "[GetCurrentTimeStamp]: Sensor agent connect from $IPAddr:$port $socketID"
+
 
   # Check the sensor access list
   if { ![ValidateSensorAccess $IPAddr] } {
     SendSocket $socketID "Connection Refused."
     catch {close $socketID} tmpError
     LogMessage "Invalid access attempt from $IPAddr"
+    LogAgentAccess "[GetCurrentTimeStamp]: ($socketID) Invalid access attempt from $IPAddr"
     return
   }
   LogMessage "Valid sensor agent: $IPAddr"
+  LogAgentAccess "[GetCurrentTimeStamp]: ($socketID) Valid Sensor agent: $IPAddr"
   fconfigure $socketID -buffering line
   fileevent $socketID readable [list SensorCmdRcvd $socketID]
   # Version check
@@ -227,3 +231,21 @@ proc CheckLoginStatus { socketID IPAddr port } {
     }
 
 }
+
+proc LogAgentAccess { message } {
+
+    global AGENT_LOG
+
+    if { [catch {open $AGENT_LOG a} fileID] } {
+
+        puts "ERROR: Unable to log access -> $message"
+        puts "ERROR: $fileID"
+        return
+
+    }
+
+    puts $fileID $message
+    catch {close $fileID}
+
+}
+

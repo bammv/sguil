@@ -1,4 +1,4 @@
-# $Id: SguildSensorAgentComms.tcl,v 1.32 2011/03/16 22:00:30 bamm Exp $ #
+# $Id: SguildSensorAgentComms.tcl,v 1.33 2011/05/29 15:41:16 bamm Exp $ #
 
 # Get the sid and cid for the agent. Create it if it doesn't exist. 
 # Send the agent [AgentSid {type} {sid}]
@@ -11,6 +11,9 @@ proc RegisterAgent { socketID type sensorName netName } {
 
     # Add agent to a list of valid sockets
     lappend validSensorSockets $socketID
+
+    # Log the agent type
+    LogAgentAccess "[GetCurrentTimeStamp]: ($socketID) $sensorName $netName $type"
 
     # Data cnx stop here
     if { $type == "data" } { return }
