@@ -3,7 +3,7 @@
 # data (rules, references, xscript, dns,       #
 # etc)                                         #
 ################################################
-# $Id: extdata.tcl,v 1.69 2011/03/09 05:00:05 bamm Exp $
+# $Id: extdata.tcl,v 1.70 2011/06/29 03:07:26 bamm Exp $
 
 proc GetRuleInfo {} {
 
@@ -629,6 +629,9 @@ proc XscriptDebugMsg { winName data } {
 proc PcapAvailable { socketID sKey fileName } {
 
     global WIRESHARK_STORE_DIR WIRESHARK_PATH
+
+    # Windows doesn't like colons
+    regsub -all {:} [file tail $fileName] {_} fileName
 
     set fileName $WIRESHARK_STORE_DIR/$fileName
     if { [catch {open $fileName w} outfileID] } {
