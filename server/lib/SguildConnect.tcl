@@ -1,4 +1,4 @@
-# $Id: SguildConnect.tcl,v 1.26 2011/05/29 15:41:16 bamm Exp $
+# $Id: SguildConnect.tcl,v 1.27 2012/03/19 21:13:29 bamm Exp $
 
 #
 # ClientConnect: Sets up comms for client/server
@@ -74,7 +74,6 @@ proc ClientVersionCheck { socketID clientVersion } {
     LogMessage "ERROR: Client connect denied - mismatched versions"
     LogMessage "CLIENT VERSION: $clientVersion"
     LogMessage "SERVER VERSION: $VERSION"
-    close $socketID
     ClientExitClose $socketID
     return
   }
