@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: quickscript.tcl,v 1.3 2008/04/02 16:33:52 bamm Exp $ #
+# $Id: quickscript.tcl,v 1.4 2012/03/19 21:28:17 bamm Exp $ #
 
 # Copyright (C) 2002-2006 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -15,7 +15,7 @@ exec tclsh "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.7.0 OPENSSL ENABLED"
+set VERSION "SGUIL-0.8.0 OPENSSL ENABLED"
 
 set SERVER localhost
 set PORT 7734
@@ -170,7 +170,7 @@ if { $serverVersion != $VERSION } {
 }
 
 # Send the server our version info
-SendToSguild $socketID "VersionInfo $VERSION"
+SendToSguild $socketID [list VersionInfo $VERSION]
 
 # SSL-ify the socket
 if { [catch {tls::import $socketID} tlsError] } { 
