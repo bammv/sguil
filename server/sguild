@@ -2,7 +2,7 @@
 # Run tcl from users PATH \
 exec tclsh "$0" "$@"
 
-# $Id: sguild,v 1.193 2011/05/29 15:41:16 bamm Exp $ #
+# $Id: sguild,v 1.194 2013/09/05 00:38:45 bamm Exp $ #
 
 # Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
 #
@@ -18,7 +18,7 @@ exec tclsh "$0" "$@"
 set VERSION "SGUIL-0.8.0"
 set AGENT_VERSION "SGUIL-0.8.0"
 # DB Version
-set DB_VERSION "0.13"
+set DB_VERSION "0.14"
 # Counter for tracking xscript transactions
 set NEXT_TRANS_ID 0
 
@@ -489,17 +489,18 @@ if { ![info exists ACCESS_FILE] } {
 if { [file exists $ACCESS_FILE] } {
   LoadAccessFile $ACCESS_FILE
 }
+# Auto cat moved to the DB
 # Load auto cat config
-if { ![info exists AUTOCAT_FILE] } {
-   if { [file exists /etc/sguild/autocat.conf] } {
-     set AUTOCAT_FILE "/etc/sguild/autocat.conf"
-   } else {
-     set AUTOCAT_FILE "./autocat.conf"
-   }
-}
-if { [file exists $AUTOCAT_FILE] } {
-  LoadAutoCatFile $AUTOCAT_FILE
-}
+#if { ![info exists AUTOCAT_FILE] } {
+#   if { [file exists /etc/sguild/autocat.conf] } {
+#     set AUTOCAT_FILE "/etc/sguild/autocat.conf"
+#   } else {
+#     set AUTOCAT_FILE "./autocat.conf"
+#   }
+#}
+#if { [file exists $AUTOCAT_FILE] } {
+#  LoadAutoCatFile $AUTOCAT_FILE
+#}
 # Load email config file
 if { ![info exists EMAIL_FILE] } {
   if { [file exists /etc/sguild/sguild.email] } {
@@ -574,6 +575,9 @@ if { [lsearch $DB_VERSION $currentDBVer] < 0 } {
     Installed Version: $currentDBVer Check the server/sql_scripts directory of \
     the src that came with sguild for scripts to help you upgrade"
 }
+
+# Load the autocats from the DB
+LoadAutoCats
 
 # Init Mysql Merge tables
 if [ catch {InitializeMysqlMergeTables} tmpError ] {

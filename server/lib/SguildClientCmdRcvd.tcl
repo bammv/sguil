@@ -1,4 +1,4 @@
-# $Id: SguildClientCmdRcvd.tcl,v 1.48 2011/03/17 02:39:29 bamm Exp $
+# $Id: SguildClientCmdRcvd.tcl,v 1.49 2013/09/05 00:38:45 bamm Exp $
 
 #
 # ClientCmdRcvd: Called when client sends commands.
@@ -7,10 +7,17 @@ proc ClientCmdRcvd { socketID } {
 
     global clientList validSockets GLOBAL_QRY_LIST REPORT_QRY_LIST
                                                                                                             
-    if { [eof $socketID] || [catch {gets $socketID data}] } {
+    if { [eof $socketID] || [catch {gets $socketID data}] || [catch {llength $data} tmpLen] } {
+
+        if { [info exists tmpLen] } {
+
+            LogMessage "Error: Received poorly formatted message from $socketID: \n$data: \n$tmpLen"
+            SendSocket $socketID [list ErrorMessage "Error: Your client sent improperly formatted data to sguild."]
+
+        }
 
         # Socket closed
-        close $socketID
+        catch {close $socketID}
         ClientExitClose $socketID
         LogMessage "Socket $socketID closed" 
 
@@ -18,7 +25,9 @@ proc ClientCmdRcvd { socketID } {
 
         # Don't display the user passwds
         if { [regexp ^ValidateUser $data] } {
+         
             InfoMessage "Client Command Received: [lrange $data 0 1] ********"
+
         } elseif { [lindex $data 0] == "ChangePass" } { 
 
             InfoMessage "Client Command Received: [lrange $data 0 1] ******** ********"
@@ -119,6 +128,8 @@ proc ClientCmdRcvd { socketID } {
  
       ChangePass          { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
 
+      AutoCatRequest      { $clientCmd $socketID [lrange $data 1 end] }
+
       default { InfoMessage "Unrecognized command from $socketID: $data" }
 
     }
@@ -162,7 +173,7 @@ proc ClientExitClose { socketID } {
 proc UserMsgRcvd { socketID userMsg } {
   global socketInfo clientList 
                                                                                                             
-  set userMsg [lindex $userMsg 0]
+  #set userMsg [lindex $userMsg 0]
                                                                                                             
   # Simple command stuff.
   # Who returns a list of connected users

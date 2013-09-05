@@ -1,4 +1,4 @@
-# $Id: SguildEvent.tcl,v 1.23 2008/04/09 04:20:52 bamm Exp $ #
+# $Id: SguildEvent.tcl,v 1.24 2013/09/05 00:38:45 bamm Exp $ #
 
 #
 # EventRcvd: Called by main when events are received.
@@ -42,7 +42,10 @@ proc EventRcvd { eventDataList } {
                || ([lsearch -exact $EMAIL_PRIORITIES $priority] >= 0\
                && [lsearch -exact $EMAIL_DISABLE_SIDS $sigID] < 0)\
                || [lsearch -exact $EMAIL_ENABLE_SIDS $sigID] >= 0 } {
-            EmailEvent $eventDataList
+            if { [catch {EmailEvent $eventDataList} tmpError] } {
+              # Email failed
+              LogMessage "Error: Failed to send notification email: $eventDataList"
+            }
           }
         }
       } else {

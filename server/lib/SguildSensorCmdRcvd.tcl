@@ -1,4 +1,4 @@
-# $Id: SguildSensorCmdRcvd.tcl,v 1.31 2011/03/16 22:00:30 bamm Exp $ #
+# $Id: SguildSensorCmdRcvd.tcl,v 1.32 2013/09/05 00:38:45 bamm Exp $ #
 
 proc SensorCmdRcvd { socketID } {
   global agentSensorNameArray validSensorSockets
@@ -30,28 +30,36 @@ proc SensorCmdRcvd { socketID } {
     }
 
     switch -exact -- $sensorCmd {
-      LastPcapTime       { UpdateLastPcapTime $socketID [lindex $data 1] }
-      RegisterAgent      { RegisterAgent $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
-      GenericEvent       { GenericEvent $socketID [lrange $data 1 end] }
-      PadsAsset          { ProcessPadsAsset [lindex $data 1] }
-      SancpFile          { RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
-      AgentInit          { AgentInit $socketID [lindex $data 1] [lindex $data 2] }
-      BarnyardInit       { BarnyardInit $socketID [lindex $data 1] [lindex $data 2] }
-      AgentLastCidReq    { AgentLastCidReq $socketID [lindex $data 1] [lindex $data 2] }
-      BYEventRcvd        { eval BYEventRcvd $socketID [lrange $data 1 end] }
-      DiskReport         { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] }
-      PING               { SendSensorAgent $socketID "PONG" }
-      PONG               { SensorAgentPongRcvd $socketID }
-      XscriptDebugMsg    { $sensorCmd [lindex $data 1] [lindex $data 2] }
-      RawDataFile        { $sensorCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
-      SystemMessage      { SystemMsgRcvd $socketID [lindex $data 1] }
-      SnortStats         { SnortStatsRcvd $socketID [lindex $data 1] }
-      BarnyardConnect    { BarnyardConnect $socketID [lindex $data 1] }
-      BarnyardDisConnect { BarnyardDisConnect $socketID [lindex $data 1] }
-      PadsSensorIDReq    { GetPadsID $socketID [lindex $data 1] }
-      VersionInfo        { AgentVersionCheck $socketID [lindex $data 1] }
+      LastPcapTime       { set cmd [list UpdateLastPcapTime $socketID [lindex $data 1]] }
+      RegisterAgent      { set cmd [list RegisterAgent $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3]] }
+      GenericEvent       { set cmd [list GenericEvent $socketID [lrange $data 1 end]] }
+      PadsAsset          { set cmd [list ProcessPadsAsset [lindex $data 1]] }
+      SancpFile          { set cmd [list RcvSancpFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3]] }
+      AgentInit          { set cmd [list AgentInit $socketID [lindex $data 1] [lindex $data 2]] }
+      BarnyardInit       { set cmd [list BarnyardInit $socketID [lindex $data 1] [lindex $data 2]] }
+      AgentLastCidReq    { set cmd [list AgentLastCidReq $socketID [lindex $data 1] [lindex $data 2]] }
+      BYEventRcvd        { set cmd "BYEventRcvd $socketID [lrange $data 1 end]" }
+      DiskReport         { set cmd [list DiskReport $socketID [lindex $data 1] [lindex $data 2]] }
+      PING               { set cmd [list SendSensorAgent $socketID "PONG"] }
+      PONG               { set cmd [list SensorAgentPongRcvd $socketID] }
+      XscriptDebugMsg    { set cmd [list XscriptDebugMsg [lindex $data 1] [lindex $data 2]] }
+      RawDataFile        { set cmd [list RawDataFile $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3]] }
+      SystemMessage      { set cmd [list SystemMsgRcvd $socketID [lindex $data 1]] }
+      SnortStats         { set cmd [list SnortStatsRcvd $socketID [lindex $data 1]] }
+      BarnyardConnect    { set cmd [list BarnyardConnect $socketID [lindex $data 1]] }
+      BarnyardDisConnect { set cmd [list BarnyardDisConnect $socketID [lindex $data 1]] }
+      PadsSensorIDReq    { set cmd [list GetPadsID $socketID [lindex $data 1]] }
+      VersionInfo        { set cmd [list AgentVersionCheck $socketID [lindex $data 1]] }
       default            { if {$sensorCmd != ""} { LogMessage "Sensor Cmd Unknown ($socketID): $sensorCmd" } }
     }
+
+    # Catch poorly formatted cmds
+    if { $sensorCmd != "" } { 
+      if { [catch {eval $cmd} tmpError] } {
+          LogMessage "Error: Improper sensor cmd received: $data: $tmpError"
+      }
+    }
+
   }
 }
 

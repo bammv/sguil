@@ -2,7 +2,7 @@
 # Run wish from users PATH \
 exec wish "$0" "$@"
 
-# $Id: sguil.tk,v 1.263 2011/03/09 05:00:04 bamm Exp $ #
+# $Id: sguil.tk,v 1.264 2013/09/05 00:38:45 bamm Exp $ #
 
 ####################################################################
 # Sguil - A tcl/tk interface for network security monitoring       #
@@ -2144,6 +2144,7 @@ source $SGUILLIB/sancp.tcl
 source $SGUILLIB/sound.tcl
 #source $SGUILLIB/SguilToolTip.tcl
 source $SGUILLIB/SguilUtil.tcl
+source $SGUILLIB/SguilAutoCat.tcl
 
 # Load TableList
 source $SGUILLIB/tablelist4.1/tablelistPublic.tcl
@@ -2203,6 +2204,7 @@ set topFrame [frame .topFrame]
     UpdateClock
   }
   set fileList [menu $fileMenu.menu -tearoff 0]
+    $fileList add command -label "AutoCat" -command { AutoCatBldr none any any any any any any any 1 }
     $fileList add command -label "Display Incident Categories" -command DisplayIncidentCats  
     $fileList add command -label "Change Password" -command LaunchPassChange  
     $fileList add command -label "Sleep (Ctrl-s)" -command "GoToSleep"
@@ -2997,6 +2999,7 @@ $correlateMenu add command -label "View Correlated Events"\
 # Query Incident Categories Menu
 set statusMenu [ menu .statusMenu -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND\
  -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND -tearoff 0 ]
+$statusMenu add command -label "Create AutoCat From Event" -command "AutoCatFromEvent"
 $statusMenu add command -label "Expire Event As NA (F8)" -command "ValidateEvent 1"
 $statusMenu add command -label "Expire Event As NA With Comment" -command "ValidateEvent 1 1"
 $statusMenu add cascade -label "Quick Query" -menu $statusMenu.quickQueryMenu
