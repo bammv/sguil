@@ -1,4 +1,4 @@
- # Sguil
+# Sguil
 
 Sguil (pronounced "sgweel") is a graphical interface to snort 
 (www.snort.org), an open source intrusion detection system. 
