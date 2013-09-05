@@ -253,7 +253,7 @@ proc RawDataRequest { socketID TRANS_ID sensor timestamp srcIP dstIP srcPort dst
 proc CheckLastPcapFile { { onetime {0} } } {
 
     global FILE_CHECK_IN_MSECS RAW_LOG_DIR CONNECTED
-    global SENSOR_ID
+    global SENSOR_ID DEBUG
 
     if {$CONNECTED && [info exists SENSOR_ID] } {
 
@@ -274,9 +274,18 @@ proc CheckLastPcapFile { { onetime {0} } } {
 
             }
 
-            file stat $logFile fileStat
-            set lastModified [clock format $fileStat(mtime) -gmt true -f "%Y-%m-%d %T"]
-            SendToSguild [list LastPcapTime $lastModified]
+            if { $logFile != "" } { 
+
+                file stat $logFile fileStat
+                set lastModified [clock format $fileStat(mtime) -gmt true -f "%Y-%m-%d %T"]
+                SendToSguild [list LastPcapTime $lastModified]
+
+            } else {
+
+                if {$DEBUG} { puts "ERROR: No pcap files in $checkDir" }
+                SendToSguild [list SystemMessage "Error: No pcap files in $checkDir."]
+
+            }
 
         }
 
