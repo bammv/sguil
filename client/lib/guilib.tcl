@@ -34,10 +34,10 @@ proc AboutBox {} {
 	    -foreground navy -text "\
 	    Sguil Version: $VERSION\n\
 	    \n\
-	    Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@satx.rr.com>\n\
+	    Copyright (C) 2002-2013 Robert (Bamm) Visscher <bamm@sguil.net>\n\
 	    \n\
-	    This program is distributed under the terms of version 1.0 of the\n\
-	    Q Public License.  See LICENSE.QPL for further details.\n\
+	    This program is distributed under the terms of version 3 of the\n\
+	    GNU Public License.  See LICENSE for further details.\n\
 	    \n\
 	    This program is distributed in the hope that it will be useful,\n\
 	    but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
