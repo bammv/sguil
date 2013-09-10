@@ -23,15 +23,15 @@ We hope to add those features in later releases.
 Files are located in the directory named for where they
 will be installed.
 
-## ./client -- Contains
+## client -- Contains
 
  * `sguil.tk` -- Analysis GUI client and
  its conf file. 
  
- * `./lib` -- contains some tcl scripts 
+ * `lib` -- contains some tcl scripts 
  that are needed by the client.
 
-## ./sensor -- Contains 
+## sensor -- Contains 
 
  * `sensor_agent.tcl` --  a script that runs on the sensor that takes 
    input from barnyard and sends alerts to the sguild server.  It also 
@@ -54,7 +54,7 @@ will be installed.
  * `./contrib` -- some stuff someone gave us...don't
    ask me how to use it.
 
-## ./server -- Contains 
+## server -- Contains 
 
  * `sguild` -- The Sguil Server (again a TCL script)
    and its conf file.  This is the brains behind this
@@ -85,7 +85,7 @@ will be installed.
        * `sguild.email` -- Configuration file for automatic
          emails on alerts from sguild.
  
- * `./sql_scripts` -- Scripts to create the sguildb 
+ * `sql_scripts` -- Scripts to create the sguildb 
    database structure.
 
 
