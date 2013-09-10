@@ -100,12 +100,5 @@ some more stuff, ya got me.
 
 Copyright (C) 2002-2010 Robert (Bamm) Visscher <bamm@sguil.net>
 
-This program is distributed under the terms of version 1.0 of the
-Q Public License.  See LICENSE.QPL for further details.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-see LICENSE for more details
+GPLv3 - See LICENSE file for more details
 
