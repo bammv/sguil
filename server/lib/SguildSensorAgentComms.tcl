@@ -127,7 +127,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id   
     }
 
     # Table Prefix
-    set tmpDate [clock format [clock scan $timestamp] -gmt true -format "%Y%m%d"]
+    set tmpDate [clock format [clock scan $timestamp -gmt true] -gmt true -format "%Y%m%d"]
     set tablePrefix "${sensorName}_${tmpDate}"
     
     # Insert Event Hdr
