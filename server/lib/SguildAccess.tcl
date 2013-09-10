@@ -175,7 +175,7 @@ proc AddUser { userName } {
     if { $passwd1 != $passwd2} {
 
         puts "ERROR: Passwords didn't match."
-        puts "$USERS_FILE NOT updated."
+        puts "Database NOT updated."
         return
 
     }
@@ -195,6 +195,62 @@ proc AddUser { userName } {
         puts "User \'$userName\' added successfully"
 
    }
+
+}
+
+proc DisableUser { userName } {
+
+    global MAIN_DB_SOCKETID DBHOST DBUSER DBPORT DBPASS DBNAME
+
+    # Check and initialize the DB
+    if { $DBPASS == "" } {
+
+        set connectCmd "-host $DBHOST -user $DBUSER -port $DBPORT"
+
+    } else {
+
+        set connectCmd "-host $DBHOST -user $DBUSER -port $DBPORT -password $DBPASS"
+
+    }
+
+    if [catch {eval mysqlconnect $connectCmd} MAIN_DB_SOCKETID] {
+
+        puts "ERROR: Unable to connect to $DBHOST on $DBPORT: Make sure mysql is running."
+        puts "$MAIN_DB_SOCKETID"
+        exit
+
+    }
+
+    # See if the DB we want to use exists
+    if { [catch {mysqluse $MAIN_DB_SOCKETID $DBNAME} noDBError] } {
+
+        puts "Error: $noDBError"
+        exit
+
+    }
+
+    # Make sure the user exists
+    set validUser [FlatDBQuery "SELECT username FROM user_info WHERE username='$userName'"]
+    if { $validUser == "" } {
+
+        puts "ERROR: User \'$userName\' does not exist."
+        return
+
+    }
+
+    # Change the user's passwd hash to "LOCKED"
+    set query "UPDATE user_info SET password='LOCKED' WHERE username='$userName'"
+
+    if { [catch {SafeMysqlExec $query} tmpError] } {
+
+        puts "ERROR: Failed to disable user's account: $tmpError"
+
+    } else {
+
+        puts "User account \'$userName\' was disabled successfully"
+
+   }
+
 
 }
 

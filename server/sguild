@@ -43,6 +43,7 @@ proc DisplayUsage { cmdName } {
   puts "  -D Runs sguild in daemon mode."
   puts "  -adduser <username>: Add user to sguild."
   puts "  -changepasswd <username>: Change user's password."
+  puts "  -disableuser <username>: Change user's account."
   puts "  -A <filename>: PATH to sguild.access file."
   puts "  -d <0|1|2>: Set DEBUG level"
   puts "  -h Display this help"
@@ -194,6 +195,7 @@ foreach arg $argv {
         -L { set state log_path }
         -adduser { set state adduser }
         -changepasswd { set state changepasswd }
+        -disableuser { set state disableuser }
         default { DisplayUsage $argv0 }
       }
     }
@@ -206,6 +208,7 @@ foreach arg $argv {
     certs { set CERTS_PATH $arg; set state flag }
     adduser { set ADDUSER 1; set userName $arg; set state flag }
     changepasswd { set CHANGEPASSWD 1; set userName $arg; set state flag }
+    disableuser { set DISABLEUSER 1; set userName $arg; set state flag }
     accessfile { set ACCESS_FILE $arg; set state flag }
     debug_level { set DEBUG_OVERRIDE 1; set DEBUG_LEVEL $arg; set DEBUG $arg; set state flag }
     user { set USER $arg; set state flag }
@@ -471,6 +474,11 @@ if { [info exists ADDUSER] && $ADDUSER } {
 # Called in to change a users passwd.
 if { [info exists CHANGEPASSWD] && $CHANGEPASSWD} {
   ChangeUserPW $userName
+  CleanExit
+}
+# Called in to disable a user account
+if { [info exists DISABLEUSER] && $DISABLEUSER} {
+  DisableUser $userName
   CleanExit
 }
 # Load accessfile
