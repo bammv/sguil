@@ -120,7 +120,7 @@ proc CreateMysqlMainEventMergeTable {} {
         INDEX last_modified (last_modified),                    \
         INDEX signature (signature),                            \
         INDEX status (status)                                   \
-        ) TYPE=MERGE UNION=([join $tmpTables ,])                \
+        ) ENGINE=MERGE UNION=([join $tmpTables ,])                \
         "
     mysqlexec $MAIN_DB_SOCKETID $createQuery
    
@@ -154,7 +154,7 @@ proc CreateMysqlMainTcpHdrMergeTable {} {
         tcp_csum      SMALLINT UNSIGNED,                        \
         tcp_urp       SMALLINT UNSIGNED,                        \
         INDEX tcphdr_p_key (sid,cid)                            \
-        ) TYPE=MERGE UNION=([join $tmpTables ,])                \
+        ) ENGINE=MERGE UNION=([join $tmpTables ,])                \
         "
 
     mysqlexec $MAIN_DB_SOCKETID $createQuery
@@ -183,7 +183,7 @@ proc CreateMysqlMainUdpHdrMergeTable {} {
         udp_len       SMALLINT UNSIGNED,                        \
         udp_csum      SMALLINT UNSIGNED,                        \
         INDEX udphdr_p_key (sid,cid)                            \
-        ) TYPE=MERGE UNION=([join $tmpTables ,])                \
+        ) ENGINE=MERGE UNION=([join $tmpTables ,])                \
         "
 
     mysqlexec $MAIN_DB_SOCKETID $createQuery
@@ -213,7 +213,7 @@ proc CreateMysqlMainIcmpHdrMergeTable {} {
         icmp_id       SMALLINT UNSIGNED,                        \
         icmp_seq      SMALLINT UNSIGNED,                        \
         INDEX icmphdr_p_key (sid,cid)                           \
-        ) TYPE=MERGE UNION=([join $tmpTables ,])                \
+        ) ENGINE=MERGE UNION=([join $tmpTables ,])                \
         "
 
     mysqlexec $MAIN_DB_SOCKETID $createQuery
@@ -241,7 +241,7 @@ proc CreateMysqlMainDataMergeTable {} {
         cid           INT UNSIGNED    NOT NULL,                 \
         data_payload  TEXT,                                     \
         INDEX data_p_key (sid,cid)                              \
-        ) TYPE=MERGE UNION=([join $tmpTables ,])                \
+        ) ENGINE=MERGE UNION=([join $tmpTables ,])                \
         "
 
     mysqlexec $MAIN_DB_SOCKETID $createQuery
