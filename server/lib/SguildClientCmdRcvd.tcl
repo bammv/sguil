@@ -96,7 +96,7 @@ proc ClientCmdRcvd { socketID } {
 
       PING                { puts $socketID "PONG" }
 
-      UserMessage         { UserMsgRcvd $socketID [lindex $data 1] }
+      UserMessage         { UserMsgRcvd $socketID [lindex { $data } 1] }
 
       SendGlobalQryList   { SendSocket $socketID [list GlobalQryList $GLOBAL_QRY_LIST] }
 
