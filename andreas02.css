@@ -1,0 +1,275 @@
+/* andreas02 - a free xhtml/css website layout by Andreas Viklund - http://andreasviklund.com - Free to use for any purpose as long as the proper credits are given to the original author.
+
+Version: 2.0 (Jan 29, 2007)
+
+Screen layout: */
+
+body {
+padding:15px 0 0 0;
+margin:0;
+font:76% tahoma, verdana, sans-serif;
+background:#e0e0e0;
+color:#303030;
+}
+
+a {
+color:#303030;
+text-decoration:none;
+border-bottom:1px dotted #505050;
+}
+
+a:hover {
+color:#303030;
+text-decoration:none;
+border-bottom:1px solid #505050;
+}
+
+h1 {
+margin:0 0 20px 0;
+font-size:2.2em;
+font-weight:normal;
+}
+
+h2 {
+margin:0 0 12px 0;
+font-size:1.6em;
+font-weight:normal;
+}
+
+h3 {
+margin:0 0 10px 0;
+font-size:1.4em;
+font-weight:normal;
+}
+
+p {
+margin:0 0 15px 0;
+line-height:1.5em;
+text-align:left;
+}
+
+a img {
+border:0;
+}
+
+/* Main container */
+
+#container {
+margin:0 auto 20px auto;
+width:730px;
+padding:5px 20px 20px 20px;
+background:#ffffff;
+}
+
+/* Site title section */
+
+#logo {
+margin:15px 0 0 0;
+}
+
+#logo h1 a {
+color:#505050;
+border:none;
+}
+
+#logo h1 a:hover {
+color:#303030;
+text-decoration:none;
+border:none;
+}
+
+/* Toptab menu */
+
+#toptabs {
+margin:10px auto -13px auto;
+font-size:0.8em;
+width:760px;
+}
+
+#toptabs p {
+text-align:right;
+color:#808080;
+}
+
+.toptab {
+padding:4px 5px 3px 5px;
+margin:0 0 0 4px;
+text-decoration:none;
+background:#f0f0f0 url(images/corner2.gif) top right no-repeat;
+color:#808080;
+border-bottom:1px solid #e0e0e0;
+}
+
+.toptab:hover {
+background:#fafafa url(images/corner2.gif) top right no-repeat;
+border-bottom:1px solid #eaeaea;
+color:#505050;
+text-decoration:none;
+}
+
+.activetoptab {
+padding:4px 5px 3px 5px;
+margin:0 0 0 4px;
+color:#505050;
+text-decoration:none;
+background:#ffffff url(images/corner2.gif) top right no-repeat;
+border-bottom:1px solid #ffffff;
+}
+
+.activetoptab:hover {
+text-decoration:none;
+border-bottom:1px solid #ffffff;
+}
+
+/* Navitab menu */
+
+#navitabs {
+clear:both;
+}
+
+.navitab {
+padding:4px 8px 4px 8px;
+margin:0 0 4px 0;
+text-decoration:none;
+font-size:1.1em;
+background:#e0e0e0 url(images/corner.gif) top right no-repeat;
+border-bottom:1px solid #ffffff;
+border-left:1px solid #ffffff;
+}
+
+.navitab:hover {
+text-decoration:none;
+background:#d0d0d0 url(images/corner.gif) top right no-repeat;
+border-bottom:1px solid #ffffff;
+}
+
+.activenavitab {
+padding:4px 8px 5px 8px;
+color:#ffffff;
+margin:0 0 5px 0;
+font-size:1.1em;
+text-decoration:none;
+background:#505050 url(images/corner.gif) top right no-repeat;
+}
+
+.activenavitab:hover {
+text-decoration:none;
+color:#ffffff;
+}
+
+/* Header description */
+
+#desc {
+height:150px;
+color:#ffffff;
+padding:0;
+background:#505050 url(images/sguil_logo_h.png) center right no-repeat;
+clear:both;
+margin:5px 0 15px 0;
+}
+
+#desc p {
+width:290px;
+font-size:1em;
+line-height:1.3em;
+padding:0 0 0 15px;
+}
+
+#desc h2 {
+padding:15px 15px 0 15px;
+color:#ffffff;
+}
+
+#desc a {
+color:#ffffff;
+text-decoration:none;
+border-color:#ffffff;
+}
+
+/* Main content */
+
+#main {
+width:550px;
+float:left;
+padding:0 15px 0 0;
+margin:0;
+border-right:1px solid #d8d8d8;
+}
+
+/* Sidebar */
+
+#sidebar {
+width:150px;
+float:right;
+}
+
+#sidebar p {
+font-size:0.9em;
+line-height:1.3em;
+margin:0 0 15px 0;
+}
+
+/* Footer */
+
+#footer {
+clear:both;
+background:#fafafa;
+padding:0;
+margin:0;
+border-top:1px solid #d8d8d8;
+}
+
+#footer a {
+color:#808080;
+}
+
+#footer a:hover {
+color:#303030;
+}
+
+#footer p {
+color:#808080;
+font-size:1.1em;
+line-height:1.3em;
+margin:15px 0 0 0;
+padding:0;
+}
+
+/* Various classes */
+
+.photo {
+padding:2px;
+margin:0 0 8px 0;
+background-color:#f0f0f0;
+border:1px solid #d8d8d8;
+}
+
+.right {
+margin-top:-8px;
+text-align:right;
+}
+
+.block {
+background:#f0f0f0;
+padding:10px;
+}
+
+.sidelink {
+text-align:left;
+display:block;
+width:140px;
+background:#f0f0f0 url(images/corner.gif) top right no-repeat;
+padding:3px 4px 3px 8px;
+margin:5px 10px 5px 0;
+border:none;
+}
+
+.sidelink:hover {
+background:#e0e0e0 url(images/corner.gif) top right no-repeat;
+text-decoration:none;
+border:none;
+}
+
+.hide {
+display:none;
+}

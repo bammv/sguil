@@ -1,0 +1,16 @@
+da81874e426cca683fb981bbda1463fc  snort-2.1.2-idslite.0.fdr.1.src.rpm
+ff4d9f2443c7ea164f341e2e78ef3f35  barnyard-0.2.0-idslite.0.fdr.1.src.rpm
+3c59530db5308212df93e0bad0aa11d3  sguil-sensor-0.4.0-idslite.1.src.rpm
+4323aca3651318ab0d88c3530453bb0c  sguil-server-0.4.0-idslite.1.src.rpm
+d07b978ee8778b97fba2a0a9ca7f88b2  sancp-1.5.5-idslite.1.src.rpm
+0c8c962389c7980ca9b383024c2e5c6a  dshieldpy-3.2-idslite.1.src.rpm
+d9a5e90e75e8637aa609b469569875da  snort-2.1.2-idslite.0.fdr.1.i386.rpm
+cad5c956d3d9aa78e2187586a6e244dd  snort-debuginfo-2.1.2-idslite.0.fdr.1.i386.rpm
+73249d44395657adc1cddd74db6d1561  barnyard-0.2.0-idslite.0.fdr.1.i386.rpm
+8682bf04a58d969861579de03a430120  barnyard-mysql-0.2.0-idslite.0.fdr.1.i386.rpm
+1e41bc91e5ca0da7552e8cf99f26d49f  barnyard-debuginfo-0.2.0-idslite.0.fdr.1.i386.rpm
+8e39187d42c651bf8e94469f24146c02  sancp-1.5.5-idslite.1.i386.rpm
+403fb10d9f6a64a6540c001f8e289cb2  sancp-debuginfo-1.5.5-idslite.1.i386.rpm
+e98b3a83e73ff64204b82c513bc13177  sguil-sensor-0.4.0-idslite.1.noarch.rpm
+470050001c8986360f7ae45e5cd17d78  sguil-server-0.4.0-idslite.1.noarch.rpm
+ab4ec0842290564aafc3d41c90add917  dshieldpy-3.2-idslite.1.noarch.rpm

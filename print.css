@@ -1,0 +1,40 @@
+/* andreas02 - a free xhtml/css website layout by Andreas Viklund - http://andreasviklund.com - Free to use for any purpose as long as the proper credits are given to the original author.
+
+Version: 2.0 (Jan 29, 2007)
+
+Print layout: */
+
+body {
+margin:0 auto;
+padding:0;
+font-family:"Times New Roman",Serif;
+background:#ffffff;
+color:#000000;
+}
+	
+#container {
+margin:2%;
+width:auto;
+float:none !important;
+}
+
+#main {
+float:none !important;
+}
+
+#logo h1 {
+margin:0 0 10px 0;
+}
+
+#toptabs, #navitabs, #sidebar, .hide {
+display:none;
+}
+
+#content img {
+display:none;
+}
+
+a {
+text-decoration:underline;
+color:#0000FF;
+}

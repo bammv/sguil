@@ -1,0 +1,181 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<meta name="description" content="your description goes here" />
+<meta name="keywords" content="sguil,nsm,ids,snort" />
+<meta name="author" content="Bamm Visscher/ Original design by Andreas Viklund - http://andreasviklund.com/" />
+<link rel="stylesheet" type="text/css" href="andreas02.css" media="screen,projection" title="andreas02 (screen)" />
+<link rel="stylesheet" type="text/css" href="print.css" media="print" />
+<title>Sguil - Open Source Network Security Monitoring</title>
+</head>
+
+<body>
+<!-- No toptabs for now
+<div id="toptabs">
+<p>Site Network: 
+<a class="activetoptab" href="index.html">Personal</a><span class="hide"> | </span>
+<a class="toptab" href="index.html">My Company</a><span class="hide"> | </span>
+<a class="toptab" href="index.html">Artist projects</a><span class="hide"> | </span>
+<a class="toptab" href="index.html">Shop</a></p>
+</div>
+-->
+
+<div id="container">
+<div id="logo">
+<h1><a href="index.html">Sguil: The Analyst Console for Network Security Monitoring</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="index.html">Home</a><span class="hide"> | </span>
+<a class="activenavitab" href="news.html">News</a><span class="hide"> | </span>
+<a class="navitab" href="screenshots.html">Screenshots</a><span class="hide"> | </span>
+<a class="navitab" href="downloads.html">Downloads</a><span class="hide"> | </span>
+<a class="navitab" href="docs.html">Docs</a><span class="hide"> | </span>
+<a class="navitab" href="tour.html">Tour</a><span class="hide"> | </span>
+<a class="navitab" href="contact.html">Contact</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>Written By Analysts, For Analysts</h2>
+<p>
+Current Version: <a href="https://sourceforge.net/projects/sguil/files/sguil/sguil-0.8.0/">Sguil 0.8.0</a>
+</p>
+</div>
+
+<div id="main">
+
+<h4>29 May 2011 - Sguil 0.8.0 Released!</h4>
+<p class="block">
+Okay, new direction. Time has been escaping me and Sguil development has suffered. When I do have time to spend on Sguil, I would rather be adding new features and fixing bugs versus testing installs and writing documentation. So starting with this release, I am going to focus on getting code out the door and hope our small community will document their experiences through blogs, wikis, mailing lists, tweets, and #snort-gui.
+<br>
+<br>
+Go out and download <a href="https://sourceforge.net/projects/sguil/files/sguil/sguil-0.8.0/">Sguil 0.8.0</a>. Install it. Test it. Break it. And find some bad guys.
+<br>
+<br>
+Bamm
+</p>
+
+<h4>25 January 2010 - I'm not dead yet</h4>
+<p class="block">
+But the demo server is. Well, it is not dead, just in an unpacked box (we moved from
+Colorado to Western Michigan recently).  Seriously. I apologize for the lack updates
+over the last two years (ouch). The project is not dead, just on hiatus. I have been
+busy with a huge deployment (over 100 sensors on ~80 appliances) and cannot wait to
+add what we have learned. Stay tuned.
+<br>
+<br>
+Bamm
+</p>
+
+<h4>26 March 2008 - Updated Modsec2Sguil</h4>
+<p class="block">
+Victor Julien writes:
+<br>
+<br>
+<i>
+I've updated the Modsec2sguil agent to work with the latest release.
+Also, it contains support for ModSecurity 2.5.x contributed by Ryan
+Cummings.
+<br>
+<br>
+Get it here: <a href=http://www.inliniac.net/modsec2sguil/>http://www.inliniac.net/modsec2sguil/</a>
+<br>
+<br>
+Cheers,
+Victor
+</i>
+</p>
+
+<h4>26 March 2008 - Bugs!</h4>
+<p class="block">
+Well, that didn't take too long. Found a bug with the way the client parses messages for display in the "User Messages" tab. It has been fixed in CVS and a simple diff can be found <a href=http://sguil.cvs.sourceforge.net/sguil/sguil/client/sguil.tk?r1=1.249&r2=1.250>here</a>. A patched release will follow.
+</p>
+
+<h4>25 March 2008 - Sguil Version 0.7.0 Released</h4>
+<p class="block">
+It has been a couple of years of changes and bugfixes since the last
+release. The biggest change is the replacement of the sensor agent
+with individual components for each collection type. The new agents
+are called snort_agent.tcl, pcap_agent.tcl, and sancp_agent.tcl. By
+splitting out the agents, collection for these different data types
+can be placed on separate hardware and still be correlated via their
+"NET_NAME".
+<br>
+<br>
+A new collection agent for <a href=http://passive.sourceforge.net>PADS</a> is also included in this release although it is still considered beta.  Also included is an example_agent.tcl script that documents how custom agents can be created. Other agents have been written for <a href=http://www.inliniac.net/blog/2007/08/14/first-modsec2sguil-release-for-sguil-07-cvs.html>ModSecurity</a> and <a href=http://www.ossec.net/ossec-list/2007-October/msg00064.html>OSSEC</a>.
+<br>
+<br>
+As always, help can be found on the sguil-users mailing list or in IRC on #snort-gui via irc.freenode.net.
+<br>
+<br>
+David Bianco has provided a great <a href=http://www.vorant.com/nsmwiki/index.php?title=Sguil_on_RedHat_HOWTO>HOWTO</a> and Rich Fifarek has created a <a href=http://synfulpacket.net/sguil/>yum repository</a> that should be updated soon.
+<br>
+<br>
+Thanks for everyone's help and happy F8ing,
+<br>
+<br>
+Bammkkkk
+</p>
+
+<h4>21 March 2007 - Modsec2Sguil 0.7 Released</h4>
+<p class="block">
+Victor Julien <a href="http://www.inliniac.net/blog/?p=70">released</a> version 0.7 of Modsec2sguil recently. Modsec2Sguil is a set of perl scripts to feed ModSecurity alerts to the Sguil NSM system. The main change of this release is that it adds support for alerts produced by ModSecurity 2.x, while 1.9.x remains to be supported. Next to this the conversion between ModSecurity’s severity and Snort’s priority was fixed, so alerts should show up in the right pane in Sguil again.<br><br>In future releases, we plan to add the capability for other projects to easily send events to Sguil.
+</p>
+
+<h4>19 March 2007 - Website Updated!</h4>
+<p class="block">
+After a much too long hiatus, the Sguil website has been updated. We are using an open source <a href=http://andreasviklund.com/templates/>template</a> from <a href=http://andreasviklund.com/about/>Andreas Viklund</a>. Also, Sguil version 0.7.0 is currently being tested in CVS and we plan to get a release candidate out soon!
+</p>
+
+<h4>24 March 2006 - Sguil 0.6.1 VM</h4>
+<p class="block">
+Richard Bejtlich of <A HREF="http://www.taosecurity.com/">TaoSecurity</A> created another Sguil <A HREF="http://sguil.sourceforge.net/index.php?page=vm">VM</A>. This edition runs Sguil 0.6.1 on FreeBSD 5.4 and is described <A HREF="http://taosecurity.blogspot.com/2006/03/new-sguil-vm-available-for-testing.html">here</A>.
+</p>
+    
+<h4>13 February 2006 - Sguil 0.6.1 Released</h4>
+<p class="block">
+Sguil-0.6.1 has been <a href="http://sourceforge.net/project/showfiles.php?group_id=71220&package_id=70722&release_id=393470">released</a>. This release adds support for snort statistics, UNION queries, and GUI enhancements.
+</p>
+
+<h4>06 January 2006 - Sguil Client VM</h4>
+<p class="block">
+Richard Bejtlich of <A HREF="http://www.taosecurity.com/">TaoSecurity</A> a new Sguil <A HREF="http://sguil.sourceforge.net/index.php?page=vm">VM</A>.  This one has the <A HREF="http://taosecurity.blogspot.com/2006/01/new-sguil-vm-with-client-hot-on-heels.html">client</A> as well as the components in his first VM.
+</p>
+
+<h4>30 December 2005 - First Sguil VM</h4>
+<p class="block">
+Richard Bejtlich of <A HREF="http://www.taosecurity.com/">TaoSecurity</A> has started creating virtual machines suitable for use in <A HREF="http://www.vmware.com/products/player/">VMware Player</A>.  You can read about the creation of the first Sguil VM in Richard's <A HREF="http://taosecurity.blogspot.com/2005/12/first-sguil-vm-available-i-am-happy-to.html">blog</A>. We've added a page on <A HREF="http://sguil.sourceforge.net/index.php?page=vm">VMs</A> for future work.  The first VM is available <A HREF="http://prdownloads.sourceforge.net/sguil/sguil0-6-0p1_freebsd6-0_1024mb.zip?download">here</A>.
+</p>
+
+</div>
+
+<div id="sidebar">
+<h3>More information:</h3>
+<p>Do you want more information about Sguil and Network Security Monitoring (NSM)? Then you should check out these pages:</p>
+
+<p>
+<a class="sidelink" href="http://taosecurity.blogspot.com">TaoSecurity Blog</a><span class="hide"> | </span>
+<a class="sidelink" href="http://wiki.sguil.net/">NSM Wiki</a><span class="hide"> | </span>
+<a class="sidelink" href="http://faq.sguil.net/">Sguil FAQ</a><span class="hide"> | </span>
+</p>
+
+<h3>Other links:</h3>
+<p>
+<a class="sidelink" href="http://www.snort.org">Snort</a><span class="hide"> | </span>
+<a class="sidelink" href="http://www.metre.net/sancp.html">SANCP</a>
+<a class="sidelink" href="http://www.squertproject.org">Squert</a>
+</p>
+
+<h3>Screen Shots:</h3>
+<p><a href="screenshots.html"><img class="photo" src="images/sguil_ss_icon.png" height="100" width="130" alt="" /><br /></a><p>
+</div>
+    
+<div id="footer">
+<p>Copyright &copy; 2007 <a href="index.html">Bamm Visscher</a> &middot; <a href="#">Contact</a> &middot; Design by <a href="http://andreasviklund.com/">Andreas Viklund</a></p>
+</div>
+
+</div>
+</body>
+</html>
