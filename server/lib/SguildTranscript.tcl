@@ -1,4 +1,4 @@
-# $Id: SguildTranscript.tcl,v 1.22 2013/09/05 00:38:45 bamm Exp $ #
+# $Id: SguildTranscript.tcl,v 1.21 2011/03/10 22:03:33 bamm Exp $ #
 
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
@@ -47,7 +47,7 @@ proc WiresharkRequest { socketID sensor sensorID timestamp srcIP srcPort dstIP d
   set date [lindex $timestamp 0]
   if [catch { InitRawFileArchive $date $sensor $srcIP $dstIP $srcPort $dstPort $ipProto }\
       rawDataFileNameInfo] {
-    catch {SendSocket $socketID [list ErrorMessage "Error getting pcap: $rawDataFileNameInfo"]}
+    SendSocket $socketID [list ErrorMessage "Error getting pcap: $rawDataFileNameInfo"]
     return
   }
   set sensorDir [lindex $rawDataFileNameInfo 0]
@@ -58,8 +58,8 @@ proc WiresharkRequest { socketID sensor sensorID timestamp srcIP srcPort dstIP d
     # No local archive (first request) or the user has requested we force a check for new data.
     if { ![GetRawDataFromSensor $TRANS_ID $sensor $sensorID $timestamp $srcIP $srcPort $dstIP $dstPort $ipProto $rawDataFileName wireshark] } {
       # This means the sensor_agent for this sensor isn't connected.
-      catch {SendSocket $socketID [list ErrorMessage "ERROR: Unable to request rawdata at this time.\
-       The sensor $sensor is NOT connected."]}
+      SendSocket $socketID [list ErrorMessage "ERROR: Unable to request rawdata at this time.\
+       The sensor $sensor is NOT connected."]
     }
   } else {
     # The data is archived locally.
@@ -78,7 +78,7 @@ proc PcapAvailable { fileName TRANS_ID } {
   
     # Send the client a session key and file name to download
     set clientSocketID [lindex $transInfoArray($TRANS_ID) 0]
-    catch {SendSocket $clientSocketID [list PcapAvailable $sKey [file tail $fileName]]}
+    SendSocket $clientSocketID [list PcapAvailable $sKey [file tail $fileName]] 
 
     set pcapKeys(fileName,$sKey) $fileName
     set pcapKeys(socketID,$sKey) $clientSocketID
@@ -93,7 +93,7 @@ proc SendPcap { socketID sKey } {
     if { [catch {open $fileName r} fileID] } {
 
         # Failed to open file
-        catch {SendSocket $pcapKeys(socketID,$sKey) [list ErrorMessage "Failed to open ${fileName}: ${fileID}"]}
+        SendSocket $pcapKeys(socketID,$sKey) [list ErrorMessage "Failed to open ${fileName}: ${fileID}"]
         unset pcapKeys(socketID,$sKey)
         unset pcapKeys(fileName,$sKey)
         return
@@ -107,7 +107,7 @@ proc SendPcap { socketID sKey } {
       -command [list PcapCopyFinished $fileID $socketID $sKey]} tmpError] } {
 
         # fcopy failed
-        catch {SendSocket $pcapKeys(socketID,$sKey) [list ErrorMessage "Failed to copy ${fileName}: ${tmpError}"]}
+        SendSocket $pcapKeys(socketID,$sKey) [list ErrorMessage "Failed to copy ${fileName}: ${tmpError}"]
         catch {close $socketID}
         unset pcapKeys(socketID,$sKey)
         unset pcapKeys(fileName,$sKey)
@@ -128,7 +128,7 @@ proc PcapCopyFinished { fileID socketID sKey bytes {error {}} } {
 
         # Error during copy
         set fileName $pcapKeys(fileName,$sKey)
-        catch {SendSocket $pcapKeys(socketID,$sKey) [list ErrorMessage "Failed to copy file ${fileName}: ${error}"]}
+        SendSocket $pcapKeys(socketID,$sKey) [list ErrorMessage "Failed to copy file ${fileName}: ${error}"]
 
     }
 
@@ -174,8 +174,8 @@ proc XscriptRequest { socketID sensor sensorID winID timestamp srcIP srcPort dst
   global NEXT_TRANS_ID transInfoArray LOCAL_LOG_DIR TCPFLOW CANCEL_TRANS_FLAG
   # If we don't have TCPFLOW then error to the user and return
   if { ![info exists TCPFLOW] || ![file exists $TCPFLOW] || ![file executable $TCPFLOW] } {
-      catch {SendSocket $socketID [list ErrorMessage "ERROR: tcpflow is not installed on the server."]}
-      catch {SendSocket $socketID [list XscriptDebugMsg $winID "ERROR: tcpflow is not installed on the server."]}
+      SendSocket $socketID [list ErrorMessage "ERROR: tcpflow is not installed on the server."]
+      SendSocket $socketID [list XscriptDebugMsg $winID "ERROR: tcpflow is not installed on the server."]
     return
   }
   # Increment the xscript counter. Gives us a unique way to track the xscript
@@ -185,13 +185,13 @@ proc XscriptRequest { socketID sensor sensorID winID timestamp srcIP srcPort dst
   set date [lindex $timestamp 0]
   if [catch { InitRawFileArchive $date $sensor $srcIP $dstIP $srcPort $dstPort 6 }\
       rawDataFileNameInfo] {
-    catch {SendSocket $socketID\
+    SendSocket $socketID\
      [list ErrorMessage "Please pass the following to your sguild administrator:\
-      Error from sguild while getting pcap: $rawDataFileNameInfo"]}
-    catch {SendSocket $socketID [list XscriptDebugMsg $winID\
+      Error from sguild while getting pcap: $rawDataFileNameInfo"]
+    SendSocket $socketID [list XscriptDebugMsg $winID\
      "ErrorMessage Please pass the following to your sguild administrator:\
-     Error from sguild while getting pcap: $rawDataFileNameInfo"]}
-    catch {SendSocket $socketID [list XscriptMainMsg $winID DONE]}
+     Error from sguild while getting pcap: $rawDataFileNameInfo"]
+    SendSocket $socketID [list XscriptMainMsg $winID DONE]
     return
   }
   set sensorDir [lindex $rawDataFileNameInfo 0]
@@ -202,15 +202,15 @@ proc XscriptRequest { socketID sensor sensorID winID timestamp srcIP srcPort dst
     # No local archive (first request) or the user has requested we force a check for new data.
     if { ![GetRawDataFromSensor $TRANS_ID $sensor $sensorID $timestamp $srcIP $srcPort $dstIP $dstPort 6 $rawDataFileName xscript] } {
       # This means the sensor_agent for this sensor isn't connected.
-      catch {SendSocket $socketID [list ErrorMessage "ERROR: Unable to request xscript at this time.\
-       The sensor $sensor is NOT connected."]}
-      catch {SendSocket $socketID [list XscriptDebugMsg $winID "ERROR: Unable to request xscript at this time.\
-       The sensor $sensor is NOT connected."]}
-      catch {SendSocket $socketID [list XscriptMainMsg $winID DONE]}
+      SendSocket $socketID [list ErrorMessage "ERROR: Unable to request xscript at this time.\
+       The sensor $sensor is NOT connected."]
+      SendSocket $socketID [list XscriptDebugMsg $winID "ERROR: Unable to request xscript at this time.\
+       The sensor $sensor is NOT connected."]
+      SendSocket $socketID [list XscriptMainMsg $winID DONE]
     }
   } else {
     # The data is archive locally.
-    catch {SendSocket $socketID [list XscriptDebugMsg $winID "Using archived data: $sensorDir/$rawDataFileName"]}
+    SendSocket $socketID [list XscriptDebugMsg $winID "Using archived data: $sensorDir/$rawDataFileName"]
     GenerateXscript $sensorDir/$rawDataFileName $socketID $winID $TRANS_ID
   }
 }
@@ -236,8 +236,8 @@ proc GetRawDataFromSensor { TRANS_ID sensor sensorID timestamp srcIP srcPort dst
       }
       flush $pcapSocketID
       if { $type == "xscript" } {
-	  catch {SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
-	      [list XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] "Raw data request sent to $sensor."]}
+	  SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
+	      [list XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] "Raw data request sent to $sensor."]
       }
   } else {
       set RFLAG 0
@@ -254,8 +254,8 @@ proc RawDataFile { socketID fileName TRANS_ID bytes } {
 
     InfoMessage "Receiving rawdata file $fileName."
     if { $type == "xscript" } {
-        catch {SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
-         [list XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] "Receiving raw file from sensor."]}
+        SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
+         [list XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] "Receiving raw file from sensor."]
     }
 
     set outfile [lindex $transInfoArray($TRANS_ID) 2]/$fileName
@@ -280,8 +280,8 @@ proc XscriptDebugMsg { TRANS_ID msg } {
     global transInfoArray
   
     if [info exists transInfoArray($TRANS_ID)] {
-        catch {SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
-           [list XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] $msg]}
+        SendSocket [lindex $transInfoArray($TRANS_ID) 0]\
+           [list XscriptDebugMsg [lindex $transInfoArray($TRANS_ID) 1] $msg]
     }
 }
 
@@ -296,30 +296,30 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
                                                                                                             
   set srcMask [TcpFlowFormat $srcIP $srcPort $dstIP $dstPort]
   set dstMask [TcpFlowFormat $dstIP $dstPort $srcIP $srcPort]
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Sensor Name:\t[lindex $transInfoArray($TRANS_ID) 4]"]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Timestamp:\t[lindex $transInfoArray($TRANS_ID) 5]"]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Connection ID:\t$winName"]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Src IP:\t\t$srcIP\t([GetHostbyAddr $srcIP])"]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Dst IP:\t\t$dstIP\t([GetHostbyAddr $dstIP])"]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Src Port:\t\t$srcPort"]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Dst Port:\t\t$dstPort"]}
+  SendSocket $clientSocketID [list XscriptMainMsg $winName HDR]
+  SendSocket $clientSocketID [list XscriptMainMsg $winName "Sensor Name:\t[lindex $transInfoArray($TRANS_ID) 4]"]
+  SendSocket $clientSocketID [list XscriptMainMsg $winName "Timestamp:\t[lindex $transInfoArray($TRANS_ID) 5]"]
+  SendSocket $clientSocketID [list XscriptMainMsg $winName "Connection ID:\t$winName"]
+  SendSocket $clientSocketID [list XscriptMainMsg $winName "Src IP:\t\t$srcIP\t([GetHostbyAddr $srcIP])"]
+  SendSocket $clientSocketID [list XscriptMainMsg $winName "Dst IP:\t\t$dstIP\t([GetHostbyAddr $dstIP])"]
+  SendSocket $clientSocketID [list XscriptMainMsg $winName "Src Port:\t\t$srcPort"]
+  SendSocket $clientSocketID [list XscriptMainMsg $winName "Dst Port:\t\t$dstPort"]
   if {$P0F} {
     if { ![file exists $P0F_PATH] || ![file executable $P0F_PATH] } {
-      catch {SendSocket $clientSocketID [list XscriptDebugMsg $winName "Cannot find p0f in: $P0F_PATH"]}
-      catch {SendSocket $clientSocketID [list XscriptDebugMsg $winName "OS fingerprint has been disabled"]}
+      SendSocket $clientSocketID [list XscriptDebugMsg $winName "Cannot find p0f in: $P0F_PATH"]
+      SendSocket $clientSocketID [list XscriptDebugMsg $winName "OS fingerprint has been disabled"]
     } else {
       set p0fID [open "| $P0F_PATH -q -s $fileName"]
       while { [gets $p0fID data] >= 0 } {
-        catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "OS Fingerprint:\t$data"]}
+        SendSocket $clientSocketID [list XscriptMainMsg $winName "OS Fingerprint:\t$data"]
       }
       catch {close $p0fID} closeError
     }
   }
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName " "]}
+  SendSocket $clientSocketID [list XscriptMainMsg $winName " "]
   if  [catch {open "| $TCPFLOW -c -r $fileName"} tcpflowID] {
     LogMessage "ERROR: tcpflow: $tcpflowID"
-    catch {SendSocket $clientSocketID [list XscriptDebugMsg $winName "ERROR: tcpflow: $tcpflowID"]}
+    SendSocket $clientSocketID [list XscriptDebugMsg $winName "ERROR: tcpflow: $tcpflowID"]
     catch {close $tcpflowID}
     return
   }
@@ -331,18 +331,18 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
     } elseif { [regsub ^$dstMask:\  $data {} data] > 0 } {
       set state DST
     }
-    catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $state]}
+    SendSocket $clientSocketID [list XscriptMainMsg $winName $state]
     SendSocket $clientSocketID [list XscriptMainMsg $winName $data]
     update
     if { $CANCEL_TRANS_FLAG($winName) } { break }
   }
   if [catch {close $tcpflowID} closeError] {
-    catch {SendSocket $clientSocketID [list XscriptDebugMsg $winName "ERROR: tcpflow: $closeError"]}
+    SendSocket $clientSocketID [list XscriptDebugMsg $winName "ERROR: tcpflow: $closeError"]
   }
   if {$NODATAFLAG} {
-    catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "No Data Sent."]}
+    SendSocket $clientSocketID [list XscriptMainMsg $winName "No Data Sent."]
   }
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName DONE]}
+  SendSocket $clientSocketID [list XscriptMainMsg $winName DONE]
 
   unset transInfoArray($TRANS_ID)
   unset CANCEL_TRANS_FLAG($winName)
@@ -375,8 +375,26 @@ proc QuickScript { clientSocketID alertID } {
 
     } else {
     
-        catch {SendSocket $clientSocketID [list XscriptMainMsg foo "Unable to find alert $alertID in RealTime array"]}
-        catch {SendSocket $clientSocketID [list XscriptMainMsg foo DONE]}
+        SendSocket $clientSocketID [list XscriptMainMsg foo "Unable to find alert $alertID in RealTime array"]
+        SendSocket $clientSocketID [list XscriptMainMsg foo DONE]
+
+    }
+
+}
+
+proc CliScript { clientSocketID eventInfo } {
+
+    if { [llength $eventInfo] == 7 } {
+
+        lassign $eventInfo \
+            sensor timestamp sensorID srcIP dstIP srcPort dstPort
+
+        XscriptRequest $clientSocketID $sensor $sensorID CLI $timestamp $srcIP $srcPort $dstIP $dstPort 0
+
+    } else {
+
+        SendSocket $clientSocketID [list XscriptMainMsg CLI "Request Failed"]
+        SendSocket $clientSocketID [list XscriptMainMsg CLI DONE]
 
     }
 
