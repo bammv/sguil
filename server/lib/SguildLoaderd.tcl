@@ -124,7 +124,7 @@ proc CreateNewSancpTable { tableName } {
         INDEX dst_port (dst_port),                         \
         INDEX src_port (src_port),                         \
         INDEX start_time (start_time)                      \
-        )                                                  \
+        ) ENGINE=MyISAM                                    \
         "
 
     # Create the table
@@ -177,7 +177,7 @@ proc CreateSancpMergeTable { dbSocketID } {
         INDEX dst_port (dst_port),                         \
         INDEX src_port (src_port),                         \
         INDEX start_time (start_time)                      \
-        ) TYPE=MERGE UNION=([join $tmpTables ,])      \
+        ) ENGINE=MERGE UNION=([join $tmpTables ,])      \
         "
     # Create our MERGE sancp table
     mysqlexec $dbSocketID $createQuery

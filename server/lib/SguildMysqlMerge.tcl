@@ -320,7 +320,7 @@ proc CreateEventTable { tableName } {
         INDEX last_modified (last_modified),                    \
         INDEX signature (signature),                            \
         INDEX status (status)                                   \
-        )                                                       \
+        ) ENGINE=MyISAM                                         \
         "
     mysqlexec $MAIN_DB_SOCKETID $createQuery
     lappend mergeTableListArray(event) $tableName 
@@ -346,7 +346,7 @@ proc CreateTcpHdrTable { tableName } {
         tcp_csum      SMALLINT UNSIGNED,                        \
         tcp_urp       SMALLINT UNSIGNED,                        \
         PRIMARY KEY   (sid,cid)                                 \
-        )                                                       \
+        ) ENGINE=MyISAM                                         \
         "
 
     mysqlexec $MAIN_DB_SOCKETID $createQuery
@@ -367,7 +367,7 @@ proc CreateUdpHdrTable { tableName } {
         udp_len       SMALLINT UNSIGNED,                        \
         udp_csum      SMALLINT UNSIGNED,                        \
         PRIMARY KEY   (sid,cid)                                 \
-        )                                                       \
+        ) ENGINE=MyISAM                                         \
         "
 
     mysqlexec $MAIN_DB_SOCKETID $createQuery
@@ -389,7 +389,7 @@ proc CreateIcmpHdrTable { tableName } {
         icmp_id       SMALLINT UNSIGNED,                        \
         icmp_seq      SMALLINT UNSIGNED,                        \
         PRIMARY KEY   (sid,cid)                                 \
-        )                                                       \
+        ) ENGINE=MyISAM                                         \
         "
 
     mysqlexec $MAIN_DB_SOCKETID $createQuery
@@ -409,7 +409,7 @@ proc CreateDataTable { tableName } {
         cid           INT UNSIGNED    NOT NULL,                 \
         data_payload  TEXT,                                     \
         PRIMARY KEY   (sid,cid)                                 \
-        )                                                       \
+        ) ENGINE=MyISAM                                         \
         "
 
     mysqlexec $MAIN_DB_SOCKETID $createQuery
