@@ -19,6 +19,21 @@
 # | timestamp  | datetime             | NO   |     | NULL    |                | 
 # +------------+----------------------+------+-----+---------+----------------+
 
+# Return a list of all autocats in the DB
+proc GetAutoCatList {} {
+
+    set aquery \
+      "SELECT \
+         autoid, erase, sensorname, src_ip, src_port,   \
+         dst_ip, dst_port, ip_proto, signature, status, \
+         active, uid, timestamp                         \
+       FROM autocat"
+
+    set l [MysqlSelect $aquery list]
+    return $l
+
+}
+
 proc LoadAutoCats {} {
 
     set aquery \
@@ -29,8 +44,6 @@ proc LoadAutoCats {} {
        WHERE active='Y'"
 
     foreach line [MysqlSelect $aquery list] {
-
-        puts "DEBUG #### $line"
 
         set clearTime [lindex $line 1]
         if { $clearTime != "" } {

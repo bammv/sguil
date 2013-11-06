@@ -180,6 +180,18 @@ proc UserMsgRcvd { socketID userMsg } {
   if { $userMsg == "who" } {
      foreach client $clientList { lappend usersList [lindex $socketInfo($client) 2] }
      SendSocket $socketID [list UserMessage sguild "Connected users: $usersList"]
+  } elseif { $userMsg == "autocats" } { 
+    set c1 7
+    set c2 80
+    SendSocket $socketID [list UserMessage sguild "+-[string repeat - $c1]-+-[string repeat - $c2]-+"]
+    foreach r [GetAutoCatList] {
+      foreach i [list ID Erase Sensor SrcIP SrcPort DstIP DstPort Proto Sig Status Active UID Added] v $r {
+        if { $v == "" && $i == "Erase" } { set v none } elseif { $v == "" } { set v any }
+        set msg [format "| %-*s | %-*s |" $c1 $i $c2 $v]
+        SendSocket $socketID [list UserMessage sguild $msg]
+      }
+      SendSocket $socketID [list UserMessage sguild "+-[string repeat - $c1]-+-[string repeat - $c2]-+"]
+    }
   } elseif { $userMsg == "healthcheck" } { 
     #SensorAgentsHealthCheck 1
     SendSocket $socketID [list UserMessage sguild "Command healthcheck depreciated."]
