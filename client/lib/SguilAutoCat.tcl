@@ -42,7 +42,7 @@ proc AutoCatBldr { erase sensor sip sport dip dport proto sig status } {
       -labeltext "Sensor Name" \
       -labelpos n \
       -width 18 \
-      -focuscommand { UpdateACText erase } \
+      -focuscommand { UpdateACText sensor } \
     ]
 
     set sipEntry [ iwidgets::entryfield $bf.sip \
@@ -196,6 +196,7 @@ proc UpdateACText { name } {
     switch -exact -- $name {
 
         erase   { set msgtxt "Time (YYYY-MM-DD HH:MM:SS) this autocat rule expires or \"none\".\nStrings like '2 days' or '48 hours' will be converted." } 
+        sensor  { set msgtxt "Enter a sensor name or any" }
         sip     { set msgtxt "Source IP address or CIDR (192.168.1.2 or 192.168.1.0/24 or 127/8) or any" }
         sport   { set msgtxt "Source port or any" }
         dip     { set msgtxt "Destination IP address or CIDR (192.168.1.2 or 192.168.1.0/24 or 127/8) or any" }
