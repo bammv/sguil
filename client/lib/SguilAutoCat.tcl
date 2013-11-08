@@ -279,7 +279,7 @@ proc ValidateAutoCat { erase sensor sip sport dip dport proto sig status } {
         return -code error "Source Port is invalid."
     }
     
-    if { $dip != "any" && $dip != "ANY" && [ip::version $sip] != 4 } { return -code error "Destination IP is invalid." }
+    if { $dip != "any" && $dip != "ANY" && [ip::version $dip] != 4 } { return -code error "Destination IP is invalid." }
 
     if { $dport != "any" && $dport != "ANY" && ($dport < 0 || $dport > 65535) } { 
         return -code error "Destination Port is invalid."
