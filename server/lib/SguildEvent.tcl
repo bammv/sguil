@@ -136,11 +136,13 @@ proc DeleteEventIDList { socketID status comment eidList } {
 
             foreach row $correlatedEventArray($eventID) {
 
-                # Make sure we haven't processed the event ID already.
-                if { [lsearch $tmpEidList $eventID] < 1 } {
+                set tmpSid [lindex $row 5]
+                set tmpCid [lindex $row 6]
+                set tmpEid $tmpSid.$tmpCid
 
-                    set tmpSid [lindex $row 5]
-                    set tmpCid [lindex $row 6]
+                # Make sure we haven't processed the event ID already.
+                if { [lsearch $tmpEidList $tmpEid] < 1 } {
+
                     set sensorName [lindex $row 3]
                     set tmpDate [clock format [clock scan [lindex $row 4]] -gmt true -format "%Y%m%d"]
                     set tmpEventTable "event_${sensorName}_${tmpDate}"

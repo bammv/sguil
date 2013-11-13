@@ -51,6 +51,7 @@ CREATE TABLE autocat
   active	ENUM('Y','N') DEFAULT 'Y',
   timestamp	DATETIME NOT NULL,
   uid		INT UNSIGNED	NOT NULL,
+  comment	VARCHAR(255),
   PRIMARY KEY (autoid)
 ) ENGINE = MYISAM;
 
