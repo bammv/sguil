@@ -1,23 +1,25 @@
 # $Id: SguildAutoCat.tcl,v 1.6 2013/09/05 00:38:45 bamm Exp $ #
 
 # Format for the autocat file is:
-# +------------+----------------------+------+-----+---------+----------------+
-# | Field      | Type                 | Null | Key | Default | Extra          |
-# +------------+----------------------+------+-----+---------+----------------+
-# | autoid     | int(10) unsigned     | NO   | PRI | NULL    | auto_increment | 
-# | erase      | datetime             | YES  |     | NULL    |                | 
-# | sensorname | varchar(255)         | YES  |     | NULL    |                | 
-# | src_ip     | int(10) unsigned     | YES  |     | NULL    |                | 
-# | src_port   | int(10) unsigned     | YES  |     | NULL    |                | 
-# | dst_ip     | int(10) unsigned     | YES  |     | NULL    |                | 
-# | dst_port   | int(10) unsigned     | YES  |     | NULL    |                | 
-# | ip_proto   | tinyint(3) unsigned  | YES  |     | NULL    |                | 
-# | signature  | varchar(255)         | YES  |     | NULL    |                | 
-# | status     | smallint(5) unsigned | NO   |     | NULL    |                | 
-# | active     | enum('Y','N')        | YES  |     | Y       |                | 
-# | uid        | int(10) unsigned     | NO   |     | NULL    |                | 
-# | timestamp  | datetime             | NO   |     | NULL    |                | 
-# +------------+----------------------+------+-----+---------+----------------+
+#  +------------+----------------------+------+-----+---------+----------------+
+#  | Field      | Type                 | Null | Key | Default | Extra          |
+#  +------------+----------------------+------+-----+---------+----------------+
+#  | autoid     | int(10) unsigned     | NO   | PRI | NULL    | auto_increment |
+#  | erase      | datetime             | YES  |     | NULL    |                |
+#  | sensorname | varchar(255)         | YES  |     | NULL    |                |
+#  | src_ip     | varchar(18)          | YES  |     | NULL    |                |
+#  | src_port   | int(10) unsigned     | YES  |     | NULL    |                |
+#  | dst_ip     | varchar(18)          | YES  |     | NULL    |                |
+#  | dst_port   | int(10) unsigned     | YES  |     | NULL    |                |
+#  | ip_proto   | tinyint(3) unsigned  | YES  |     | NULL    |                |
+#  | signature  | varchar(255)         | YES  |     | NULL    |                |
+#  | status     | smallint(5) unsigned | NO   |     | NULL    |                |
+#  | active     | enum('Y','N')        | YES  |     | Y       |                |
+#  | timestamp  | datetime             | NO   |     | NULL    |                |
+#  | uid        | int(10) unsigned     | NO   |     | NULL    |                |
+#  | comment    | varchar(255)         | YES  |     | NULL    |                |
+#  +------------+----------------------+------+-----+---------+----------------+
+
 
 # Return a list of all autocats in the DB
 proc GetAutoCatList {} {
@@ -26,7 +28,7 @@ proc GetAutoCatList {} {
       "SELECT \
          autoid, erase, sensorname, src_ip, src_port,   \
          dst_ip, dst_port, ip_proto, signature, status, \
-         active, uid, timestamp                         \
+         active, uid, timestamp, comment                \
        FROM autocat"
 
     set l [MysqlSelect $aquery list]
@@ -198,7 +200,7 @@ proc AutoCatRequest { clientSocketID ruleList } {
 
     global userIDArray MAIN_DB_SOCKETID
 
-    if { [llength $ruleList] != 9 } {
+    if { [llength $ruleList] != 10 } {
 
         SendSocket $clientSocketID [list ErrorMessage "Invalid number of values in autocat list: $ruleList"]
         return
@@ -206,7 +208,7 @@ proc AutoCatRequest { clientSocketID ruleList } {
     }
 
     set i 0
-    foreach t [list erase sensorname src_ip src_port dst_ip dst_port ip_proto signature status] { 
+    foreach t [list erase sensorname src_ip src_port dst_ip dst_port ip_proto signature status comment] { 
 
         set v [lindex $ruleList $i]
 
@@ -231,7 +233,6 @@ proc AutoCatRequest { clientSocketID ruleList } {
 
     # Build INSERT query
     set q "INSERT INTO autocat ([join $tables ,])  VALUES ([join $values ,])"
-    puts "DEBUG #### $q"
 
     # INSERT
     if { [catch {::mysql::exec $MAIN_DB_SOCKETID $q} tmpError] } {
