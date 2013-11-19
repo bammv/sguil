@@ -109,6 +109,13 @@ proc AutoCatBldr { erase sensor sip sport dip dport proto sig status } {
       -side left \
       -expand false
 
+    set commentEntry [ iwidgets::entryfield $autoBldWin.cmnt\
+      -labeltext "Comment" \
+      -labelpos w \
+      -width 80 \
+      -focuscommand { UpdateACText comment } \
+    ]
+
     set h [message $autoBldWin.h \
       -justify left \
       -width 800 \
@@ -119,7 +126,7 @@ proc AutoCatBldr { erase sensor sip sport dip dport proto sig status } {
       $bb add cancel -text "Cancel" -command "set autocat(state) cancel"
       $bb add submit -text "Submit" -command "set autocat(state) submit"
 
-    pack $bf -side top -fill x
+    pack $bf $commentEntry -side top -fill x
     pack $h -side top -fill both -expand true
     pack $bb -side top
 
@@ -137,7 +144,7 @@ proc AutoCatBldr { erase sensor sip sport dip dport proto sig status } {
         ACIPNormalize $sipEntry
         ACIPNormalize $dipEntry
 
-       foreach value [list erase sensor sip sport dip dport proto sig status] { 
+       foreach value [list erase sensor sip sport dip dport proto sig status comment] { 
 
             set $value [eval $${value}Entry get]
 
@@ -145,15 +152,14 @@ proc AutoCatBldr { erase sensor sip sport dip dport proto sig status } {
 
         destroy $autoBldWin
 
-        if { [catch {ValidateAutoCat $erase $sensor $sip $sport $dip $dport $proto $sig $status} tmpError] } {
+        if { [catch {ValidateAutoCat $erase $sensor $sip $sport $dip $dport $proto $sig $status $comment} tmpError] } {
 
             ErrorMessage "You have an error with your rule syntax:\n $tmpError"
             AutoCatBldr $erase $sensor $sip $sport $dip $dport $proto $sig $status
 
         } else {
 
-            puts "DEBUG #### good -> $erase $sensor $sip $sport $dip $dport $proto $sig $status"
-            SendToSguild [list AutoCatRequest $erase $sensor $sip $sport $dip $dport $proto $sig $status]
+            SendToSguild [list AutoCatRequest $erase $sensor $sip $sport $dip $dport $proto $sig $status $comment]
             InfoMessage "Autocat rule sent to server."
 
         }
@@ -165,6 +171,7 @@ proc AutoCatBldr { erase sensor sip sport dip dport proto sig status } {
     }
 
 }
+
 proc AutoCatFromEvent {} { 
 
     global ACTIVE_EVENT MULTI_SELECT CUR_SEL_PANE
@@ -212,6 +219,7 @@ proc UpdateACText { name } {
                               '%%REGEXP%%(?i)^testing would match 'Testing' and 'testing' but not '123testing'\n\n\
                               If you don't use %%REGEXP%% the string you type in the sig must EXACTLY match the rule." }
         status   { set msgtxt "Status the alert matches will be automatically categorized to (NA=1, Cat I-VII = 11-17)" }
+        comment  { set msgtxt "Add a comment for this rule." }
         default { return }
 
     } 
@@ -263,7 +271,7 @@ proc ACIPNormalize { winName } {
 
 }
 
-proc ValidateAutoCat { erase sensor sip sport dip dport proto sig status } {
+proc ValidateAutoCat { erase sensor sip sport dip dport proto sig status comment } {
 
     if { $erase != "none" && $erase != "NONE" && [catch {clock scan $erase} tmpError] } {
 
@@ -292,5 +300,7 @@ proc ValidateAutoCat { erase sensor sip sport dip dport proto sig status } {
     if { ![string is integer -strict $status] || $status < 1 } { 
        return -code error "An invalid status was provided"
     }
+
+    if { [string length $comment] > 255 } { return -code error "Comments are limited to 255 characters." }
 
 }
