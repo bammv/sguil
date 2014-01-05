@@ -365,7 +365,7 @@ proc ClientConnect { socketID IPAddr port } {
     return
   }
   if {$OPENSSL} {
-    tls::import $socketID -server true -keyfile $KEY -certfile $PEM
+    tls::import $socketID -server true -keyfile $KEY -certfile $PEM -ssl2 false -ssl3 false -tls1 true
     fileevent $socketID readable [list HandShake $socketID ClientCmdRcvd]
   } else {
     fileevent $socketID readable [list ClientCmdRcvd $socketID]

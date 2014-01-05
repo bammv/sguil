@@ -248,7 +248,7 @@ proc ConnectToSguild {} {
         return -code error "Error: Unable to load TLS: $tmpError"
     }
 
-    tls::import $socketID
+    tls::import $socketID -ssl2 false -ssl3 false -tls1 true
 
     after 1000
     if {$DEBUG} {puts "Sending PING"}

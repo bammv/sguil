@@ -183,7 +183,7 @@ proc UploadSancpFile { filePath fileSize } {
         }
 
         catch { flush $dataChannelID }
-        tls::import $dataChannelID
+        tls::import $dataChannelID -ssl2 false -ssl3 false -tls1 true
 
         #
         # Connected and version checks finished.
