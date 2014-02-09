@@ -78,7 +78,7 @@ proc ClientVersionCheck { socketID clientVersion } {
     return
   }
 
-  if { [catch {tls::import $socketID -server true -keyfile $KEY -certfile $PEM} importError] } {
+  if { [catch {tls::import $socketID -server true -keyfile $KEY -certfile $PEM -ssl2 false -ssl3 false -tls1 true} importError] } {
         LogMessage "ERROR: $importError"
         close $socketID
         ClientExitClose $socketID
@@ -132,7 +132,7 @@ proc AgentVersionCheck { socketID agentVersion } {
     return
   }
 
-  if { [catch {tls::import $socketID -server true -keyfile $KEY -certfile $PEM} importError] } {
+  if { [catch {tls::import $socketID -server true -keyfile $KEY -certfile $PEM -ssl2 false -ssl3 false -tls1 true} importError] } {
         LogMessage "ERROR: $importError"
         catch {close $socketID}
         CleanUpDisconnectedAgent $socketID

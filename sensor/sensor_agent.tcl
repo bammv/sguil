@@ -973,7 +973,7 @@ proc ConnectToSguilServer {} {
     }
     flush $sguildSocketID
     if {$OPENSSL} {
-      tls::import $sguildSocketID
+      tls::import $sguildSocketID -ssl2 false -ssl3 false -tls1 true
     }
     fileevent $sguildSocketID readable [list SguildCmdRcvd $sguildSocketID]
     set CONNECTED 1

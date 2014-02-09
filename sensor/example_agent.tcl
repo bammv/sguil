@@ -292,7 +292,7 @@ proc ConnectToSguilServer {} {
         }
 
         catch { flush $sguildSocketID }
-        tls::import $sguildSocketID
+        tls::import $sguildSocketID -ssl2 false -ssl3 false -tls1 true
 
         set CONNECTED 1
         if {$DEBUG} {puts "Connected to $SERVER_HOST"}

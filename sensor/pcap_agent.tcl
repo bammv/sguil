@@ -120,7 +120,7 @@ proc UploadRawFile { fileName TRANS_ID fileSize } {
         }
 
         catch { flush $dataChannelID }
-        tls::import $dataChannelID
+        tls::import $dataChannelID -ssl2 false -ssl3 false -tls1 true
 
         #
         # Connected and version checks finished.
@@ -605,7 +605,7 @@ proc ConnectToSguilServer {} {
         }
 
         catch { flush $sguildSocketID }
-        tls::import $sguildSocketID
+        tls::import $sguildSocketID -ssl2 false -ssl3 false -tls1 true
 
         fileevent $sguildSocketID readable [list SguildCmdRcvd $sguildSocketID]
         set CONNECTED 1

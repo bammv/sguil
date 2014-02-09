@@ -173,7 +173,7 @@ if { $serverVersion != $VERSION } {
 SendToSguild $socketID [list VersionInfo $VERSION]
 
 # SSL-ify the socket
-if { [catch {tls::import $socketID} tlsError] } { 
+if { [catch {tls::import $socketID -ssl2 false -ssl3 false -tls1 true} tlsError] } {
 
     puts "failed."
     puts "ERROR: $tlsError"
