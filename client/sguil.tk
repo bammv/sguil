@@ -747,9 +747,11 @@ proc InsertPadsQueryResults { paneName results } {
 
 proc EventStatusLabel { color status tableName row col win } {
 
+    global MiddleButton RightButton
+
     label $win -text $status -background $color -width 3 -relief flat
 
-    bind $win <Button-3> {
+    bind $win <$RightButton> {
 
         foreach {tablelist::W tablelist::x tablelist::y} \
             [tablelist::convEventFields %W %x %y] {}
@@ -1180,7 +1182,7 @@ proc CreatePadsLists { baseFrame } {
     }
 
     # Right mouse button
-    bind $bindWin <Button-3> {
+    bind $bindWin <$RightButton> {
 
         foreach {tablelist::W tablelist::x tablelist::y} \
             [tablelist::convEventFields %W %x %y] {}
@@ -1195,7 +1197,7 @@ proc CreatePadsLists { baseFrame } {
 
 proc CreateSessionLists { baseFrame } {
 
-    global SCROLL_HOME
+    global SCROLL_HOME MiddleButton RightButton
 
     set SCROLL_HOME($baseFrame) 0
     set currentPane $baseFrame.tablelist
@@ -1255,7 +1257,7 @@ proc CreateSessionLists { baseFrame } {
     }
 
     # Right mouse button
-    bind $bindWin <Button-3> {
+    bind $bindWin <$RightButton> {
 
         foreach {tablelist::W tablelist::x tablelist::y} \
             [tablelist::convEventFields %W %x %y] {}
@@ -1267,7 +1269,7 @@ proc CreateSessionLists { baseFrame } {
     }
 
     # Middle mouse button
-    bind $bindWin <Button-2> {
+    bind $bindWin <$MiddleButton> {
 
         foreach {tablelist::W tablelist::x tablelist::y} \
             [tablelist::convEventFields %W %x %y] {}
@@ -1319,6 +1321,7 @@ proc SetSortType { rtpane win columnIndex } {
 proc CreateEventLists { baseFrame {movable {1}} {rtpane {0}} } {
 
     global SCROLL_HOME RT_SORT RT_SORT_COLUMN RT_SORT_ORDER
+    global MiddleButton RightButton
 
     set SCROLL_HOME($baseFrame) 0
     set currentPane $baseFrame.tablelist
@@ -1386,7 +1389,7 @@ proc CreateEventLists { baseFrame {movable {1}} {rtpane {0}} } {
     }
 
     # Right mouse button
-    bind $bindWin <Button-3> {
+    bind $bindWin <$RightButton> {
 
         foreach {tablelist::W tablelist::x tablelist::y} \
             [tablelist::convEventFields %W %x %y] {}
@@ -1398,7 +1401,7 @@ proc CreateEventLists { baseFrame {movable {1}} {rtpane {0}} } {
     }
 
     # Middle mouse button
-    bind $bindWin <Button-2> {
+    bind $bindWin <$MiddleButton> {
 
         foreach {tablelist::W tablelist::x tablelist::y} \
             [tablelist::convEventFields %W %x %y] {}
@@ -2157,6 +2160,42 @@ if { $WHOIS_PATH == "SimpleWhois" } {
 set SERVERHOSTSELECTED [lindex $SERVERHOST 0]
 
 ############################# GUI ############################################
+
+# Map buttons based on platform
+switch $tcl_platform(platform) {
+
+    "unix" {
+
+        # OSX is unix/Darwin
+        if { $tcl_platform(os) == "Darwin" } {
+
+            set MiddleButton {Button-3}
+            set RightButton {Button-2}
+
+        } else {
+
+            set MiddleButton {Button-2}
+            set RightButton {Button-3}
+
+        }
+
+    }
+
+    "windows" {
+
+        set MiddleButton {Button-2}
+        set RightButton {Button-3}
+
+    }
+
+    "macintosh" {
+
+        set MiddleButton {Button-3}
+        set RightButton {Button-2}
+
+    }
+
+}
 
 wm withdraw .
 
