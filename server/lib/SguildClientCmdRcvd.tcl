@@ -130,6 +130,8 @@ proc ClientCmdRcvd { socketID } {
 
       AutoCatRequest      { $clientCmd $socketID [lrange $data 1 end] }
 
+      SendAutoCatList     { $clientCmd $socketID }
+
       default { InfoMessage "Unrecognized command from $socketID: $data" }
 
     }

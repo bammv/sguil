@@ -36,6 +36,14 @@ proc GetAutoCatList {} {
 
 }
 
+# Send a list of autocats to a requesting client
+proc SendAutoCatList { socketID } {
+    
+    foreach r [GetAutoCatList] { SendSocket $socketID [list InsertAutoCat $r] } 
+    SendSocket $socketID [list InsertAutoCat end]
+
+}
+
 proc LoadAutoCats {} {
 
     set aquery \
