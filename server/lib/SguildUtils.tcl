@@ -24,13 +24,12 @@ proc HupTrapped {} {
   global acRules acCat ACCESS_FILE EMAIL_FILE
   LogMessage "HUP signal caught."
   # Reload auto cat rules
-  InfoMessage "Reloading AutoCat rules: $AUTOCAT_FILE"
+  InfoMessage "Reloading AutoCat rules from DB."
   # Clear the current rules
   if [info exists acRules] { unset acRules }
   if [info exists acCat] { unset acCat }
-  if { [ file exists $AUTOCAT_FILE] } {
-    LoadAutoCatFile $AUTOCAT_FILE
-  }
+  # Load autocat rules from the DB
+  LoadAutoCats
   if { [file exists $EMAIL_FILE] } {
     LoadEmailConfig $EMAIL_FILE
     InfoMessage "Email config loaded: $EMAIL_FILE"
