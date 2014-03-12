@@ -132,6 +132,10 @@ proc ClientCmdRcvd { socketID } {
 
       SendAutoCatList     { $clientCmd $socketID }
 
+      EnableAutoCatRule   { $clientCmd $socketID [lindex $data 1] }
+
+      DisableAutoCatRule   { $clientCmd $socketID [lindex $data 1] }
+
       default { InfoMessage "Unrecognized command from $socketID: $data" }
 
     }
