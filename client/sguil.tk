@@ -208,6 +208,7 @@ proc ServerCommandRcvd { socketID } {
       WiresharkDataPcap { $serverCmd $socketID [lindex $data 1] [lindex $data 2] }
       PcapAvailable { $serverCmd $socketID [lindex $data 1] [lindex $data 2] }
       PassChange { $serverCmd [lindex $data 1] [lindex $data 2] }
+      InsertAutoCat { $serverCmd [lindex $data 1] }
       default { puts "Unrecognized command from $socketID: $data" }
     }
   } 
@@ -2133,6 +2134,8 @@ if { [file exists $FONTFILE] } {
 }
 option add *Font ourStandardFont
 
+lappend auto_path $SGUILLIB
+
 # Source required sguillibs
 source $SGUILLIB/dkffont.tcl
 source $SGUILLIB/email17.tcl
@@ -2150,8 +2153,16 @@ source $SGUILLIB/SguilUtil.tcl
 source $SGUILLIB/SguilAutoCat.tcl
 
 # Load TableList
-source $SGUILLIB/tablelist4.1/tablelistPublic.tcl
-source $SGUILLIB/tablelist4.1/tablelist.tcl
+package require tablelist
+
+# Images for tablelist checkbuttons
+if { [file exists $SGUILLIB/images/checked.gif] } {
+    image create photo checkedButton -file  $SGUILLIB/images/checked.gif
+}
+if { [file exists $SGUILLIB/images/unchecked.gif] } {
+    image create photo uncheckedButton -file  $SGUILLIB/images/unchecked.gif
+}
+
 
 if { $WHOIS_PATH == "SimpleWhois" } {
   source $SGUILLIB/whois.tcl
@@ -2244,6 +2255,7 @@ set topFrame [frame .topFrame]
   }
   set fileList [menu $fileMenu.menu -tearoff 0]
     $fileList add command -label "AutoCat" -command { AutoCatBldr none any any any any any any any 1 }
+    $fileList add command -label "AutoCat Viewer" -command LaunchAutoCatViewer  
     $fileList add command -label "Display Incident Categories" -command DisplayIncidentCats  
     $fileList add command -label "Change Password" -command LaunchPassChange  
     $fileList add command -label "Sleep (Ctrl-s)" -command "GoToSleep"

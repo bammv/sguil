@@ -304,3 +304,185 @@ proc ValidateAutoCat { erase sensor sip sport dip dport proto sig status comment
     if { [string length $comment] > 255 } { return -code error "Comments are limited to 255 characters." }
 
 }
+
+proc LaunchAutoCatViewer {} {
+
+    set winName .acViewer
+
+    if { ![winfo exists $winName] } { 
+
+        CreateAutoCatViewer $winName 
+
+    } else {
+
+        wm withdraw $winName
+        wm deiconify $winName
+
+    }
+
+    $winName configure -cursor watch
+    SendToSguild SendAutoCatList
+
+}
+
+proc emptyStr { val } { return "" }
+
+proc CreateAutoCatViewer { winName } {
+
+    toplevel $winName
+    wm title $winName "AutoCat Viewer"
+    wm geometry $winName +[winfo rootx .]+[winfo pointery .]
+
+    set aceFrame $winName.frame
+    frame $aceFrame
+
+    set aceTable $aceFrame.table
+    set aceVScroll $aceFrame.vscroll
+    set aceHScroll $winName.hscroll
+
+    # erase sensor sip sport dip dport proto sig status comment
+    tablelist::tablelist $aceTable \
+        -columns {7   "Active"      center
+                  3   "ID"          left
+                  18  "Erase"       left
+                  15  "Sensor"      left
+                  16  "Src IP"      left
+                  6   "SPort"       left
+                  16  "Dst IP"      left
+                  6   "DPort"       left
+                  4   "Pr"          left
+                  40  "Signature"   left
+                  4   "ST"          left
+                  12  "Owner"       left
+                  18  "Created"     left
+                  50  "Comment"     left}   \
+        -stretch all \
+        -width 150 \
+        -height 5 \
+        -movablecolumns 1 \
+        -instanttoggle 1 \
+        -yscrollcommand [list $aceVScroll set] \
+        -xscrollcommand [list $aceHScroll set] \
+        -editstartcommand ConfirmAutoCatChange \
+        -editendcommand ChangeAutoCatStatus
+
+    $aceTable columnconfigure 0 -name active -editable yes -width 0 -editwindow checkbutton -formatcommand emptyStr
+    $aceTable columnconfigure 1 -name autoid -editable no -sortmode integer -resizable 1 -stretchable 1 -width 0
+    $aceTable columnconfigure 2 -name erase -editable no -sortmode dictionary -resizable 1 -stretchable 1 -width 0
+    $aceTable columnconfigure 3 -name sensor -editable no -sortmode dictionary -resizable 1 -stretchable 1 -width 0
+    $aceTable columnconfigure 4 -name sip -editable no -sortmode dictionary -resizable 1 -stretchable 1 -width 0
+    $aceTable columnconfigure 5 -name sport -editable no -sortmode dictionary -resizable 1 -stretchable 1 -width 0
+    $aceTable columnconfigure 6 -name dip -editable no -sortmode dictionary -resizable 1 -stretchable 1 -width 0
+    $aceTable columnconfigure 7 -name dport -editable no -sortmode dictionary -resizable 1 -stretchable 1 -width 0
+    $aceTable columnconfigure 8 -name ipproto -editable no -sortmode dictionary -resizable 1 -stretchable 1 -width 0
+    $aceTable columnconfigure 9 -name signature -editable no -sortmode dictionary -resizable 1 -stretchable 1 -width 0
+    $aceTable columnconfigure 10 -name status -editable no -sortmode integer -resizable 1 -stretchable 1 -width 0
+    $aceTable columnconfigure 11 -name owner -editable no -sortmode dictionary -resizable 1 -stretchable 1 -width 0
+    $aceTable columnconfigure 12 -name timestamp -editable no -sortmode dictionary -resizable 1 -stretchable 1 -width 0
+    $aceTable columnconfigure 13 -name comment -editable no -sortmode dictionary -resizable 1 -stretchable 1 -width 0
+
+    scrollbar $aceVScroll -orient vertical -width 10 -command [list $aceTable yview]
+    scrollbar $aceHScroll -orient horizontal -width 10 -command [list $aceTable xview]
+
+    pack $aceTable -side left -fill both -expand true
+    pack $aceVScroll -side right -fill y
+
+    button $winName.close -text "Close" -command "destroy $winName"
+    pack $aceFrame -side top -fill both -expand true
+    pack $aceHScroll -side top -fill x
+    pack $winName.close -side bottom
+
+    return $aceTable
+
+}
+
+proc ConfirmAutoCatChange { tbl row col text} {
+
+    set w [$tbl editwinpath]
+    set r [lindex [$tbl get $row $row] 0]
+    set clearTime [lindex $r 2]
+
+    # Cannot enable a future rule
+    if { $text == "0" && $clearTime != "none" } {
+
+        set cTimeSecs [clock scan "$clearTime" -gmt true]
+        if { $cTimeSecs < [clock seconds] } {
+
+            tk_messageBox -parent $tbl -message "Cannot enable this rule, its erase time is in the past." -type ok -icon info
+            $tbl cancelediting
+            return [$tbl cellcget $row,$col -text]
+
+        }
+
+    }
+
+    # Give the user an option to cancel this edit
+    set answer [tk_messageBox -parent $tbl -message "Are you sure you want to modify this autocat rule?" -type yesno -icon question]
+    if {$answer == "no"} { $tbl cancelediting }
+
+    return [$tbl cellcget $row,$col -text]
+
+}
+
+proc ChangeAutoCatStatus { tbl row col text} {
+
+    set img [expr {$text ? "checkedButton" : "uncheckedButton"}]
+    $tbl cellconfigure $row,$col -image $img
+
+    set r [lindex [$tbl get $row $row] 0]
+    set rid [lindex $r 1]
+
+    if { $text == "1" } {
+
+        SendToSguild [list EnableAutoCatRule $rid]
+        tk_messageBox -parent $tbl -message "AutoCat enable request for autocat id $rid sent." -type ok -icon info
+
+    } else {
+
+        SendToSguild [list DisableAutoCatRule $rid]
+        tk_messageBox -parent $tbl -message "AutoCat disable request for autocat id $rid sent." -type ok -icon info
+
+    }
+
+    return $text
+
+}
+
+proc InsertAutoCat { r } { 
+
+    set winName .acViewer
+    set aceFrame $winName.frame
+    set aceTable $aceFrame.table
+
+    if { $r == "end" } { $winName configure -cursor left_ptr; return }
+
+    # Y ==1 N == 0
+    if { [lindex $r 0] == "Y" || [lindex $r 0] == "y" } { set r [lreplace $r 0 0 1] } else { set r [lreplace $r 0 0 0] }
+    # Map nulls to "none" or "any"
+    if { [lindex $r 2] == "" } { set r [lreplace $r 2 2 "none"] } 
+    if { [lindex $r 13] == "" } { set r [lreplace $r 13 13 "none"] }
+    for {set i 2}  {$i < 13} {incr i} { if { [lindex $r $i] == "" } { set r [lreplace $r $i $i "any"] } }
+
+    # Insert row into table
+    $aceTable insert end $r
+
+    # Upate the checkbox
+    set availImg [expr {([lindex $r 0] == 1) ? "checkedButton" : "uncheckedButton"}]
+    $aceTable cellconfigure end,active -image $availImg
+
+}
+
+proc AutoCatEditButton { tbl row col w } {
+
+    set key [$tbl getkeys $row]
+    button $w -text "Edit" -command [list EditAutoCatRule $tbl $key]
+
+}
+
+proc EditAutoCatRule { tbl key } {
+
+    puts "tbl -> $tbl ; key -> $key"
+
+}
+
+
