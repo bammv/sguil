@@ -54,39 +54,50 @@ proc LoadAutoCats {} {
        FROM autocat \
        WHERE active='Y'"
 
-    foreach line [MysqlSelect $aquery list] {
+    foreach line [MysqlSelect $aquery list] { ProcessAutoCat $line }
 
-        set rid [lindex $line 0]
-        set clearTime [lindex $line 1]
+}
 
-        if { $clearTime != "" } {
+proc ProcessAutoCat { line } {
 
-            set cTimeSecs [clock scan "$clearTime" -gmt true]
+    set rid [lindex $line 0]
+    set clearTime [lindex $line 1]
 
-            if { $cTimeSecs > [clock seconds] } {
+    if { $clearTime != "" } {
 
-                # Invoke the rule
-                AddAutoCatRule $rid [lrange $line 2 end] 
+        set cTimeSecs [clock scan "$clearTime" -gmt true]
 
-                # Set up the removal
-                set DELAY [expr ($cTimeSecs - [clock seconds]) * 1000]
-                after $DELAY RemoveAutoCatRule $rid
+        if { $cTimeSecs > [clock seconds] } {
 
-            } else {
- 
-                # Disable the autocat rule
-                RemoveAutoCatRule $rid
+            # Invoke the rule
+            AddAutoCatRule $rid [lrange $line 2 end] 
 
-            }
+            # Set up the removal
+            set DELAY [expr ($cTimeSecs - [clock seconds]) * 1000]
+            after $DELAY RemoveAutoCatRule $rid
 
         } else {
-
-            AddAutoCatRule [lindex $line 0] [lrange $line 2 end] 
+ 
+            # Disable the autocat rule
+            RemoveAutoCatRule $rid
 
         }
 
+    } else {
+
+        AddAutoCatRule [lindex $line 0] [lrange $line 2 end] 
+
     }
-   
+
+}
+
+proc DisableAutoCatRule { socketID rid } {
+
+    global userIDArray
+
+    LogMessage "User $userIDArray($socketID) disabled autocat ID $rid"
+    RemoveAutoCatRule $rid
+
 }
 
 proc RemoveAutoCatRule { rid } {
@@ -107,17 +118,29 @@ proc RemoveAutoCatRule { rid } {
 
 }
 
-proc EnableAutoCat { rid } {
+proc EnableAutoCatRule { socketID rid } {
 
-    global MAIN_DB_SOCKET
+    global MAIN_DB_SOCKETID userIDArray
+
+    LogMessage "User $userIDArray($socketID) enabled autocat ID $rid"
 
     set q "UPDATE autocat SET active='Y' WHERE autoid='$rid'"
 
     if { [catch {::mysql::exec $MAIN_DB_SOCKETID $q} tmpError] } {
 
         LogMessage "Unable to enable autocat rule $rid: $tmpError"
+        return
 
     }
+
+    set aquery \
+      "SELECT \
+         autoid, erase, sensorname, src_ip, src_port, \
+         dst_ip, dst_port, ip_proto, signature, status \
+       FROM autocat \
+       WHERE autoid='$rid'"
+
+    ProcessAutoCat [MysqlSelect $aquery list]
 
 }
 
