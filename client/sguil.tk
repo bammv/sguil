@@ -2018,9 +2018,12 @@ proc InsertHistoryResults { winName results } {
 proc CheckLineFormat { line } {
     
     set RETURN 1
-  # Right now we just check the length and for "set".
+
+    # Right now we just check the length and for "set".
     if { [llength $line] !=3 ||[lindex $line 0] != "set" } { set RETURN 0 }
-	return $RETURN
+
+    return $RETURN
+
 }
 
 
