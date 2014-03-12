@@ -15,7 +15,7 @@ exec tclsh "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.8.0"
+set VERSION "SGUIL-0.9.0"
 set AGENT_VERSION "SGUIL-0.8.0"
 # DB Version
 set DB_VERSION "0.14"

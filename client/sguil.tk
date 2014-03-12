@@ -19,7 +19,7 @@ exec wish "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.8.0"
+set VERSION "SGUIL-0.9.0"
 
 # Load extended tcl
 if [catch {package require Tclx} tclxVersion] {
