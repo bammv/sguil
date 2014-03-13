@@ -12,7 +12,7 @@ exec tclsh "$0" ${1+"$@"}
 # 8.4a2), which causes excessive memory use when calling "info exists" on
 # non-existent array elements.
 #
-# Copyright (c) 2001-2005  Csaba Nemethi (E-mail: csaba.nemethi@t-online.de)
+# Copyright (c) 2001-2014  Csaba Nemethi (E-mail: csaba.nemethi@t-online.de)
 #==============================================================================
 
 set procDef {
@@ -44,10 +44,12 @@ set fi [open tablelistWidget.tcl.BAK r]
 set fo [open tablelistWidget.tcl     w]
 
 for {set n 1} {[gets $fi line] >= 0} {incr n} {
-    if {$n == 21} {
+    if {$n == 19} {
 	puts -nonewline $fo $line
 	puts $fo $procDef
     } else {
+	regsub -all {\[info exists (tablelist::[^\(]+)\(([^\]]+)\)\]} $line \
+		    {[tablelist::arrElemExists \1 \2]} line
 	regsub -all {\[info exists ([^\(]+)\(([^\]]+)\)\]} $line \
 		    {[arrElemExists \1 \2]} line
 	puts $fo $line
@@ -61,13 +63,16 @@ puts "\nMade backup copy \"tablelistWidget.tcl.BAK\"."
 puts "Created new version of the file \"tablelistWidget.tcl\"."
 
 foreach file {tablelistBind.tcl tablelistConfig.tcl tablelistEdit.tcl
-	      tablelistMove.tcl tablelistSort.tcl tablelistUtil.tcl} {
+	      tablelistMove.tcl tablelistSort.tcl tablelistThemes.tcl
+	      tablelistUtil.tcl} {
     file copy $file $file.BAK
 
     set fi [open $file.BAK r]
     set fo [open $file     w]
 
-    for {set n 1} {[gets $fi line] >= 0} {incr n} {
+    while {[gets $fi line] >= 0} {
+	regsub -all {\[info exists (tablelist::[^\(]+)\(([^\]]+)\)\]} $line \
+		    {[tablelist::arrElemExists \1 \2]} line
 	regsub -all {\[info exists ([^\(]+)\(([^\]]+)\)\]} $line \
 		    {[arrElemExists \1 \2]} line
 	puts $fo $line

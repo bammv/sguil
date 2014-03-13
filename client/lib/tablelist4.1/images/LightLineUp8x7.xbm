@@ -1,4 +1,0 @@
-#define LightLineUp8x7_width 8
-#define LightLineUp8x7_height 7
-static unsigned char LightLineUp8x7_bits[] = {
-   0x10, 0x30, 0x20, 0x60, 0x40, 0xc0, 0xff};

@@ -1,4 +1,0 @@
-#define TriangleUp7x7_width 7
-#define TriangleUp7x7_height 7
-static unsigned char TriangleUp7x7_bits[] = {
-   0x08, 0x1c, 0x1c, 0x3e, 0x3e, 0x7f, 0x7f};

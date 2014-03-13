@@ -78,7 +78,7 @@ proc InsertRuleData { ruleData } {
         #Remove any existing tags
         eval {$w tag delete} [$w tag names]
 
-        # Find the sid for snort.org and bleeding links.
+        # Find the sid for sid_ref() links
         set sidIndex [$w search -count length -regexp -- {sid:.*?;} 0.0 end]
         if { $sidIndex != "" } {
 
@@ -87,15 +87,11 @@ proc InsertRuleData { ruleData } {
             set start "$row.[expr $col + 4]"
             set end "$row.[expr [lindex [split $sidIndex .] 1] + $length - 1]"
             set sid [lindex [split [$w get $sidIndex $end] :] 1]
-
-            if { $sid < 1000000 || ( $sid >= 2000000 && $sid < 3000000 )} { 
-                # Within snort.org rule range
-                $ruleText component text tag configure SID -foreground blue -underline 0
-	        $w tag add SID $start "$start + [expr $length - 5] char"
-                $w tag bind SID <Enter> { %W configure -cursor hand2 }
-                $w tag bind SID <Leave> { %W configure -cursor left_ptr }
-                $w tag bind SID <ButtonRelease-1> [list DisplayReference %W $sidIndex $length]
-            }
+            $ruleText component text tag configure SID -foreground blue -underline 0
+            $w tag add SID $start "$start + [expr $length - 5] char"
+            $w tag bind SID <Enter> { %W configure -cursor hand2 }
+            $w tag bind SID <Leave> { %W configure -cursor left_ptr }
+            $w tag bind SID <ButtonRelease-1> [list DisplayReference %W $sidIndex $length]
 
         }
 
@@ -129,7 +125,7 @@ proc InsertRuleData { ruleData } {
 
 proc DisplayReference { win start length } {
 
-    global BROWSER_PATH
+    global BROWSER_PATH sid_ref
     
     if { ![info exists BROWSER_PATH] } { 
         ErrorMessage "Error: BROWSER_PATH is NOT defined."
@@ -162,14 +158,14 @@ proc DisplayReference { win start length } {
         mcafee     { exec $BROWSER_PATH http://vil.nai.com/vil/content/v_$content & }
         arachnids  { InfoMessage "ArachNIDS references are no long supported." }
         sid        { 
-                     if { $content < 1000000 } {
-                         exec $BROWSER_PATH http://www.snort.org/pub-bin/sigs.cgi?sid=$content &
-                     } elseif { $content > 1999999 && $content < 30000000} {
-                         exec $BROWSER_PATH http://doc.emergingthreats.net/$content &
-                     } else {
-                         tk_messageBox -type ok -icon warning -message\
-                          "Sid $content is a locally managed signature/rule."
+                     set f 0
+                     foreach a [array names sid_ref] {
+                         set min [lindex $sid_ref($a) 1]
+                         set max [lindex $sid_ref($a) 2]
+                         set uri "[lindex $sid_ref($a) 0]$content"
+                         if { $content >= $min && $content <= $max } { exec $BROWSER_PATH $uri; set f 1; break }
                      }
+                     if { !$f } { InfoMessage "Unable to find url for sid $content. Check your sguil.conf." } 
         }
         default    { InfoMessage "Unknown reference in rule: $ref" }
 

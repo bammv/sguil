@@ -5,7 +5,7 @@
 #   - Namespace initialization
 #   - Public utility procedures
 #
-# Copyright (c) 2000-2005  Csaba Nemethi (E-mail: csaba.nemethi@t-online.de)
+# Copyright (c) 2000-2014  Csaba Nemethi (E-mail: csaba.nemethi@t-online.de)
 #==============================================================================
 
 package require Tcl 8
@@ -20,16 +20,49 @@ namespace eval mwutil {
     #
     # Public variables:
     #
-    variable version	2.0
+    variable version	2.8
     variable library	[file dirname [info script]]
 
     #
     # Public procedures:
     #
     namespace export	wrongNumArgs getAncestorByClass convEventFields \
-			defineKeyNav processTraversal configure \
-			fullConfigOpt fullOpt enumOpts setConfigVals \
-			configSubCmd attribSubCmd getScrollInfo
+			defineKeyNav processTraversal focusNext focusPrev \
+			configureWidget fullConfigOpt fullOpt enumOpts \
+			configureSubCmd attribSubCmd hasattribSubCmd \
+			unsetattribSubCmd getScrollInfo
+
+    #
+    # Make modified versions of the procedures tk_focusNext and
+    # tk_focusPrev, to be invoked in the processTraversal command
+    #
+    proc makeFocusProcs {} {
+	#
+	# Enforce the evaluation of the Tk library file "focus.tcl"
+	#
+	tk_focusNext .
+
+	#
+	# Build the procedures focusNext and focusPrev
+	#
+	foreach direction {Next Prev} {
+	    set procBody [info body tk_focus$direction]
+	    regsub -all {winfo children} $procBody {getChildren $class} procBody
+	    proc focus$direction {w class} $procBody
+	}
+    }
+    makeFocusProcs 
+
+    #
+    # Invoked in the procedures focusNext and focusPrev defined above:
+    #
+    proc getChildren {class w} {
+	if {[string compare [winfo class $w] $class] == 0} {
+	    return {}
+	} else {
+	    return [winfo children $w]
+	}
+    }
 }
 
 #
@@ -58,7 +91,7 @@ proc mwutil::wrongNumArgs args {
 # exist (but w itself needn't exist).
 #------------------------------------------------------------------------------
 proc mwutil::getAncestorByClass {w class} {
-    regexp {^(.+)\..+$} $w dummy win
+    regexp {^(\..+)\..+$} $w dummy win
     while {[string compare [winfo class $win] $class] != 0} {
 	set win [winfo parent $win]
     }
@@ -114,12 +147,17 @@ proc mwutil::processTraversal {w class event} {
     set win [getAncestorByClass $w $class]
 
     if {[string compare $event "<Tab>"] == 0} {
-	set target [tk_focusNext $win]
+	set target [focusNext $win $class]
     } else {
-	set target [tk_focusPrev $win]
+	set target [focusPrev $win $class]
     }
 
     if {[string compare $target $win] != 0} {
+	set focus [focus]
+	if {[string length $focus] != 0} {
+	    event generate $focus <<TraverseOut>>
+	}
+
 	focus $target
 	event generate $target <<TraverseIn>>
     }
@@ -128,16 +166,15 @@ proc mwutil::processTraversal {w class event} {
 }
 
 #------------------------------------------------------------------------------
-# mwutil::configure
+# mwutil::configureWidget
 #
 # Configures the widget win by processing the command-line arguments specified
 # in optValPairs and, if the value of initialize is true, also those database
 # options that don't match any command-line arguments.
 #------------------------------------------------------------------------------
-proc mwutil::configure {win configSpecsName configValsName \
-			configCmd optValPairs initialize} {
+proc mwutil::configureWidget {win configSpecsName configCmd cgetCmd \
+			      optValPairs initialize} {
     upvar $configSpecsName configSpecs
-    upvar $configValsName configVals
 
     #
     # Process the command-line arguments
@@ -158,7 +195,7 @@ proc mwutil::configure {win configSpecsName configValsName \
 	}
 	set opt $result
 	lappend cmdLineOpts $opt
-	lappend savedVals $configVals($opt)
+	lappend savedVals [eval $cgetCmd [list $win $opt]]
 	if {[catch {eval $configCmd [list $win $opt $val]} result] != 0} {
 	    set failed 1
 	    break
@@ -191,7 +228,7 @@ proc mwutil::configure {win configSpecsName configValsName \
 	    set dbName [lindex $configSpecs($opt) 0]
 	    set dbClass [lindex $configSpecs($opt) 1]
 	    set dbValue [option get $win $dbName $dbClass]
-	    if {[string compare $dbValue ""] == 0} {
+	    if {[string length $dbValue] == 0} {
 		set default [lindex $configSpecs($opt) 3]
 		eval $configCmd [list $win $opt $default]
 	    } else {
@@ -237,26 +274,20 @@ proc mwutil::fullConfigOpt {opt configSpecsName} {
 	}
     }
 
-    switch $count {
-	0 {
-	    ### return -code error "unknown option \"$opt\""
-	    return -code error \
-		   "bad option \"$opt\": must be [enumOpts $optList]"
+    if {$count == 1} {
+	if {[llength $configSpecs($option)] == 1} {
+	    return $configSpecs($option)
+	} else {
+	    return $option
 	}
-
-	1 {
-	    if {[llength $configSpecs($option)] == 1} {
-		return $configSpecs($option)
-	    } else {
-		return $option
-	    }
-	}
-
-	default {
-	    ### return -code error "unknown option \"$opt\""
-	    return -code error \
-		   "ambiguous option \"$opt\": must be [enumOpts $optList]"
-	}
+    } elseif {$count == 0} {
+	### return -code error "unknown option \"$opt\""
+	return -code error \
+	       "bad option \"$opt\": must be [enumOpts $optList]"
+    } else {
+	### return -code error "unknown option \"$opt\""
+	return -code error \
+	       "ambiguous option \"$opt\": must be [enumOpts $optList]"
     }
 }
 
@@ -282,20 +313,14 @@ proc mwutil::fullOpt {kind opt optList} {
 	}
     }
 
-    switch $count {
-	0 {
-	    return -code error \
-		   "bad $kind \"$opt\": must be [enumOpts $optList]"
-	}
-
-	1 {
-	    return $option
-	}
-
-	default {
-	    return -code error \
-		   "ambiguous $kind \"$opt\": must be [enumOpts $optList]"
-	}
+    if {$count == 1} {
+	return $option
+    } elseif {$count == 0} {
+	return -code error \
+	       "bad $kind \"$opt\": must be [enumOpts $optList]"
+    } else {
+	return -code error \
+	       "ambiguous $kind \"$opt\": must be [enumOpts $optList]"
     }
 }
 
@@ -327,135 +352,127 @@ proc mwutil::enumOpts optList {
 }
 
 #------------------------------------------------------------------------------
-# mwutil::setConfigVals
-#
-# Sets the elements of the array specified by configValsName to the values
-# returned by passing the widget name win and the relevant options to the
-# command given by cgetCmd.
-#------------------------------------------------------------------------------
-proc mwutil::setConfigVals {win configSpecsName configValsName
-			    cgetCmd argList} {
-    upvar $configSpecsName configSpecs
-    upvar $configValsName configVals
-
-    set optList {}
-    if {[llength $argList] == 0} {
-	foreach opt [array names configSpecs] {
-	    if {[llength $configSpecs($opt)] > 1} {
-		lappend optList $opt
-	    }
-	}
-    } else {
-	foreach {opt val} $argList {
-	    lappend optList [fullConfigOpt $opt configSpecs]
-	}
-    }
-
-    foreach opt $optList {
-	set configVals($opt) [eval $cgetCmd [list $win $opt]]
-    }
-}
-
-#------------------------------------------------------------------------------
-# mwutil::configSubCmd
+# mwutil::configureSubCmd
 #
 # This procedure is invoked to process configuration subcommands.
 #------------------------------------------------------------------------------
-proc mwutil::configSubCmd {win configSpecsName configValsName
-			   configCmd argList} {
+proc mwutil::configureSubCmd {win configSpecsName configCmd cgetCmd argList} {
     upvar $configSpecsName configSpecs
-    upvar $configValsName configVals
 
-    switch [llength $argList] {
-	0 {
-	    #
-	    # Return a list describing all available configuration options
-	    #
-	    foreach opt [lsort [array names configSpecs]] {
-		if {[llength $configSpecs($opt)] == 1} {
-		    set alias $configSpecs($opt)
-		    if {$::tk_version < 8.1} {
-			set dbName [lindex $configSpecs($alias) 0]
-			lappend result [list $opt $dbName]
-		    } else {
-			lappend result [list $opt $alias]
-		    }
+    set argCount [llength $argList]
+    if {$argCount > 1} {
+	#
+	# Set the specified configuration options to the given values
+	#
+	return [configureWidget $win configSpecs $configCmd $cgetCmd $argList 0]
+    } elseif {$argCount == 1} {
+	#
+	# Return the description of the specified configuration option
+	#
+	set opt [fullConfigOpt [lindex $argList 0] configSpecs]
+	set dbName [lindex $configSpecs($opt) 0]
+	set dbClass [lindex $configSpecs($opt) 1]
+	set default [lindex $configSpecs($opt) 3]
+	return [list $opt $dbName $dbClass $default \
+		[eval $cgetCmd [list $win $opt]]]
+    } else {
+	#
+	# Return a list describing all available configuration options
+	#
+	foreach opt [lsort [array names configSpecs]] {
+	    if {[llength $configSpecs($opt)] == 1} {
+		set alias $configSpecs($opt)
+		if {$::tk_version >= 8.1} {
+		    lappend result [list $opt $alias]
 		} else {
-		    set dbName [lindex $configSpecs($opt) 0]
-		    set dbClass [lindex $configSpecs($opt) 1]
-		    set default [lindex $configSpecs($opt) 3]
-		    lappend result [list $opt $dbName $dbClass $default \
-				    $configVals($opt)]
+		    set dbName [lindex $configSpecs($alias) 0]
+		    lappend result [list $opt $dbName]
 		}
+	    } else {
+		set dbName [lindex $configSpecs($opt) 0]
+		set dbClass [lindex $configSpecs($opt) 1]
+		set default [lindex $configSpecs($opt) 3]
+		lappend result [list $opt $dbName $dbClass $default \
+				[eval $cgetCmd [list $win $opt]]]
 	    }
-	    return $result
 	}
-
-	1 {
-	    #
-	    # Return the description of the specified configuration option
-	    #
-	    set opt [fullConfigOpt [lindex $argList 0] configSpecs]
-	    set dbName [lindex $configSpecs($opt) 0]
-	    set dbClass [lindex $configSpecs($opt) 1]
-	    set default [lindex $configSpecs($opt) 3]
-	    return [list $opt $dbName $dbClass $default $configVals($opt)]
-	}
-
-	default {
-	    #
-	    # Set the specified configuration options to the given values
-	    #
-	    return [configure $win configSpecs configVals $configCmd $argList 0]
-	}
+	return $result
     }
 }
 
 #------------------------------------------------------------------------------
 # mwutil::attribSubCmd
 #
-# This procedure is invoked to process the attrib subcommand.
+# This procedure is invoked to process *attrib subcommands.
 #------------------------------------------------------------------------------
-proc mwutil::attribSubCmd {win argList} {
+proc mwutil::attribSubCmd {win prefix argList} {
     set classNs [string tolower [winfo class $win]]
-    upvar ::${classNs}::ns${win}::attribVals attribVals
+    upvar ::${classNs}::ns${win}::attribs attribs
 
     set argCount [llength $argList]
-    switch $argCount {
-	0 {
-	    #
-	    # Return the current list of attribute names and values
-	    #
-	    set result {}
-	    foreach attr [lsort [array names attribVals]] {
-		lappend result [list $attr $attribVals($attr)]
-	    }
-	    return $result
+    if {$argCount > 1} {
+	#
+	# Set the specified attributes to the given values
+	#
+	if {$argCount % 2 != 0} {
+	    return -code error "value for \"[lindex $argList end]\" missing"
 	}
-
-	1 {
-	    #
-	    # Return the value of the specified attribute
-	    #
-	    set attr [lindex $argList 0]
-	    if {[info exists attribVals($attr)]} {
-		return $attribVals($attr)
-	    } else {
-		return ""
-	    }
+	foreach {attr val} $argList {
+	    set attribs($prefix-$attr) $val
 	}
-
-	default {
-	    #
-	    # Set the specified attributes to the given values
-	    #
-	    if {$argCount % 2 != 0} {
-		return -code error "value for \"[lindex $argList end]\" missing"
-	    }
-	    array set attribVals $argList
+	return ""
+    } elseif {$argCount == 1} {
+	#
+	# Return the value of the specified attribute
+	#
+	set attr [lindex $argList 0]
+	set name $prefix-$attr
+	if {[info exists attribs($name)]} {
+	    return $attribs($name)
+	} else {
 	    return ""
 	}
+    } else {
+	#
+	# Return the current list of attribute names and values
+	#
+	set len [string length "$prefix-"]
+	set result {}
+	foreach name [lsort [array names attribs "$prefix-*"]] {
+	    set attr [string range $name $len end]
+	    lappend result [list $attr $attribs($name)]
+	}
+	return $result
     }
+}
+
+#------------------------------------------------------------------------------
+# mwutil::hasattribSubCmd
+#
+# This procedure is invoked to process has*attrib subcommands.
+#------------------------------------------------------------------------------
+proc mwutil::hasattribSubCmd {win prefix attr} {
+    set classNs [string tolower [winfo class $win]]
+    upvar ::${classNs}::ns${win}::attribs attribs
+
+    return [info exists attribs($prefix-$attr)]
+}
+
+#------------------------------------------------------------------------------
+# mwutil::unsetattribSubCmd
+#
+# This procedure is invoked to process unset*attrib subcommands.
+#------------------------------------------------------------------------------
+proc mwutil::unsetattribSubCmd {win prefix attr} {
+    set classNs [string tolower [winfo class $win]]
+    upvar ::${classNs}::ns${win}::attribs attribs
+
+    set name $prefix-$attr
+    if {[info exists attribs($name)]} {
+	unset attribs($name)
+    }
+
+    return ""
 }
 
 #------------------------------------------------------------------------------
