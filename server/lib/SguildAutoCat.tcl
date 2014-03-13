@@ -50,7 +50,7 @@ proc LoadAutoCats {} {
     set aquery \
       "SELECT \
          autoid, erase, sensorname, src_ip, src_port, \
-         dst_ip, dst_port, ip_proto, signature, status \
+         dst_ip, dst_port, ip_proto, signature, status, comment \
        FROM autocat \
        WHERE active='Y'"
 
@@ -146,7 +146,7 @@ proc EnableAutoCatRule { socketID rid } {
 
 proc AddAutoCatRule { rid rList } {
 
-    global acRules acCat
+    global acRules acCat acComment
 
     InfoMessage "Adding AutoCat Rule: $rid $rList"
 
@@ -209,12 +209,15 @@ proc AddAutoCatRule { rid rList } {
     }
 
     # Define the status matches are updated to
-    set acCat($rid) [lindex $rList $i]
+    set acCat($rid) [lindex $rList 7]
+    # Define the comment associated w/matches
+    set comment [lindex $rList 8]
+    if { $comment == "" } { set acComment($rid) "autoid $rid" } else { set acComment($rid) "autoid $rid: $comment" }
 
 }
 
 proc AutoCat { data } {
-    global acRules acCat AUTOID
+    global acRules acCat acComment AUTOID
     foreach rid [array names acRules] {
 	set MATCH 1
 	foreach rule [lrange $acRules($rid) 0 end] {
@@ -256,7 +259,7 @@ proc AutoCat { data } {
 	if { $MATCH } {
 	    InfoMessage "AUTO MARKING EVENT AS : $acCat($rid)"
 	    UpdateDBStatus [lindex $data 3] [lindex $data 4] [lindex $data 5] [lindex $data 6] [GetCurrentTimeStamp] $AUTOID $acCat($rid)
-	    InsertHistory [lindex $data 5] [lindex $data 6] $AUTOID [GetCurrentTimeStamp] $acCat($rid) "Auto Update"
+	    InsertHistory [lindex $data 5] [lindex $data 6] $AUTOID [GetCurrentTimeStamp] $acCat($rid) $acComment($rid) 
 	    return 1
 	}
     }
