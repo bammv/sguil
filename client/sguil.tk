@@ -2156,7 +2156,7 @@ source $SGUILLIB/SguilUtil.tcl
 source $SGUILLIB/SguilAutoCat.tcl
 
 # Load TableList
-package require tablelist
+package require tablelist 5.11
 
 # Images for tablelist checkbuttons
 if { [file exists $SGUILLIB/images/checked.gif] } {
