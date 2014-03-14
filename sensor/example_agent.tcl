@@ -29,7 +29,7 @@ exec tclsh "$0" "$@"
 #
 
 # Make sure you define the version this agent will work with. 
-set VERSION "SGUIL-0.8.0"
+set VERSION "SGUIL-0.9.0"
 
 # Define the agent type here. It will be used to register the agent with sguild.
 # The template also prepends the agent type in all caps to all event messages.

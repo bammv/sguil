@@ -18,7 +18,7 @@ exec tclsh "$0" "$@"
 #
 
 # Don't touch these
-set VERSION "SGUIL-0.7.0"
+set VERSION "SGUIL-0.9.0"
 set CONNECTED 0
 
 proc bgerror { errorMsg } {
