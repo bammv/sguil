@@ -92,3 +92,49 @@ proc SelectDown {} {
     }
 
 }
+
+proc UserSelectedEvent { eventID uid } {
+
+   global rtPaneArray
+
+    # Loop through each pane until we find the matching eventID (sid.alert)
+    foreach rtPane [array names rtPaneArray] {
+
+       # A list of eventIDs in this pane
+       set eidList [$rtPaneArray($rtPane) getcolumns alertID]
+       set ematch [lsearch -exact $eidList $eventID]
+
+        # Act on a match
+        if { $ematch >= 0 } {
+
+            # Update the status txt to be the user's uid
+            $rtPaneArray($rtPane) cellconfigure $ematch,status -window "EventStatusLabel [list white $uid]"
+
+        }
+
+    }
+
+}
+
+proc UserUnSelectedEvent { eventID uid } {
+
+    global rtPaneArray eventArray
+
+    foreach rtPane [array names rtPaneArray] {
+
+        set eidList [$rtPaneArray($rtPane) getcolumns alertID]
+        set ematch [lsearch -exact $eidList $eventID]
+
+        # Found the match
+        if { $ematch >= 0 } {
+
+            set priority [lindex $eventArray($eventID) 1]
+            set statusColor [GetColorByPriority $priority]
+            $rtPaneArray($rtPane) cellconfigure $ematch,status -window "EventStatusLabel [list $statusColor RT]"
+
+        }
+
+    }
+
+
+}

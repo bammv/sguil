@@ -209,6 +209,8 @@ proc ServerCommandRcvd { socketID } {
       PcapAvailable { $serverCmd $socketID [lindex $data 1] [lindex $data 2] }
       PassChange { $serverCmd [lindex $data 1] [lindex $data 2] }
       InsertAutoCat { $serverCmd [lindex $data 1] }
+      UserSelectedEvent { $serverCmd [lindex $data 1] [lindex $data 2] }
+      UserUnSelectedEvent { $serverCmd [lindex $data 1] [lindex $data 2] }
       default { puts "Unrecognized command from $socketID: $data" }
     }
   } 
@@ -266,7 +268,7 @@ proc UpdateUserName { userName userID } {
   $userIDText configure -text $userID
 }
 proc ReconnectToSguild {} {
-  global CONNECTED USERNAME PASSWD socketID monitorList
+  global CONNECTED USERNAME PASSWD USERID socketID monitorList
   if [catch {ConnectToSguild} socketID] {
     InsertSystemInfoMsg sguil.tk "${socketID}. Will try again in 60 secs."
     set CONNECTED 0
@@ -1587,9 +1589,9 @@ proc SelectPadsPane { win type format } {
 
 proc SelectEventPane { win type format } {
 
-    global CUR_SEL_PANE CUR_SEL_EVENT ACTIVE_EVENT BUSY MULTI_SELECT DISPLAYEDDETAIL
+    global CUR_SEL_PANE CUR_SEL_EVENT ACTIVE_EVENT BUSY MULTI_SELECT DISPLAYEDDETAIL USERID
     global portscanDataFrame packetDataFrame sancpFrame padsFrame genericFrame
-    global generatorListMap sigIDListMap BUSY
+    global generatorListMap sigIDListMap BUSY rtPaneArray
 
     #if { $BUSY } { bell; return }
 
@@ -1618,6 +1620,13 @@ proc SelectEventPane { win type format } {
         }
 
         set CUR_SEL_EVENT $eventID
+
+        # If win is a rt pane, send selected eventID to other clients via sguild
+        foreach rtPane [array names rtPaneArray] { 
+
+            if { $rtPaneArray($rtPane) == $win } { SendToSguild [list UserSelectedEvent $eventID $USERID] }
+
+        }
 
         set genID $generatorListMap($eventID)
         set sigID [lindex $sigIDListMap($eventID) 0]
