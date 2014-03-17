@@ -136,6 +136,8 @@ proc ClientCmdRcvd { socketID } {
 
       DisableAutoCatRule   { $clientCmd $socketID [lindex $data 1] }
 
+      UserSelectedEvent   { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+
       default { InfoMessage "Unrecognized command from $socketID: $data" }
 
     }
@@ -146,7 +148,8 @@ proc ClientCmdRcvd { socketID } {
 
 proc ClientExitClose { socketID } {
 
-  global clientList  clientMonitorSockets validSockets socketInfo sensorUsers
+  global clientList clientMonitorSockets validSockets socketInfo sensorUsers
+  global userIDArray selectedEvent
 
   set userName [lindex $socketInfo($socketID) 2]
 
@@ -168,6 +171,13 @@ proc ClientExitClose { socketID } {
       set sensorUsers($sensorName) [ldelete $sensorUsers($sensorName) $userName]
     }
   }
+  # Unselect selected event
+  if { [array exists selectedEvent] && [info exists selectedEvent($socketID)] } {
+    foreach client $clientList {
+      SendSocket $client [list UserUnSelectedEvent $selectedEvent($socketID) $userIDArray($socketID)]
+    }
+    unset selectedEvent($socketID)
+  }
   if { [info exists socketInfo($socketID)] } {
     set tmpUserName [lindex $socketInfo($socketID) 2]
     unset socketInfo($socketID)
@@ -177,15 +187,23 @@ proc ClientExitClose { socketID } {
 }
 
 proc UserMsgRcvd { socketID userMsg } {
-  global socketInfo clientList 
+  global socketInfo clientList userIDArray selectedEvent
                                                                                                             
   #set userMsg [lindex $userMsg 0]
                                                                                                             
   # Simple command stuff.
   # Who returns a list of connected users
   if { $userMsg == "who" } {
-     foreach client $clientList { lappend usersList [lindex $socketInfo($client) 2] }
-     SendSocket $socketID [list UserMessage sguild "Connected users: $usersList"]
+     SendSocket $socketID [list UserMessage sguild "== Connected Users =="]
+     foreach client $clientList { 
+       set uinfo "Username: [lindex $socketInfo($client) 2] -- User ID: $userIDArray($client) -- "
+       if { [array exists selectedEvent] && [info exists selectedEvent($client)] } { 
+         append uinfo "Selected Event: $selectedEvent($client)"
+       } else {
+         append uinfo "Selected Event: none"
+       }
+       SendSocket $socketID [list UserMessage sguild $uinfo]
+     }
   } elseif { $userMsg == "autocats" } { 
     set c1 7
     set c2 80
@@ -457,7 +475,7 @@ proc SendEscalatedEvents { socketID } {
 proc SendCurrentEvents { socketID } {
 
     global eventIDArray eventIDList clientMonitorSockets eventIDCountArray
-    global sidNetNameMap
+    global sidNetNameMap userIDArray selectedEvent
                                                                                                                        
     if { [info exists eventIDList] && [llength $eventIDList] > 0 } {
 
@@ -480,4 +498,46 @@ proc SendCurrentEvents { socketID } {
 
     }
 
+    # Update client on which events are currently selected
+    foreach s [array names selectedEvent] {
+
+        SendSocket $socketID [list UserSelectedEvent $selectedEvent($s) $userIDArray($s)] 
+
+    }
+
 }
+
+proc UserSelectedEvent { socketID eventID userID } {
+
+    global selectedEvent clientList
+
+    # Unselect previously selected event
+    if { [info exists selectedEvent($socketID)] } {
+
+        foreach client $clientList {
+
+            if { $client != $socketID } { 
+
+                SendSocket $client [list UserUnSelectedEvent $selectedEvent($socketID) $userID] 
+
+            }
+
+        }
+
+    }
+
+    set selectedEvent($socketID) $eventID
+
+    # Send newly selected event
+    foreach client $clientList {
+
+        if { $client != $socketID } { 
+
+            SendSocket $client [list UserSelectedEvent $selectedEvent($socketID) $userID] 
+
+        }
+
+    }
+   
+}
+
