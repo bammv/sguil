@@ -298,7 +298,7 @@ proc CheckLastPcapFile { { onetime {0} } } {
 
 proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto rawDataFileName type } {
 
-    global RAW_LOG_DIR DEBUG TCPDUMP TMP_DIR VLAN
+    global RAW_LOG_DIR DEBUG TCPDUMP TMP_DIR
 
     set date [lindex $timestamp 0]
 
@@ -426,23 +426,14 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
 
     }
 
-    if { [info exists VLAN] && $VLAN } {
-
-        set tmpFilter "vlan and "
-
-    } else {
-
-        set tmpFilter {}
-
-    }
-
+    # Use ip or vlan for the filter
     if {$proto != "6" && $proto != "17"} {
 
-        set tcpdumpFilter "${tmpFilter}host $srcIP and host $dstIP and proto $proto"
+        set tcpdumpFilter "(ip and host $srcIP and host $dstIP and proto $proto) or (vlan and host $srcIP and host $dstIP and proto $proto)"
 
     } else {
 
-        set tcpdumpFilter "${tmpFilter}host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto"
+        set tcpdumpFilter "(ip and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto) or (vlan and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto)"
 
     }
 
