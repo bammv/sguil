@@ -156,6 +156,11 @@ proc ClientExitClose { socketID } {
     unset socketInfo($socketID)
     SendSystemInfoMsg sguild "User $userName has disconnected."
     LogClientAccess "[GetCurrentTimeStamp]: $socketID - $userName logged out"
+    if { [array exists sensorUsers] } {
+      foreach sensorName [array names sensorUsers] {
+        set sensorUsers($sensorName) [ldelete $sensorUsers($sensorName) $userName]
+      }
+    }
   }
 
   if { [info exists clientList] } {
@@ -168,11 +173,6 @@ proc ClientExitClose { socketID } {
   }
   if { [info exists validSockets] } {
     set validSockets [ldelete $validSockets $socketID]
-  }
-  if { [array exists sensorUsers] } {
-    foreach sensorName [array names sensorUsers] {
-      set sensorUsers($sensorName) [ldelete $sensorUsers($sensorName) $userName]
-    }
   }
   # Unselect selected event
   if { [array exists selectedEvent] && [info exists selectedEvent($socketID)] } {
