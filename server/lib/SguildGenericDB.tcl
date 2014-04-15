@@ -173,7 +173,7 @@ proc UpdateDBStatus { sensorName date sid cid timestamp uid status } {
 
     global MAIN_DB_SOCKETID
 
-    set tmpDate [clock format [clock scan $date] -gmt true -format "%Y%m%d"]
+    set tmpDate [clock format [clock scan $date] -format "%Y%m%d"]
     set tableName "event_${sensorName}_$tmpDate"
     set updateString\
      "UPDATE `$tableName` SET status=$status, last_modified='$timestamp', last_uid='$uid' WHERE sid=$sid AND cid=$cid"
