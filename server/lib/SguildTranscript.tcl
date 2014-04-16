@@ -332,7 +332,7 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
       set state DST
     }
     catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $state]}
-    SendSocket $clientSocketID [list XscriptMainMsg $winName $data]
+    catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $data]}
     update
     if { $CANCEL_TRANS_FLAG($winName) } { break }
   }

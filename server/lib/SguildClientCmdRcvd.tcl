@@ -151,9 +151,17 @@ proc ClientExitClose { socketID } {
   global clientList clientMonitorSockets validSockets socketInfo sensorUsers
   global userIDArray selectedEvent
 
-  set userName [lindex $socketInfo($socketID) 2]
-
-  LogClientAccess "[GetCurrentTimeStamp]: $socketID - $userName logged out"
+  if { [info exists socketInfo($socketID)] } {
+    set userName [lindex $socketInfo($socketID) 2]
+    unset socketInfo($socketID)
+    SendSystemInfoMsg sguild "User $userName has disconnected."
+    LogClientAccess "[GetCurrentTimeStamp]: $socketID - $userName logged out"
+    if { [array exists sensorUsers] } {
+      foreach sensorName [array names sensorUsers] {
+        set sensorUsers($sensorName) [ldelete $sensorUsers($sensorName) $userName]
+      }
+    }
+  }
 
   if { [info exists clientList] } {
     set clientList [ldelete $clientList $socketID]
@@ -166,22 +174,12 @@ proc ClientExitClose { socketID } {
   if { [info exists validSockets] } {
     set validSockets [ldelete $validSockets $socketID]
   }
-  if { [array exists sensorUsers] } {
-    foreach sensorName [array names sensorUsers] {
-      set sensorUsers($sensorName) [ldelete $sensorUsers($sensorName) $userName]
-    }
-  }
   # Unselect selected event
   if { [array exists selectedEvent] && [info exists selectedEvent($socketID)] } {
     foreach client $clientList {
       SendSocket $client [list UserUnSelectedEvent $selectedEvent($socketID) $userIDArray($socketID)]
     }
     unset selectedEvent($socketID)
-  }
-  if { [info exists socketInfo($socketID)] } {
-    set tmpUserName [lindex $socketInfo($socketID) 2]
-    unset socketInfo($socketID)
-    SendSystemInfoMsg sguild "User $tmpUserName has disconnected."
   }
 
 }
