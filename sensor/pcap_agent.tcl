@@ -464,8 +464,41 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
 
     } else {
 
-        fileevent $cmdID readable [list ProcessTcpdump $cmdID $TMP_DIR/$rawDataFileName $TRANS_ID $type]
+        if { ![file exists $TMP_DIR/$rawDataFileName] } {
 
+            if {$proto != "6" && $proto != "17"} {
+
+                set tcpdumpFilter "(ip and host $srcIP and host $dstIP and proto $proto)"
+
+            } else {
+
+                set tcpdumpFilter "(ip and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto)"
+
+            }
+
+            set tcpdumpCmd "$TCPDUMP -r $RAW_LOG_DIR/$date/$logFileName -w $TMP_DIR/$rawDataFileName $tcpdumpFilter"
+
+            if [catch { open "| $tcpdumpCmd" r } cmdID] {
+
+                set tmpMsg "Error running $tcpdumpCmd: $cmdID"
+                if { $type == "xscript" } {
+
+                    SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $cmdID]]
+
+                } else {
+
+                    SendToSguild [list SystemMessage $cmdID]
+
+                }
+            } else {
+
+                fileevent $cmdID readable [list ProcessTcpdump $cmdID $TMP_DIR/$rawDataFileName $TRANS_ID $type]
+            }
+
+        } else {
+
+            fileevent $cmdID readable [list ProcessTcpdump $cmdID $TMP_DIR/$rawDataFileName $TRANS_ID $type]
+        }
     }
 
 }
