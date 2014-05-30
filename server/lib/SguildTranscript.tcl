@@ -334,7 +334,7 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
     catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $state]}
     catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $data]}
     update
-    if { $CANCEL_TRANS_FLAG($winName) } { break }
+    if { [info exists CANCEL_TRANS_FLAG(winName)] && $CANCEL_TRANS_FLAG($winName) } { break }
   }
   if [catch {close $tcpflowID} closeError] {
     catch {SendSocket $clientSocketID [list XscriptDebugMsg $winName "ERROR: tcpflow: $closeError"]}
