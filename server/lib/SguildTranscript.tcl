@@ -344,8 +344,8 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
   }
   catch {SendSocket $clientSocketID [list XscriptMainMsg $winName DONE]}
 
-  unset transInfoArray($TRANS_ID)
-  unset CANCEL_TRANS_FLAG($winName)
+  if { [info exists transInfoArray(TRANS_ID)] } { unset transInfoArray($TRANS_ID) }
+  if { [info exists CANCEL_TRANS_FLAG(winName)] } { unset CANCEL_TRANS_FLAG($winName) }
 
 }
 
