@@ -94,7 +94,7 @@ proc ClientCmdRcvd { socketID } {
 
       ValidateUser        { ValidateUser $socketID [lindex $data 1] [lindex $data 2] }
 
-      PING                { puts $socketID "PONG" }
+      PING                { catch {SendSocket $socketID PONG} }
 
       UserMessage         { UserMsgRcvd $socketID [lindex $data 1] }
 
