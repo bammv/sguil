@@ -13,7 +13,7 @@ proc ClientConnect { socketID IPAddr port } {
     # Check the client access list
     if { ![ValidateClientAccess $IPAddr] } {
 
-        SendSocket $socketID "Connection Refused."
+        catch {SendSocket $socketID "Connection Refused."}
         catch {close $socketID} tmpError
         LogMessage "Invalid access attempt from $IPAddr"
         return
@@ -102,7 +102,7 @@ proc SensorConnect { socketID IPAddr port } {
 
   # Check the sensor access list
   if { ![ValidateSensorAccess $IPAddr] } {
-    SendSocket $socketID "Connection Refused."
+    catch {SendSocket $socketID "Connection Refused."}
     catch {close $socketID} tmpError
     LogMessage "Invalid access attempt from $IPAddr"
     LogAgentAccess "[GetCurrentTimeStamp]: ($socketID) Invalid access attempt from $IPAddr"

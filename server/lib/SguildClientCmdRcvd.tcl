@@ -12,7 +12,7 @@ proc ClientCmdRcvd { socketID } {
         if { [info exists tmpLen] } {
 
             LogMessage "Error: Received poorly formatted message from $socketID: \n$data: \n$tmpLen"
-            SendSocket $socketID [list ErrorMessage "Error: Your client sent improperly formatted data to sguild."]
+            catch {SendSocket $socketID [list ErrorMessage "Error: Your client sent improperly formatted data to sguild."]}
 
         }
 
@@ -98,9 +98,9 @@ proc ClientCmdRcvd { socketID } {
 
       UserMessage         { UserMsgRcvd $socketID [lindex $data 1] }
 
-      SendGlobalQryList   { SendSocket $socketID [list GlobalQryList $GLOBAL_QRY_LIST] }
+      SendGlobalQryList   { catch {SendSocket $socketID [list GlobalQryList $GLOBAL_QRY_LIST]} }
 
-      SendReportQryList   { SendSocket $socketID [list ReportQryList $REPORT_QRY_LIST] }
+      SendReportQryList   { catch {SendSocket $socketID [list ReportQryList $REPORT_QRY_LIST]} }
 
       ReportRequest       { ReportBuilder $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
 
@@ -177,7 +177,7 @@ proc ClientExitClose { socketID } {
   # Unselect selected event
   if { [array exists selectedEvent] && [info exists selectedEvent($socketID)] } {
     foreach client $clientList {
-      SendSocket $client [list UserUnSelectedEvent $selectedEvent($socketID) $userIDArray($socketID)]
+      catch {SendSocket $client [list UserUnSelectedEvent $selectedEvent($socketID) $userIDArray($socketID)]}
     }
     unset selectedEvent($socketID)
   }
@@ -192,7 +192,7 @@ proc UserMsgRcvd { socketID userMsg } {
   # Simple command stuff.
   # Who returns a list of connected users
   if { $userMsg == "who" } {
-     SendSocket $socketID [list UserMessage sguild "== Connected Users =="]
+     catch {SendSocket $socketID [list UserMessage sguild "== Connected Users =="]}
      foreach client $clientList { 
        set uinfo "Username: [lindex $socketInfo($client) 2] -- User ID: $userIDArray($client) -- "
        if { [array exists selectedEvent] && [info exists selectedEvent($client)] } { 
@@ -200,26 +200,26 @@ proc UserMsgRcvd { socketID userMsg } {
        } else {
          append uinfo "Selected Event: none"
        }
-       SendSocket $socketID [list UserMessage sguild $uinfo]
+       catch {SendSocket $socketID [list UserMessage sguild $uinfo]}
      }
   } elseif { $userMsg == "autocats" } { 
     set c1 7
     set c2 80
-    SendSocket $socketID [list UserMessage sguild "+-[string repeat - $c1]-+-[string repeat - $c2]-+"]
+    catch {SendSocket $socketID [list UserMessage sguild "+-[string repeat - $c1]-+-[string repeat - $c2]-+"]}
     foreach r [GetAutoCatList] {
       foreach i [list ID Erase Sensor SrcIP SrcPort DstIP DstPort Proto Sig Status Active UID Added Comment] v $r {
         if { $v == "" && ($i == "Erase" || $i == "Comment") } { set v none } elseif { $v == "" } { set v any }
         set msg [format "| %-*s | %-*s |" $c1 $i $c2 $v]
-        SendSocket $socketID [list UserMessage sguild $msg]
+        catch {SendSocket $socketID [list UserMessage sguild $msg]}
       }
-      SendSocket $socketID [list UserMessage sguild "+-[string repeat - $c1]-+-[string repeat - $c2]-+"]
+      catch {SendSocket $socketID [list UserMessage sguild "+-[string repeat - $c1]-+-[string repeat - $c2]-+"]}
     }
   } elseif { $userMsg == "healthcheck" } { 
     #SensorAgentsHealthCheck 1
-    SendSocket $socketID [list UserMessage sguild "Command healthcheck depreciated."]
+    catch {SendSocket $socketID [list UserMessage sguild "Command healthcheck depreciated."]}
   } else {
     foreach client $clientList {
-      SendSocket $client [list UserMessage [lindex $socketInfo($socketID) 2] $userMsg]
+      catch {SendSocket $client [list UserMessage [lindex $socketInfo($socketID) 2] $userMsg]}
     }
   }
 }
@@ -227,13 +227,13 @@ proc UserMsgRcvd { socketID userMsg } {
 proc GetCorrelatedEvents { socketID eid winName } {
   global correlatedEventArray eventIDArray
   if { [info exists eventIDArray] } {
-    SendSocket $socketID\
-     [list InsertQueryResults $winName [eval FormatStdToQuery $eventIDArray($eid)]]
+    catch {SendSocket $socketID\
+     [list InsertQueryResults $winName [eval FormatStdToQuery $eventIDArray($eid)]]}
   }
                                                                                                             
   if { [info exists correlatedEventArray($eid)] } {
     foreach row $correlatedEventArray($eid) {
-      SendSocket $socketID [list InsertQueryResults $winName [eval FormatStdToQuery $row]]
+      catch {SendSocket $socketID [list InsertQueryResults $winName [eval FormatStdToQuery $row]]}
     }
   }
 }
@@ -485,10 +485,7 @@ proc SendCurrentEvents { socketID } {
 
                 if { [lsearch -exact $clientMonitorSockets($netName) $socketID] >= 0} {
                     InfoMessage "Sending client $socketID: InsertEvent $eventIDArray($eventID) $eventIDCountArray($eventID)" 
-                    catch {\
-                     SendSocket $socketID [list InsertEvent "$eventIDArray($eventID) $eventIDCountArray($eventID)"] \
-                    } tmpError
-
+                    catch {SendSocket $socketID [list InsertEvent "$eventIDArray($eventID) $eventIDCountArray($eventID)"]}
                 }
             }
 
@@ -499,7 +496,7 @@ proc SendCurrentEvents { socketID } {
     # Update client on which events are currently selected
     foreach s [array names selectedEvent] {
 
-        SendSocket $socketID [list UserSelectedEvent $selectedEvent($s) $userIDArray($s)] 
+        catch {SendSocket $socketID [list UserSelectedEvent $selectedEvent($s) $userIDArray($s)]}
 
     }
 
@@ -516,7 +513,7 @@ proc UserSelectedEvent { socketID eventID userID } {
 
             if { $client != $socketID } { 
 
-                SendSocket $client [list UserUnSelectedEvent $selectedEvent($socketID) $userID] 
+                catch {SendSocket $client [list UserUnSelectedEvent $selectedEvent($socketID) $userID]}
 
             }
 
@@ -531,7 +528,7 @@ proc UserSelectedEvent { socketID eventID userID } {
 
         if { $client != $socketID } { 
 
-            SendSocket $client [list UserSelectedEvent $selectedEvent($socketID) $userID] 
+            catch {SendSocket $client [list UserSelectedEvent $selectedEvent($socketID) $userID]}
 
         }
 

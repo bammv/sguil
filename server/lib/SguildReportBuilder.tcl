@@ -64,7 +64,7 @@ proc ReportBuilder { socketID type sid cid } {
             set timestart [lindex [lindex $cid 1] 0]
             set timeend [lindex [lindex $cid 1] 1]
             if { ![regexp -nocase "^select" $sql] } {
-               SendSocket $socketID [list ErrorMessage "Only SELECT queries are valid in the Report Builder"]
+               catch {SendSocket $socketID [list ErrorMessage "Only SELECT queries are valid in the Report Builder"]}
                return
             }
             # Macro replacements

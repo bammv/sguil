@@ -50,8 +50,8 @@ proc HupTrapped {} {
     set REPORT_QRY_LIST none
   }
   foreach clientSocket $clientList {
-    SendSocket $clientSocket [list GlobalQryList $GLOBAL_QRY_LIST]
-    SendSocket $clientSocket [list ReportQryList $REPORT_QRY_LIST]
+    catch {SendSocket $clientSocket [list GlobalQryList $GLOBAL_QRY_LIST]}
+    catch {SendSocket $clientSocket [list ReportQryList $REPORT_QRY_LIST]}
   }
   LoadAccessFile $ACCESS_FILE
 }

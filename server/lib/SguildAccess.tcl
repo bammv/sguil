@@ -439,11 +439,11 @@ proc ChangePass { socketID username oldpass newpass } {
         set hashPasswd [::sha1::sha1 "${newpass}${salt}"]
 
         DBCommand "UPDATE user_info SET password='${salt}${hashPasswd}' WHERE username='$username'"
-        SendSocket $socketID [list PassChange 1 $newpass]
+        catch {SendSocket $socketID [list PassChange 1 $newpass]} tmpError
 
     } else {
 
-        SendSocket $socketID [list PassChange 0 failed]
+        catch {SendSocket $socketID [list PassChange 0 failed]} tmpError
 
     }
 

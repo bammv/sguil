@@ -40,8 +40,8 @@ proc GetAutoCatList {} {
 # Send a list of autocats to a requesting client
 proc SendAutoCatList { socketID } {
     
-    foreach r [GetAutoCatList] { SendSocket $socketID [list InsertAutoCat $r] } 
-    SendSocket $socketID [list InsertAutoCat end]
+    foreach r [GetAutoCatList] { catch {SendSocket $socketID [list InsertAutoCat $r]} } 
+    catch {SendSocket $socketID [list InsertAutoCat end]} tmpError
 
 }
 
@@ -272,7 +272,7 @@ proc AutoCatRequest { clientSocketID ruleList } {
 
     if { [llength $ruleList] != 10 } {
 
-        SendSocket $clientSocketID [list ErrorMessage "Invalid number of values in autocat list: $ruleList"]
+        catch {SendSocket $clientSocketID [list ErrorMessage "Invalid number of values in autocat list: $ruleList"]} tmpError
         return
 
     }
@@ -307,25 +307,25 @@ proc AutoCatRequest { clientSocketID ruleList } {
     # INSERT
     if { [catch {::mysql::exec $MAIN_DB_SOCKETID $q} tmpError] } {
 
-        SendSocket $clientSocketID [list ErrorMessage "Error inserting autocat rule into the DB: $tmpError"]
+        catch {SendSocket $clientSocketID [list ErrorMessage "Error inserting autocat rule into the DB: $tmpError"]} tmpError
         return
 
     }
 
     if { [catch {::mysql::insertid $MAIN_DB_SOCKETID} rid] || $rid == "" } {
 
-        SendSocket $clientSocketID [list ErrorMessage "Error retrieving new autocat rule id: $rid"]
+        catch {SendSocket $clientSocketID [list ErrorMessage "Error retrieving new autocat rule id: $rid"] 1} tmpError
         return
 
     }
     
     if { [catch {AddAutoCatRule $rid [lrange $ruleList 1 end]} tmpError] } {
 
-        SendSocket $clientSocketID [list ErrorMessage "Error inserting autocat rule: $rid"]
+        catch {SendSocket $clientSocketID [list ErrorMessage "Error inserting autocat rule: $rid"] 1} tmpError
 
     } else {
         
-        SendSocket $clientSocketID [list InfoMessage "AutoCat rule $rid successfully implemented."]
+        catch {SendSocket $clientSocketID [list InfoMessage "AutoCat rule $rid successfully implemented."]} tmpError
 
     }
 

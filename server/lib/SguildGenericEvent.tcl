@@ -86,7 +86,7 @@ proc GenericEvent { agentSocketID eventList } {
 
 
     # Send the agent confirmation 
-    SendSocket $agentSocketID [list ConfirmEvent $alertID]
+    catch {SendSocket $agentSocketID [list ConfirmEvent $alertID]}
 
 }
 
