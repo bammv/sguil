@@ -331,8 +331,8 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
     } elseif { [regsub ^$dstMask:\  $data {} data] > 0 } {
       set state DST
     }
-    catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $state]}
-    catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $data]}
+    if [catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $state]}] { break }
+    if [catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $data]}] { break }
     update
     if { [info exists CANCEL_TRANS_FLAG(winName)] && $CANCEL_TRANS_FLAG($winName) } { break }
   }
