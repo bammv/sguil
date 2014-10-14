@@ -1118,6 +1118,8 @@ proc DeleteTab { eventTabs tabName } {
 
 proc CreatePadsLists { baseFrame } {
 
+    global RightButton
+
     # mysql> DESC pads;
     # +-------------+---------------------+------+-----+---------------------+-------+
     # | Field       | Type                | Null | Key | Default             | Extra |
