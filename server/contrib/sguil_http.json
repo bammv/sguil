@@ -1,0 +1,26 @@
+PUT /_template/logstash_per_index
+{
+    "template" : "logstash*",
+    "mappings" : {
+      "Sguil_httplog" : {
+         "properties": {
+            "@timestamp":{"type":"date","format":"dateOptionalTime"},
+            "@version":{"type":"string"},
+            "dst_port":{"type":"long"},
+            "dst_ip":{"type":"ip"},
+            "host":{"type":"string"},
+            "http_host":{"type":"string", "index":"not_analyzed", "omit_norms":true, "index_options":"docs"},
+            "http_referrer":{"type":"string", "index":"not_analyzed", "omit_norms":true, "index_options":"docs"},
+            "uri":{"type":"string", "index":"not_analyzed", "omit_norms":true, "index_options":"docs"},
+            "http_user_agent":{"type":"string", "index":"not_analyzed", "omit_norms":true, "index_options":"docs"},
+            "http_method":{"type":"string"},
+            "src_port":{"type":"long"},
+            "src_ip":{"type":"ip"},
+            "http_status":{"type":"string"},
+            "timestamp":{"type":"string"},
+            "http_accept_lang":{"type":"string", "index":"not_analyzed", "omit_norms":true, "index_options":"docs"},
+            "x-fwd-for":{"type":"string"}
+      }
+    }
+  }
+}
