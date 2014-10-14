@@ -734,7 +734,17 @@ proc GetXscript { type force } {
     set sidcidList [split [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID] .]
     set cnxID [lindex $sidcidList 1]
     set sensorID [lindex $sidcidList 0]
-    set proto [$CUR_SEL_PANE(name) getcells $selectedIndex,ipproto]
+  
+    if { $CUR_SEL_PANE(format) == "SGUIL_HTTP" } {
+
+        set proto 6
+        set sensorID [$CUR_SEL_PANE(name) getcells $selectedIndex,net_name]
+
+    } else {
+
+        set proto [$CUR_SEL_PANE(name) getcells $selectedIndex,ipproto]
+
+    }
 
     if { $CUR_SEL_PANE(format) == "SSN" } {
 
@@ -760,7 +770,8 @@ proc GetXscript { type force } {
     set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
     set dstPort [$CUR_SEL_PANE(name) getcells $selectedIndex,dstport]
 
-    set xscriptWinName ".[string tolower ${sensor}]_${cnxID}"
+    regsub -all {.} $sensor {_} safesensor
+    set xscriptWinName ".[string tolower ${safesensor}]_${cnxID}"
 
     if { $type == "xscript"} {
 

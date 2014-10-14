@@ -2163,6 +2163,7 @@ source $SGUILLIB/sound.tcl
 #source $SGUILLIB/SguilToolTip.tcl
 source $SGUILLIB/SguilUtil.tcl
 source $SGUILLIB/SguilAutoCat.tcl
+source $SGUILLIB/SguilElasticSearch.tcl
 
 # Load TableList
 package require tablelist 5.11
@@ -2594,6 +2595,37 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
       pack $padsBannerFrame -side bottom -fill both -expand true
 
     #
+    # Detail for sguil_http from ES data
+    #
+    set sguil_httpFrame [frame $detailDataFrame.sguil_httpFrame]
+
+      set sguil_httpDisplayButton [checkbutton $sguil_httpFrame.genericButton -variable DISPLAY_SGUIL_HTTP \
+        -command DisplaySguil_HttpDetail -text "Sguil_HTTP Detail"]
+
+      set sguil_httpDetailFrame [frame $sguil_httpFrame.detail]
+      set sguil_httpDetailTable $sguil_httpDetailFrame.table
+      set sguil_httpDetailScroll $sguil_httpDetailFrame.scroll
+
+      tablelist::tablelist $sguil_httpDetailTable \
+        -columns {11 "Field"    left
+                  60 "Value"    left} \
+        -stretch all \
+        -movablecolumns 0 \
+        -spacing 5 \
+        -yscrollcommand [list $sguil_httpDetailScroll set] -width 20
+
+      $sguil_httpDetailTable columnconfigure 0 -name field -resizable 0
+      $sguil_httpDetailTable columnconfigure 1 -name field -resizable 1 -wrap 1
+
+      scrollbar $sguil_httpDetailScroll -orient vertical -width 10 -command [list $sguil_httpDetailTable yview]
+      pack $sguil_httpDetailTable -side left -fill both -expand true
+      pack $sguil_httpDetailScroll -side right -fill y
+
+      pack $sguil_httpDisplayButton -side top
+      pack $sguil_httpDetailFrame -side top -fill both -expand true
+
+
+    #
     # Detail for generic events
     #
     set genericFrame [frame $detailDataFrame.genericFrame]
@@ -2963,12 +2995,15 @@ set ipQueryMenu [ menu .ipQueryMenu -background $SELECTBACKGROUND -foreground $S
 .ipQueryMenu add cascade -label "Quick Query" -menu $ipQueryMenu.quickMenu
 .ipQueryMenu add cascade -label "Advanced Query" -menu $ipQueryMenu.advancedMenu
 .ipQueryMenu add cascade -label "Dshield IP Lookup" -menu $ipQueryMenu.dshieldIPMenu
+.ipQueryMenu add cascade -label "ElasticSearch" -menu $ipQueryMenu.esMenu
 
 menu $ipQueryMenu.quickMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
 -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
 menu $ipQueryMenu.advancedMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
 -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
 menu $ipQueryMenu.dshieldIPMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
+-activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
+menu $ipQueryMenu.esMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
 -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
 
 foreach { currentMenu subcommand } { .ipQueryMenu.quickMenu "quick" .ipQueryMenu.advancedMenu "build" } {
@@ -3003,6 +3038,9 @@ $ipQueryMenu.advancedMenu.padsMenu add command -label "Query Dst IP" -command "Q
 
 $ipQueryMenu.dshieldIPMenu add command -label "SrcIP" -command "GetDshieldIP srcip"
 $ipQueryMenu.dshieldIPMenu add command -label "DstIP" -command "GetDshieldIP dstip"
+
+$ipQueryMenu.esMenu add command -label "SrcIP" -command "ESQueryRequest Sguil_httplog srcip {1 hour ago} now"
+
 
 # PADS Menus
 set padsIPQueryMenu [ menu .padsIPQueryMenu -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
