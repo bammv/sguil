@@ -220,7 +220,11 @@ proc GetRawDataFromSensor { TRANS_ID sensor sensorID timestamp srcIP srcPort dst
   global pcapSocket
 
   set RFLAG 1
-  set sensorNetName [MysqlGetNetName $sensorID]
+  if [string is integer $sensorID] {
+      set sensorNetName [MysqlGetNetName $sensorID]
+  } else {
+      set sensorNetName $sensorID
+  }
   if { $sensorNetName == "unknown" } { return 0 }
 
   if { [array exists pcapSocket] && [info exists pcapSocket($sensorNetName)]} {
