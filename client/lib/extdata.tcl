@@ -770,7 +770,7 @@ proc GetXscript { type force } {
     set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
     set dstPort [$CUR_SEL_PANE(name) getcells $selectedIndex,dstport]
 
-    regsub -all {.} $sensor {_} safesensor
+    regsub -all {\.} $sensor {_} safesensor
     set xscriptWinName ".[string tolower ${safesensor}]_${cnxID}"
 
     if { $type == "xscript"} {
