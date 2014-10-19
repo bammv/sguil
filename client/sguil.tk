@@ -3042,6 +3042,8 @@ $ipQueryMenu.dshieldIPMenu add command -label "SrcIP" -command "GetDshieldIP src
 $ipQueryMenu.dshieldIPMenu add command -label "DstIP" -command "GetDshieldIP dstip"
 
 $ipQueryMenu.esMenu add command -label "SrcIP" -command "ESQueryRequest Sguil_httplog srcip {1 hour ago} now"
+$ipQueryMenu.esMenu add command -label "DstIP" -command "ESQueryRequest Sguil_httplog dstip {1 hour ago} now"
+$ipQueryMenu.esMenu add command -label "SrcIP to DstIP" -command "ESQueryRequest Sguil_httplog src2dst {1 hour ago} now"
 
 
 # PADS Menus

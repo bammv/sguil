@@ -22,7 +22,7 @@ proc ESQueryRequest { type term { start { 1 hour ago } } { end { now } } } {
 
     set i [$CUR_SEL_PANE(name) curselection]
     set src_ip [$CUR_SEL_PANE(name) getcells $i,srcip]
-    set dst_ip [$CUR_SEL_PANE(name) getcells $i,srcip]
+    set dst_ip [$CUR_SEL_PANE(name) getcells $i,dstip]
 
     set q ""
 
