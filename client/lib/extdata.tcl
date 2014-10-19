@@ -732,17 +732,18 @@ proc GetXscript { type force } {
 
     set selectedIndex [$CUR_SEL_PANE(name) curselection]
     set sidcidList [split [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID] .]
-    set cnxID [lindex $sidcidList 1]
-    set sensorID [lindex $sidcidList 0]
   
     if { $CUR_SEL_PANE(format) == "SGUIL_HTTP" } {
 
         set proto 6
         set sensorID [$CUR_SEL_PANE(name) getcells $selectedIndex,net_name]
+        set cnxID [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID]
 
     } else {
 
         set proto [$CUR_SEL_PANE(name) getcells $selectedIndex,ipproto]
+        set cnxID [lindex $sidcidList 1]
+        set sensorID [lindex $sidcidList 0]
 
     }
 
