@@ -183,6 +183,7 @@ proc ESQueryBuilder { type {rawquery {}} {start {}} {end {}} } {
             UpdateESQuery
             set type [$ES_QUERY(type) get]
             set query [$ES_QUERY(json) get 0.0 end]
+            set rawquery [$ES_QUERY(query) get 0.0 end]
 
             PrepESQuery $type $query $rawquery $start $end
 
@@ -371,7 +372,7 @@ proc QueryFinished { queryFrame type query token } {
         if { [http::ncode $token] == "200" } {
 
             set hits [dict get [json::json2dict [http::data $token] ] hits]
-            puts "Total rows: [dict get $hits total]"
+            InfoMessage "ElasticSearch total rows: [dict get $hits total]"
 
             foreach row [dict get $hits hits] { 
 
