@@ -183,13 +183,15 @@ proc ChangeFont  { fontType } {
 }
 proc SaveNewFonts {} {
 
-    global FONTFILE SERVERHOST
+    global FONTFILE SERVERHOST ES_PROFILE
 
 
     if [catch {write_file $FONTFILE \
       "ourStandardFont [font configure ourStandardFont]" \
-      "ourFixedFont [font configure ourFixedFont]"       \
-      "RecentServersList $SERVERHOST"} writError] {
+      "ourFixedFont [font configure ourFixedFont]" \
+      "RecentServersList $SERVERHOST" \
+      "ESProfile $ES_PROFILE(host) $ES_PROFILE(user) $ES_PROFILE(auth)" \
+      } writError] {
 
         InfoMessage "Unable to write preferences to $FONTFILE"
 

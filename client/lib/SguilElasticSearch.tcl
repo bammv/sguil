@@ -1,16 +1,3 @@
-package require http
-package require tls
-package require json
-package require json::write
-package require base64
-
-set ES_PROFILE(host) {https://192.168.8.10}
-set ES_PROFILE(user) {}
-set ES_PROFILE(pass) {}
-set ES_PROFILE(auth) false
-
-::http::register https 443 ::tls::socket
-
 # Preprocess query requests from the right click menu and then launch the GUI
 # 
 # type of query (Sguil_httplog, Sguil_flow, etc)
@@ -501,6 +488,9 @@ proc ESBasicAuth {} {
     focus -force $uEntry
 
     tkwait window $esAuth
+
+    # This updates the users sguilrc
+    SaveNewFonts
 
     return $ES_PROFILE(auth)
 

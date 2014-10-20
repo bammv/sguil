@@ -115,6 +115,22 @@ namespace import -force iwidgets::promptdialog
 namespace import -force iwidgets::feedback
 namespace import -force iwidgets::shell
 
+# Load ElasticSearch required packages
+foreach p { http tls json json::write } {
+
+    if [catch {package require $p} pVersion]   {
+
+        ErrorMessage "Error: The $p package does NOT appear to be installed on this sysem.\n\nSearching ElasticSearch will not perform correctly."
+        break
+
+    }
+
+}
+
+::http::register https 443 ::tls::socket
+
+
+
 # Default global vars
 set ACTIVE_EVENT 0
 set MULTI_SELECT 0
@@ -141,6 +157,10 @@ set CUR_SEL_FRAME(name) 0
 set COUNTER 0
 set SEARCHFRAME 1
 set SELECT_LIMIT 1000
+set ES_PROFILE(host) {https://192.168.8.10}
+set ES_PROFILE(user) {}
+set ES_PROFILE(pass) {}
+set ES_PROFILE(auth) false
 
 # Grab the bgerror so we can intercept panedwindow conflicts
 auto_load bgerror
@@ -2132,6 +2152,13 @@ if { [file exists $FONTFILE] } {
 
             set SERVERHOST $tmpSERVERHOST
 
+        } elseif { [lindex $fontLine 0] == "ESProfile" } {
+
+            # ESServer server user auth
+            set ES_PROFILE(host) [lindex $fontLine 1]
+            set ES_PROFILE(user) [lindex $fontLine 2]
+            set ES_PROFILE(auth) [lindex $fontLine 3]
+   
         } else {
 
             eval font create [lindex $fontLine 0] [lrange $fontLine 1 end]
