@@ -128,30 +128,36 @@ proc ExportResults { currentTab type } {
     set filename [tk_getSaveFile -initialdir $env(HOME) -initialfile $defaultname]
     if { $filename == "" } {return}
     
-    set winname $currentTab.tablelist
-    if {$SepChar == "HUMAN-READABLE" } {
-	if { $type == "event"} {
-          set OutputText [ExportHumanText $winname]
-	} elseif { $type == "ssn" || $type == "sancp" } {
-          set OutputText [ExportHumanSSNText $winname]
-        }
-    } else {
-	if { $type == "event"} {
-          set OutputText [ExportDelimitedText $winname $SepChar $quote $header]
-	} elseif { $type == "ssn" || $type == "sancp" } {
-          set OutputText [ExportDelimitedSSNText $winname $SepChar $quote $header]
-        }
-    }
     if [catch {open $filename w} fileID] {
 	puts "Error: Could not create/open $filename: $fileID"
 	return
-    } else {
-	puts $fileID $OutputText
-	close $fileID
     }
+
+    set winname $currentTab.tablelist
+    if {$SepChar == "HUMAN-READABLE" } {
+	if { $type == "event"} {
+          ExportHumanText $winname $fileID
+	} elseif { $type == "ssn" || $type == "sancp" } {
+          ExportHumanSSNText $winname $fileID
+        }
+    } else {
+        
+#	if { $type == "event"} {
+#          ExportDelimitedText $winname $SepChar $quote $header $fileID
+#	} elseif { $type == "ssn" || $type == "sancp" } {
+#          ExportDelimitedSSNText $winname $SepChar $quote $header $fileID
+#        } elseif { $type == "sguil_http" } {
+#        }
+
+        WriteResultsToFileID $winname $SepChar $quote $header $fileID
+    }
+
+    catch {close $fileID}
+
     tk_messageBox -type ok -icon info -parent $currentTab\
      -message "File Saved as $filename"
 }
+
 proc TextReport  { detail sanitize } {
     global ACTIVE_EVENT CUR_SEL_PANE RETURN_FLAG REPORTNUM REPORT_RESULTS REPORT_DONE
     global DEBUG env
@@ -1268,5 +1274,35 @@ proc ExportDelimitedSSNText { winname SepChar quote header } {
 	set ReturnString "${ReturnString}[$winname getcells $i,dstbytes]\n"
     }
     return $ReturnString
+}
+
+proc WriteResultsToFileID { w SepChar quote header fileID } {
+
+    if {$SepChar == "<TAB>"} {set SepChar "\t"}
+
+    # Write headerto file
+    if { $header == 1 } {
+
+        set t [$w columncount]
+        set i 0
+        while { $i < $t } { 
+            lappend h [$w columncget $i -name]
+            incr i
+        }
+
+        puts $fileID [join $h $SepChar]
+
+    }
+
+    # Write table contents to file
+    set s [$w size]
+    set i 0
+    while { $i < $s } { 
+
+        puts $fileID [join [$w getcells $i,0 $i,end] $SepChar]
+        incr i
+
+    }
+
 }
 
