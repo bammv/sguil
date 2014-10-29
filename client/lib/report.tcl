@@ -142,13 +142,6 @@ proc ExportResults { currentTab type } {
         }
     } else {
         
-#	if { $type == "event"} {
-#          ExportDelimitedText $winname $SepChar $quote $header $fileID
-#	} elseif { $type == "ssn" || $type == "sancp" } {
-#          ExportDelimitedSSNText $winname $SepChar $quote $header $fileID
-#        } elseif { $type == "sguil_http" } {
-#        }
-
         WriteResultsToFileID $winname $SepChar $quote $header $fileID
     }
 

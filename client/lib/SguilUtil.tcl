@@ -190,7 +190,7 @@ proc SaveNewFonts {} {
       "ourStandardFont [font configure ourStandardFont]" \
       "ourFixedFont [font configure ourFixedFont]" \
       "RecentServersList $SERVERHOST" \
-      "ESProfile $ES_PROFILE(host) $ES_PROFILE(user) $ES_PROFILE(auth)" \
+      "[list ESProfile $ES_PROFILE(host) $ES_PROFILE(user) $ES_PROFILE(auth)]" \
       } writError] {
 
         InfoMessage "Unable to write preferences to $FONTFILE"
