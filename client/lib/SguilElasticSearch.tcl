@@ -172,7 +172,7 @@ proc ESQueryBuilder { type {rawquery {}} {start {}} {end {}} } {
             set query [$ES_QUERY(json) get 0.0 end]
             set rawquery [$ES_QUERY(query) get 0.0 end]
 
-            PrepESQuery $type $query $rawquery $start $end
+            PrepESQuery $type $query $rawquery $ES_QUERY(start) $ES_QUERY(end)
 
         }
 
