@@ -83,7 +83,7 @@ proc ESQueryBuilder { type {rawquery {}} {start {}} {end {}} } {
         #$sEntry insert 0 $start
 
         set sEntry [iwidgets::entryfield $qFrame.start \
-            -labeltext "Start: " \
+            -labeltext "Start (GMT): " \
             -width 10 \
             -command { UpdateESQuery } \
             -focuscommand { UpdateESQuery } \
@@ -93,7 +93,7 @@ proc ESQueryBuilder { type {rawquery {}} {start {}} {end {}} } {
         $sEntry insert 0 $start
 
         set eEntry [iwidgets::entryfield $qFrame.end \
-            -labeltext "End: " \
+            -labeltext "End (GMT): " \
             -width 10 \
             -command { UpdateESQuery } \
             -focuscommand { UpdateESQuery } \
@@ -190,7 +190,7 @@ proc UpdateESQuery {} {
 
     if { $ES_QUERY(start) != "now" } { 
 
-        set stime "[clock scan $ES_QUERY(start)]000"
+        set stime "[clock scan $ES_QUERY(start) -gmt true]000"
 
     } else {
 
@@ -200,7 +200,7 @@ proc UpdateESQuery {} {
 
     if  { $ES_QUERY(end) != "now" } { 
 
-       set etime "[clock scan $ES_QUERY(start)]000"
+       set etime "[clock scan $ES_QUERY(start) -gmt true]000"
 
     } else {
 
@@ -664,7 +664,15 @@ proc DisplaySguil_HttpDetail {} {
           http_accept_language \
         ] {
 
-            $sguil_httpDetailTable insert end [list $title [lindex $data $i]]
+            set c [$CUR_SEL_PANE(name) findcolumnname $title]
+            #if { $CUR_SEL_PANE(name) isviewable $i,$c } { puts foo }
+            set v 1
+            $sguil_httpDetailTable insert end [list 1 $title [lindex $data $i]]
+
+            # Upate the checkbox
+            set availImg [expr {($v == 1) ? "checkedButton" : "uncheckedButton"}]
+            $CUR_SEL_PANE(name) cellconfigure $i,$c -image $availImg
+
             incr i
 
         }

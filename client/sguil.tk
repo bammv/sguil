@@ -2636,15 +2636,18 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
       set sguil_httpDetailScroll $sguil_httpDetailFrame.scroll
 
       tablelist::tablelist $sguil_httpDetailTable \
-        -columns {11 "Field"    left
+        -columns {7  "View"     center \
+                  11 "Field"    left
                   60 "Value"    left} \
         -stretch all \
         -movablecolumns 0 \
         -spacing 5 \
+        -instanttoggle 1 \
         -yscrollcommand [list $sguil_httpDetailScroll set] -width 20
 
-      $sguil_httpDetailTable columnconfigure 0 -name field -resizable 0
-      $sguil_httpDetailTable columnconfigure 1 -name field -resizable 1 -wrap 1
+      $sguil_httpDetailTable columnconfigure 0 -name view -editable yes -width 0 -editwindow checkbutton -formatcommand emptyStr
+      $sguil_httpDetailTable columnconfigure 1 -name field -resizable 0
+      $sguil_httpDetailTable columnconfigure 2 -name value -resizable 1 -wrap 1
 
       scrollbar $sguil_httpDetailScroll -orient vertical -width 10 -command [list $sguil_httpDetailTable yview]
       pack $sguil_httpDetailTable -side left -fill both -expand true
