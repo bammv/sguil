@@ -1488,12 +1488,17 @@ proc LaunchRightClickMenu { win x y cellWin } {
         switch -exact $columnName {
 
             srcip    { tk_popup $ipQueryMenu $tmpX $tmpY }
+            src_ip    { tk_popup $ipQueryMenu $tmpX $tmpY }
             dstip    { tk_popup $ipQueryMenu $tmpX $tmpY }
+            dst_ip    { tk_popup $ipQueryMenu $tmpX $tmpY }
             srcport  { tk_popup $portQueryMenu $tmpX $tmpY }
+            src_port  { tk_popup $portQueryMenu $tmpX $tmpY }
             dstport  { tk_popup $portQueryMenu $tmpX $tmpY }
+            dst_port  { tk_popup $portQueryMenu $tmpX $tmpY }
             status   { tk_popup $statusMenu $tmpX $tmpY }
             event    { tk_popup $sigQueryMenu $tmpX $tmpY }
             alertID  { tk_popup $eventIDMenut $tmpX $tmpY }
+            _id      { tk_popup $eventIDMenut $tmpX $tmpY }
             count    { tk_popup $correlateMenu $tmpX $tmpY }
             default  { set foo bar }
 
@@ -1512,6 +1517,7 @@ proc QuickAction {  win x y cellWin } {
     switch -exact $columnName {
 
         alertID  { GetXscript xscript 0 }
+        _id      { GetXscript xscript 0 }
         count    { DisplayCorrelatedEvents }
         default  { set foo bar }
 
@@ -2628,7 +2634,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
     #
     set sguil_httpFrame [frame $detailDataFrame.sguil_httpFrame]
 
-      set sguil_httpDisplayButton [checkbutton $sguil_httpFrame.genericButton -variable DISPLAY_SGUIL_HTTP \
+      #set sguil_httpDisplayButton [checkbutton $sguil_httpFrame.genericButton -variable DISPLAY_SGUIL_HTTP \
         -command DisplaySguil_HttpDetail -text "Sguil_HTTP Detail"]
 
       set sguil_httpDetailFrame [frame $sguil_httpFrame.detail]
@@ -2643,7 +2649,8 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
         -movablecolumns 0 \
         -spacing 5 \
         -instanttoggle 1 \
-        -yscrollcommand [list $sguil_httpDetailScroll set] -width 20
+        -yscrollcommand [list $sguil_httpDetailScroll set] -width 20 \
+        -editendcommand ChangeESViewStatus
 
       $sguil_httpDetailTable columnconfigure 0 -name view -editable yes -width 0 -editwindow checkbutton -formatcommand emptyStr
       $sguil_httpDetailTable columnconfigure 1 -name field -resizable 0
@@ -2653,7 +2660,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
       pack $sguil_httpDetailTable -side left -fill both -expand true
       pack $sguil_httpDetailScroll -side right -fill y
 
-      pack $sguil_httpDisplayButton -side top
+      #pack $sguil_httpDisplayButton -side top
       pack $sguil_httpDetailFrame -side top -fill both -expand true
 
 

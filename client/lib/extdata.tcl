@@ -731,25 +731,39 @@ proc GetXscript { type force } {
     if {!$ACTIVE_EVENT} {return}
 
     set selectedIndex [$CUR_SEL_PANE(name) curselection]
-    set sidcidList [split [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID] .]
   
     if { $CUR_SEL_PANE(format) == "SGUIL_HTTP" } {
 
         set proto 6
         set sensorID [$CUR_SEL_PANE(name) getcells $selectedIndex,net_name]
-        set cnxID [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID]
+        set cnxID [$CUR_SEL_PANE(name) getcells $selectedIndex,_id]
+        set sensor [$CUR_SEL_PANE(name) getcells $selectedIndex,host]
+        set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,src_ip]
+        set srcPort [$CUR_SEL_PANE(name) getcells $selectedIndex,src_port]
+        set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dst_ip]
+        set dstPort [$CUR_SEL_PANE(name) getcells $selectedIndex,dst_port]
 
     } else {
 
+        set sidcidList [split [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID] .]
         set proto [$CUR_SEL_PANE(name) getcells $selectedIndex,ipproto]
         set cnxID [lindex $sidcidList 1]
         set sensorID [lindex $sidcidList 0]
+        set sensor [$CUR_SEL_PANE(name) getcells $selectedIndex,sensor]
+        set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
+        set srcPort [$CUR_SEL_PANE(name) getcells $selectedIndex,srcport]
+        set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
+        set dstPort [$CUR_SEL_PANE(name) getcells $selectedIndex,dstport]
 
     }
 
     if { $CUR_SEL_PANE(format) == "SSN" } {
 
         set timestamp [$CUR_SEL_PANE(name) getcells $selectedIndex,starttime]
+
+    } elseif { $CUR_SEL_PANE(format) == "SGUIL_HTTP" } {
+
+        set timestamp [$CUR_SEL_PANE(name) getcells $selectedIndex,@timestamp]
 
     } else {
 
@@ -765,11 +779,6 @@ proc GetXscript { type force } {
 
     }
 
-    set sensor [$CUR_SEL_PANE(name) getcells $selectedIndex,sensor]
-    set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
-    set srcPort [$CUR_SEL_PANE(name) getcells $selectedIndex,srcport]
-    set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
-    set dstPort [$CUR_SEL_PANE(name) getcells $selectedIndex,dstport]
 
     regsub -all {\.} $sensor {_} safesensor
     set xscriptWinName ".[string tolower ${safesensor}]_${cnxID}"

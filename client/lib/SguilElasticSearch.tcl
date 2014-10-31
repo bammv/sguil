@@ -261,6 +261,7 @@ proc PrepESQuery { type query rawquery start end } {
 
     # Build the multi lists
     CreateESLists $queryFrame
+    $queryFrame configure -cursor watch
 
     # Build the actions (close, export, re-submit, and edit)
 
@@ -311,9 +312,8 @@ proc ESQuery { type query queryFrame } {
 
     set url "$ES_PROFILE(host)/_search?pretty"
    
-    puts "q -> $query"
-
-    puts "Making request to $url"
+    #puts "q -> $query"
+    #puts "Making request to $url"
 
     if { $ES_PROFILE(auth) } { 
     
@@ -349,9 +349,6 @@ proc QueryFinished { queryFrame type query token } {
 
     set tablewin $queryFrame.tablelist
 
-    puts "QueryFinished{}."
-    flush stdout
-
     # Make sure the cnx did not timeout/etc
     if  { [http::status $token] == "ok" } {
 
@@ -359,8 +356,9 @@ proc QueryFinished { queryFrame type query token } {
         if { [http::ncode $token] == "200" } {
 
             set hits [dict get [json::json2dict [http::data $token] ] hits]
-            InfoMessage "ElasticSearch total rows: [dict get $hits total]"
+            set totalhits [dict get $hits total]
 
+            set foo 0
             foreach row [dict get $hits hits] { 
 
                 set id [dict get $row _id]
@@ -396,16 +394,19 @@ proc QueryFinished { queryFrame type query token } {
 
                 }
 
+            incr foo
+            [winfo parent $tablewin] configure -cursor left_ptr
+
             }
 
-            puts "Query finished"
+            InfoMessage "Displaying $foo of $totalhits hits"
 
         } else {
 
             # Not a 200. Check if auth is required
             if { [http::ncode $token] == "401" } {
 
-                puts "Authentication Required"
+                #puts "Authentication Required"
                 # Rerun the query if auth is provided
                 if [ESBasicAuth] { 
 
@@ -416,7 +417,7 @@ proc QueryFinished { queryFrame type query token } {
             } else {
 
                 set errorMsg [http::code $token]
-                puts "Error: $errorMsg"
+                ErrorMessage "Error: $errorMsg"
 
             }
 
@@ -428,7 +429,7 @@ proc QueryFinished { queryFrame type query token } {
 
         # An error code was returned
         set httpError [http::error $token]
-        puts "error: $httpError"
+        ErrorMessage "error: $httpError"
         http::cleanup $token
 
         #return -code error $httpError
@@ -532,21 +533,21 @@ proc CreateESLists { baseFrame } {
          -yscrollcommand [list $currentYSB set] \
          -xscrollcommand [list $currentHSB set]
 
-    $currentPane columnconfigure 0 -name sensor -resizable 1 -stretchable 0 -sortmode dictionary
-    $currentPane columnconfigure 1 -name net_name -resizable 1 -stretchable 0 -sortmode dictionary
-    $currentPane columnconfigure 2 -name alertID -resizable 1 -stretchable 0 -sortmode real
-    $currentPane columnconfigure 3 -name date -resizable 1 -stretchable 0 -sortmode dictionary
-    $currentPane columnconfigure 4 -name srcip -resizable 1 -stretchable 0 -sortmode dictionary
-    $currentPane columnconfigure 5 -name srcport -resizable 1 -stretchable 0 -sortmode integer
-    $currentPane columnconfigure 6 -name dstip -resizable 1 -stretchable 0 -sortmode dictionary
-    $currentPane columnconfigure 7 -name dstport -resizable 1 -stretchable 0 -sortmode integer
-    $currentPane columnconfigure 9 -name method -resizable 1 -stretchable 1 -sortmode dictionary
-    $currentPane columnconfigure 9 -name host -resizable 1 -stretchable 1 -sortmode dictionary
+    $currentPane columnconfigure 0 -name host -resizable 1 -stretchable 0 -sortmode dictionary
+    $currentPane columnconfigure 1 -name net_name -resizable 1 -stretchable 0 -sortmode dictionary -hide 1
+    $currentPane columnconfigure 2 -name _id -resizable 1 -stretchable 0 -sortmode real
+    $currentPane columnconfigure 3 -name @timestamp -resizable 1 -stretchable 0 -sortmode dictionary
+    $currentPane columnconfigure 4 -name src_ip -resizable 1 -stretchable 0 -sortmode dictionary
+    $currentPane columnconfigure 5 -name src_port -resizable 1 -stretchable 0 -sortmode integer
+    $currentPane columnconfigure 6 -name dst_ip -resizable 1 -stretchable 0 -sortmode dictionary
+    $currentPane columnconfigure 7 -name dst_port -resizable 1 -stretchable 0 -sortmode integer
+    $currentPane columnconfigure 8 -name http_method -resizable 1 -stretchable 1 -sortmode dictionary
+    $currentPane columnconfigure 9 -name http_host -resizable 1 -stretchable 1 -sortmode dictionary
     $currentPane columnconfigure 10 -name uri -resizable 1 -stretchable 1 -sortmode dictionary
-    $currentPane columnconfigure 11 -name status -resizable 1 -stretchable 1 -sortmode dictionary
-    $currentPane columnconfigure 12 -name referer -resizable 1 -stretchable 1 -sortmode dictionary
-    $currentPane columnconfigure 13 -name ua -resizable 1 -stretchable 1 -sortmode dictionary
-    $currentPane columnconfigure 14 -name lang -resizable 1 -stretchable 1 -sortmode dictionary
+    $currentPane columnconfigure 11 -name http_status -resizable 1 -stretchable 1 -sortmode dictionary
+    $currentPane columnconfigure 12 -name http_referrer -resizable 1 -stretchable 1 -sortmode dictionary -hide 1
+    $currentPane columnconfigure 13 -name http_user_agent -resizable 1 -stretchable 1 -sortmode dictionary -hide 1
+    $currentPane columnconfigure 14 -name http_accept_language -resizable 1 -stretchable 1 -sortmode dictionary -hide 1
 
     scrollbar $currentYSB -orient vertical -command [list $currentPane yview]
     scrollbar $currentHSB -orient horizontal -command [list $currentPane xview]
@@ -609,7 +610,7 @@ proc SelectSguil_HttpPane { win type format } {
     if { $selectedIndex == "" } { return }
 
     # Get the eventID
-    set eventID [$CUR_SEL_PANE(name) getcells $selectedIndex,alertID]
+    set eventID [$CUR_SEL_PANE(name) getcells $selectedIndex,_id]
 
     # If we clicked on an already active event, do nothing.
     if { [info exists CUR_SEL_EVENT] && $CUR_SEL_EVENT == $eventID } {
@@ -639,7 +640,7 @@ proc DisplaySguil_HttpDetail {} {
     # Clear the current data
     $sguil_httpDetailTable delete 0 end
 
-    if { $ACTIVE_EVENT && $DISPLAY_SGUIL_HTTP && !$MULTI_SELECT } {
+    if { $ACTIVE_EVENT && !$MULTI_SELECT } {
 
         set selectedIndex [$CUR_SEL_PANE(name) curselection]
         set data [$CUR_SEL_PANE(name) get $selectedIndex]
@@ -665,13 +666,14 @@ proc DisplaySguil_HttpDetail {} {
         ] {
 
             set c [$CUR_SEL_PANE(name) findcolumnname $title]
-            #if { $CUR_SEL_PANE(name) isviewable $i,$c } { puts foo }
-            set v 1
+            #if { [$CUR_SEL_PANE(name) isviewable @$i,$c] } { set v 1 } else { set v 0 }
+            set v [$CUR_SEL_PANE(name) columncget $title -hide]
+ 
             $sguil_httpDetailTable insert end [list 1 $title [lindex $data $i]]
 
             # Upate the checkbox
-            set availImg [expr {($v == 1) ? "checkedButton" : "uncheckedButton"}]
-            $CUR_SEL_PANE(name) cellconfigure $i,$c -image $availImg
+            set availImg [expr {($v == 0) ? "checkedButton" : "uncheckedButton"}]
+            $sguil_httpDetailTable cellconfigure end,0 -image $availImg
 
             incr i
 
@@ -679,4 +681,27 @@ proc DisplaySguil_HttpDetail {} {
 
     }
    
+}
+
+proc ChangeESViewStatus { tbl row col text } {
+
+    global sguil_httpFrame DISPLAY_SGUIL_HTTP ACTIVE_EVENT MULTI_SELECT CUR_SEL_PANE sguil_httpDetailTable
+
+    set img [expr {$text ? "checkedButton" : "uncheckedButton"}]
+    $tbl cellconfigure $row,$col -image $img
+
+    set name [lindex [lindex [$tbl get $row $row] 0] 1]
+
+    if { $img == "checkedButton" } {
+
+        $CUR_SEL_PANE(name) columnconfigure $name -hide 0
+
+    } else {
+
+        $CUR_SEL_PANE(name) columnconfigure $name -hide 1
+
+    }
+
+    return $text
+
 }
