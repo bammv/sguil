@@ -8,8 +8,17 @@ proc ESQueryRequest { type term { start { 1 hour ago } } { end { now } } } {
     global CUR_SEL_PANE
 
     set i [$CUR_SEL_PANE(name) curselection]
-    set src_ip [$CUR_SEL_PANE(name) getcells $i,srcip]
-    set dst_ip [$CUR_SEL_PANE(name) getcells $i,dstip]
+    if { $CUR_SEL_PANE(format) == "SGUIL_HTTP" } {
+
+        set src_ip [$CUR_SEL_PANE(name) getcells $i,src_ip]
+        set dst_ip [$CUR_SEL_PANE(name) getcells $i,dst_ip]
+
+    } else {
+
+        set src_ip [$CUR_SEL_PANE(name) getcells $i,srcip]
+        set dst_ip [$CUR_SEL_PANE(name) getcells $i,dstip]
+
+    }
 
     set q ""
 
