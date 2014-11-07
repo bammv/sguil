@@ -291,6 +291,18 @@ proc GetWhoisData {} {
 
             set ip [$CUR_SEL_PANE(name) getcells $selectedIndex,ip]
 
+        } elseif { $CUR_SEL_PANE(type) == "SGUIL_HTTP" || $CUR_SEL_PANE(type) == "SGUIL_SSN" } { 
+      
+            if { $WHOISLIST == "srcip" } { 
+
+                set ip [$CUR_SEL_PANE(name) getcells $selectedIndex,src_ip]
+
+            } else {
+
+                set ip [$CUR_SEL_PANE(name) getcells $selectedIndex,dst_ip]
+
+            }
+
         } else {
 
             set ip [$CUR_SEL_PANE(name) getcells $selectedIndex,$WHOISLIST]

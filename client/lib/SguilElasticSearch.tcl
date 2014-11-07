@@ -365,8 +365,6 @@ proc QueryFinished { queryFrame type query token } {
 
     global ES_PROFILE
 
-    puts "DEBUG #### QueryFinished for $type"
-
     set tablewin $queryFrame.tablelist
 
     # Make sure the cnx did not timeout/etc
@@ -378,13 +376,9 @@ proc QueryFinished { queryFrame type query token } {
             set hits [dict get [json::json2dict [http::data $token] ] hits]
             set totalhits [dict get $hits total]
 
-            puts "DEBUG #### Total hits: $totalhits"
-
             set foo 0
             foreach row [dict get $hits hits] { 
             
-                puts "DEBUG #### $row"
-
                 set id [dict get $row _id]
                 set _source [dict get $row _source]
                 dict with _source { 
@@ -441,8 +435,6 @@ proc QueryFinished { queryFrame type query token } {
                         ]
 
                     }
-
-                    puts "DEBUG #### rList --> $rList"
 
                     $tablewin insert end $rList
 
@@ -578,9 +570,9 @@ proc CreateESHttpLists { baseFrame } {
                   6  "Method"             left
                   20 "URI"                left
                   6  "Status"             left
-                  20 "Referer"            left
-                  20 "User-Agent"         left
-                  20 "Accept-Language"    left
+                  25 "Referer"            left
+                  25 "User-Agent"         left
+                  25 "Accept-Language"    left
                   15 "Vendor"             left
          } \
          -selectmode browse \
