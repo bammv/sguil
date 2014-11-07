@@ -577,6 +577,7 @@ proc CreateESHttpLists { baseFrame } {
          } \
          -selectmode browse \
          -width 40 \
+         -spacing 5 \
          -yscrollcommand [list $currentYSB set] \
          -xscrollcommand [list $currentHSB set]
 
@@ -671,6 +672,7 @@ proc CreateESSsnLists { baseFrame } {
          } \
          -selectmode browse \
          -width 40 \
+         -spacing 5 \
          -yscrollcommand [list $currentYSB set] \
          -xscrollcommand [list $currentHSB set]
 
