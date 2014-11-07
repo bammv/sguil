@@ -1,6 +1,6 @@
 # Preprocess query requests from the right click menu and then launch the GUI
 # 
-# type of query (Sguil_httplog, Sguil_flow, etc)
+# type of query (Sguil_httplog, Sguil_ssn, etc)
 # default conditions (src_ip, dst_ip, both)
 # Time manipulation (hours ago)
 proc ESQueryRequest { type term { start { 1 hour ago } } { end { now } } } { 
@@ -8,7 +8,7 @@ proc ESQueryRequest { type term { start { 1 hour ago } } { end { now } } } {
     global CUR_SEL_PANE
 
     set i [$CUR_SEL_PANE(name) curselection]
-    if { $CUR_SEL_PANE(format) == "SGUIL_HTTP" } {
+    if { $CUR_SEL_PANE(format) == "SGUIL_HTTP" || $CUR_SEL_PANE(format) == "SGUIL_SSN" } {
 
         set src_ip [$CUR_SEL_PANE(name) getcells $i,src_ip]
         set dst_ip [$CUR_SEL_PANE(name) getcells $i,dst_ip]
@@ -79,8 +79,8 @@ proc ESQueryBuilder { type {rawquery {}} {start {}} {end {}} } {
             -command { UpdateESQuery } \
         ]
 
-        # Populate our optionss: Sguil_httplog, Sguil_flow
-        foreach t { Sguil_httplog Sguil_flow } { $ES_QUERY(type) insert end $t }
+        # Populate our optionss: Sguil_httplog, Sguil_ssn
+        foreach t { Sguil_httplog Sguil_ssn } { $ES_QUERY(type) insert end $t }
         $ES_QUERY(type) select $type
 
         set hEntry [iwidgets::entryfield $qFrame.host \
@@ -269,7 +269,16 @@ proc PrepESQuery { type query rawquery start end } {
     $eventTabs select end
 
     # Build the multi lists
-    CreateESLists $queryFrame
+    if { $type == "Sguil_httplog" } { 
+
+        CreateESHttpLists $queryFrame
+
+    } else {
+
+        CreateESSsnLists $queryFrame
+
+    }
+
     $queryFrame configure -cursor watch
 
     # Build the actions (close, export, re-submit, and edit)
@@ -356,6 +365,8 @@ proc QueryFinished { queryFrame type query token } {
 
     global ES_PROFILE
 
+    puts "DEBUG #### QueryFinished for $type"
+
     set tablewin $queryFrame.tablelist
 
     # Make sure the cnx did not timeout/etc
@@ -367,8 +378,12 @@ proc QueryFinished { queryFrame type query token } {
             set hits [dict get [json::json2dict [http::data $token] ] hits]
             set totalhits [dict get $hits total]
 
+            puts "DEBUG #### Total hits: $totalhits"
+
             set foo 0
             foreach row [dict get $hits hits] { 
+            
+                puts "DEBUG #### $row"
 
                 set id [dict get $row _id]
                 set _source [dict get $row _source]
@@ -381,23 +396,53 @@ proc QueryFinished { queryFrame type query token } {
                     regexp {^(\d+-\d+-\d+)T(\d+\:\d+\:\d+)} ${@timestamp} match date time
                     set timestamp "$date $time"
 
-                    set rList [list \
-                      $host \
-                      $net_name \
-                      $id \
-                      $timestamp \
-                      $src_ip \
-                      $src_port \
-                      $dst_ip \
-                      $dst_port \
-                      $http_host \
-                      $http_method \
-                      $uri \
-                      $http_status \
-                      $http_referrer \
-                      $http_user_agent \
-                      $http_accept_language \
-                   ]
+                    if { $type == "Sguil_httplog" } { 
+
+                        set rList [list \
+                          $host \
+                          $net_name \
+                          $id \
+                          $timestamp \
+                          $src_ip \
+                          $src_port \
+                          $dst_ip \
+                          $dst_port \
+                          $http_host \
+                          $http_method \
+                          $uri \
+                          $http_status \
+                          $http_referrer \
+                          $http_user_agent \
+                          $http_accept_language \
+                          $vendor \
+                       ]
+
+                    } else {
+
+                        set rList [list \
+                          $host \
+                          $net_name \
+                          $id \
+                          $start_time \
+                          $end_time \
+                          $duration \
+                          $src_ip \
+                          $src_port \
+                          $dst_ip \
+                          $dst_port \
+                          $ip_proto \
+                          $src_pkts \
+                          $dst_pkts \
+                          $src_bytes \
+                          $dst_bytes \
+                          $src_flags \
+                          $dst_flags \
+                          $vendor \
+                        ]
+
+                    }
+
+                    puts "DEBUG #### rList --> $rList"
 
                     $tablewin insert end $rList
 
@@ -506,7 +551,7 @@ proc ESBasicAuth {} {
 
 }
  
-proc CreateESLists { baseFrame } { 
+proc CreateESHttpLists { baseFrame } { 
 
     global SCROLL_HOME MiddleButton RightButton
 
@@ -526,9 +571,9 @@ proc CreateESLists { baseFrame } {
                   25 "_id"                left
                   18 "Timestamp"          center
                   16 "Src IP"             left
-                  6  "SPort"              left
+                  6  "SPort"              right
                   16 "Dst IP"             left
-                  6  "DPort"              left
+                  6  "DPort"              right
                   16 "Host"               left
                   6  "Method"             left
                   20 "URI"                left
@@ -536,6 +581,7 @@ proc CreateESLists { baseFrame } {
                   20 "Referer"            left
                   20 "User-Agent"         left
                   20 "Accept-Language"    left
+                  15 "Vendor"             left
          } \
          -selectmode browse \
          -width 40 \
@@ -557,6 +603,7 @@ proc CreateESLists { baseFrame } {
     $currentPane columnconfigure 12 -name http_referrer -resizable 1 -stretchable 1 -sortmode dictionary -hide 1
     $currentPane columnconfigure 13 -name http_user_agent -resizable 1 -stretchable 1 -sortmode dictionary -hide 1
     $currentPane columnconfigure 14 -name http_accept_language -resizable 1 -stretchable 1 -sortmode dictionary -hide 1
+    $currentPane columnconfigure 15 -name vendor -resizable 1 -stretchable 1 -sortmode dictionary -hide 1
 
     scrollbar $currentYSB -orient vertical -command [list $currentPane yview]
     scrollbar $currentHSB -orient horizontal -command [list $currentPane xview]
@@ -594,6 +641,102 @@ proc CreateESLists { baseFrame } {
 
         ManualSelectRow $tablelist::W $tablelist::x $tablelist::y
         SelectSguil_HttpPane $tablelist::W SGUIL_HTTP SGUIL_HTTP
+        LaunchRightClickMenu $tablelist::W $tablelist::x $tablelist::y %W
+
+    }
+
+}
+proc CreateESSsnLists { baseFrame } { 
+
+    global SCROLL_HOME MiddleButton RightButton
+
+    #set SCROLL_HOME($baseFrame) 0
+
+    set currentPane $baseFrame.tablelist
+    set currentYSB $baseFrame.ysb
+    set currentHSB $baseFrame.hsb
+
+    # Build the table
+    tablelist::tablelist $currentPane \
+        -columns {15 "Sensor"             left
+                  15 "net_name"           left
+                  25 "_id"                left
+                  18 "start_time"         center
+                  18 "end_time"           center
+                  8  "duration"           right
+                  16 "src_ip"             left
+                  7  "src_port"           right
+                  16 "dst_ip"             left
+                  7  "dst_port"           right
+                  8  "ip_proto"           right
+                  7  "src_pkts"           right
+                  7  "dst_pkts"           right
+                  8  "src_bytes"          right
+                  8  "dst_bytes"          right
+                  8  "src_flags"          right
+                  8  "dst_flags"          right
+                  8  "vendor"             left
+         } \
+         -selectmode browse \
+         -width 40 \
+         -yscrollcommand [list $currentYSB set] \
+         -xscrollcommand [list $currentHSB set]
+
+    $currentPane columnconfigure 0 -name host -resizable 1 -stretchable 1 -sortmode dictionary
+    $currentPane columnconfigure 1 -name net_name -resizable 1 -stretchable 1 -sortmode dictionary -hide 1
+    $currentPane columnconfigure 2 -name _id -resizable 1 -stretchable 1 -sortmode real
+    $currentPane columnconfigure 3 -name start_time -resizable 1 -stretchable 1 -sortmode dictionary
+    $currentPane columnconfigure 4 -name end_time -resizable 1 -stretchable 1 -sortmode dictionary
+    $currentPane columnconfigure 5 -name duration -resizable 1 -stretchable 1 -sortmode integer -hide 1
+    $currentPane columnconfigure 6 -name src_ip -resizable 1 -stretchable 1 -sortmode dictionary
+    $currentPane columnconfigure 7 -name src_port -resizable 1 -stretchable 1 -sortmode integer
+    $currentPane columnconfigure 8 -name dst_ip -resizable 1 -stretchable 1 -sortmode dictionary
+    $currentPane columnconfigure 9 -name dst_port -resizable 1 -stretchable 1 -sortmode integer
+    $currentPane columnconfigure 10 -name ip_proto -resizable 1 -stretchable 1 -sortmode integer
+    $currentPane columnconfigure 11 -name src_pkts -resizable 1 -stretchable 1 -sortmode integer
+    $currentPane columnconfigure 12 -name dst_pkts -resizable 1 -stretchable 1 -sortmode integer
+    $currentPane columnconfigure 13 -name src_bytes -resizable 1 -stretchable 1 -sortmode integer
+    $currentPane columnconfigure 14 -name dst_bytes -resizable 1 -stretchable 1 -sortmode integer
+    $currentPane columnconfigure 15 -name src_flags -resizable 1 -stretchable 1 -sortmode integer -hide 1
+    $currentPane columnconfigure 16 -name dst_flags -resizable 1 -stretchable 1 -sortmode integer -hide 1
+    $currentPane columnconfigure 17 -name vendor -resizable 1 -stretchable 1 -sortmode dictionary -hide 1
+
+    scrollbar $currentYSB -orient vertical -command [list $currentPane yview]
+    scrollbar $currentHSB -orient horizontal -command [list $currentPane xview]
+
+    pack $currentYSB -side right -fill y
+    pack $currentPane -side top -fill both -expand true
+    pack $currentHSB -side bottom -fill x
+    pack $baseFrame -expand true -fill both
+
+    set bindWin [$currentPane bodytag]
+
+    # Grab button press/motion and make sure we aren't busy
+    bind $bindWin <ButtonPress-1> { global BUSY; if { $BUSY } { bell; break } }
+    bind $bindWin <Button1-Motion> { global BUSY; if { $BUSY } { break } }
+
+    # Left button was released on a list.
+    bind $bindWin <ButtonRelease-1> {
+
+        global BUSY
+
+        if { $BUSY } { bell; break }
+
+        foreach {tablelist::W tablelist::x tablelist::y} \
+            [tablelist::convEventFields %W %x %y] {}
+
+        SelectSguil_SsnPane $tablelist::W SGUIL_SSN SGUIL_SSN
+
+    }
+
+    # Right mouse button
+    bind $bindWin <$RightButton> {
+
+        foreach {tablelist::W tablelist::x tablelist::y} \
+            [tablelist::convEventFields %W %x %y] {}
+
+        ManualSelectRow $tablelist::W $tablelist::x $tablelist::y
+        SelectSguil_SsnPane $tablelist::W SGUIL_SSN SGUIL_SSN
         LaunchRightClickMenu $tablelist::W $tablelist::x $tablelist::y %W
 
     }
@@ -642,6 +785,48 @@ proc SelectSguil_HttpPane { win type format } {
 
 }
 
+proc SelectSguil_SsnPane { win type format } {
+
+    global CUR_SEL_PANE CUR_SEL_EVENT ACTIVE_EVENT BUSY MULTI_SELECT DISPLAYEDDETAIL
+    global portscanDataFrame packetDataFrame padsFrame sguil_ssnFrame
+
+    set CUR_SEL_PANE(name) $win
+    set CUR_SEL_PANE(type) $type
+    set CUR_SEL_PANE(format) $format
+
+    set ACTIVE_EVENT 1
+
+    # ES panes are single select only
+    set MULTI_SELECT 0
+    set selectedIndex [$win curselection]
+
+    # Nothing selected
+    if { $selectedIndex == "" } { return }
+
+    # Get the eventID
+    set eventID [$CUR_SEL_PANE(name) getcells $selectedIndex,_id]
+
+    # If we clicked on an already active event, do nothing.
+    if { [info exists CUR_SEL_EVENT] && $CUR_SEL_EVENT == $eventID } {
+        return
+    }
+
+    set CUR_SEL_EVENT $eventID
+
+    if { $DISPLAYEDDETAIL != $sguil_ssnFrame } {
+
+        pack forget $DISPLAYEDDETAIL
+        pack $sguil_ssnFrame -fill both -expand true
+        set DISPLAYEDDETAIL $sguil_ssnFrame
+
+    }
+
+    DisplaySguil_SsnDetail
+    ResolveHosts
+    GetWhoisData
+
+}
+
 proc DisplaySguil_HttpDetail {} {
 
     global sguil_httpFrame DISPLAY_SGUIL_HTTP ACTIVE_EVENT MULTI_SELECT CUR_SEL_PANE sguil_httpDetailTable
@@ -672,6 +857,7 @@ proc DisplaySguil_HttpDetail {} {
           http_referrer \
           http_user_agent \
           http_accept_language \
+          vendor \
         ] {
 
             set c [$CUR_SEL_PANE(name) findcolumnname $title]
@@ -692,9 +878,82 @@ proc DisplaySguil_HttpDetail {} {
    
 }
 
+proc DisplaySguil_SsnDetail {} {
+
+    global sguil_ssnFrame DISPLAY_SGUIL_SSN ACTIVE_EVENT MULTI_SELECT CUR_SEL_PANE sguil_ssnDetailTable
+
+    # Clear the current data
+    $sguil_ssnDetailTable delete 0 end
+
+    if { $ACTIVE_EVENT && !$MULTI_SELECT } {
+
+        set selectedIndex [$CUR_SEL_PANE(name) curselection]
+        set data [$CUR_SEL_PANE(name) get $selectedIndex]
+
+        set i 0
+
+        foreach title [list \
+          host \
+          net_name \
+          _id \
+          start_time \
+          end_time \
+          duration \
+          src_ip \
+          src_port \
+          dst_ip \
+          dst_port \
+          ip_proto \
+          src_pkts \
+          dst_pkts \
+          src_bytes \
+          dst_bytes \
+          src_flags \
+          dst_flags \
+          vendor \
+        ] {
+
+            set c [$CUR_SEL_PANE(name) findcolumnname $title]
+            #if { [$CUR_SEL_PANE(name) isviewable @$i,$c] } { set v 1 } else { set v 0 }
+            set v [$CUR_SEL_PANE(name) columncget $title -hide]
+ 
+            # Parse out flags if req'd
+            if { $title == "src_flags" || $title == "dst_flags" } { 
+
+                set flags [lindex $data $i]
+                set f ""
+                if { $flags & 1 } { lappend f FIN }
+                if { $flags & 2 } { lappend f SYN }
+                if { $flags & 4 } { lappend f RESET }
+                if { $flags & 8 } { lappend f PUSH }
+                if { $flags & 16 } { lappend f ACK }
+                if { $flags & 32 } { lappend f URG }
+                if { $flags & 64 } { lappend f R0 }
+                if { $flags & 128 } { lappend f R1 } 
+
+                $sguil_ssnDetailTable insert end [list 1 $title $f]
+
+            } else {
+
+                $sguil_ssnDetailTable insert end [list 1 $title [lindex $data $i]]
+
+            }
+
+            # Upate the checkbox
+            set availImg [expr {($v == 0) ? "checkedButton" : "uncheckedButton"}]
+            $sguil_ssnDetailTable cellconfigure end,0 -image $availImg
+
+            incr i
+
+        }
+
+    }
+   
+}
+
 proc ChangeESViewStatus { tbl row col text } {
 
-    global sguil_httpFrame DISPLAY_SGUIL_HTTP ACTIVE_EVENT MULTI_SELECT CUR_SEL_PANE sguil_httpDetailTable
+    global ACTIVE_EVENT MULTI_SELECT CUR_SEL_PANE 
 
     set img [expr {$text ? "checkedButton" : "uncheckedButton"}]
     $tbl cellconfigure $row,$col -image $img

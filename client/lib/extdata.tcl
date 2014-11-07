@@ -732,9 +732,8 @@ proc GetXscript { type force } {
 
     set selectedIndex [$CUR_SEL_PANE(name) curselection]
   
-    if { $CUR_SEL_PANE(format) == "SGUIL_HTTP" } {
+    if { $CUR_SEL_PANE(format) == "SGUIL_HTTP" || $CUR_SEL_PANE(format) == "SGUIL_SSN"} {
 
-        set proto 6
         set sensorID [$CUR_SEL_PANE(name) getcells $selectedIndex,net_name]
         set cnxID [$CUR_SEL_PANE(name) getcells $selectedIndex,_id]
         set sensor [$CUR_SEL_PANE(name) getcells $selectedIndex,host]
@@ -742,6 +741,16 @@ proc GetXscript { type force } {
         set srcPort [$CUR_SEL_PANE(name) getcells $selectedIndex,src_port]
         set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dst_ip]
         set dstPort [$CUR_SEL_PANE(name) getcells $selectedIndex,dst_port]
+       
+        if { $CUR_SEL_PANE(format) == "SGUIL_HTTP" } {
+
+            set proto 6
+
+        } else {
+
+            set proto [$CUR_SEL_PANE(name) getcells $selectedIndex,ip_proto]
+
+        }
 
     } else {
 
@@ -764,6 +773,10 @@ proc GetXscript { type force } {
     } elseif { $CUR_SEL_PANE(format) == "SGUIL_HTTP" } {
 
         set timestamp [$CUR_SEL_PANE(name) getcells $selectedIndex,@timestamp]
+
+    } elseif { $CUR_SEL_PANE(format) == "SGUIL_SSN" } {
+
+        set timestamp [$CUR_SEL_PANE(name) getcells $selectedIndex,start_time]
 
     } else {
 

@@ -2660,9 +2660,37 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
       pack $sguil_httpDetailTable -side left -fill both -expand true
       pack $sguil_httpDetailScroll -side right -fill y
 
-      #pack $sguil_httpDisplayButton -side top
       pack $sguil_httpDetailFrame -side top -fill both -expand true
 
+    #
+    # Detail for sguil_ssn from ES data
+    #
+    set sguil_ssnFrame [frame $detailDataFrame.sguil_ssnFrame]
+
+      set sguil_ssnDetailFrame [frame $sguil_ssnFrame.detail]
+      set sguil_ssnDetailTable $sguil_ssnDetailFrame.table
+      set sguil_ssnDetailScroll $sguil_ssnDetailFrame.scroll
+
+      tablelist::tablelist $sguil_ssnDetailTable \
+        -columns {7  "View"     center \
+                  11 "Field"    left
+                  60 "Value"    left} \
+        -stretch all \
+        -movablecolumns 0 \
+        -spacing 5 \
+        -instanttoggle 1 \
+        -yscrollcommand [list $sguil_ssnDetailScroll set] -width 20 \
+        -editendcommand ChangeESViewStatus
+
+      $sguil_ssnDetailTable columnconfigure 0 -name view -editable yes -width 0 -editwindow checkbutton -formatcommand emptyStr
+      $sguil_ssnDetailTable columnconfigure 1 -name field -resizable 0
+      $sguil_ssnDetailTable columnconfigure 2 -name value -resizable 1 -wrap 1
+
+      scrollbar $sguil_ssnDetailScroll -orient vertical -width 10 -command [list $sguil_ssnDetailTable yview]
+      pack $sguil_ssnDetailTable -side left -fill both -expand true
+      pack $sguil_ssnDetailScroll -side right -fill y
+
+      pack $sguil_ssnDetailFrame -side top -fill both -expand true
 
     #
     # Detail for generic events
@@ -3078,10 +3106,21 @@ $ipQueryMenu.advancedMenu.padsMenu add command -label "Query Dst IP" -command "Q
 $ipQueryMenu.dshieldIPMenu add command -label "SrcIP" -command "GetDshieldIP srcip"
 $ipQueryMenu.dshieldIPMenu add command -label "DstIP" -command "GetDshieldIP dstip"
 
-$ipQueryMenu.esMenu add command -label "SrcIP" -command "ESQueryRequest Sguil_httplog srcip {1 hour ago} now"
-$ipQueryMenu.esMenu add command -label "DstIP" -command "ESQueryRequest Sguil_httplog dstip {1 hour ago} now"
-$ipQueryMenu.esMenu add command -label "SrcIP to DstIP" -command "ESQueryRequest Sguil_httplog src2dst {1 hour ago} now"
+$ipQueryMenu.esMenu add cascade -label "Sguil_httplog" -menu $ipQueryMenu.esMenu.httpLogMenu
+menu $ipQueryMenu.esMenu.httpLogMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
+    -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
 
+$ipQueryMenu.esMenu add cascade -label "Sguil_ssn" -menu $ipQueryMenu.esMenu.ssnMenu
+menu $ipQueryMenu.esMenu.ssnMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
+    -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
+
+$ipQueryMenu.esMenu.httpLogMenu add command -label "SrcIP" -command "ESQueryRequest Sguil_httplog srcip {1 hour ago} now"
+$ipQueryMenu.esMenu.httpLogMenu add command -label "DstIP" -command "ESQueryRequest Sguil_httplog dstip {1 hour ago} now"
+$ipQueryMenu.esMenu.httpLogMenu add command -label "SrcIP to DstIP" -command "ESQueryRequest Sguil_httplog src2dst {1 hour ago} now"
+
+$ipQueryMenu.esMenu.ssnMenu add command -label "SrcIP" -command "ESQueryRequest Sguil_ssn srcip {1 hour ago} now"
+$ipQueryMenu.esMenu.ssnMenu add command -label "DstIP" -command "ESQueryRequest Sguil_ssn dstip {1 hour ago} now"
+$ipQueryMenu.esMenu.ssnMenu add command -label "SrcIP to DstIP" -command "ESQueryRequest Sguil_ssn src2dst {1 hour ago} now"
 
 # PADS Menus
 set padsIPQueryMenu [ menu .padsIPQueryMenu -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
