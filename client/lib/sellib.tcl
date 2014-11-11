@@ -36,15 +36,6 @@ proc SelectUp {} {
     set listSize [$CUR_SEL_PANE(name) size]
     if { $listSize == 0 } { set ACTIVE_EVENT 0; return }
 
-#    set selectedIndex [$CUR_SEL_PANE(name) curselection]
-#    # Can't move up
-#    if { $selectedIndex == 0 } { return }
-
-#    set nIndex [expr $selectedIndex - 1]
-#    $CUR_SEL_PANE(name) selection clear $selectedIndex
-#    $CUR_SEL_PANE(name) selection set $nIndex
-#    $CUR_SEL_PANE(name) see $nIndex
-
     if { $CUR_SEL_PANE(type) == "EVENT" } {
 
         SelectEventPane $CUR_SEL_PANE(name) EVENT EVENT
@@ -67,15 +58,6 @@ proc SelectDown {} {
 
     set listSize [$CUR_SEL_PANE(name) size]
     if { $listSize == 0 } { set ACTIVE_EVENT 0; return }
-
-#    set selectedIndex [$CUR_SEL_PANE(name) curselection]
-#    set nIndex [expr $selectedIndex + 1]
-#    # Can't move down
-#    if { $nIndex == $listSize } { return }
-
-#    $CUR_SEL_PANE(name) selection clear $selectedIndex
-#    $CUR_SEL_PANE(name) selection set $nIndex
-#    $CUR_SEL_PANE(name) see $nIndex
 
     if { $CUR_SEL_PANE(type) == "EVENT" } {
 
