@@ -257,6 +257,14 @@ proc ResolveHosts {} {
             set name [GetHostbyAddr $ip]
             InsertDNSData $ip $name $ip $name
 
+        } elseif { $CUR_SEL_PANE(type) == "SGUIL_HTTP" || $CUR_SEL_PANE(type) == "SGUIL_SSN" } {
+
+            set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,src_ip]
+            set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dst_ip]
+            set srcName [GetHostbyAddr $srcIP]
+            set dstName [GetHostbyAddr $dstIP]
+            InsertDNSData $srcIP $srcName $dstIP $dstName
+
         } else {
 
             set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
@@ -473,9 +481,9 @@ proc GetHostbyAddr { ip } {
     }
 
     # Wait for the request to finish
-    dns::wait $tok
+    catch {dns::wait $tok}
 
-    set hostname [dns::name $tok]
+    if [catch {[dns::name $tok]} hostname] { set hostname "Unknown" }
     dns::cleanup $tok
     if { $hostname == "" } { set hostname "Unknown" }
     return $hostname
