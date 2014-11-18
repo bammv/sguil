@@ -61,6 +61,10 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 
             if { $CUR_SEL_PANE(type) == "SANCP" } {
                 set starttime [clock scan "30 min ago" -base [clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,starttime]]]
+            } elseif { $CUR_SEL_PANE(type) == "SGUIL_HTTP" } {
+                set starttime [clock scan "30 min ago" -base [[clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,@timestamp]]]
+            } else if { $CUR_SEL_PANE(type) == "SGUIL_SSN" } { 
+                set starttime [clock scan "30 min ago" -base [[clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,start_time]]]
             } else {
                 set starttime [clock scan "30 min ago" -base [clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,date]]]
             }
@@ -80,7 +84,15 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 
     if { $queryType == "srcip" } {
 
-	set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
+        if { $CUR_SEL_PANE(type) == "SGUIL_HTTP" || $CUR_SEL_PANE(type) == "SGUIL_SSN" } {
+
+            set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,src_ip]
+
+        } else {
+
+	    set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
+
+        }
 
         if { $tableName == "pads" } {
 
@@ -95,19 +107,45 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 
     } elseif { $queryType == "srcport" } {
 
-	set srcport [$CUR_SEL_PANE(name) getcells $selectedIndex,srcport]
+        if { $CUR_SEL_PANE(type) == "SGUIL_HTTP" || $CUR_SEL_PANE(type) == "SGUIL_SSN" } {
+
+	    set srcport [$CUR_SEL_PANE(name) getcells $selectedIndex,src_port]
+
+        } else {
+
+	    set srcport [$CUR_SEL_PANE(name) getcells $selectedIndex,srcport]
+
+        }
+
 	lappend whereTmp "$globalWhere $tableName.src_port = '$srcport'"
         lappend whereTmp "$globalWhere $tableName.dst_port = '$srcport'"
 
     } elseif { $queryType == "dstport" } {
 
-	set dstport [$CUR_SEL_PANE(name) getcells $selectedIndex,dstport]
+        if { $CUR_SEL_PANE(type) == "SGUIL_HTTP" || $CUR_SEL_PANE(type) == "SGUIL_SSN" } {
+
+	    set dstport [$CUR_SEL_PANE(name) getcells $selectedIndex,dst_port]
+
+        } else {
+
+	    set dstport [$CUR_SEL_PANE(name) getcells $selectedIndex,dstport]
+
+        }
+
 	lappend whereTmp "$globalWhere $tableName.src_port = '$dstport'"
         lappend whereTmp "$globalWhere $tableName.dst_port = '$dstport'"
 
     } elseif { $queryType == "dstip" } {
 
-	set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
+        if { $CUR_SEL_PANE(type) == "SGUIL_HTTP" || $CUR_SEL_PANE(type) == "SGUIL_SSN" } {
+
+            set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dst_ip]
+
+        } else {
+
+     	    set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
+
+        }
 
         if { $tableName == "pads" } {
 
@@ -126,8 +164,18 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 
     } elseif { $queryType == "src2dst" } {
 
-	set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
-	set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
+        if { $CUR_SEL_PANE(type) == "SGUIL_HTTP" || $CUR_SEL_PANE(type) == "SGUIL_SSN" } {
+
+            set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,src_ip]
+            set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dst_ip]
+
+        } else {
+
+	    set srcIP [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
+	    set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
+
+        }
+
 	lappend whereTmp "$globalWhere $tableName.src_ip  = INET_ATON('$srcIP') AND $tableName.dst_ip = INET_ATON('$dstIP')"
 
     } elseif { $queryType == "category" } {
