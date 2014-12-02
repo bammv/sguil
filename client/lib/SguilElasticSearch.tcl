@@ -209,7 +209,7 @@ proc UpdateESQuery {} {
 
     if  { $ES_QUERY(end) != "now" } { 
 
-       set etime "[clock scan $ES_QUERY(start) -gmt true]000"
+       set etime "[clock scan $ES_QUERY(end) -gmt true]000"
 
     } else {
 
