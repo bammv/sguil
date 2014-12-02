@@ -63,7 +63,7 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
                 set starttime [clock scan "30 min ago" -base [clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,starttime]]]
             } elseif { $CUR_SEL_PANE(type) == "SGUIL_HTTP" } {
                 set starttime [clock scan "30 min ago" -base [[clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,@timestamp]]]
-            } else if { $CUR_SEL_PANE(type) == "SGUIL_SSN" } { 
+            } elseif { $CUR_SEL_PANE(type) == "SGUIL_SSN" } { 
                 set starttime [clock scan "30 min ago" -base [[clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,start_time]]]
             } else {
                 set starttime [clock scan "30 min ago" -base [clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,date]]]
