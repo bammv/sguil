@@ -9,11 +9,16 @@ proc TurnSoundOff { sndButton } {
     }
 }
 proc TurnSoundOn { sndButton } {
-    global SOUND SOUND_SRVR FESTIVAL_ID
+    global SOUND SOUND_SRVR FESTIVAL_ID tcl_platform
     # Sound is off. Turn it on if we can.
     if { [file exists /dev/speech] } {
         # Looks like speechd is installed
         set SOUND_SRVR speechd
+        set SOUND 1
+        $sndButton configure -text On -foreground darkgreen
+        Speak "Sound has been activated"
+    } elseif { $tcl_platform(os) == "Darwin" } {
+        set SOUND_SRVR say
         set SOUND 1
         $sndButton configure -text On -foreground darkgreen
         Speak "Sound has been activated"
@@ -81,5 +86,10 @@ proc Speak { msg } {
         } else {
             flush $FESTIVAL_ID
         }
+    } elseif { $SOUND_SRVR == "say" } {
+            if [catch { exec say \"$msg\" } tmpError] {
+                ErrorMessage "Error trying to use say: $tmpError"
+                TurnSoundOff
+            }
     }
 }
