@@ -1,0 +1,4 @@
+# Change Jay Aye Are to jar
+{JAR} {jar}
+# Summarize my sensor
+{JNY8675309-eth0} {Newaygo egress}

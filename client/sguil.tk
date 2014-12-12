@@ -2216,6 +2216,12 @@ if { $WHOIS_PATH == "SimpleWhois" } {
   source $SGUILLIB/whois.tcl
 }
 
+if { [info exists SOUND_FILE] && [file exists $SOUND_FILE] } {
+
+    LoadSoundTransforms $SOUND_FILE
+
+}
+
 set SERVERHOSTSELECTED [lindex $SERVERHOST 0]
 
 ############################# GUI ############################################

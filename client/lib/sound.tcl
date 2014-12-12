@@ -1,3 +1,29 @@
+proc LoadSoundTransforms { fileName } {
+
+    global transforms
+
+    for_file line $fileName {
+
+        incr i
+
+        # Filter out commented and empty lines
+        if { ![regexp ^# $line] && ![regexp ^$ $line] } {
+  
+            if { [llength $line] == 2 } { 
+    
+                set transforms([lindex $line 0]) [lindex $line 1]
+    
+            } else {
+    
+                InfoMessage "Error at line $i in $fileName: $line"
+
+            }
+
+        }
+    }
+
+}
+
 proc TurnSoundOff { sndButton } {
     global SOUND SOUND_SRVR FESTIVAL_ID
     set SOUND 0
@@ -67,7 +93,14 @@ proc ConnectToFestival {} {
     return -code ok $festSocketID
 }
 proc Speak { msg } {
-    global SOUND_SRVR FESTIVAL_ID SOUND
+    global SOUND_SRVR FESTIVAL_ID SOUND transforms
+
+    if { [array exists transforms] } {
+        foreach pat [array names transforms] { 
+            regsub $pat $msg $transforms($pat) msg 
+        }
+    }
+
     if { $SOUND_SRVR == "speechd" } {
         set soundFileID [open /dev/speech w]
         puts $soundFileID $msg
@@ -87,7 +120,7 @@ proc Speak { msg } {
             flush $FESTIVAL_ID
         }
     } elseif { $SOUND_SRVR == "say" } {
-            if [catch { exec say \"$msg\" } tmpError] {
+            if [catch { exec say \"$msg\" & } tmpError] {
                 ErrorMessage "Error trying to use say: $tmpError"
                 TurnSoundOff
             }
