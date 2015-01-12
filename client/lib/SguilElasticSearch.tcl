@@ -243,7 +243,8 @@ proc UpdateESQuery {} {
     set filtered [json::write object filtered [json::write object query $q filter $range]]
 
     # The sorting
-    set sort [json::write array [json::write object @timestamp [json::write object order [json::write string desc]]]]
+    #set sort [json::write array [json::write object @timestamp [json::write object order [json::write string desc]] [json::write object ignore_unmapped [json::write string true]]]]
+    set sort [json::write array [json::write object @timestamp [json::write object order [json::write string desc] ignore_unmapped [json::write string true] ] ]]
 
     set fq [json::write object query $filtered size $ES_QUERY(size) sort $sort]
 
