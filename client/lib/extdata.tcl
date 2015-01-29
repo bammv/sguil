@@ -283,7 +283,7 @@ proc ResolveHosts {} {
 
 proc GetWhoisData {} {
 
-    global ACTIVE_EVENT CUR_SEL_PANE WHOISLIST whoisText WHOIS_PATH MULTI_SELECT
+    global ACTIVE_EVENT CUR_SEL_PANE WHOISLIST whoisText WHOIS_PATH WHOIS_BOTH_PATH MULTI_SELECT
 
     ClearWhoisData
 
@@ -294,6 +294,7 @@ proc GetWhoisData {} {
         Working
         update
         set selectedIndex [$CUR_SEL_PANE(name) curselection]
+        set whois_path $WHOIS_PATH
 
         if { $CUR_SEL_PANE(type) == "PADS" } { 
 
@@ -317,7 +318,14 @@ proc GetWhoisData {} {
 
 		set sip [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
 		set dip [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
-		set ip "$sip $dip"
+
+		if { ![info exists WHOIS_BOTH_PATH] || $WHOIS_BOTH_PATH == "" } {
+		    ErrorMessage "WHOIS_BOTH_PATH had not been configured in sguil.conf. Using just 'Src' for query."
+		    set ip "$sip"
+		} else {
+		    set whois_path $WHOIS_BOTH_PATH
+		    set ip "$sip $dip"
+		}
 
 	    } else {
 		set ip [$CUR_SEL_PANE(name) getcells $selectedIndex,$WHOISLIST]
@@ -325,7 +333,7 @@ proc GetWhoisData {} {
 
         }
 
-        if { $WHOIS_PATH == "SimpleWhois" } {
+        if { $whois_path == "SimpleWhois" } {
 
             foreach line [SimpleWhois $ip] {
 
@@ -336,7 +344,7 @@ proc GetWhoisData {} {
 
             $whoisText insert end "Attempting whois query on $ip\n"
             update
-            set whoisCommandID [open "| $WHOIS_PATH $ip" r]
+            set whoisCommandID [open "| $whois_path $ip" r]
 
             while { [gets $whoisCommandID data] >= 0 } {
 
