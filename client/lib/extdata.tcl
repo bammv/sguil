@@ -313,7 +313,15 @@ proc GetWhoisData {} {
 
         } else {
 
-            set ip [$CUR_SEL_PANE(name) getcells $selectedIndex,$WHOISLIST]
+	    if { $WHOISLIST == "both" } {
+
+		set sip [$CUR_SEL_PANE(name) getcells $selectedIndex,srcip]
+		set dip [$CUR_SEL_PANE(name) getcells $selectedIndex,dstip]
+		set ip "$sip $dip"
+
+	    } else {
+		set ip [$CUR_SEL_PANE(name) getcells $selectedIndex,$WHOISLIST]
+	    }
 
         }
 
