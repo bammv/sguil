@@ -483,7 +483,7 @@ proc GetHostbyAddr { ip } {
     # Wait for the request to finish
     catch {dns::wait $tok}
 
-    if [catch {[dns::name $tok]} hostname] { set hostname "Unknown" }
+    if [catch {dns::name $tok} hostname] { set hostname "Unknown" }
     dns::cleanup $tok
     if { $hostname == "" } { set hostname "Unknown" }
     return $hostname
