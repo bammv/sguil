@@ -217,21 +217,15 @@ proc UpdateESQuery {} {
 
     }
 
-    # The filter part
-    set ts [json::write object @timestamp [json::write object from $stime to $etime]]
-    set range [json::write object range $ts]
-
-    set type [$ES_QUERY(type) get]
-
     # Grab the query from the entry
     if { [info exists ES_QUERY(query)] } {
 
         regsub -all {\n} [$ES_QUERY(query) get 0.0 end] {} query
-        set query "_type:$type AND ($query)"
+        set query "$query"
 
     } else {
 
-        set query "_type:$type"
+        set query "*"
 
     }
 
@@ -240,7 +234,17 @@ proc UpdateESQuery {} {
     # The query part
     set q [json::write object query_string [json::write object query [json::write string $query]]]
 
-    set filtered [json::write object filtered [json::write object query $q filter $range]]
+    # The filter part
+    set ts [json::write object @timestamp [json::write object from $stime to $etime]]
+    set range [json::write object range $ts]
+    set type [$ES_QUERY(type) get]
+    set query_string [json::write object query_string [json::write object query [json::write string "_type:$type"]]]
+    set q1 [json::write object query $query_string]
+    set fq [json::write object fquery $q1]
+    set array_must [json::write array $range $fq]
+    set bool [json::write object bool [json::write object must $array_must]]
+
+    set filtered [json::write object filtered [json::write object query $q filter $bool]]
 
     # The sorting
     #set sort [json::write array [json::write object @timestamp [json::write object order [json::write string desc]] [json::write object ignore_unmapped [json::write string true]]]]
@@ -321,18 +325,35 @@ proc PrepESQuery { type query rawquery start end } {
     pack $queryFrame -side bottom -fill both
 
     # Run the query
-    ESQuery $type $query $queryFrame
+    ESQuery $type $query $queryFrame $start $end
 
 }
 
-proc ESQuery { type query queryFrame } {
+proc ESQuery { type query queryFrame start end } {
 
     global ES_PROFILE ES_QUERY_NUMBER DEBUG eventTabs
 
-    set url "$ES_PROFILE(host)/_search?pretty"
+    # Build the indexes to search
+    set esecs [clock scan $end]
+    set ssecs [clock scan $start]
+    set ed [clock format [clock scan $end] -gmt true -f "%Y.%m.%d"]
+    set sd [clock format [clock scan $start] -gmt true -f "%Y.%m.%d"]
+    set indexes "logstash-$sd"
+    while { $ed != $sd } {
+
+        set ssecs [clock scan tomorrow -base $ssecs]
+        puts $ssecs
+        set sd [clock format $ssecs -gmt true -f "%Y.%m.%d"]
+        puts $sd
+        lappend indexes "logstash-$sd"
+
+    }
+    set indexes [join $indexes ,]
+
+    set url "$ES_PROFILE(host)/$indexes/_search?pretty"
    
-    #puts "q -> $query"
-    #puts "Making request to $url"
+    #puts "DEBUG #### q -> $query"
+    #puts "DEBUG #### Making request to $url"
 
     if { $ES_PROFILE(auth) } { 
     
@@ -347,8 +368,8 @@ proc ESQuery { type query queryFrame } {
 
     }
 
-    lappend cmd "-command" "QueryFinished $queryFrame $type $query"
-
+    lappend cmd "-command" [list QueryFinished $queryFrame $type [lindex $query 0] $start $end]
+  
     if { [catch { eval $cmd } tmpError] } {
 
         ErrorMessage $tmpError
@@ -362,7 +383,7 @@ proc ESQuery { type query queryFrame } {
 
 }
 
-proc QueryFinished { queryFrame type query token } {
+proc QueryFinished { queryFrame type query start end token } {
 
     global ES_PROFILE
 
@@ -457,7 +478,7 @@ proc QueryFinished { queryFrame type query token } {
                 # Rerun the query if auth is provided
                 if [ESBasicAuth] { 
 
-                    ESQuery $type [list $query] $queryFrame 
+                    ESQuery $type [list $query] $queryFrame $start $end
 
                 } 
 
