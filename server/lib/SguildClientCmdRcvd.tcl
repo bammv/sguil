@@ -94,7 +94,7 @@ proc ClientCmdRcvd { socketID } {
 
       ValidateUser        { ValidateUser $socketID [lindex $data 1] [lindex $data 2] }
 
-      PING                { catch {SendSocket $socketID PONG} }
+      PING                { ClientPingRcvd $socketID }
 
       UserMessage         { UserMsgRcvd $socketID [lindex $data 1] }
 
@@ -149,7 +149,8 @@ proc ClientCmdRcvd { socketID } {
 proc ClientExitClose { socketID } {
 
   global clientList clientMonitorSockets validSockets socketInfo sensorUsers
-  global userIDArray selectedEvent
+  global userIDArray selectedEvent eventSocketList
+
 
   if { [info exists socketInfo($socketID)] } {
     set userName [lindex $socketInfo($socketID) 2]
@@ -176,10 +177,7 @@ proc ClientExitClose { socketID } {
   }
   # Unselect selected event
   if { [array exists selectedEvent] && [info exists selectedEvent($socketID)] } {
-    foreach client $clientList {
-      catch {SendSocket $client [list UserUnSelectedEvent $selectedEvent($socketID) $userIDArray($socketID)]}
-    }
-    unset selectedEvent($socketID)
+    UnSelectEvent $socketID $selectedEvent($socketID) $userIDArray($socketID)
   }
 
 }
@@ -502,37 +500,77 @@ proc SendCurrentEvents { socketID } {
 
 }
 
-proc UserSelectedEvent { socketID eventID userID } {
+proc UnSelectEvent { socketID oldEventID userID } {
 
-    global selectedEvent clientList
+    global selectedEvent eventSocketList clientList userIDArray
 
-    # Unselect previously selected event
-    if { [info exists selectedEvent($socketID)] } {
+    if { ![info exists eventSocketList($oldEventID)] } { return }
 
-        foreach client $clientList {
+    # If multple users have it selected...
+    if { [llength $eventSocketList($oldEventID)] > 1 } {
 
-            if { $client != $socketID } { 
+        # If we are the first index, then update the alert has a new owner
+        if { [lsearch -exact $eventSocketList($oldEventID) $socketID] == 0 } {
 
-                catch {SendSocket $client [list UserUnSelectedEvent $selectedEvent($socketID) $userID]}
+            set newOwner $userIDArray([lindex $eventSocketList($oldEventID) 1])
+        
+            foreach client $clientList {
+
+                catch {SendSocket $client [list UserSelectedEvent $selectedEvent($socketID) $newOwner]}
 
             }
 
         }
 
+        # Remove the requesting socketID from the list
+        set eventSocketList($oldEventID) [ldelete $eventSocketList($oldEventID) $socketID]
+
+    } else {
+
+        # Otherwise...Unset the var and send unselect all users
+        unset eventSocketList($oldEventID)
+        foreach client $clientList {
+
+            catch {SendSocket $client [list UserUnSelectedEvent $selectedEvent($socketID) $userID]}
+
+        }
+
+
     }
+
+}
+
+proc UserSelectedEvent { socketID eventID userID } {
+
+    global selectedEvent eventSocketList clientList userIDArray
+
+    ####### Process current selected event ######
+    # Check if we already selected an event
+    if { [info exists selectedEvent($socketID)] } {
+
+        UnSelectEvent $socketID $selectedEvent($socketID) $userID
+
+    }
+
+    ####### Process newly selected event ########
 
     set selectedEvent($socketID) $eventID
 
-    # Send newly selected event
-    foreach client $clientList {
+    # Check to see if anyone has this event already selected
+    if { ![info exists eventSocketList($eventID)] } {
 
-        if { $client != $socketID } { 
+        # THis user is the owner of the alert
+        foreach client $clientList {
 
             catch {SendSocket $client [list UserSelectedEvent $selectedEvent($socketID) $userID]}
 
         }
 
+
     }
-   
+
+    # Create or add the new socketID to the list
+    lappend eventSocketList($eventID) $socketID
+
 }
 

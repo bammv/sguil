@@ -115,3 +115,50 @@ proc SendAllSensorStatusInfo {} {
     }
 
 }
+
+proc ClientPingRcvd { socketID } {
+
+    global LastClientCheckIn
+
+    #puts "DEBUG ##### In ClientPingRcvd"
+
+    if { ![array exists LastClientCheckIn] || ![info exists LastClientCheckIn($socketID)] } {
+
+        puts "DEBUG #### Setting up check for $socketID"
+        after 60000 CheckClientStatus $socketID
+
+    }
+
+    set LastClientCheckIn($socketID) [clock seconds]
+    catch {SendSocket $socketID PONG}
+
+    #puts "DEBUG #### $socketID CheckIn: $LastClientCheckIn($socketID)"
+    update
+    
+}
+
+proc CheckClientStatus { socketID } {
+
+    global LastClientCheckIn
+
+    #puts "DEBUG ##### In Check Client Status"
+
+    if { [array exists LastClientCheckIn] && [info exists LastClientCheckIn($socketID)] } {
+
+        if { [expr [clock seconds] - $LastClientCheckIn($socketID)] > 120 } {
+
+            puts "DEBUG ##### $socketID hasn't pinged!!! Killing any left open connection!!!"
+            unset LastClientCheckIn($socketID)
+            catch {close $socketID}
+            ClientExitClose $socketID
+    
+        } else {
+    
+            #puts "DEBUG ##### $socketID is good"
+            after 60000 CheckClientStatus $socketID
+    
+        }
+
+    }
+
+}

@@ -73,7 +73,7 @@ proc RcvBinCopy { socketID outFile bytes {callback {}} } {
 
     # Binary transfer
     fconfigure $outFileID -translation binary -encoding binary
-    fconfigure $socketID -translation binary -encoding binary
+    fconfigure $socketID -translation binary -encoding binary -buffering full -buffersize 99999
 
     # Copy in the background
     fcopy $socketID $outFileID -size $bytes -command [list BinCopyFinished $socketID $outFileID $outFile $callback]

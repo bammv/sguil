@@ -56,6 +56,22 @@ proc HupTrapped {} {
   LoadAccessFile $ACCESS_FILE
 }
 
+proc IntTrapped {} {
+ 
+    global clientList DEBUG
+
+    if { $DEBUG > 0 } { puts "Rcvd INT signal. Closing all client sockets." }
+    
+    foreach socketID $clientList {
+
+        catch {close $socketID}
+        ClientExitClose $socketID
+
+    }
+
+
+}
+
 proc GetRandAlphaNumInt {} {
   set x [expr [random 74] + 48]
   while {!($x >= 48 && $x <= 57) && !($x >= 65 && $x <= 90)\
