@@ -3120,13 +3120,19 @@ $ipQueryMenu.esMenu add cascade -label "Sguil_ssn" -menu $ipQueryMenu.esMenu.ssn
 menu $ipQueryMenu.esMenu.ssnMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
     -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
 
-$ipQueryMenu.esMenu.httpLogMenu add command -label "SrcIP" -command "ESQueryRequest Sguil_httplog srcip {1 hour ago} now"
-$ipQueryMenu.esMenu.httpLogMenu add command -label "DstIP" -command "ESQueryRequest Sguil_httplog dstip {1 hour ago} now"
-$ipQueryMenu.esMenu.httpLogMenu add command -label "SrcIP to DstIP" -command "ESQueryRequest Sguil_httplog src2dst {1 hour ago} now"
+$ipQueryMenu.esMenu.httpLogMenu add command -label "SrcIP" -command "ESQueryRequest Sguil_httplog srcip"
+#$ipQueryMenu.esMenu.httpLogMenu add command -label "SrcIP" -command "ESQueryRequest Sguil_httplog srcip {1 hour ago} now"
+$ipQueryMenu.esMenu.httpLogMenu add command -label "DstIP" -command "ESQueryRequest Sguil_httplog dstip"
+#$ipQueryMenu.esMenu.httpLogMenu add command -label "DstIP" -command "ESQueryRequest Sguil_httplog dstip {1 hour ago} now"
+$ipQueryMenu.esMenu.httpLogMenu add command -label "SrcIP to DstIP" -command "ESQueryRequest Sguil_httplog src2dst"
+#$ipQueryMenu.esMenu.httpLogMenu add command -label "SrcIP to DstIP" -command "ESQueryRequest Sguil_httplog src2dst {1 hour ago} now"
 
-$ipQueryMenu.esMenu.ssnMenu add command -label "SrcIP" -command "ESQueryRequest Sguil_ssn srcip {1 hour ago} now"
-$ipQueryMenu.esMenu.ssnMenu add command -label "DstIP" -command "ESQueryRequest Sguil_ssn dstip {1 hour ago} now"
-$ipQueryMenu.esMenu.ssnMenu add command -label "SrcIP to DstIP" -command "ESQueryRequest Sguil_ssn src2dst {1 hour ago} now"
+$ipQueryMenu.esMenu.ssnMenu add command -label "SrcIP" -command "ESQueryRequest Sguil_ssn srcip"
+#$ipQueryMenu.esMenu.ssnMenu add command -label "SrcIP" -command "ESQueryRequest Sguil_ssn srcip {1 hour ago} now"
+$ipQueryMenu.esMenu.ssnMenu add command -label "DstIP" -command "ESQueryRequest Sguil_ssn dstip"
+#$ipQueryMenu.esMenu.ssnMenu add command -label "DstIP" -command "ESQueryRequest Sguil_ssn dstip {1 hour ago} now"
+$ipQueryMenu.esMenu.ssnMenu add command -label "SrcIP to DstIP" -command "ESQueryRequest Sguil_ssn src2dst"
+#$ipQueryMenu.esMenu.ssnMenu add command -label "SrcIP to DstIP" -command "ESQueryRequest Sguil_ssn src2dst {1 hour ago} now"
 
 # PADS Menus
 set padsIPQueryMenu [ menu .padsIPQueryMenu -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \

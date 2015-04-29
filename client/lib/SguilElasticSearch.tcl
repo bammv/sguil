@@ -3,7 +3,7 @@
 # type of query (Sguil_httplog, Sguil_ssn, etc)
 # default conditions (src_ip, dst_ip, both)
 # Time manipulation (hours ago)
-proc ESQueryRequest { type term { start { 1 hour ago } } { end { now } } } { 
+proc ESQueryRequest { type term { start {} } { end {} } } { 
 
     global CUR_SEL_PANE
 
@@ -12,13 +12,33 @@ proc ESQueryRequest { type term { start { 1 hour ago } } { end { now } } } {
 
         set src_ip [$CUR_SEL_PANE(name) getcells $i,src_ip]
         set dst_ip [$CUR_SEL_PANE(name) getcells $i,dst_ip]
+        
+        if { $CUR_SEL_PANE(format) == "SGUIL_HTTP" } { 
+
+            set ts [$CUR_SEL_PANE(name) getcells $i,@timestamp]
+
+        } else {
+
+            [$CUR_SEL_PANE(name) getcells $i,start_time]
+
+        }
 
     } else {
 
         set src_ip [$CUR_SEL_PANE(name) getcells $i,srcip]
         set dst_ip [$CUR_SEL_PANE(name) getcells $i,dstip]
+        set ts [$CUR_SEL_PANE(name) getcells $i,date]
 
     }
+
+    # Set start and end search times to 30 mins before and after
+    if { $start == "" } {
+
+        set start [clock format [clock scan "30 mins ago" -base [clock scan $ts]] -f "%Y-%m-%d %T"]
+        set end [clock format [clock scan "30 mins" -base [clock scan $ts]] -f "%Y-%m-%d %T"]
+
+    }
+    
 
     set q ""
 
