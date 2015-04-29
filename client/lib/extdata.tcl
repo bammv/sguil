@@ -151,7 +151,7 @@ proc DisplayReference { win start length } {
  
      switch -exact -- $type {
 
-        url        { exec $BROWSER_PATH http://$content & }
+        url        { exec $BROWSER_PATH $content & }
         bugtraq    { exec $BROWSER_PATH http://www.securityfocus.com/bid/$content & }
         cve        { exec $BROWSER_PATH http://nvd.nist.gov/nvd.cfm?cvename=CAN-$content & }
         nessus     { exec $BROWSER_PATH http://cgi.nessus.org/plugins/dump.php3?id=$content & }
