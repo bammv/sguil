@@ -274,7 +274,7 @@ proc RawDataFile { socketID fileName TRANS_ID bytes } {
 
     }
 
-    puts "DEBUG #### callback -> $callback"
+    InfoMessage "DEBUG #### callback -> $callback"
 
     RcvBinCopy $socketID $outfile $bytes $callback
 
