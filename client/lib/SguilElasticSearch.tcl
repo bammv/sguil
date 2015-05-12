@@ -356,8 +356,8 @@ proc ESQuery { type query queryFrame start end } {
     # Build the indexes to search
     set esecs [clock scan $end]
     set ssecs [clock scan $start]
-    set ed [clock format [clock scan $end] -gmt true -f "%Y.%m.%d"]
-    set sd [clock format [clock scan $start] -gmt true -f "%Y.%m.%d"]
+    set ed [clock format [clock scan $end] -f "%Y.%m.%d"]
+    set sd [clock format [clock scan $start] -f "%Y.%m.%d"]
     set indexes "logstash-$sd"
     while { $ed != $sd } {
 
