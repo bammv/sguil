@@ -19,7 +19,7 @@ proc ESQueryRequest { type term { start {} } { end {} } } {
 
         } else {
 
-            [$CUR_SEL_PANE(name) getcells $i,start_time]
+            set ts [$CUR_SEL_PANE(name) getcells $i,start_time]
 
         }
 
