@@ -559,8 +559,10 @@ proc CreateXscriptWin { winName } {
     pack $termButtonFrame.searchButton $termButtonFrame.abortButton $termButtonFrame.closeButton \
      -side left -padx 0 -expand true
   pack $winName.menubutton -side top -anchor w
-  pack $winName.sText $termButtonFrame $winName.debug \
+  pack $winName.sText \
    -side top -fill both -expand true
+  pack $termButtonFrame $winName.debug \
+   -side top -fill both -expand false
 }
 proc AbortXscript { winName } {
   $winName.termButtonsFrame.abortButton configure -state disabled
