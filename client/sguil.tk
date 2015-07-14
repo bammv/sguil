@@ -2880,39 +2880,39 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
     set tcpHdrFrame [frame $packetFrame.tcpHdrFrame -background black -borderwidth 1]
       set tcpHdrLabel [label $tcpHdrFrame.tcpHdrLabel -text TCP -width 8 -foreground white -background blue]
       set sPortTcpHdrFrame [frame $tcpHdrFrame.sPortTcpHdrFrame]
-        LabelText $sPortTcpHdrFrame 5 "Source\nPort" 3
+        LabelText $sPortTcpHdrFrame 5 "SPort" 1
       set dPortTcpHdrFrame [frame $tcpHdrFrame.dPortTcpHdrFrame]
-        LabelText $dPortTcpHdrFrame 5 "Dest\nPort" 3
+        LabelText $dPortTcpHdrFrame 5 "DPort" 1
       set r1TcpHdrFrame [frame $tcpHdrFrame.r1TcpHdrFrame]
-        LabelText $r1TcpHdrFrame 1 "R\n1" 3
+        LabelText $r1TcpHdrFrame 1 "1" 1
       set r0TcpHdrFrame [frame $tcpHdrFrame.r0TcpHdrFrame]
-        LabelText $r0TcpHdrFrame 1 "R\n0" 3
+        LabelText $r0TcpHdrFrame 1 "0" 1
       set urgTcpHdrFrame [frame $tcpHdrFrame.urgTcpHdrFrame]
-        LabelText $urgTcpHdrFrame 1 "U\nR\nG" 3
+        LabelText $urgTcpHdrFrame 1 "U" 1
       set ackTcpHdrFrame [frame $tcpHdrFrame.ackTcpHdrFrame]
-        LabelText $ackTcpHdrFrame 1 "A\nC\nK" 3
+        LabelText $ackTcpHdrFrame 1 "A" 1
       set pshTcpHdrFrame [frame $tcpHdrFrame.pshTcpHdrFrame]
-        LabelText $pshTcpHdrFrame 1 "P\nS\nH" 3
+        LabelText $pshTcpHdrFrame 1 "P" 1
       set rstTcpHdrFrame [frame $tcpHdrFrame.rstTcpHdrFrame]
-        LabelText $rstTcpHdrFrame 1 "R\nS\nT" 3
+        LabelText $rstTcpHdrFrame 1 "R" 1
       set synTcpHdrFrame [frame $tcpHdrFrame.synTcpHdrFrame]
-        LabelText $synTcpHdrFrame 1 "S\nY\nN" 3
+        LabelText $synTcpHdrFrame 1 "S" 1
       set finTcpHdrFrame [frame $tcpHdrFrame.finTcpHdrFrame]
-        LabelText $finTcpHdrFrame 1 "F\nI\nN" 3
+        LabelText $finTcpHdrFrame 1 "F" 1
       set seqTcpHdrFrame [frame $tcpHdrFrame.seqTcpHdrFrame]
-        LabelText $seqTcpHdrFrame 10 "Seq #" 3
+        LabelText $seqTcpHdrFrame 10 "Seq #" 1
       set acknoTcpHdrFrame [frame $tcpHdrFrame.acknoTcpHdrFrame]
-        LabelText $acknoTcpHdrFrame 10 "Ack #" 3
+        LabelText $acknoTcpHdrFrame 10 "Ack #" 1
       set tcpoffsetTcpHdrFrame [frame $tcpHdrFrame.tcpoffsetTcpHdrFrame]
-        LabelText $tcpoffsetTcpHdrFrame 5 "Offset" 3
+        LabelText $tcpoffsetTcpHdrFrame 5 "Offset" 1
       set resTcpHdrFrame [frame $tcpHdrFrame.resTcpHdrFrame]
-        LabelText $resTcpHdrFrame 3 "Res" 3
+        LabelText $resTcpHdrFrame 3 "Res" 1
       set windowTcpHdrFrame [frame $tcpHdrFrame.windowTcpHdrFrame]
-        LabelText $windowTcpHdrFrame 6 "Window" 3
+        LabelText $windowTcpHdrFrame 6 "Window" 1
       set urpTcpHdrFrame [frame $tcpHdrFrame.urpTcpHdrFrame]
-        LabelText $urpTcpHdrFrame 3 "Urp" 3
+        LabelText $urpTcpHdrFrame 3 "Urp" 1
       set tcpchksumTcpHdrFrame [frame $tcpHdrFrame.tcpchksumTcpHdrFrame]
-        LabelText $tcpchksumTcpHdrFrame 6 "ChkSum" 3
+        LabelText $tcpchksumTcpHdrFrame 6 "ChkSum" 1
       pack $tcpHdrLabel -side left -anchor w -fill y
       pack $sPortTcpHdrFrame $dPortTcpHdrFrame $r1TcpHdrFrame $r0TcpHdrFrame $urgTcpHdrFrame\
        $ackTcpHdrFrame $pshTcpHdrFrame $rstTcpHdrFrame $synTcpHdrFrame $finTcpHdrFrame\
