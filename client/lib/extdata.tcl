@@ -539,31 +539,46 @@ proc ClearWhoisData {} {
 }
 
 proc CreateXscriptWin { winName } {
+
     toplevel $winName
-    menubutton $winName.menubutton -underline 0 -text File -menu $winName.menubutton.menu
-    menu $winName.menubutton.menu -tearoff 0
-    $winName.menubutton.menu add command -label "Save As" -command "SaveXscript $winName"
-    $winName.menubutton.menu add command -label "Close Window" -command "destroy $winName"
+
+    # Text box for xscript contents
     scrolledtext $winName.sText -vscrollmode dynamic -hscrollmode dynamic -wrap word\
 	    -visibleitems 85x30 -sbwidth 10
     $winName.sText tag configure hdrTag -foreground black -background "#00FFFF"
     $winName.sText tag configure srcTag -foreground blue
     $winName.sText tag configure dstTag -foreground red
     
-  scrolledtext $winName.debug -vscrollmode dynamic -hscrollmode none -wrap word\
-   -visibleitems 85x5 -sbwidth 10 -labeltext "Debug Messages" -textbackground lightblue
-  set termButtonFrame [frame $winName.termButtonsFrame]
+    # Text box for debug
+    # Hide the ST in a frame to easily pack/unpack
+    set df [frame $winName.df]
+    scrolledtext $df.debug -vscrollmode dynamic -hscrollmode none -wrap word\
+    -visibleitems 85x5 -sbwidth 10 -labeltext "Debug Messages" -textbackground lightblue
+
+    # Interaction buttons
+    set termButtonFrame [frame $winName.termButtonsFrame]
     button $termButtonFrame.searchButton -text "Search" -command "SearchDialog $winName" 
     button $termButtonFrame.abortButton -text "Abort " -command "AbortXscript $winName" 
     button $termButtonFrame.closeButton -text "Close" -command "CleanupXscriptWin $winName"
     pack $termButtonFrame.searchButton $termButtonFrame.abortButton $termButtonFrame.closeButton \
      -side left -padx 0 -expand true
-  pack $winName.menubutton -side top -anchor w
-  pack $winName.sText \
-   -side top -fill both -expand true
-  pack $termButtonFrame $winName.debug \
-   -side top -fill both -expand false
+
+    # Top Menu - Build the items so we can hide/unhide debug
+    menubutton $winName.menubutton -underline 0 -text File -menu $winName.menubutton.menu
+    menu $winName.menubutton.menu -tearoff 0
+    $winName.menubutton.menu add command -label "Show Debug" -command "pack $df.debug"
+    $winName.menubutton.menu add command -label "Save As" -command "SaveXscript $winName"
+    $winName.menubutton.menu add command -label "Close Window" -command "destroy $winName"
+
+    # Pack the windows from the top: Menu, Xscript Text, Debug, Buttons
+    pack $winName.menubutton -side top -anchor w
+    pack $winName.sText \
+     -side top -fill both -expand true
+    pack $df $termButtonFrame \
+     -side top -fill both -expand false
+
 }
+
 proc AbortXscript { winName } {
   $winName.termButtonsFrame.abortButton configure -state disabled
   SendToSguild [list AbortXscript $winName]
@@ -633,14 +648,14 @@ proc InsertXscriptData { winName state data } {
       ErrorMessage "$data"
     }
   } else {
-    $winName.debug component text insert end "$data\n"
-    $winName.debug see end
+    $winName.df.debug component text insert end "$data\n"
+    $winName.df.debug see end
   } 
 }
 proc XscriptDebugMsg { winName data } {
     if [winfo exists $winName] {
-      $winName.debug component text insert end "$data\n"
-      $winName.debug see end
+      $winName.df.debug component text insert end "$data\n"
+      $winName.df.debug see end
     }
 }
 
