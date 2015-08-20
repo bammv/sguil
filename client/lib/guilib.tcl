@@ -134,6 +134,9 @@ proc CreateTableListBox { winName columnList } {
 }
 
 proc DisplayIncidentCats {} {
+
+  global CAT
+
   set categoryTl [toplevel .categoryTl]
   wm title .categoryTl "Incident Categories"
   wm geometry .categoryTl +[winfo pointerx .]+[winfo pointery .]
@@ -142,13 +145,15 @@ proc DisplayIncidentCats {} {
   set categoryButton [button $categoryTl.close -text "Ok" -command "destroy $categoryTl"]
   pack $categoryText -side top -fill both -expand true
   pack $categoryButton -side bottom
-  $categoryText component text insert end "Category I\tUnauthorized Root/Admin Access\n"
-  $categoryText component text insert end "Category II\tUnauthorized User Access\n"
-  $categoryText component text insert end "Category III\tAttempted Unauthorized Access\n"
-  $categoryText component text insert end "Category IV\tSuccessful Denial of Service Attack\n"
-  $categoryText component text insert end "Category V\tPoor Security Practice or Policy Violation\n"
-  $categoryText component text insert end "Category VI\tReconnaissance/Probes/Scans\n"
-  $categoryText component text insert end "Category VII\tVirus Infection\n"
+
+  foreach v [lsort [array names CAT]] {
+
+    set d [lindex $CAT($v) 0]
+    set k [lindex $CAT($v) 3]
+    $categoryText component text insert end "${k}: $d\n"
+
+  }
+
 }
 
 proc ClearPacketData {} {
