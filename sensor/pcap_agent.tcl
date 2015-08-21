@@ -157,7 +157,9 @@ proc UploadRawFile { fileName TRANS_ID fileSize } {
 
 proc BinCopyToSguild { dataChannelID fileName } {
 
-    puts "DEBUG #### Sending file via $dataChannelID"
+    global DEBUG
+
+    if {$DEBUG} { puts "DEBUG #### Sending file via $dataChannelID" }
 
     if [ catch {open $fileName r} rFileID ] {
 
