@@ -91,8 +91,13 @@ Step 2: Generate a server certificate/key pair:
   A challenge password []:
   An optional company name []:
 
-  Bamm@syn: openssl x509 -req -in sguild.req -CA CA.pem -CAkey privkey.pem -CAserial file.sr1 -out sguild.pem
-  ****** NOTE: 'file.sr1' contains a two digit number like "44"
+  ****** NOTE: The serial number should be a unique number to the issuing CA. There are three ways to supply
+  a serial number to the certifacte request:
+    * Create a text file containing the serial number and ref it with -CAserial <filename.srl>
+    * Use the option -set_serial ####### in the command line (like below)
+    * Use the -CAcreateserial -CAserial <filename.seq> options to have OpenSSL create and manage the 
+      serial numbers for you. 
+  Bamm@syn: openssl x509 -req -in sguild.req -CA CA.pem -CAkey privkey.pem -set_serial 8675309 -out sguild.pem
   Signature ok
   subject=/C=US/ST=Texas/O=sguild
   Getting CA Private Key
