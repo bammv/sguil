@@ -157,8 +157,6 @@ proc UploadRawFile { fileName TRANS_ID fileSize } {
 
 proc BinCopyToSguild { dataChannelID fileName } {
 
-    puts "DEBUG #### Sending file via $dataChannelID"
-
     if [ catch {open $fileName r} rFileID ] {
 
         # Error opening file
@@ -202,6 +200,20 @@ proc BinCopyFinished { fileID dataChannelID fileName bytes {error  {}} } {
 
 }
 
+proc SendLogMessage { type msg {TRANS_ID {0}} } {
+
+        if { $type == "xscript" } {
+
+            SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $msg]]
+
+        } else {
+
+            SendToSguild [list SystemMessage $msg]
+
+        }
+
+}
+
 # Received a request for rawdata
 proc RawDataRequest { socketID TRANS_ID sensor timestamp srcIP dstIP srcPort dstPort proto rawDataFileName type } {
 
@@ -225,6 +237,8 @@ proc RawDataRequest { socketID TRANS_ID sensor timestamp srcIP dstIP srcPort dst
         return
 
     }
+
+    SendLogMessage $type "$HOSTNAME is processing your pcap request." $TRANS_ID
 
     # Create the data file.
     if { [catch {CreateRawDataFile $TRANS_ID $timestamp \
@@ -295,134 +309,54 @@ proc CheckLastPcapFile { { onetime {0} } } {
 
 }
 
-
 proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto rawDataFileName type } {
 
     global RAW_LOG_DIR DEBUG TCPDUMP TMP_DIR
+    global BACK_SECONDS FWD_SECONDS TCPDUMP_TRACKER PCAP_FILE_TRACKER
 
+    SendLogMessage $type "Searching all files $BACK_SECONDS seconds before and $FWD_SECONDS seconds after $timestamp." $TRANS_ID
+
+    # Touch the working file
+    close [open $TMP_DIR/$rawDataFileName a]
+    set start_secs [clock scan "$BACK_SECONDS seconds ago" -base [clock scan $timestamp]]
+    set end_secs [clock scan "$FWD_SECONDS seconds" -base [clock scan $timestamp]]
+
+    # Find all the date directories with pcap we want to search
     set date [lindex $timestamp 0]
+    lappend datedirs $RAW_LOG_DIR/$date
+    set start_date [clock format [clock scan $start_secs] -gmt true -f "%Y-%m-%d"]
+    if { ![lsearch $datedirs $start_date] } { lappend datedirs $RAW_LOG_DIR/$date } 
+    set end_date [clock format [clock scan $end_secs] -gmt true -f "%Y-%m-%d"]
+    if { ![lsearch $datedirs $end_date] } { lappend datedirs $RAW_LOG_DIR/$date } 
 
-    if { [file exists $RAW_LOG_DIR/$date] && [file isdirectory $RAW_LOG_DIR/$date] } {
+    # Find a list of files in the identified dirs
+    foreach datedir $datedirs {
 
-        if { $type == "xscript" } {
+        # Find the first file
+        foreach logFile [ lsort -decreasing [glob -nocomplain $datedir/snort.log.*] ] {
 
-            SendToSguild [list XscriptDebugMsg $TRANS_ID "Making a list of local log files."]
-            SendToSguild [list XscriptDebugMsg $TRANS_ID "Looking in $RAW_LOG_DIR/$date."]
+            set ft [lindex [split [file tail $logFile] .] 2]
 
-        } else {
+            if { $ft <= $start_secs } { 
 
-            SendToSguild [list SystemMessage "Making a list of local log files."]
-            SendToSguild [list SystemMessage "Looking in $RAW_LOG_DIR/$date."]
+                set start_file $ft
+                break
 
-        }
-
-    } else {
-
-        if { $type == "xscript" } {
-
-            SendToSguild [list XscriptDebugMsg $TRANS_ID \
-             "$RAW_LOG_DIR/$date does not exist. Make sure log_packets.sh is configured correctly."]
-
-        } else {
-
-            SendToSguild [list SystemMessage \
-             "$RAW_LOG_DIR/$date does not exist. Make sure log_packets.sh is configured correctly."]
+            } 
 
         }
 
-        if {$DEBUG} {
+        SendLogMessage $type "Building a list of pcap files to search..." $TRANS_ID
+        foreach logFile [ lsort -decreasing [glob -nocomplain $datedir/snort.log.*] ] {
 
-           puts "$RAW_LOG_DIR/$date does not exist. Make sure log_packets.sh is configured correctly."
+            set ft [lindex [split [file tail $logFile] .] 2]
+            if { $ft >= $start_file && $ft <= $end_secs } { 
 
-        }
+                lappend logFiles $logFile
 
-        return -code error
-
-    }
-
-    cd $RAW_LOG_DIR/$date
-
-    if { $type == "xscript" } {
-
-        SendToSguild [list XscriptDebugMsg $TRANS_ID "Making a list of local log files in $RAW_LOG_DIR/$date."]
-
-    } else {
-
-        SendToSguild [list SystemMessage "Making a list of local log files in $RAW_LOG_DIR/$date."]
-
-    }
-
-    foreach logFile [glob -nocomplain snort.log.*] {
-
-        lappend logFileTimes [lindex [split $logFile .] 2]
-
-    }
-
-    if { ! [info exists logFileTimes] } {
-
-        if { $type == "xscript" } {
-
-            SendToSguild [list XscriptDebugMsg $TRANS_ID "No matching log files."]
-
-        } else {
-
-            SendToSguild [list SystemMessage "No matching log files."]
+            } 
 
         }
-
-        return -code error
-    }
-
-    set sLogFileTimes [lsort -decreasing $logFileTimes]
-    if {$DEBUG} {puts $sLogFileTimes}
-
-    if { $type == "xscript" } {
-
-        SendToSguild [list XscriptDebugMsg $TRANS_ID "Available log files:"]
-        SendToSguild [list XscriptDebugMsg $TRANS_ID "$sLogFileTimes"]
-
-    } else {
-
-        SendToSguild [list SystemMessage "Available log files:"]
-        SendToSguild [list SystemMessage "$sLogFileTimes"]
-
-    }
-
-    set eventTime [clock scan $timestamp -gmt true]
-
-    # The first file we find with a time >= to ours should have our packets.
-    foreach logFileTime $sLogFileTimes {
-
-        if { $eventTime >= $logFileTime } {
-
-            set logFileName "snort.log.$logFileTime"
-            break
-
-        }
-
-    }
-
-    if { ![info exists logFileName] } {
-
-        if {$DEBUG} {
-
-            puts "ERROR: Unable to find the matching pcap file based on the time."
-            puts "       The requested event time is: $eventTime"
-        }
-
-        if { $type == "xscript" } {
-
-            SendToSguild [list XscriptDebugMsg $TRANS_ID "ERROR: Unable to find the matching pcap file based on the time."]
-            SendToSguild [list XscriptDebugMsg $TRANS_ID "The requested event time is: $eventTime"]
-
-        } else {
-
-            SendToSguild [list SystemMessage "ERROR: Unable to find the matching pcap file based on the time."]
-            SendToSguild [list SystemMessage "The requested event time is: $eventTime"]
-
-        }
-
-        return -code error
 
     }
 
@@ -437,109 +371,165 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
 
     }
 
-    set tcpdumpCmd "$TCPDUMP -r $RAW_LOG_DIR/$date/$logFileName -w $TMP_DIR/$rawDataFileName $tcpdumpFilter"
+    set i 0
+    set TCPDUMP_TRACKER($rawDataFileName) [llength $logFiles]
 
-    if { $type == "xscript" } {
+    foreach logFile [lsort -increasing $logFiles] { 
 
-        SendToSguild [list XscriptDebugMsg $TRANS_ID "Creating unique data file: $tcpdumpCmd"]
+        SendLogMessage $type "Searching: $logFile" $TRANS_ID
 
-    } else {
+        set tcpdumpCmd "$TCPDUMP -r $logFile -w $TMP_DIR/$rawDataFileName.$i $tcpdumpFilter"
 
-        SendToSguild [list SystemMessage "Creating unique data file: $tcpdumpCmd"]
+        if [catch { open "| $tcpdumpCmd" r } cmdID] {
 
-    }
-
-    if [catch { open "| $tcpdumpCmd" r } cmdID] {
-
-        set tmpMsg "Error running $tcpdumpCmd: $cmdID"
-        if { $type == "xscript" } {
-
-            SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $cmdID]]
-
-        } else {
-
-            SendToSguild [list SystemMessage $cmdID]
-
-        }
-
-    } else {
-
-        if { ![file exists $TMP_DIR/$rawDataFileName] } {
-
-            if {$proto != "6" && $proto != "17"} {
-
-                set tcpdumpFilter "(ip and host $srcIP and host $dstIP and proto $proto)"
-
+            set tmpMsg "Error running $tcpdumpCmd: $cmdID"
+            if { $type == "xscript" } {
+    
+                SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $cmdID]]
+    
             } else {
-
-                set tcpdumpFilter "(ip and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto)"
-
+    
+                SendToSguild [list SystemMessage $cmdID]
+    
             }
 
-            set tcpdumpCmd "$TCPDUMP -r $RAW_LOG_DIR/$date/$logFileName -w $TMP_DIR/$rawDataFileName $tcpdumpFilter"
+            break
+    
+        } else {
+    
+            if { ![file exists $TMP_DIR/$rawDataFileName.$i] } {
+    
+                if {$proto != "6" && $proto != "17"} {
+    
+                    set tcpdumpFilter "(ip and host $srcIP and host $dstIP and proto $proto)"
+    
+                } else {
+    
+                    set tcpdumpFilter "(ip and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto)"
+    
+                }
+    
+                set tcpdumpCmd "$TCPDUMP -r $logFile -w $TMP_DIR/$rawDataFileName.$i $tcpdumpFilter"
+    
+                if [catch { open "| $tcpdumpCmd" r } cmdID] {
+    
+                    set tmpMsg "Error running $tcpdumpCmd: $cmdID"
+                    if { $type == "xscript" } {
+    
+                        SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $cmdID]]
+    
+                    } else {
+    
+                        SendToSguild [list SystemMessage $cmdID]
+    
+                    }
 
-            if [catch { open "| $tcpdumpCmd" r } cmdID] {
-
-                set tmpMsg "Error running $tcpdumpCmd: $cmdID"
-                if { $type == "xscript" } {
-
-                    SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $cmdID]]
+                    break
 
                 } else {
 
-                    SendToSguild [list SystemMessage $cmdID]
+                    lappend PCAP_FILE_TRACKER($rawDataFileName) $TMP_DIR/$rawDataFileName.$i
 
                 }
+    
             } else {
 
-                fileevent $cmdID readable [list ProcessTcpdump $cmdID $TMP_DIR/$rawDataFileName $TRANS_ID $type]
+                lappend PCAP_FILE_TRACKER($rawDataFileName) $TMP_DIR/$rawDataFileName.$i
+
             }
-
-        } else {
-
-            fileevent $cmdID readable [list ProcessTcpdump $cmdID $TMP_DIR/$rawDataFileName $TRANS_ID $type]
+            
         }
+
+        # Background the tcpdump command. Process them when all have finished
+        fileevent $cmdID readable [list RanTcpdump $cmdID $TMP_DIR/$rawDataFileName.$i $TRANS_ID $type $rawDataFileName]
+        incr i
+
     }
 
 }
 
-proc ProcessTcpdump { cmdID fileName TRANS_ID type } {
+proc MergePcapFiles { rawDataFileName TRANS_ID type } {
 
-    if { [eof $cmdID] || [catch {gets $socketID data}] } {
+    global TMP_DIR PCAP_FILE_TRACKER
 
-        # Socket closed
-        catch {close $cmdID}
+    SendLogMessage $type "Merging results." $TRANS_ID
 
-        if { [file exists $fileName] } {
+    # Move the first file to our final file
+    file rename -force [lindex $PCAP_FILE_TRACKER($rawDataFileName) 0] $TMP_DIR/$rawDataFileName
 
-            # Copy the file up to sguild via a data channel.
-            UploadRawFile $fileName $TRANS_ID [file size $fileName]
+    if { [llength $PCAP_FILE_TRACKER($rawDataFileName)] > 1 } { 
 
-        } else {
+        set outID [open $TMP_DIR/$rawDataFileName a]
+        fconfigure $outID -translation binary
 
-            if { $type == "xscript" } {
+        # Strip the 24 byte pcap header from all but the first file and append them to the main
+        foreach pcapFile [lrange $PCAP_FILE_TRACKER($rawDataFileName) 1 end] {
 
-                SendToSguild [list XscriptDebugMsg $TRANS_ID "Error creating file: $fileName"]
+            if { [file size $pcapFile] > 24 } { 
 
-            } else {
-
-                SendToSguild [list SystemMessage "Error creating file: $fileName"]
-
+                set pID [open $pcapFile r]
+                fconfigure $pID -translation binary
+                seek $pID 24 start
+                puts -nonewline $outID [read $pID]
+                close $pID
+                
             }
 
+            file delete -force $pcapFile
+
         }
+
+        close $outID
+
+    }
+
+    ProcessTcpdump $TMP_DIR/$rawDataFileName $TRANS_ID $type
+
+}
+
+proc RanTcpdump { cmdID fileName TRANS_ID type rawDataFileName } {
+
+    global TCPDUMP_TRACKER 
+
+    if { [gets $cmdID data] < 0 || [eof $cmdID] } {
+
+        catch {close $cmdID}
+        incr TCPDUMP_TRACKER($rawDataFileName) -1
+        if { $TCPDUMP_TRACKER($rawDataFileName) == 0 } { 
+
+            MergePcapFiles $rawDataFileName $TRANS_ID $type 
+
+        } 
+
+    } else {
+
+        SendLogMessage $type "Unknown tcpdump output: $data" $TRANS_ID
+
+    }
+
+}
+
+proc ProcessTcpdump { fileName TRANS_ID type } {
+
+    if { [file exists $fileName] } {
+
+        SendLogMessage $type "Uploading $fileName to server" $TRANS_ID
+
+        # Copy the file up to sguild via a data channel.
+        UploadRawFile $fileName $TRANS_ID [file size $fileName]
 
     } else {
 
         if { $type == "xscript" } {
 
-            SendToSguild [list XscriptDebugMsg $TRANS_ID "tcpdump: $data"]
+            SendToSguild [list XscriptDebugMsg $TRANS_ID "Error creating file: $fileName"]
 
         } else {
 
-            SendToSguild [list SystemMessage "tcpdump: $data"]
+            SendToSguild [list SystemMessage "Error creating file: $fileName"]
 
         }
+
 
     }
 
@@ -802,6 +792,10 @@ foreach arg $argv {
     }
 
 }
+
+# Set the default search seconds in case one isn't provided in the .conf
+set BACK_SECONDS 0
+set FWD_SECONDS 0
 
 # Parse the config file here
 # Default location is /etc/pcap_agent.conf or pwd
