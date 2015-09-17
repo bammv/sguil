@@ -397,47 +397,8 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
     
         } else {
     
-            if { ![file exists $TMP_DIR/$rawDataFileName.$i] } {
-    
-                if {$proto != "6" && $proto != "17"} {
-    
-                    set tcpdumpFilter "(ip and host $srcIP and host $dstIP and proto $proto)"
-    
-                } else {
-    
-                    set tcpdumpFilter "(ip and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto)"
-    
-                }
-    
-                set tcpdumpCmd "$TCPDUMP -r $logFile -w $TMP_DIR/$rawDataFileName.$i $tcpdumpFilter"
-    
-                if [catch { open "| $tcpdumpCmd" r } cmdID] {
-    
-                    set tmpMsg "Error running $tcpdumpCmd: $cmdID"
-                    if { $type == "xscript" } {
-    
-                        SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $cmdID]]
-    
-                    } else {
-    
-                        SendToSguild [list SystemMessage $cmdID]
-    
-                    }
+            lappend PCAP_FILE_TRACKER($rawDataFileName) $TMP_DIR/$rawDataFileName.$i
 
-                    break
-
-                } else {
-
-                    lappend PCAP_FILE_TRACKER($rawDataFileName) $TMP_DIR/$rawDataFileName.$i
-
-                }
-    
-            } else {
-
-                lappend PCAP_FILE_TRACKER($rawDataFileName) $TMP_DIR/$rawDataFileName.$i
-
-            }
-            
         }
 
         # Background the tcpdump command. Process them when all have finished
@@ -541,7 +502,7 @@ proc CheckDiskSpace {} {
 
     if { $CONNECTED && [info exists WATCH_DIR] && [file exists $WATCH_DIR] } {
 
-        if [catch {exec df -h $WATCH_DIR} output] {
+        if [catch {exec df -Ph $WATCH_DIR} output] {
 
             SendToSguild "DiskReport Error: $output"
 
