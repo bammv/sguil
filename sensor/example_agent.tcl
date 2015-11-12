@@ -48,7 +48,7 @@ proc DisplayUsage { cmdName } {
 
     puts "Usage: $cmdName \[-D\] \[-o\] \[-c <config filename>\] \[-f <syslog filename>\] -i <ipaddr>"
     puts "  -i <ipaddr>: IP address to associate alert with (required)."
-    puts "  -c <filename>: PATH to config (pads_agent.conf) file."
+    puts "  -c <filename>: PATH to config (example_agent.conf) file."
     puts "  -f <filename>: PATH to syslog file to monitor."
     puts "  -D Runs sensor_agent in daemon mode."
     exit
@@ -139,17 +139,17 @@ proc ProcessData { line } {
     if { [regexp {(?x)                                           # Turn on expanded regexp
                    (^[a-zA-Z]+\s[0-9]+\s[0-9]+:[0-9]+:[0-9]+)\s  # date
                    .*\ssshd\[[0-9]+\]:\s(Accepted|Failed)\s      # status
-                   password\sfor\s(.*?)\sfrom\s                  # user
+                   (publickey|password)\sfor\s(.*?)\sfrom\s        # user
                    ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s            # ipaddr 
                    port\s([0-9]+)                                # port
-            } $line match date status user inet_src_ip src_port] } {
+            } $line match date status atype user inet_src_ip src_port] } {
 
         # Convert date to YY-MM-DD HH:MM:SS format
         set nDate [clock format [clock scan "$date" -gmt true] -gmt true -f "%Y-%m-%d %T"]
     
         if { $status == "Accepted" } { 
     
-            set message "[string toupper $AGENT_TYPE] Login accepted for $user"
+            set message "[string toupper $AGENT_TYPE] Login accepted for $user via $atype"
             # Each sig should have it's on sig id.
             set sig_id "1"
             # Rev of this sig
@@ -159,7 +159,7 @@ proc ProcessData { line } {
     
         } else { 
     
-            set message "[string toupper $AGENT_TYPE] Login failed for $user"
+            set message "[string toupper $AGENT_TYPE] Login failed for $user via $atype"
             # Each sig should have it's on sig id.
             set sig_id "2"
             # Rev of this sig
@@ -195,10 +195,13 @@ proc ProcessData { line } {
         # revision......Which rev of the signature
         # hexDetail.....Event detail in hex. Will be displayed when analyst views the event with more detail.
     
+        # HTMLfy the alert detail
+        set h "<html><table><tr><td><b>Date:</b></td><td>$date</td></tr><tr><td><b>User:</b></td><td>$user</td></tr><tr><td><b>Auth:</b></td><td>$atype</td></tr><tr><td><b>Status:</b></td><td>$status</td></tr></table><br><br>$match</html>"
+
         # Build the event to send
         set event [list GenericEvent 0 $priority $class $HOSTNAME $nDate $AGENT_ID $NEXT_EVENT_ID \
                    $NEXT_EVENT_ID [string2hex $message] $inet_src_ip $IPADDR 6 $src_port 22       \
-                   $GEN_ID $sig_id $rev [string2hex $match]]
+                   $GEN_ID $sig_id $rev [string2hex $h]]
     
         # Send the event to sguild
         if { $DEBUG } { puts "Sending: $event" }
