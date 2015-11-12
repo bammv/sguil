@@ -889,7 +889,7 @@ proc ClearGenericDetail {} {
 
     global genericText 
 
-    $genericText delete 0.0 end
+    $genericText clear
 
 }
 
@@ -2701,8 +2701,15 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
     set genericFrame [frame $detailDataFrame.genericFrame]
       set genericDisplayButton [checkbutton $genericFrame.genericButton -variable DISPLAY_GENERIC \
         -command DisplayGenericDetail -text "Display Detail"]
-      set genericText [scrolledtext $genericFrame.genericText -hscrollmode none -visibleitems 10x2\
-       -sbwidth 10 -vscrollmode dynamic -wrap word]
+      set genericText [scrolledhtml $genericFrame.genericText \
+        -relief flat \
+        -hscrollmode none \
+        -visibleitems 10x2 \
+        -sbwidth 10 \
+        -vscrollmode dynamic \
+        -update 0 \
+        -linkcommand OpenHREF \
+      ]
       pack $genericDisplayButton -side top 
       pack $genericText -side bottom -fill both -expand true
       pack $padsBannerFrame -side bottom -fill both -expand true
@@ -3058,6 +3065,8 @@ $eventIDMenut add command -label "Transcript" -command "GetXscript xscript 0"
 $eventIDMenut add command -label "Transcript (force new)" -command "GetXscript xscript 1"
 $eventIDMenut add command -label "Wireshark" -command "GetXscript wireshark 0"
 $eventIDMenut add command -label "Wireshark (force new)" -command "GetXscript wireshark 1"
+$eventIDMenut add command -label "Custom" -command "GetXscript custom 0"
+$eventIDMenut add command -label "Custom (force new)" -command "GetXscript custom 1"
 
 # IPQuery Menu
 set ipQueryMenu [ menu .ipQueryMenu -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
