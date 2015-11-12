@@ -357,8 +357,27 @@ proc InsertGenericDetail { hexData } {
 
     global genericText
 
-    $genericText  insert end [hex2string $hexData]
+    #$genericText insert end [hex2string $hexData]
+    $genericText render [hex2string $hexData]
     Idle
+
+}
+
+proc OpenHREF { link } {
+
+    global BROWSER_PATH
+
+    if { ![info exists BROWSER_PATH] } {
+        ErrorMessage "Error: BROWSER_PATH is NOT defined."
+        return
+    }
+
+    if { ![file exists $BROWSER_PATH] || ![file executable $BROWSER_PATH] } {
+        ErrorMessage "Error: The application $BROWSER_PATH does not exist or is not executable."
+        return
+    }
+
+    exec $BROWSER_PATH $link &
 
 }
 
