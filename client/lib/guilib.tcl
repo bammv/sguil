@@ -357,7 +357,6 @@ proc InsertGenericDetail { hexData } {
 
     global genericText
 
-    #$genericText insert end [hex2string $hexData]
     $genericText render [hex2string $hexData]
     Idle
 
