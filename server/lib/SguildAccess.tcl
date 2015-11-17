@@ -66,43 +66,6 @@ proc ValidateClientAccess { ipaddr } {
   return $RFLAG
 }
 
-
-proc DelUser { userName USERS_FILE } {
-
-  # DEPRECIATED
-  puts "DELETE USER DEPRECIATED"
-  return
-
-  set fileID [open $USERS_FILE r]
-  set USERFOUND 0
-  for_file line $USERS_FILE {
-    if { ![regexp ^# $line] && ![regexp ^$ $line] } {
-      # User file is boobie deliminated
-      set tmpLine $line
-      if { $userName == [ctoken tmpLine "(.)(.)"] } {
-        set USERFOUND 1
-      } else {
-        lappend tmpData $line
-      }
-    } else {
-      lappend tmpData $line
-    }
-  }
-  close $fileID
-  if { !$USERFOUND } {
-    puts "ERROR: User \'$userName\' does NOT exist in $USERS_FILE"
-  } else {
-    if [catch {open $USERS_FILE w} fileID] {
-      puts "ERROR: Could not edit $USERS_FILE: $fileID"
-    } else {
-      foreach line $tmpData {
-        puts $fileID $line
-      }
-      close $fileID
-    }
-  }
-}
-
 proc AddUser { userName } {
 
     global MAIN_DB_SOCKETID DBHOST DBUSER DBPORT DBPASS DBNAME
@@ -154,7 +117,7 @@ proc AddUser { userName } {
     set dupeCheck [FlatDBQuery "SELECT username FROM user_info WHERE username='$userName'"]
     if { $dupeCheck != "" } { 
 
-        puts "ERROR: User \'$userName\' already exists in $USERS_FILE."
+        puts "ERROR: User \'$userName\' already exists."
         return
 
     }
@@ -387,7 +350,7 @@ proc LogClientAccess { message } {
 
 proc ValidateUser { socketID username password } {
 
-    global USERS_FILE validSockets socketInfo userIDArray
+    global validSockets socketInfo userIDArray
 
     # Configure the socket
     fileevent $socketID readable {}
