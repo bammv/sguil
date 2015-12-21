@@ -1,0 +1,10 @@
+[Unit]
+Description=Sguil Server
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/sbin/sguild -D
+
+[Install]
+WantedBy=multi-user.target
