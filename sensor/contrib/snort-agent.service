@@ -1,0 +1,21 @@
+[Unit]
+Description=snort-agent service
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Environment=SENSOR_NAME=
+Type=forking
+
+#logs are being written to journal us journalctl --unit=snort-agent.service to see the logs for this service
+#add -f to follow -n for lines as per tail
+
+StandardOutput=journal
+StandardError=journal
+
+ExecStart=/usr/sbin/snort_agent.tcl -c /etc/nsm/${SENSOR_NAME}/snort_agent.conf
+
+Restart=always
+RestartSec=2
+
