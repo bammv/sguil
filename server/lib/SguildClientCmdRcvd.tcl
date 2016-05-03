@@ -138,6 +138,8 @@ proc ClientCmdRcvd { socketID } {
 
       UserSelectedEvent   { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
 
+      CliScript           { $clientCmd $socketID [lindex $data 1] }
+
       default { InfoMessage "Unrecognized command from $socketID: $data" }
 
     }

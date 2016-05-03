@@ -385,3 +385,21 @@ proc QuickScript { clientSocketID alertID } {
     }
 
 }
+
+proc CliScript { clientSocketID eventInfo } {
+
+    if { [llength $eventInfo] == 7 } {
+
+        lassign $eventInfo \
+            sensor timestamp sensorID srcIP dstIP srcPort dstPort
+
+        XscriptRequest $clientSocketID $sensor $sensorID CLI $timestamp $srcIP $srcPort $dstIP $dstPort 0
+
+    } else {
+
+        SendSocket $clientSocketID [list XscriptMainMsg CLI "Request Failed"]
+        SendSocket $clientSocketID [list XscriptMainMsg CLI DONE]
+
+    }
+
+}
