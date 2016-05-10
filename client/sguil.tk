@@ -120,7 +120,7 @@ foreach p { http tls json json::write } {
 
     if [catch {package require $p} pVersion]   {
 
-        ErrorMessage "Error: The $p package does NOT appear to be installed on this sysem.\n\nSearching ElasticSearch will not perform correctly."
+        tk_messageBox -type ok -icon warning -message "Error: The $p package does NOT appear to be installed on this system.\n\nSearching ElasticSearch will not perform correctly."
         break
 
     }
