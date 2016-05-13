@@ -1,0 +1,8 @@
+/* generic class defining a top margin whose height equals the font size */
+.tm {margin-top: 1em}
+
+/* background and border for the <pre> tag */
+pre {background: #F7F7F7; border: silver solid 1px}
+
+/* color for the <span> tag */
+span {color: #E00000}
