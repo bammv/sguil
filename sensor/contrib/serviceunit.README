@@ -1,0 +1,2 @@
+The unit files use forking, which requires the respective agent configuration file have the DAEMON value be set to 1.
+Also To use daemon mode, tclx needs to be installed.
