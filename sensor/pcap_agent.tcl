@@ -20,6 +20,7 @@ exec tclsh "$0" "$@"
 # Don't touch these
 set VERSION "SGUIL-0.9.0"
 set CONNECTED 0
+set env(TZ) UTC
 
 proc bgerror { errorMsg } {
                                                                                                                            
