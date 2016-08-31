@@ -423,6 +423,9 @@ if { [info exists USER] } {
 
 }
 
+# Set last column agent status query data to off if not specified in config
+if { ![info exists LAST_DATA_TIME] } { set LAST_DATA_TIME 0 }
+
 # Set sensor aggregation to 1 if not specified
 if { ![info exists SENSOR_AGGREGATION_ON] } { set SENSOR_AGGREGATION_ON 1 }
 
@@ -672,38 +675,41 @@ set sensorQuery "SELECT sid, net_name, hostname, agent_type FROM sensor WHERE ac
 LogMessage "  $sensorQuery"
 set agentList [MysqlSelect $sensorQuery]
 
-# Build the sensor status array
-foreach agentSidType $agentList {
+#only run this if LAST_DATA_TIME is set to 1
+if { $LAST_DATA_TIME == 1 } {
 
-    set sid [lindex $agentSidType 0]
-    set net_name [lindex $agentSidType 1]
-    set hostname [lindex $agentSidType 2]
-    set agent_type [lindex $agentSidType 3]
+  # Build the sensor status array
+  foreach agentSidType $agentList {
 
-    # Get the time of the last alert or load 
-    # If the type is not pads or sancp then we assume it is 
-    # an alert of some type and should be in the event table
-    if { $agent_type != "pads" && $agent_type != "sancp" } {
+      set sid [lindex $agentSidType 0]
+      set net_name [lindex $agentSidType 1]
+      set hostname [lindex $agentSidType 2]
+      set agent_type [lindex $agentSidType 3]
 
-        # Make sure the event table has built
-        if { $mergeTableListArray(event) != "" } {
+      set qType "N/A"
+      set last "N/A"
+      set tDate [clock format [clock seconds] -format %Y%m%d]
 
-            set tmpQuery "SELECT MAX(timestamp) FROM event WHERE sid=$sid"
+      # Get the time of the last alert or load 
+      # If the type is not pads or sancp then we assume it is 
+      # an alert of some type and should be in the event table
+      if { $agent_type != "pads" && $agent_type != "sancp" && $agent_type != "pcap" } {
+	
+          # Make sure the event table has built
+          if { $mergeTableListArray(event) != "" } {
+		
+	  	  set qType "event"
 
-        } else { 
+	  } 
+	
+          if { $agent_type == "snort" } {
 
-            set tmpQuery "N/A"
+              # Init snort stats array
+              set snortStatsArray($hostname) [list $sid N/A N/A N/A N/A N/A N/A N/A N/A N/A N/A]
 
-        }
+          }
 
-        if { $agent_type == "snort" } {
-
-            # Init snort stats array
-            set snortStatsArray($hostname) [list $sid N/A N/A N/A N/A N/A N/A N/A N/A N/A N/A]
-
-        }
-
-    } elseif { $agent_type == "pads" } {
+      } elseif { $agent_type == "pads" } {
 
         set tmpQuery "SELECT MAX(timestamp) FROM pads WHERE sid=$sid"
 
@@ -739,6 +745,43 @@ foreach agentSidType $agentList {
 
     # agentStatusList(sid) net_name hostname agent_type last status
     set agentStatusList($sid) [list $net_name $hostname $agent_type $last 0]
+  	  set qType "pads"
+
+      } 
+
+      if { $qType == "N/A" } {
+
+          set last "N/A"
+
+      } else {
+	  # Try query in today's table otherwise use the merge table
+	  if { $qType != "pads" } {
+    	    set tmpQuery "SELECT MAX(timestamp) from $qType\_$hostname\_$tDate"
+
+            if { [catch {MysqlSelect $tmpQuery flatlist} last] || $last == "" } {
+
+              set tmpQuery "SELECT MAX(timestamp) from $qType"
+              set last [lindex [MysqlSelect $tmpQuery flatlist] 0]
+
+              LogMessage "last query: $tmpQuery"
+
+          } else {
+            
+              set tmpQuery "SELECT MAX(timestamp) FROM $qType WHERE sid=$sid"
+              set last [lindex [MysqlSelect $tmpQuery flatlist] 0]
+	
+              LogMessage "last query: $tmpQuery"
+
+	  }
+         LogMessage "last query: $tmpQuery"
+      }
+
+      # agentStatusList(sid) net_name hostname agent_type last status
+      set agentStatusList($sid) [list $net_name $hostname $agent_type $last 0]
+
+    }
+
+  }
 
 }
 
