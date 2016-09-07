@@ -372,6 +372,7 @@ if { ![info exists CONF_FILE] } {
     DisplayUsage $argv0
   }
 }
+
 set i 0
 if { [info exists CONF_FILE] } {
   # Parse the config file. Currently the only option is to 
@@ -430,6 +431,9 @@ if { ![info exists SENSOR_AGGREGATION_ON] } { set SENSOR_AGGREGATION_ON 1 }
 if { [info exists DEBUG_OVERRIDE] && [info exists DEBUG_LEVEL] } {
     set DEBUG $DEBUG_LEVEL
 }
+
+# Set client connection wait time to 3 minutes if not specified in config
+if { ![info exists CLIENT_CONNECT_WAIT] } { set CLIENT_CONNECT_WAIT 180 }
 
 # Source the libs
 set sourceLibs {
@@ -872,14 +876,23 @@ foreach net $netList {
     set sidNetNameMap($sid) $netName
 }
 
-# Open a socket for clients to connect to
-if { [info exists BIND_CLIENT_IP_ADDR] && $BIND_CLIENT_IP_ADDR != "" } {
-  set clientSocketCmd "socket -server ClientConnect -myaddr $BIND_CLIENT_IP_ADDR $SERVERPORT"
-} else {
-  set clientSocketCmd "socket -server ClientConnect $SERVERPORT"
-}
-if [catch {eval $clientSocketCmd} serverSocket] {
-  ErrorMessage "ERROR: Couldn't open client socket: $serverSocket"
+proc OpenClientConnect { CLIENT_CONNECT_WAIT } {
+
+    global BIND_CLIENT_IP_ADDR
+    global SERVERPORT
+    global serverSocket
+
+    #after CLIENT_CONNECT_WAIT seconds open a port for clients to connect to
+    sleep $CLIENT_CONNECT_WAIT
+    # Open a socket for clients to connect to
+    if { [info exists BIND_CLIENT_IP_ADDR] && $BIND_CLIENT_IP_ADDR != "" } {
+      set clientSocketCmd "socket -server ClientConnect -myaddr $BIND_CLIENT_IP_ADDR $SERVERPORT"
+    } else {
+      set clientSocketCmd "socket -server ClientConnect $SERVERPORT"
+    }
+    if [catch {eval $clientSocketCmd} serverSocket] {
+      ErrorMessage "ERROR: Couldn't open client socket: $serverSocket"
+    }
 }
 # Open a socket for sensors to connect to
 if { [info exists BIND_SENSOR_IP_ADDR] && $BIND_SENSOR_IP_ADDR != "" } {
@@ -897,6 +910,8 @@ signal trap {QUIT TERM} CleanExit
 
 # Start the health check for sensoragents
 after 10000 SensorAgentsHealthCheck
+
+OpenClientConnect $CLIENT_CONNECT_WAIT
 
 # Infinite wait
 vwait FOREVER
