@@ -431,6 +431,9 @@ if { [info exists DEBUG_OVERRIDE] && [info exists DEBUG_LEVEL] } {
     set DEBUG $DEBUG_LEVEL
 }
 
+# Set client connection wait time to 1 minute if not specified in config
+if { ![info exists CLIENT_CONNECT_WAIT] } { set CLIENT_CONNECT_WAIT 60000 }
+
 # Source the libs
 set sourceLibs {
     SguildAccess.tcl           \
@@ -872,14 +875,21 @@ foreach net $netList {
     set sidNetNameMap($sid) $netName
 }
 
-# Open a socket for clients to connect to
-if { [info exists BIND_CLIENT_IP_ADDR] && $BIND_CLIENT_IP_ADDR != "" } {
-  set clientSocketCmd "socket -server ClientConnect -myaddr $BIND_CLIENT_IP_ADDR $SERVERPORT"
-} else {
-  set clientSocketCmd "socket -server ClientConnect $SERVERPORT"
-}
-if [catch {eval $clientSocketCmd} serverSocket] {
-  ErrorMessage "ERROR: Couldn't open client socket: $serverSocket"
+proc OpenClientConnect { } {
+
+    global BIND_CLIENT_IP_ADDR
+    global SERVERPORT
+    global serverSocket
+
+    # Open a socket for clients to connect to
+    if { [info exists BIND_CLIENT_IP_ADDR] && $BIND_CLIENT_IP_ADDR != "" } {
+      set clientSocketCmd "socket -server ClientConnect -myaddr $BIND_CLIENT_IP_ADDR $SERVERPORT"
+    } else {
+      set clientSocketCmd "socket -server ClientConnect $SERVERPORT"
+    }
+    if [catch {eval $clientSocketCmd} serverSocket] {
+      ErrorMessage "ERROR: Couldn't open client socket: $serverSocket"
+    }
 }
 # Open a socket for sensors to connect to
 if { [info exists BIND_SENSOR_IP_ADDR] && $BIND_SENSOR_IP_ADDR != "" } {
@@ -897,6 +907,8 @@ signal trap {QUIT TERM} CleanExit
 
 # Start the health check for sensoragents
 after 10000 SensorAgentsHealthCheck
+
+after $CLIENT_CONNECT_WAIT OpenClientConnect
 
 # Infinite wait
 vwait FOREVER
