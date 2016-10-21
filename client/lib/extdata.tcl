@@ -841,7 +841,7 @@ proc GetXscript { type force } {
 
         } else {
 
-            InfoMessage "This transcipt is already being displayed by you. Please close\
+            InfoMessage "This transcript is already being displayed by you. Please close\
              that window before you request a new one."
             # Try and bring the window to the top in case it is hidden.
             wm withdraw $xscriptWinName
@@ -906,7 +906,7 @@ proc SaveXscript { win } {
   set saveFile [tk_getSaveFile -parent $win -initialfile $initialFile.txt]
   if { $saveFile == "" } {
     tk_messageBox -type ok -icon warning -parent $win -message\
-     "No filename selected. Transcipt was NOT saved."
+     "No filename selected. Transcript was NOT saved."
     return
   }
   if { [catch {$win.sText export $saveFile} saveError] } {
