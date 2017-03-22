@@ -194,24 +194,33 @@ proc DecodeIPv4 { P } {
 
 }
 
-proc ReadInEveLine {} {
+proc ReadNextEveLine {} {
 
-    global EVE_FILE EVE_MD5 ROW EVE_ID
+    global EVE_FILE EVE_MD5 ROW EVE_ID CONFIRM_WAIT
 
-    if { [eof $EVE_ID] || [catch {gets $EVE_ID line} tmpError] } {
+    # Check for a new line every second
+    if { ![eof $EVE_ID] } { 
 
-        catch {close $EVE_ID} tmpError
-        if { [info exists tmpError] } {
-            set bgerror "Error while processing $EVE_FILE: $tmpError"
+        if { [catch {gets $EVE_ID line} tmpError] } {
+
+            catch {close $EVE_ID} tmpError
+            if { [info exists tmpError] } {
+                set bgerror "Error while processing $EVE_FILE: $tmpError"
+            } else {
+                set bgerror "Error: Received EOF from $EVE_FILE"
+            }
+    
         } else {
-            set bgerror "Error: Received EOF from $EVE_FILE"
+
+            if { $ROW == 1 } { set EVE_MD5 [::md5::md5 -hex $line] }
+
+            ParseEveLine $line
+
         }
 
     } else {
 
-        if { $ROW == 1 } { set EVE_MD5 [::md5::md5 -hex $line] }
-
-        ParseEveLine $line
+        after 1000 ReadNextEveLine
 
     }
 
@@ -486,7 +495,8 @@ proc InitEveLog {} {
     }
 
     fconfigure $EVE_ID -buffering line
-    fileevent $EVE_ID readable ReadInEveLine
+    #fileevent $EVE_ID readable ReadNextEveLine
+    ReadNextEveLine
 
 }
 
@@ -533,6 +543,7 @@ proc ConfirmMsg { dummyID cid } {
 
     UpdateWaldoFile $WALDO_TRACKER($cid)
     unset -nocomplain WALDO_TRACKER($cid)
+    ReadNextEveLine
 
 }
 
