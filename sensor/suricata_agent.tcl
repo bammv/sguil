@@ -249,7 +249,6 @@ proc ParseEveLine { line } {
     # 2017-03-05T00:21:01.145558+0000
     #
     set ts [lindex [ split [regsub {T} [dict get $data timestamp] { }] .] 0] 
-    puts "DEBUG #### time: $ts"
     set ts [clock format [clock scan $ts] -f "%Y-%m-%d %T"]
     set msg [list 0 $SID $CID $HOSTNAME $flow_id $flow_id $ts]
     foreach f { gid signature_id rev signature } { lappend msg $alert($f) }
@@ -743,9 +742,9 @@ if { [info exists CONF_FILE] } {
 
 }
 #
-## Command line overrides the conf file.
-#if {[info exists DAEMON_CONF_OVERRIDE] && $DAEMON_CONF_OVERRIDE} { set DAEMON 1}
-#if {[info exists DAEMON] && $DAEMON} {Daemonize}
+# Command line overrides the conf file.
+if {[info exists DAEMON_CONF_OVERRIDE] && $DAEMON_CONF_OVERRIDE} { set DAEMON 1}
+if {[info exists DAEMON] && $DAEMON} {Daemonize}
 
 # OpenSSL is required
 # Need path?
