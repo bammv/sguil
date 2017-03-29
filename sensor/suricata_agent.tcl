@@ -185,7 +185,7 @@ proc DecodeIPv4 { P } {
 
     switch -exact --  $packet(ip_proto) {
 
-        0    	{ DecodeICMP $P }
+        1    	{ DecodeICMP $P }
         6    	{ DecodeTCP $P }
         17	{ DecodeUDP $P }
         default { puts "Unknown IP protocol type" }
