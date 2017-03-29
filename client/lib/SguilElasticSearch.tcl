@@ -48,11 +48,11 @@ proc ESQueryRequest { type term { start {} } { end {} } } {
 
     } elseif { $term == "dstip" } { 
 
-        set q "dst_ip:$dst_ip"
+        set q "dest_ip:$dst_ip"
 
     } else {
 
-        set q "src_ip:$src_ip AND dst_ip:$dst_ip"
+        set q "src_ip:$src_ip AND dest_ip:$dst_ip"
 
     }
     
@@ -261,14 +261,14 @@ proc UpdateESQuery {} {
     set query_string [json::write object query_string [json::write object query [json::write string "_type:$type"]]]
     set q1 [json::write object query $query_string]
     set fq [json::write object fquery $q1]
-    set array_must [json::write array $range $fq]
+    set array_must [json::write array $range]
     set bool [json::write object bool [json::write object must $array_must]]
 
-    set filtered [json::write object filtered [json::write object query $q filter $bool]]
+    set filtered [json::write object bool [json::write object must $q filter $bool]]
 
     # The sorting
     #set sort [json::write array [json::write object @timestamp [json::write object order [json::write string desc]] [json::write object ignore_unmapped [json::write string true]]]]
-    set sort [json::write array [json::write object @timestamp [json::write object order [json::write string desc] ignore_unmapped [json::write string true] ] ]]
+    set sort [json::write array [json::write object @timestamp [json::write object order [json::write string desc] ] ]]
 
     set fq [json::write object query $filtered size $ES_QUERY(size) sort $sort]
 
@@ -358,19 +358,23 @@ proc ESQuery { type query queryFrame start end } {
     set ssecs [clock scan $start]
     set ed [clock format [clock scan $end] -f "%Y.%m.%d"]
     set sd [clock format [clock scan $start] -f "%Y.%m.%d"]
-    set indexes "logstash-$sd"
+    if { $type == "Sguil_httplog" } {
+        set indexes "http-$sd"
+    } else {
+	set indexes "flow-$sd"
+    }
     while { $ed != $sd } {
 
         set ssecs [clock scan tomorrow -base $ssecs]
         puts $ssecs
         set sd [clock format $ssecs -gmt true -f "%Y.%m.%d"]
         puts $sd
-        lappend indexes "logstash-$sd"
+        lappend indexes "http-$sd"
 
     }
     set indexes [join $indexes ,]
 
-    set url "$ES_PROFILE(host)/$indexes/_search?pretty"
+    set url "$ES_PROFILE(host):9200/$indexes/_search?pretty"
    
     #puts "DEBUG #### q -> $query"
     #puts "DEBUG #### Making request to $url"
@@ -389,7 +393,7 @@ proc ESQuery { type query queryFrame start end } {
     }
 
     lappend cmd "-command" [list QueryFinished $queryFrame $type [lindex $query 0] $start $end]
-  
+
     if { [catch { eval $cmd } tmpError] } {
 
         ErrorMessage $tmpError
@@ -414,34 +418,83 @@ proc QueryFinished { queryFrame type query start end token } {
 
         # Verify we had a good HTTP status code
         if { [http::ncode $token] == "200" } {
-
+           
             set hits [dict get [json::json2dict [http::data $token] ] hits]
             set totalhits [dict get $hits total]
-
             set foo 0
-            foreach row [dict get $hits hits] { 
             
-                set id [dict get $row _id]
+            foreach row [dict get $hits hits] { 
+                
+		set id [dict get $row _id]
                 set _source [dict get $row _source]
-                dict with _source { 
-
-                    # message @version @timestamp type host src_ip src_port dst_ip dst_port x-fwd-for http_method http_host
+                set vendor [dict get $row _type]
+		set index [dict get $row _index]
+		if { [regexp {(^http-.*)} $index match]} {
+			set index "http"
+		} else {
+			set index "flow"
+		}
+		dict with _source { 
+		    if { $event_type == "http" } {
+			set type "Sguil_httplog"
+		    } else {
+			set type "ssn"
+		    }
+	  	    # message @version @timestamp type host src_ip src_port dst_ip dst_port x-fwd-for http_method http_host
                     # uri http_referrer http_user_agent http_accept_language http_status vendor
 
                     # Convert the time
                     regexp {^(\d+-\d+-\d+)T(\d+\:\d+\:\d+)} ${@timestamp} match date time
                     set timestamp "$date $time"
-
-                    if { $type == "Sguil_httplog" } { 
-
-                        set rList [list \
+                 
+		    if { $type == "Sguil_httplog" } { 
+			set host $host
+			set net_name $host
+			set dst_ip $dest_ip
+			if {[dict exist $http hostname]} {
+                                set http_host [dict get $http hostname]
+                        } else {
+                                set http_host "-"
+                        }
+			if {[dict exist $http http_method]} {
+                                set http_method [dict get $http http_method]
+                        } else {
+                                set http_method "-"
+                        }
+			if {[dict exist $http url]} {
+                                set uri [dict get $http url]
+                        } else {
+                                set uri "-"
+                        }
+			if {[dict exist $http status]} {
+				set http_status [dict get $http status]
+			} else {
+				set http_status "-"
+			}
+			if {[dict exist $http http_refer]} {
+                                set http_referrer [dict get $http http_refer]
+                        } else {
+                                set http_referrer "-"
+                        }
+			if {[dict exist $http http_user_agent]} {
+                                set http_user_agent [dict get $http http_user_agent]
+                        } else {
+                                set http_user_agent "-"
+                        }
+			if {[dict exist $http accept_language]} {
+                                set http_accept_language [dict get $http accept_language]
+                        } else {
+                                set http_accept_language "-"
+                        }
+			set dst_port $dest_port
+			set rList [list \
                           $host \
                           $net_name \
                           $id \
                           $timestamp \
                           $src_ip \
                           $src_port \
-                          $dst_ip \
+                          $dest_ip \
                           $dst_port \
                           $http_host \
                           $http_method \
@@ -454,7 +507,71 @@ proc QueryFinished { queryFrame type query start end token } {
                        ]
 
                     } else {
-
+			set net_name $host
+			set dst_ip $dest_ip
+			set dst_port $dest_port
+			# set ip_proto $proto
+			switch -exact -- $proto {
+				ICMP {
+					set ip_proto 1
+				}
+				TCP {
+					set ip_proto 6
+				}
+				UDP {
+					set ip_proto 17
+				}
+				default {
+					set ip_proto 0
+				}
+			}
+			if {[dict exist $flow start]} {
+                                regexp {^(\d+-\d+-\d+)T(\d+\:\d+\:\d+)} $[dict get $flow start] match date time
+								set start_time "$date $time"
+                        } else {
+                                set start_time "-"
+                        }
+                        if {[dict exist $flow end]} {
+                                regexp {^(\d+-\d+-\d+)T(\d+\:\d+\:\d+)} $[dict get $flow end] match date time
+								set end_time "$date $time"
+                        } else {
+                                set end_time "-"
+                        }
+                        if {[dict exist $flow age]} {
+                                set duration [dict get $flow age]
+                        } else {
+                                set duration "-"
+                        }
+                        if {[dict exist $flow pkts_toserver]} {
+                                set src_pkts [dict get $flow pkts_toserver]
+                        } else {
+                                set src_pkts "-"
+                        }
+                        if {[dict exist $flow pkts_toclient]} {
+                                set dst_pkts [dict get $flow pkts_toclient]
+                        } else {
+                                set dst_pkts "-"
+                        }
+                        if {[dict exist $flow bytes_toserver]} {
+                                set src_bytes [dict get $flow bytes_toserver]
+                        } else {
+                                set src_bytes "-"
+                        }
+                        if {[dict exist $flow bytes_toclient]} {
+                                set dst_bytes [dict get $flow bytes_toclient]
+                        } else {
+                                set dst_bytes "-"
+                        }
+                        if {[dict exist $tcp tcp_flags_ts]} {
+                                set src_flags [dict get $tcp tcp_flags_ts]
+                        } else {
+                                set src_flags "-"
+                        }
+                        if {[dict exist $tcp tcp_flags_tc]} {
+                                set dst_flags [dict get $tcp tcp_flags_tc]
+                        } else {
+                                set dst_flags "-"
+                        }
                         set rList [list \
                           $host \
                           $net_name \
@@ -475,13 +592,10 @@ proc QueryFinished { queryFrame type query start end token } {
                           $dst_flags \
                           $vendor \
                         ]
-
                     }
-
                     $tablewin insert end $rList
 
                 }
-
             incr foo
             [winfo parent $tablewin] configure -cursor left_ptr
 
@@ -957,15 +1071,16 @@ proc DisplaySguil_SsnDetail {} {
             if { $title == "src_flags" || $title == "dst_flags" } { 
 
                 set flags [lindex $data $i]
+                set dflags [expr 0x$flags]
                 set f ""
-                if { $flags & 1 } { lappend f FIN }
-                if { $flags & 2 } { lappend f SYN }
-                if { $flags & 4 } { lappend f RESET }
-                if { $flags & 8 } { lappend f PUSH }
-                if { $flags & 16 } { lappend f ACK }
-                if { $flags & 32 } { lappend f URG }
-                if { $flags & 64 } { lappend f R0 }
-                if { $flags & 128 } { lappend f R1 } 
+                if { $dflags & 1 } { lappend f FIN }
+                if { $dflags & 2 } { lappend f SYN }
+                if { $dflags & 4 } { lappend f RESET }
+                if { $dflags & 8 } { lappend f PUSH }
+                if { $dflags & 16 } { lappend f ACK }
+                if { $dflags & 32 } { lappend f URG }
+                if { $dflags & 64 } { lappend f R0 }
+                if { $dflags & 128 } { lappend f R1 } 
 
                 $sguil_ssnDetailTable insert end [list 1 $title $f]
 
