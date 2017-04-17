@@ -142,15 +142,6 @@ set validSensorSockets {}
 set clientList {}
 set LOGGER {}
 
-# Check to see if tcl was compiled w/threading enabled.
-# Fork and thread don't play nice together so we bail 
-# w/an error if threading was enabled
-if { [info exists ::tcl_platform(threaded)] } {
-    puts "ERROR: This version of tcl was compile with threading enabled.\
-          Sguil is NOT compatible with threading."
-    CleanExit 1
-}
-
 # Check for the existance of logger 
 foreach path [split $env(PATH) :] {
     if { [file exists $path/logger] && [file executable $path/logger] } { set LOGGER $path/logger }
