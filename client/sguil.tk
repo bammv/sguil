@@ -223,7 +223,7 @@ proc ServerCommandRcvd { socketID } {
       ReportResponse { $serverCmd [lindex $data 1] [lindex $data 2] }
       InsertSancpFlags { $serverCmd [lindex $data 1] }
       XscriptDebugMsg { $serverCmd [lindex $data 1] [lindex $data 2] }
-      XscriptMainMsg { $serverCmd [lindex $data 1] [lindex $data 2] }
+      XscriptMainMsg { $serverCmd [lindex $data 1] [lindex $data 2] [lrange $data 3 end] }
       WiresharkDataBase64 { $serverCmd [lindex $data 1] [lindex $data 2] }
       WiresharkDataPcap { $serverCmd $socketID [lindex $data 1] [lindex $data 2] }
       PcapAvailable { $serverCmd $socketID [lindex $data 1] [lindex $data 2] }

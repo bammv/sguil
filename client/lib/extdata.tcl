@@ -611,7 +611,7 @@ proc CleanupXscriptWin { winName } {
 
 }
 
-proc XscriptMainMsg { winName data } {
+proc XscriptMainMsg { winName type data } {
   global XSCRIPTDATARCVD SESSION_STATE
   if { ! [winfo exist $winName] } {
     CreateXscriptWin $winName
@@ -620,18 +620,19 @@ proc XscriptMainMsg { winName data } {
     $winName.sText clear
     set XSCRIPTDATARCVD($winName) 1
   }
-  switch -exact -- $data {
-     HDR    { set SESSION_STATE($winName) HDR }
-     SRC    { set SESSION_STATE($winName) SRC }
-     DST    { set SESSION_STATE($winName) DST }
+  switch -exact -- $type {
+     HDR    { $winName.sText component text insert end "[format {%-20s%-20s} [lindex $data 0] [lindex $data 1]]\n" hdrTag }
+     SRC    { $winName.sText component text insert end "SRC: [lindex $data 0]\n" srcTag }
+     DST    { $winName.sText component text insert end "DST: [lindex $data 0]\n" dstTag }
      DEBUG  { set SESSION_STATE($winName) DEBUG }
      DONE   { unset SESSION_STATE($winName)
               unset XSCRIPTDATARCVD($winName)
-              InsertXscriptData $winName DEBUG "Finished."
+              $winName.df.debug component text insert end "Finished.\n"
+              $winName.df.debug see end
               $winName.sText configure -cursor left_ptr
             }
      ERROR { set SESSION_STATE($winName) ERROR }
-     default { InsertXscriptData $winName $SESSION_STATE($winName) $data }
+     default { $winName.df.debug component text insert end "Unknown: $type $data.\n" }
   }
 }
   
