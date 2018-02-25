@@ -278,138 +278,148 @@ proc ParseEveLine { line } {
     set data [::json::json2dict $line]
 
     # If this isn't an alert we ignore
-    if { [dict get $data event_type] != "alert" } { incr ROW; return }
+    if { [dict get $data event_type] == "alert" } { 
 
-    array set alert [dict get $data alert]
+        array set alert [dict get $data alert]
 
-    if { [dict exists $data flow_id] } {
-        set flow_id [dict get $data flow_id]
-    } else { 
-        set flow_id 0
-    }
-
-    if { [catch {incr CID}] || $CID == "" || $CID == "{}" } {
-      set CID 0
-      incr CID
-    }
-  
-    #
-    # 2017-03-05T00:21:01.145558+0000
-    #
-    set ts [lindex [ split [regsub {T} [dict get $data timestamp] { }] .] 0] 
-    set ts [clock format [clock scan $ts] -f "%Y-%m-%d %T"]
-    set msg [list 0 $SID $CID $HOSTNAME $flow_id $flow_id $ts]
-    foreach f { gid signature_id rev signature } { lappend msg $alert($f) }
-    lappend msg $ts
-    foreach f { severity category } { lappend msg $alert($f) }
-
-    if { [dict exists $data packet_info] } {
-
-        array set packet_info [dict get $data packet_info]
-        DecodePacket $packet_info(linktype) [ base64::decode [dict get $data packet]]
-    }
-
-    set src_ip [dict get $data src_ip]
-    set dst_ip [dict get $data dest_ip]
-
-    # Add IP info
-    if { ![info exists packet(ipv4)] || !$packet(ipv4) } {
-
-        # Create empty fields for non IPv4 types. Most likely to see ipv6
-        set packet(ip_sip) {}
-        set packet(ip_dip) {}
-        set src_ip {}
-        set dst_ip {}
-
-        # Set the IP proto
-        set ip_proto_name [dict get $data proto]
-        switch -exact -- $ip_proto_name {
-
-            TCP	{ set packet(ip_proto) 6 }
-            UDP { set packet(ip_proto) 17 }
-            ICMP { set packet(ip_proto) 1 }
-            default { set packet(ip_proto) {} }
-
+        if { [dict exists $data flow_id] } {
+            set flow_id [dict get $data flow_id]
+        } else { 
+            set flow_id 0
         }
 
-        lappend msg $packet(ip_sip) $src_ip $packet(ip_dip) $dst_ip $packet(ip_proto)
+        if { [catch {incr CID}] || $CID == "" || $CID == "{}" } {
+          set CID 0
+          incr CID
+        }
+  
+        #
+        # 2017-03-05T00:21:01.145558+0000
+        #
+        set ts [lindex [ split [regsub {T} [dict get $data timestamp] { }] .] 0] 
+        set ts [clock format [clock scan $ts] -f "%Y-%m-%d %T"]
+        set msg [list 0 $SID $CID $HOSTNAME $flow_id $flow_id $ts]
+        foreach f { gid signature_id rev signature } { lappend msg $alert($f) }
+        lappend msg $ts
+        foreach f { severity category } { lappend msg $alert($f) }
 
-        # Append empty indexes for the unavaible fields. 
-        #foreach i {ip_ver ip_hlen ip_tos ip_len ip_id ip_flags ip_off ip_ttl ip_csum } { lappend msg {} }
-        lappend msg {}  {} {} {} {} {} {} {} {}
+        if { [dict exists $data packet_info] } {
 
-    }  else {
+            array set packet_info [dict get $data packet_info]
+            DecodePacket $packet_info(linktype) [ base64::decode [dict get $data packet]]
+        }
 
-        lappend msg $packet(ip_sip) $src_ip $packet(ip_dip) $dst_ip
-        foreach i {ip_proto ip_ver ip_hlen ip_tos ip_len ip_id ip_flags ip_off ip_ttl ip_csum } { lappend msg $packet($i) }
+        set src_ip [dict get $data src_ip]
+        set dst_ip [dict get $data dest_ip]
 
-    }
+        # Add IP info
+        if { ![info exists packet(ipv4)] || !$packet(ipv4) } {
 
-    # Add ICMP info
-    if { ![info exists packet(icmp)] || !$packet(icmp) } {
-
-        # Add empty indexes
-        lappend msg {} {} {} {} {}
+            # Create empty fields for non IPv4 types. Most likely to see ipv6
+            set packet(ip_sip) {}
+            set packet(ip_dip) {}
+            set src_ip {}
+            set dst_ip {}
+    
+            # Set the IP proto
+            set ip_proto_name [dict get $data proto]
+            switch -exact -- $ip_proto_name {
+    
+                TCP	{ set packet(ip_proto) 6 }
+                UDP { set packet(ip_proto) 17 }
+                ICMP { set packet(ip_proto) 1 }
+                default { set packet(ip_proto) {} }
+    
+            }
+    
+            lappend msg $packet(ip_sip) $src_ip $packet(ip_dip) $dst_ip $packet(ip_proto)
+    
+            # Append empty indexes for the unavaible fields. 
+            #foreach i {ip_ver ip_hlen ip_tos ip_len ip_id ip_flags ip_off ip_ttl ip_csum } { lappend msg {} }
+            lappend msg {}  {} {} {} {} {} {} {} {}
+    
+        }  else {
+    
+            lappend msg $packet(ip_sip) $src_ip $packet(ip_dip) $dst_ip
+            foreach i {ip_proto ip_ver ip_hlen ip_tos ip_len ip_id ip_flags ip_off ip_ttl ip_csum } { lappend msg $packet($i) }
+    
+        }
+    
+        # Add ICMP info
+        if { ![info exists packet(icmp)] || !$packet(icmp) } {
+    
+            # Add empty indexes
+            lappend msg {} {} {} {} {}
+    
+        } else {
+    
+            foreach i { icmp_type icmp_code icmp_id icmp_seq } { lappend msg $packet($i) } 
+    
+            }
+    
+        # Add src and dest ports
+        
+        if { ![info exists packet(src_port)] } {
+            if { [dict exists $data src_port] } { lappend msg [dict get $data src_port] } else { lappend msg {} }
+        } else {
+            lappend msg $packet(src_port)
+        }
+        if { ![info exists packet(dest_port)] } {
+            if { [dict exists $data dest_port] } { lappend msg [dict get $data dest_port] } else { lappend msg {} }
+        } else {
+            lappend msg $packet(dest_port)
+        }
+    
+        # Add TCP indexes
+        if { ![info exists packet(tcp)] || !$packet(tcp) } {
+    
+            # Add empty indexes
+            lappend msg {} {}  {} {} {} {} {} {}
+    
+        } else {
+    
+            foreach i { tcp_seq tcp_ack tcp_off tcp_res tcp_flags tcp_win tcp_csum tcp_urp } { lappend msg $packet($i) }
+    
+        }
+        
+        # Add UDP indexes
+        if { ![info exists packet(udp)] || !$packet(udp) } {
+    
+            # Add empty indexes
+            lappend msg {} {}
+    
+        } else {
+    
+            foreach i { udp_len udp_csum } { lappend msg $packet($i) }
+    
+        }
+    
+        # Add the payload
+        if { [dict exists $data payload] } {
+    
+            set i [binary scan [ base64::decode [dict get $data payload]] H* payload]
+            lappend msg $payload
+    
+        } else {
+    
+            lappend msg {}
+    
+        }
+    
+        set WALDO_TRACKER($CID) $ROW
+        SendToSguild "BYEventRcvd $sguildSocketID $msg"
+        incr ROW
 
     } else {
 
-        foreach i { icmp_type icmp_code icmp_id icmp_seq } { lappend msg $packet($i) } 
+        if { $DEBUG } { puts "Data is not an alert.\n$line"}
 
-    }
-
-    # Add src and dest ports
-
-    if { ![info exists packet(src_port)] } {
-        if { [dict exists $data src_port] } { lappend msg [dict get $data src_port] } else { lappend msg {} }
-    } else {
-        lappend msg $packet(src_port)
-    }
-    if { ![info exists packet(dest_port)] } {
-        if { [dict exists $data dest_port] } { lappend msg [dict get $data dest_port] } else { lappend msg {} }
-    } else {
-        lappend msg $packet(dest_port)
-    }
-
-    # Add TCP indexes
-    if { ![info exists packet(tcp)] || !$packet(tcp) } {
-
-        # Add empty indexes
-        lappend msg {} {}  {} {} {} {} {} {}
-
-    } else {
-
-        foreach i { tcp_seq tcp_ack tcp_off tcp_res tcp_flags tcp_win tcp_csum tcp_urp } { lappend msg $packet($i) }
+        UpdateWaldoFile $ROW
+        incr ROW
+        ReadNextEveLine
 
     }
     
-    # Add UDP indexes
-    if { ![info exists packet(udp)] || !$packet(udp) } {
-
-        # Add empty indexes
-        lappend msg {} {}
-
-    } else {
-
-        foreach i { udp_len udp_csum } { lappend msg $packet($i) }
-
-    }
-
-    # Add the payload
-    if { [dict exists $data payload] } {
-
-        set i [binary scan [ base64::decode [dict get $data payload]] H* payload]
-        lappend msg $payload
-
-    } else {
-
-        lappend msg {}
-
-    }
-
-    set WALDO_TRACKER($CID) $ROW
-    SendToSguild "BYEventRcvd $sguildSocketID $msg"
-    incr ROW
-
 }
 
 proc UpdateWaldoFile { row } {

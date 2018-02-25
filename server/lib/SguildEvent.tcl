@@ -185,12 +185,12 @@ proc DeleteEventIDList { socketID status comment eidList } {
 
             if [info exists eventIDArray($tmpEid)] {
 
-                set escalateArray($tmpEid) $eventIDArray($tmpEid)
+                set escalateArray($tmpEid) [lreplace $eventIDArray($tmpEid) 0 0 2]
 
             } else {
 
                 set escalateArray($tmpEid) [FlatDBQuery\
-                 "SELECT event.status, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.sid=[lindex [split $tmpEid .] 0] AND event.cid=[lindex [split $tmpEid .] 1]"]
+                 "SELECT 2, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.sid=[lindex [split $tmpEid .] 0] AND event.cid=[lindex [split $tmpEid .] 1]"]
 
             }
 

@@ -350,11 +350,21 @@ proc LogClientAccess { message } {
 
 proc ValidateUser { socketID username password } {
 
-    global validSockets socketInfo userIDArray
+    global validSockets socketInfo userIDArray WEBSOCKETS
 
-    # Configure the socket
-    fileevent $socketID readable {}
-    fconfigure $socketID -buffering line
+    # If this is a websocket, then use SendWebSocket
+    if { [info exists WEBSOCKETS] && [lsearch -exact $WEBSOCKETS $socketID] < 0 } {
+
+        # Configure the socket
+        fileevent $socketID readable {}
+        fconfigure $socketID -buffering line
+        set ws 0
+
+    } else {
+    
+        set ws 1
+
+    }
 
     if { [ValidUserPassword $username $password] } {
     
@@ -389,7 +399,7 @@ proc ValidateUser { socketID username password } {
 
     }
 
-    fileevent $socketID readable [list ClientCmdRcvd $socketID]
+    if { !$ws } { fileevent $socketID readable [list ClientCmdRcvd $socketID] }
 
 }
 

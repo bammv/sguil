@@ -1,0 +1,294 @@
+<div id="SguilConsole" ng-cloak>
+
+    <div layout="column" role="main" aria-hidden="false">
+        <md-toolbar class="md-hue-2">
+            <div class="md-toolbar-tools">
+
+                <h2 flex="" md-truncate="">Sguil RealTime Console</h2>
+                <!--
+                <h5 flex="" md-truncate="">RealTime Queue: {{ rtqueue }} </h5>
+                <h5 flex="" md-truncate="">Escalated Queue: {{ equeue }} </h5>
+                -->
+                <h5 flex="" md-truncate="">{{ gmttime | date:'yyyy-MM-dd HH:mm:ss': 'UTC/GMT' }} GMT</h5>
+
+                <md-button class="md-icon-button" aria-label="User Info" ng-click="PlaySound()">
+                  <md-icon md-svg-src="images/person_outline.svg"></md-icon>
+                  <md-tooltip class="multiline-tt" md-direction="left">
+                      Server: {{ cleanName }}<br>
+                      Username: {{ username }}<br>
+                      User ID: {{ userid }}<br>
+                      Selected Event: {{ selectedRow }}
+                  </md-tooltip>
+                </md-button>
+
+                <md-button class="md-icon-button" aria-label="Logout">
+                  <md-icon ng-click="logout()" md-svg-src="images/logout.svg"></md-icon>
+                  <md-tooltip md-direction="left">Logout</md-tooltip>
+                </md-button>
+
+                <md-button class="md-icon-button" aria-label="More">
+                  <md-icon md-svg-icon="img/icons/more_vert.svg"></md-icon>
+                </md-button>
+
+            </div>
+        </md-toolbar>
+    </div>
+
+
+      <md-tabs md-autoselect md-border-bottom md-dynamic-height class="md-primary md-hue-3">
+                  <!-- <div ui-grid="gridOptions" ui-grid-selection class="grid"></div> -->
+          <!--
+          <md-tab label="RT Events" md-on-select="newTabSelected('rtevents')">
+              <md-content md-scroll-y layout="column">
+                  <tabulator input-id="rtevents" options="tableOptions" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>
+              </md-content>
+          </md-tab>
+          <md-tab label="Escalated" md-on-select="newTabSelected('escalated')">
+                  <tabulator input-id="escalated" options="tableOptions" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>
+          </md-tab>
+          -->
+          <md-tab ng-repeat="tab in mainTabs" md-on-select="newTabSelected(tab.title)">
+              <md-tab-label>{{tab.title}} <a ng-if="tab.close" ng-click="removeQuery($index,tab)"><md-icon md-svg-src="images/ic_close_white_16px.svg"></a></md-icon></md-tab-label>
+              <md-tab-body><div compile="tab.content"></div></md-tab-body>
+          </md-tab>
+      </md-tabs>
+
+      <nav id="eventid-menu" class="context-menu">
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="transcriptRequest($event)">Transcript</md-button>
+          </md-menu-item>
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="ctrl.checkVoicemail()">History</md-button>
+          </md-menu-item>
+      </nav>
+
+      <nav id="srcip-menu" class="context-menu">
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="showEventSearchDialog($event, 'srcip')">Search Events</md-button>
+          </md-menu-item>
+      </nav>
+
+      <nav id="dstip-menu" class="context-menu">
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="showEventSearchDialog($event, 'dstip')">Search Events</md-button>
+          </md-menu-item>
+      </nav>
+
+      <nav id="priority-menu" class="context-menu">
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="updateEventStatus('1')">Update to NA</md-button>
+          </md-menu-item>
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="updateEventStatus('2')">Escalate Event</md-button>
+          </md-menu-item>
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="updateEventStatus('11')">Update to Cat 1</md-button>
+          </md-menu-item>
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="updateEventStatus('12')">Update to Cat 2</md-button>
+          </md-menu-item>
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="updateEventStatus('13')">Update to Cat 3</md-button>
+          </md-menu-item>
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="updateEventStatus('14')">Update to Cat 4</md-button>
+          </md-menu-item>
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="updateEventStatus('15')">Update to Cat 5</md-button>
+          </md-menu-item>
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="updateEventStatus('16')">Update to Cat 6</md-button>
+          </md-menu-item>
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="updateEventStatus('17')">Update to Cat 7</md-button>
+          </md-menu-item>
+      </nav>
+
+    <div layout="row">
+
+        <div layout="column" style="min-height:350px;max-height:350px;height:350px;width:50%;min-width:50%;max-width:50%">
+            <div layout="column">
+            <md-content>
+                <md-tabs md-border-bottom md-dynamic-height class="md-primary md-hue-3">
+                  <md-tab label="IP Info">
+                      <md-toolbar layout="row" class="md-hue-1 md-xsmall toolbar-checkbox">
+                          <div class="md-toolbar-tools">
+                            <h2 class="md-toolbar-tools" style="color:white">Lookup Address: {{ eventinfo.lookupip }}</h2>
+                            <md-radio-group layout="row" ng-model="eventinfo.whois" ng-change="displayWhoisData" class="md-toolbar-tools">
+                                <md-radio-button value="none" class="md-toolbar-tools md-primary" style="color:white">None</md-radio-button>
+                                <md-radio-button value="srcip" class="md-toolbar-tools md-primary" style="color:white">SrcIP</md-radio-button>
+                                <md-radio-button value="dstip" class="md-toolbar-tools md-primary" style="color:white">DstIP</md-radio-button>
+                            </md-radio-group>
+                          </div>
+                      </md-toolbar>
+                      <md-content class="md-padding" style="min-height:294px;max-height:294px;height:294px">
+                          <div id="whoisLog" style="font-size:12px"></div>
+                      </md-content>
+                  </md-tab>
+                  <md-tab label="Chat">
+                    <md-content class="md-padding" style="min-height:224px;max-height:224px;height:224px" scroll-glue>
+                        <div id="chatLog" style="font-size:12px" scroll-glue></div>
+                    </md-content>
+                    <div>
+                        <md-content class="md-no-momentum">
+                            <md-input-container class="md-icon-float md-block">
+                              <!-- Use floating label instead of placeholder -->
+                              <label>Send Message</label>
+                              <md-icon md-svg-src="img/icons/ic_comment_24px.svg" class="name"></md-icon>
+                              <input ng-model="eventinfo.msg" type="text" ng-keyup="$event.keyCode == 13 && sendMsg()">
+                            </md-input-container>
+                        </md-content>
+                    </div>   
+                  </md-tab>
+                  <md-tab label="Log">
+                    <md-content class="md-padding" style="height:318px">
+                       <!-- <div id="systemLog" style="font-family:monospace;font-size:12px" scroll-glue></div> -->
+                       <div id="systemLog" style="font-size:12px" scroll-glue></div>
+                    </md-content>
+                  </md-tab>
+                </md-tabs>
+            </md-content>
+            </div>
+        </div>
+
+        <div layout="column" style="width:50%">
+
+            <div layout="column">
+
+                <div layout="column">
+                <md-content>
+                    <md-toolbar layout="row" class="md-hue-3 md-small toolbar-checkbox">
+                        <div class="md-toolbar-tools">
+                        <md-checkbox ng-model="eventinfo.sig" ng-change="clickSignature()" aria-label="Signature Checkbox"></md-checkbox>
+                        <h2 class="md-toolbar-tools" style="color:white">Signature</h2>
+                        </div>
+                    </md-toolbar>
+                    <div id="eventSignature" style="height:100px;font-family:monospace;font-size:12px;">
+                    </div>
+                </md-content>
+                </div>
+
+                <md-content>
+                <div class="md-content" layout="row">
+    
+                    <div layout="column" style="width:70%">
+                        <md-toolbar layout="row" class="md-hue-3 md-small">
+                        <div class="md-toolbar-tools">
+                            <md-checkbox ng-model="eventinfo.payload" ng-change="clickPayload()" aria-label="Payload Checkbox"></md-checkbox>
+                            <h2 class="md-toolbar-tools" style="color:white">Hex Payload</h2>
+                        </div>
+                        </md-toolbar>
+                        <div id="payloadHex" style="height:186px;font-family:monospace;font-size:12px;">
+                        </div>
+                    </div>
+
+                    <md-divider></md-divider>
+                
+                    <div layout="column" style="width:30%">
+                        <md-toolbar layout="row" class="md-hue-3 md-small">
+                            <div class="md-toolbar-tools">
+                            <h2 class="md-toolbar-tools" style="color:white">Ascii Payload</h2>
+                            </div>
+                        </md-toolbar>
+                        <div id="payloadAscii" style="height:186px;font-family:monospace;font-size:12px;">
+                        </div>
+                    </div>
+
+                </div>
+                </md-content>
+
+            </div>
+        </div>
+    </div>
+
+    <div style="visibility: hidden">
+       <div class="md-dialog-container" id="sguilLogin">
+            <md-dialog layout-padding>
+                <form class="form-signin" name="form" ng-submit="login()" role="form">
+                    <img src="images/sguil_logo_h.gif">
+                    <br /><br /> 
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <i class="fa fa-key"></i>
+                        <input type="text" name="username" id="username" class="form-control" ng-model="username" required />
+                        <span ng-show="form.username.$dirty && form.username.$error.required" class="help-block">Username is required</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <i class="fa fa-lock"></i>
+                        <input type="password" name="password" id="password" class="form-control" ng-model="password" required />
+                        <span ng-show="form.password.$dirty && form.password.$error.required" class="help-block">Password is required</span>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" ng-disabled="form.$invalid || dataLoading" class="btn btn-danger">Login</button>
+                        <img ng-if="dataLoading" src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA=="/>
+                    </div>
+                    <br /><br /> 
+                    <div ng-show="error" class="alert alert-danger">{{error}}</div>
+                </form>
+            </md-dialog>
+        </div>
+    </div>
+
+    <div style="visibility: hidden">
+       <div class="md-dialog-container" id="sguilSensorSelect">
+            <md-dialog layout-padding>
+                <div="SensorSelectController" class="md-padding demo" >
+                    <section layout="row" layout-sm="column" layout-align="center center" layout-wrap>
+                        <img src="images/sguil_logo_h.gif" style="padding:15px">
+                    </section>
+                    <div layout="row" layout-wrap>
+                        <div flex="100" layout="column">
+                            <div>
+                            <!--
+                              In IE, we cannot apply flex directly to <fieldset>
+                              @see https://github.com/philipwalton/flexbugs#9-some-html-elements-cant-be-flex-containers
+                            -->
+                                <fieldset class="demo-fieldset" >
+                                <legend class="demo-legend">Select Sensor Networks to Monitor</legend>
+                                <div layout="row" layout-wrap flex>
+                                    <div flex-xs flex="50" ng-cloak>
+                                        <md-checkbox aria-label="Select All"
+                                             ng-checked="isChecked()"
+                                             md-indeterminate="isIndeterminate()"
+                                             ng-click="toggleAll()">
+                                            <span ng-if="isChecked()">Un-</span>Select All
+                                        </md-checkbox>
+                                    </div>
+                                    <div class="demo-select-all-checkboxes" flex="100" ng-repeat="sensor in sensorNames">
+                                        <md-checkbox ng-checked="exists(sensor, selected)" ng-click="toggle(sensor, selected)">
+                                              {{ sensor }}
+                                        </md-checkbox>
+                                    </div>
+                                </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                    </div>
+                    <section layout="row" layout-sm="column" layout-align="center center" layout-wrap>
+                          <md-button class="md-raised md-primary" ng-click="monitor()">Monitor</md-button>
+                    </section>
+                </div>            
+            </md-dialog>
+        </div>
+    </div>
+
+    <!--
+    <div style="visibility: hidden">
+        <div class="md-dialog-container" id="alertSearch">
+            <md-dialog layout-padding>
+                <md-input-container class="md-block">
+                    <label>Query</label>
+                    <textarea ng-model="eventWhere" rows="10" md-select-on-focus></textarea>
+                </md-input-container>
+                <section layout="row" layout-sm="column" layout-align="center center" layout-wrap>
+                      <md-button class="md-raised md-primary" ng-click="eventSearch()">Cancel</md-button>
+                      <md-button class="md-raised md-primary" ng-click="eventSearch()">Search</md-button>
+                </section>
+            </md-dialog>
+        </div>
+    </div>
+    -->
+
+
+</div>

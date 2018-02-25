@@ -300,14 +300,14 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
                                                                                                             
   set srcMask [TcpFlowFormat $srcIP $srcPort $dstIP $dstPort]
   set dstMask [TcpFlowFormat $dstIP $dstPort $srcIP $srcPort]
-  #catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR START]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Sensor Name:" [lindex $transInfoArray($TRANS_ID) 4]]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Timestamp:" [lindex $transInfoArray($TRANS_ID) 5]]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Connection ID:" $winName]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Src IP:" "$srcIP ([GetHostbyAddr $srcIP])"]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Dst IP:" "$dstIP\t([GetHostbyAddr $dstIP])"]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Src Port:" $srcPort]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Dst Port:" $dstPort]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Sensor Name:\t[lindex $transInfoArray($TRANS_ID) 4]"]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Timestamp:\t[lindex $transInfoArray($TRANS_ID) 5]"]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Connection ID:\t$winName"]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Src IP:\t\t$srcIP\t([GetHostbyAddr $srcIP])"]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Dst IP:\t\t$dstIP\t([GetHostbyAddr $dstIP])"]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Src Port:\t\t$srcPort"]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Dst Port:\t\t$dstPort"]}
   if {$P0F} {
     if { ![file exists $P0F_PATH] || ![file executable $P0F_PATH] } {
       catch {SendSocket $clientSocketID [list XscriptDebugMsg $winName "Cannot find p0f in: $P0F_PATH"]}
@@ -315,13 +315,12 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
     } else {
       set p0fID [open "| $P0F_PATH -q -s $fileName"]
       while { [gets $p0fID data] >= 0 } {
-        catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "OS Fingerprint:" $data]}
+        catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "OS Fingerprint:\t$data"]}
       }
       catch {close $p0fID} closeError
     }
   }
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR " " " "]}
-  #catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR END]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName " "]}
   if  [catch {open "| $TCPFLOW -c -r $fileName"} tcpflowID] {
     LogMessage "ERROR: tcpflow: $tcpflowID"
     catch {SendSocket $clientSocketID [list XscriptDebugMsg $winName "ERROR: tcpflow: $tcpflowID"]}
@@ -336,8 +335,8 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
     } elseif { [regsub ^$dstMask:\  $data {} data] > 0 } {
       set state DST
     }
-    #if [catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $state]}] { break }
-    if [catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $state $data]}] { break }
+    if [catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $state]}] { break }
+    if [catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $data]}] { break }
     update
     if { [info exists CANCEL_TRANS_FLAG(winName)] && $CANCEL_TRANS_FLAG($winName) } { break }
   }

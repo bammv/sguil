@@ -4,16 +4,34 @@
 # SendSocket: Send command to client
 #
 proc SendSocket { socketID command } {
-  global clientList
-  InfoMessage "Sending $socketID: $command"
-  if { [catch {puts $socketID $command} sendError] } {
-    LogMessage "Error sending \"$command\" to $socketID"
-    catch { close $socketID } closeError
-    # Remove socket from the client list
-    ClientExitClose $socketID
-    return -code error -errorinfo $sendError
-  }
-  catch {flush $socketID} flushError
+
+    global clientList clientWebSockets
+
+    InfoMessage "Sending $socketID: $command"
+
+    # If this is a websocket, then use SendWebSocket
+    if { [info exists clientWebSockets] && [lsearch -exact $clientWebSockets $socketID] >= 0 } {
+
+        catch {SguildSendWebSocket $socketID $command} sendError
+
+    } else {
+
+        catch {puts $socketID $command} sendError
+        # Flush non-websockets
+        catch {flush $socketID} flushError
+
+    }
+
+    if { $sendError == 1 } {
+
+        LogMessage "Error sending \"$command\" to $socketID"
+        catch { close $socketID } closeError
+        # Remove socket from the client list
+        ClientExitClose $socketID
+        return -code error -errorinfo $sendError
+
+    }
+
 }
                                                                                                      
 #
@@ -76,6 +94,6 @@ proc SendSensorList { socketID } {
       }
     }
   }
-  puts $socketID "SensorList $fullSensorList"
+  SendSocket $socketID "SensorList $fullSensorList"
 }
 

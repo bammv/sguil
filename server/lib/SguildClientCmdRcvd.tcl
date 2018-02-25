@@ -151,7 +151,7 @@ proc ClientCmdRcvd { socketID } {
 proc ClientExitClose { socketID } {
 
   global clientList clientMonitorSockets validSockets socketInfo sensorUsers
-  global userIDArray selectedEvent eventSocketList
+  global userIDArray selectedEvent eventSocketList 
 
 
   if { [info exists socketInfo($socketID)] } {
@@ -180,7 +180,11 @@ proc ClientExitClose { socketID } {
   # Unselect selected event
   if { [array exists selectedEvent] && [info exists selectedEvent($socketID)] } {
     UnSelectEvent $socketID $selectedEvent($socketID) $userIDArray($socketID)
+    unset selectedEvent($socketID)
   }
+
+  #SguildWebSocketDisconnect $socketID
+
 
 }
 
@@ -504,9 +508,15 @@ proc SendCurrentEvents { socketID } {
 
 proc UnSelectEvent { socketID oldEventID userID } {
 
-    global selectedEvent eventSocketList clientList userIDArray
+    global selectedEvent eventSocketList clientList userIDArray eventIDArray
 
     if { ![info exists eventSocketList($oldEventID)] } { return }
+
+    if { ![info exists eventIDArray($oldEventID)] } { 
+        set priority 1
+    } else {
+        set priority [lindex $eventIDArray($oldEventID) 1]
+    }
 
     # If multple users have it selected...
     if { [llength $eventSocketList($oldEventID)] > 1 } {
@@ -533,7 +543,7 @@ proc UnSelectEvent { socketID oldEventID userID } {
         unset eventSocketList($oldEventID)
         foreach client $clientList {
 
-            catch {SendSocket $client [list UserUnSelectedEvent $selectedEvent($socketID) $userID]}
+            catch {SendSocket $client [list UserUnSelectedEvent $selectedEvent($socketID) $userID $priority]}
 
         }
 

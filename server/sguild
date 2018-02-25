@@ -453,6 +453,9 @@ set sourceLibs {
     SguildTranscript.tcl       \
     SguildUtils.tcl            \
     SguildMysqlMerge.tcl       \
+    SguildWebSocket.tcl        \
+    SguildHttpsd.tcl           \
+    SguildSimpleWhois.tcl      \
 }
 
 # Override config file if -l was specified on cmd line
@@ -894,6 +897,8 @@ LogMessage "Sguild Initialized."
 
 signal trap {HUP} HupTrapped
 signal trap {QUIT TERM} CleanExit
+
+InitWebSocket 4444
 
 # Start the health check for sensoragents
 after 10000 SensorAgentsHealthCheck
