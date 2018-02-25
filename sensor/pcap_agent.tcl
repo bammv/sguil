@@ -20,6 +20,7 @@ exec tclsh "$0" "$@"
 # Don't touch these
 set VERSION "SGUIL-0.9.0"
 set CONNECTED 0
+set env(TZ) UTC
 
 proc bgerror { errorMsg } {
                                                                                                                            
@@ -288,7 +289,7 @@ proc CheckLastPcapFile { { onetime {0} } } {
 
             }
 
-            if { $logFile != "" } { 
+            if { [info exists logFile] && $logFile != "" } { 
 
                 file stat $logFile fileStat
                 set lastModified [clock format $fileStat(mtime) -gmt true -f "%Y-%m-%d %T"]
@@ -328,82 +329,101 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
     if { ![lsearch $datedirs $start_date] } { lappend datedirs $RAW_LOG_DIR/$date } 
     set end_date [clock format [clock scan $end_secs] -gmt true -f "%Y-%m-%d"]
     if { ![lsearch $datedirs $end_date] } { lappend datedirs $RAW_LOG_DIR/$date } 
-
+    
     # Find a list of files in the identified dirs
     foreach datedir $datedirs {
 
-        # Find the first file
-        foreach logFile [ lsort -decreasing [glob -nocomplain $datedir/snort.log.*] ] {
+        if { ![file exists $datedir] } {
 
-            set ft [lindex [split [file tail $logFile] .] 2]
+            SendLogMessage $type "$datedir does not exist: $datedir" $TRANS_ID
 
-            if { $ft <= $start_secs } { 
+        } else {
 
-                set start_file $ft
-                break
+            # Find the first file
+            foreach logFile [ lsort -decreasing [glob -nocomplain $datedir/snort.log.*] ] {
 
-            } 
+                set ft [lindex [split [file tail $logFile] .] 2]
 
-        }
+                if { $ft <= $start_secs } { 
 
-        SendLogMessage $type "Building a list of pcap files to search..." $TRANS_ID
-        foreach logFile [ lsort -decreasing [glob -nocomplain $datedir/snort.log.*] ] {
+                    set start_file $ft
+                    break
 
-            set ft [lindex [split [file tail $logFile] .] 2]
-            if { $ft >= $start_file && $ft <= $end_secs } { 
-
-                lappend logFiles $logFile
-
-            } 
-
-        }
-
-    }
-
-    # Use ip or vlan for the filter
-    if {$proto != "6" && $proto != "17"} {
-
-        set tcpdumpFilter "(ip and host $srcIP and host $dstIP and proto $proto) or (vlan and host $srcIP and host $dstIP and proto $proto)"
-
-    } else {
-
-        set tcpdumpFilter "(ip and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto) or (vlan and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto)"
-
-    }
-
-    set i 0
-    set TCPDUMP_TRACKER($rawDataFileName) [llength $logFiles]
-
-    foreach logFile [lsort -increasing $logFiles] { 
-
-        SendLogMessage $type "Searching: $logFile" $TRANS_ID
-
-        set tcpdumpCmd "$TCPDUMP -r $logFile -w $TMP_DIR/$rawDataFileName.$i $tcpdumpFilter"
-
-        if [catch { open "| $tcpdumpCmd" r } cmdID] {
-
-            set tmpMsg "Error running $tcpdumpCmd: $cmdID"
-            if { $type == "xscript" } {
-    
-                SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $cmdID]]
-    
-            } else {
-    
-                SendToSguild [list SystemMessage $cmdID]
+                } 
     
             }
 
-            break
+
+            foreach logFile [ lsort -decreasing [glob -nocomplain $datedir/snort.log.*] ] {
     
-        } else {
+                #SendLogMessage $type "logFile: $logFile" $TRANS_ID
+                set ft [lindex [split [file tail $logFile] .] 2]
+                if { $ft >= $start_file && $ft <= $end_secs } { 
+
+                    lappend logFiles $logFile
     
-            lappend PCAP_FILE_TRACKER($rawDataFileName) $TMP_DIR/$rawDataFileName.$i
+                } 
+    
+            }
 
         }
 
-        # Background the tcpdump command. Process them when all have finished
-        fileevent $cmdID readable [list RanTcpdump $cmdID $TMP_DIR/$rawDataFileName.$i $TRANS_ID $type $rawDataFileName]
-        incr i
+    }
+
+    # Check to see if we found any pcap files
+    if { ![info exists logFiles] } {
+
+        SendLogMessage $type "Did not find any match pcap files. Check sensor config." $TRANS_ID
+        catch { file delete $TMP_DIR/$rawDataFileName} tmpError
+
+    } else {
+
+        # Use ip or vlan for the filter
+        if {$proto != "6" && $proto != "17"} {
+
+            set tcpdumpFilter "(ip and host $srcIP and host $dstIP and proto $proto) or (vlan and host $srcIP and host $dstIP and proto $proto)"
+
+        } else {
+
+            set tcpdumpFilter "(ip and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto) or (vlan and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto)"
+
+        }
+
+        set i 0
+        set TCPDUMP_TRACKER($rawDataFileName) [llength $logFiles]
+
+        foreach logFile [lsort -increasing $logFiles] { 
+
+            SendLogMessage $type "Searching: $logFile" $TRANS_ID
+
+            set tcpdumpCmd "$TCPDUMP -r $logFile -w $TMP_DIR/$rawDataFileName.$i $tcpdumpFilter"
+
+            if [catch { open "| $tcpdumpCmd" r } cmdID] {
+
+                set tmpMsg "Error running $tcpdumpCmd: $cmdID"
+                if { $type == "xscript" } {
+    
+                    SendToSguild [list XscriptDebugMsg $TRANS_ID [CleanMsg $cmdID]]
+    
+                } else {
+    
+                    SendToSguild [list SystemMessage $cmdID]
+    
+                }
+
+                break
+    
+            } else {
+    
+                lappend PCAP_FILE_TRACKER($rawDataFileName) $TMP_DIR/$rawDataFileName.$i
+
+            }
+
+            # Background the tcpdump command. Process them when all have finished
+            fileevent $cmdID readable [list RanTcpdump $cmdID $TMP_DIR/$rawDataFileName.$i $TRANS_ID $type $rawDataFileName]
+            incr i
+
+        }
 
     }
 

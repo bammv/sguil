@@ -29,24 +29,35 @@ set NEXT_TRANS_ID 0
 ########################## PROCS ####################################
 
 proc DisplayUsage { cmdName } {
-  puts "Usage: $cmdName \[-D\] \[-h\] \[-c <filename>\] \[-P <filename>\]"
-  puts "         \[-O <filename>\] \[-C <directory\]"
-  puts "       $cmdName \[-u <filename\] \[-adduser <username>\] \[-changepasswd <username>\]"
-  puts "  -c <filename>: PATH to the sguild config (sguild.conf) file."
-  puts "  -a <filename>: PATH to the autocat config (autocat.conf) file."
-  puts "  -g <filename>: PATH to the sguild global queries (sguild.queries) file."
-  puts "  -P <filename>: Name of file to write the PID to."
-  puts "                 Default is /var/run/sguild.pid"
-  puts "  -l <filepath>: PATH to sguild libraries."
-  puts "  -O <filename>: Define PATH to tls (tcl openssl) lib (libtls1.x.so)"
-  puts "  -C <directory>: Directory that contains sguild.pem and sguild.key"
-  puts "  -D Runs sguild in daemon mode."
-  puts "  -adduser <username>: Add user to sguild."
-  puts "  -changepasswd <username>: Change user's password."
-  puts "  -disableuser <username>: Change user's account."
-  puts "  -A <filename>: PATH to sguild.access file."
+  puts "Usage: $cmdName -D \[<option> <value>\]"
+  puts "       $cmdName -adduser|-changepasswd|-disableuser <username>"
+  puts ""
+  puts "  -D Runs sguild in daemon mode"
   puts "  -d <0|1|2>: Set DEBUG level"
-  puts "  -h Display this help"
+  puts "  -P <filename>: PATH to write PID file (def: /var/run/sguild.pid)"
+  puts "  -c <filename>: PATH to sguild config file (def: /etc/sguild/sguild.conf or .)"
+  puts "  -a <filename>: PATH to autocat config file (def: /etc/sguild/autocat.conf)"
+  puts "  -g <filename>: PATH to global queries file (def: /etc/sguild/sguild.queries)"
+  puts "  -A <filename>: PATH to user access file (def: /etc/sguild/sguild.access)"
+  puts "  -l <filepath>: PATH to sguild libraries (def: ./lib)"
+  puts "  -O <filepath>: PATH to tls library, libtls1.*.so (def: \$LIBPATH)"
+  puts "  -C <directory>: Directory with sguild.pem and sguild.key files (def: /etc/sguild/certs)"
+  puts "  -L <directory>: Directory to write logfiles (def: /var/log/sguild)"
+  puts "  -U <userid>:   User id to write logfiles"
+  puts "  -G <groupid>:  Group id to write logfiles"
+  puts ""
+  puts "  -adduser <username>: Add user to sguild database (requires TTY)"
+  puts "  -changepasswd <username>: Change user's password (requires TTY)"
+  puts "  -disableuser <username>: Disable user's account"
+  puts ""
+  puts "  -h: Display this help"
+  puts "  -v: Display version"
+  CleanExit
+}
+
+proc DisplayVersion { cmdname } {
+  global VERSION
+  puts "$cmdname: version $VERSION"
   CleanExit
 }
 
@@ -179,10 +190,10 @@ foreach arg $argv {
       switch -glob -- $arg {
         -- { set state flag }
         -h { DisplayUsage $argv0}
+        -v { DisplayVersion $argv0}
         -c { set state conf }
         -a { set state autocat }
         -g { set state gquery }
-        -u { set state users_file }
         -D { set DAEMON_CONF_OVERRIDE 1 }
         -P { set state pid_file }
         -O { set state openssl }
@@ -442,6 +453,9 @@ set sourceLibs {
     SguildTranscript.tcl       \
     SguildUtils.tcl            \
     SguildMysqlMerge.tcl       \
+    SguildWebSocket.tcl        \
+    SguildHttpsd.tcl           \
+    SguildSimpleWhois.tcl      \
 }
 
 # Override config file if -l was specified on cmd line
@@ -883,6 +897,8 @@ LogMessage "Sguild Initialized."
 
 signal trap {HUP} HupTrapped
 signal trap {QUIT TERM} CleanExit
+
+InitWebSocket 4444
 
 # Start the health check for sensoragents
 after 10000 SensorAgentsHealthCheck

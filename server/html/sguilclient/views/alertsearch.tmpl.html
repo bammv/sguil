@@ -1,0 +1,16 @@
+<md-dialog layout-padding flex="50">
+      <form ng-cloak>
+    <md-input-container class="md-block">
+        <label>Query</label>
+        <textarea ng-model="eventWhere" rows="5" md-select-on-focus></textarea>
+    </md-input-container>
+    <md-dialog-actions layout="row" layout-align="center">
+          <md-button class="md-raised md-primary" ng-click="answer('search')">Search</md-button>
+          <md-button class="md-raised md-primary" ng-click="cancel()">Cancel</md-button>
+    </md-dialog-actions>
+    <!--
+    <section layout="row" layout-sm="column" layout-align="center center" layout-wrap>
+    </section>
+    -->
+      </form>
+</md-dialog>

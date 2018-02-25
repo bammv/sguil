@@ -1,0 +1,161 @@
+.ui-grid-top-panel {
+    background: #8c9eff;
+    color: white;
+}
+
+table, th , td:nth-child(odd) {
+  background-color: #f1f1f1;
+  padding-left: 5px;
+  width: 100px;
+}
+table td:nth-child(even) {
+  background-color: #ffffff;
+  padding-left: 5px;
+  
+}
+
+md-tooltip .md-content {
+    height: auto !important;
+    max-width: 200px !important;
+    font-size: 13px !important;
+}
+
+md-tooltip {
+    height: auto !important;
+    max-width: 200px !important;
+    font-size: 13px !important;
+    overflow: visible !important;
+    white-space: normal !important;
+}
+
+md-tooltip ._md-content {
+    height: auto !important;
+    max-width: 200px !important;
+    font-size: 13px !important;
+}
+
+._md-content.packet-data {
+    font-size: 10px !important;
+    font-family: monospace;
+}
+
+  md-toolbar.md-small {
+    height: 32px;
+    min-height: 32px;
+    max-height: 32px; }
+    md-toolbar.md-small .md-toolbar-tools {
+      font-size: 14px;
+      height: 32px;
+      min-height: 32px;
+      max-height: 32px; }
+
+  md-toolbar.md-xsmall {
+    height: 24px;
+    min-height: 24px;
+    max-height: 24px; }
+    md-toolbar.md-xsmall .md-toolbar-tools {
+      font-size: 14px;
+      height: 24px;
+      min-height: 24px;
+      max-height: 24px; }
+
+md-tabs-wrapper, md-tabs-canvas, md-pagination-wrapper {
+    height: 32px !important;
+}
+
+md-menu-item.md-small {
+  min-height: 24px;
+  height: 24px;
+ }
+  md-menu-item > .md-button {
+    font-size: 12px;
+    min-height: 24px !important;
+    line-height: 24px !important;
+    text-transform: none;
+    font-weight: 400;
+    height: 100%;
+    padding-left: 16px;
+    padding-right: 16px;
+    width: 100%; }
+    md-menu-item > .md-button::-moz-focus-inner {
+      padding: 0;
+      border: 0; }
+    [dir=rtl] md-menu-item > .md-button {
+      text-align: right; }
+    md-menu-item > .md-button md-icon {
+      margin: auto 16px auto 0; }
+      [dir=rtl] md-menu-item > .md-button md-icon {
+        margin: auto 0 auto 16px; }
+    md-menu-item > .md-button p {
+      display: inline-block;
+      margin: auto; }
+    md-menu-item > .md-button span {
+      margin-top: auto;
+      margin-bottom: auto; }
+    md-menu-item > .md-button .md-ripple-container {
+      border-radius: inherit; 
+}
+
+md-button.md-small {
+  min-height: 24px !important;
+  line-height: 24px !important;
+  font-size: 12px !important;
+}
+/* context (rightclick) menu */
+
+.context-menu {
+  display: none;
+  position: absolute;
+  z-index: 10;
+  width: 150px;
+  background-color: #fff;
+  border: solid 1px #dfdfdf;
+  box-shadow: 1px 1px 2px #cfcfcf;
+}
+
+.context-menu--active {
+  display: block;
+}
+
+.context-menu__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.context-menu__item {
+  display: block;
+  margin-bottom: 0px;
+}
+
+.context-menu__item:last-child {
+  margin-bottom: 0;
+}
+
+/*
+[scroll-glue-top],
+[scroll-glue-bottom],
+[scroll-glue]{
+  height: 100px;
+  overflow-y: scroll;
+  border: 1px solid gray;
+}
+
+[scroll-glue-left],
+[scroll-glue-right]{
+  width: 100px;
+  overflow-x: scroll;
+  border: 1px solid gray;
+  padding: 10px;
+}
+
+[scroll-glue-left] span,
+[scroll-glue-right] span{
+  border: 1px solid black;
+}
+*/
+/*
+.toolbar-checkbox md-checkbox {
+    margin-top: 6px;
+}
+*/

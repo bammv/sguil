@@ -274,8 +274,6 @@ proc RawDataFile { socketID fileName TRANS_ID bytes } {
 
     }
 
-    puts "DEBUG #### callback -> $callback"
-
     RcvBinCopy $socketID $outfile $bytes $callback
 
 }
@@ -300,14 +298,14 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
                                                                                                             
   set srcMask [TcpFlowFormat $srcIP $srcPort $dstIP $dstPort]
   set dstMask [TcpFlowFormat $dstIP $dstPort $srcIP $srcPort]
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Sensor Name:\t[lindex $transInfoArray($TRANS_ID) 4]"]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Timestamp:\t[lindex $transInfoArray($TRANS_ID) 5]"]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Connection ID:\t$winName"]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Src IP:\t\t$srcIP\t([GetHostbyAddr $srcIP])"]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Dst IP:\t\t$dstIP\t([GetHostbyAddr $dstIP])"]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Src Port:\t\t$srcPort"]}
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "Dst Port:\t\t$dstPort"]}
+  #catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR START]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Sensor Name:" [lindex $transInfoArray($TRANS_ID) 4]]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Timestamp:" [lindex $transInfoArray($TRANS_ID) 5]]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Connection ID:" $winName]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Src IP:" "$srcIP ([GetHostbyAddr $srcIP])"]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Dst IP:" "$dstIP\t([GetHostbyAddr $dstIP])"]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Src Port:" $srcPort]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Dst Port:" $dstPort]}
   if {$P0F} {
     if { ![file exists $P0F_PATH] || ![file executable $P0F_PATH] } {
       catch {SendSocket $clientSocketID [list XscriptDebugMsg $winName "Cannot find p0f in: $P0F_PATH"]}
@@ -315,12 +313,13 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
     } else {
       set p0fID [open "| $P0F_PATH -q -s $fileName"]
       while { [gets $p0fID data] >= 0 } {
-        catch {SendSocket $clientSocketID [list XscriptMainMsg $winName "OS Fingerprint:\t$data"]}
+        catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "OS Fingerprint:" $data]}
       }
       catch {close $p0fID} closeError
     }
   }
-  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName " "]}
+  catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR " " " "]}
+  #catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR END]}
   if  [catch {open "| $TCPFLOW -c -r $fileName"} tcpflowID] {
     LogMessage "ERROR: tcpflow: $tcpflowID"
     catch {SendSocket $clientSocketID [list XscriptDebugMsg $winName "ERROR: tcpflow: $tcpflowID"]}
@@ -335,8 +334,8 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
     } elseif { [regsub ^$dstMask:\  $data {} data] > 0 } {
       set state DST
     }
-    if [catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $state]}] { break }
-    if [catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $data]}] { break }
+    #if [catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $state]}] { break }
+    if [catch {SendSocket $clientSocketID [list XscriptMainMsg $winName $state $data]}] { break }
     update
     if { [info exists CANCEL_TRANS_FLAG(winName)] && $CANCEL_TRANS_FLAG($winName) } { break }
   }
@@ -381,6 +380,24 @@ proc QuickScript { clientSocketID alertID } {
     
         catch {SendSocket $clientSocketID [list XscriptMainMsg foo "Unable to find alert $alertID in RealTime array"]}
         catch {SendSocket $clientSocketID [list XscriptMainMsg foo DONE]}
+
+    }
+
+}
+
+proc CliScript { clientSocketID eventInfo } {
+
+    if { [llength $eventInfo] == 7 } {
+
+        lassign $eventInfo \
+            sensor timestamp sensorID srcIP dstIP srcPort dstPort
+
+        XscriptRequest $clientSocketID $sensor $sensorID CLI $timestamp $srcIP $srcPort $dstIP $dstPort 0
+
+    } else {
+
+        SendSocket $clientSocketID [list XscriptMainMsg CLI "Request Failed"]
+        SendSocket $clientSocketID [list XscriptMainMsg CLI DONE]
 
     }
 

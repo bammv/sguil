@@ -1,0 +1,182 @@
+<html>
+<head>
+  <title>Interactive Tablelist Cell Editing Using the ctext Package</title>
+
+  <meta name="Author" content="Csaba Nemethi">
+  <meta name="Keywords" content="tablelist, editing, ctext">
+
+  <link rel="stylesheet" type="text/css" href="stylesheet.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+  <div align="center">
+    <h1>Interactive Tablelist Cell Editing Using the ctext Package</h1>
+
+    <h2>For Tablelist Version 5.14</h2>
+
+    <h3>by</h3>
+
+    <h2>Csaba Nemethi</h2>
+
+    <address>
+      <a href="mailto:csaba.nemethi@t-online.de">csaba.nemethi@t-online.de</a>
+    </address>
+  </div>
+  <hr>
+
+  <h2 id="contents">Contents</h2>
+
+  <ul>
+    <li><a href="#overview">Overview</a></li>
+
+    <li><a href="#ctext">The <code><b>tablelist::addCtext</b></code>
+    Command</a></li>
+  </ul>
+
+  <div align="center">
+    <p><a href="index.html">Start page</a></p>
+  </div>
+  <hr>
+
+  <h2 id="overview">Overview</h2>
+
+  <p>George Peter Staplin's ctext package is a library extension for Tcl/Tk
+  versions 8.0 or higher, written in pure Tcl/Tk code.&nbsp; It is part of
+  tklib, which has the address</p>
+
+  <blockquote>
+    <address>
+      <a href="http://core.tcl.tk/tklib">http://core.tcl.tk/tklib</a>
+    </address>
+  </blockquote>
+
+  <p>Tablelist supports interactive cell editing with the aid of the ctext
+  widget implemented in the package mentioned above.&nbsp; The steps needed for
+  using this widget for editing the cells of a given column are as follows:</p>
+
+  <ol>
+    <li>Register the ctext widget for interactive cell editing by invoking the
+    <code><b><a href="#ctext">tablelist::addCtext</a></b></code> command
+    described below.</li>
+
+    <li class="tm">Use the tablelist widget's <code><b><a href=
+    "tablelistWidget.html#columnconfigure">columnconfigure</a></b></code>
+    subcommand to set the given column's <code><b><a href=
+    "tablelistWidget.html#col_editable">-editable</a></b></code> option to true
+    and its <code><b><a href=
+    "tablelistWidget.html#col_editwindow">-editwindow</a></b></code> option to
+    the value returned by the command mentioned above.&nbsp; (These options are
+    supported at cell level, too, with the aid of the <code><b><a href=
+    "tablelistWidget.html#cellconfigure">cellconfigure</a></b></code>
+    subcommand.)</li>
+  </ol>
+
+  <div align="center">
+    <p><a href="#contents">Contents</a>&nbsp;&nbsp;&nbsp;&nbsp; <a href=
+    "index.html">Start page</a></p>
+  </div>
+  <hr>
+
+  <h2 id="ctext">The <code><b>tablelist::addCtext</b></code> Command</h2>
+
+  <dl>
+    <dt><b>NAME</b></dt>
+
+    <dd><code>tablelist::addCtext</code> &ndash; Register the ctext widget for
+    interactive cell editing</dd>
+
+    <dt class="tm"><b>SYNOPSIS</b></dt>
+
+    <dd>
+      <pre>
+<b>tablelist::addCtext</b> ?<i>name</i>?
+</pre>
+    </dd>
+
+    <dt><b>DESCRIPTION</b></dt>
+
+    <dd>This command registers the ctext widget for interactive cell editing in
+    tablelist widgets.&nbsp; The optional argument specifies the name to be
+    used for the ctext widget as the value of the <code><b><a href=
+    "tablelistWidget.html#col_editwindow">-editwindow</a></b></code> column or
+    cell configuration option.&nbsp; It may be any string that is different
+    from the <a href="tablelistTkCore.html">Tk core</a> and <a href=
+    "tablelistTile.html">tile</a> edit window names.&nbsp; The default is
+    <code><b>ctext</b></code>.&nbsp; The command returns its
+    <code><i>name</i></code> argument.</dd>
+
+    <dd class="tm">The temporary embedded ctext widget used for interactive
+    cell editing will be created with its <code><b>-padx</b></code> and
+    <code><b>-pady</b></code> options set to <code>2</code>, its
+    <code><b>-wrap</b></code> option set to <code><b>none</b></code>, and its
+    initial height set to the number of lines contained in it.&nbsp; There is,
+    however, an exception from this rule:&nbsp; If the <code><b><a href=
+    "tablelistWidget.html#col_wrap">-wrap</a></b></code> option of the cell's
+    column was set to true and Tk version 8.5 or higher is being used, then the
+    ctext widget's <code><b>-wrap</b></code> option will be set to
+    <code><b>word</b></code> and its initial height will equal the number of
+    <i>display</i> lines (taking into account the line wraps) contained in
+    it.&nbsp; You can use the script corresponding to the <code><b><a href=
+    "tablelistWidget.html#editstartcommand">-editstartcommand</a></b></code>
+    tablelist configuration option to override the initial settings according
+    to your needs.</dd>
+
+    <dd class="tm">If the ctext widget's <code><b>-wrap</b></code> option was
+    set to <code><b>word</b></code> or <code><b>char</b></code> (either by
+    Tablelist or from within the above-mentioned script) and Tk version 8.5 or
+    higher is being used, then, whenever its width changes (e.g., due to
+    interactive column resizing), its height will be set automatically to the
+    number of display lines contained in it.&nbsp; (The number of display lines
+    is retrieved with the aid of the&nbsp; <code><b>count
+    -displaylines</b></code>&nbsp; ctext widget subcommand, introduced in Tk
+    8.5.)</dd>
+
+    <dd class="tm">If the widget callback package Wcb was loaded into the
+    interpreter (via&nbsp; <code><b>package require Wcb</b></code>&nbsp;
+    or&nbsp; <code><b>package require wcb</b></code>)&nbsp; then the ctext
+    widget's height will be updated automatically whenever text is inserted
+    into or deleted from it, which makes the editing much more
+    user-friendly.&nbsp; This is achieved by using an appropriately defined
+    after-<code><b>insert</b></code> and after-<code><b>delete</b></code>
+    callback for the edit window.&nbsp; You can use the script corresponding to
+    the <code><b><a href=
+    "tablelistWidget.html#editstartcommand">-editstartcommand</a></b></code>
+    tablelist configuration option to define further callbacks for the ctext
+    widget.&nbsp; (The above-mentioned callback is created via
+    <code><b>wcb::cbappend</b></code>, <i>after</i> returning from that
+    script.)</dd>
+
+    <dd class="tm">The <code>Tab</code> key is reserved for navigation between
+    the editable cells, but the user can insert a tabulator character into the
+    ctext widget by pressing <code>Control-i</code>.</dd>
+
+    <dd class="tm">Unlike in the case of the other widgets used for interactive
+    cell editing (except the Tk core text widget), the <code>Return</code> and
+    <code>KP_Enter</code> keys insert a newline character into the ctext
+    widget.&nbsp; <code>Control-j</code> can also be used for inserting a
+    newline.&nbsp; <code>Control-Return</code> and
+    <code>Control-KP_Enter</code> terminate the editing and destroy the edit
+    window.</dd>
+
+    <dd class="tm"><code>Control-Home</code> and <code>Control-End</code> have
+    their well-known text widget-specific bindings, just like
+    <code>Meta-&lt;</code> and <code>Meta-&gt;</code> if
+    <code><b>tk_strictMotif</b></code> is false.&nbsp; Again, this is different
+    from the behavior of the other widgets used for interactive cell editing
+    (except the Tk core text widget).&nbsp; For jumping into the first/last
+    editable cell, the user can press
+    <code>Alt-Home</code>/<code>Alt-End</code> or
+    <code>Meta-Home</code>/<code>Meta-End</code>
+    (<code>Command-Home</code>/<code>Command-End</code> on Mac OS Classic and
+    Mac OS X Aqua).</dd>
+
+    <dt class="tm"><b>KEYWORDS</b></dt>
+
+    <dd>tablelist, editing, ctext</dd>
+  </dl>
+
+  <div align="center">
+    <p><a href="index.html">Start page</a></p>
+  </div>
+</body>
+</html>
