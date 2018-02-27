@@ -145,11 +145,11 @@ set LOGGER {}
 # Check to see if tcl was compiled w/threading enabled.
 # Fork and thread don't play nice together so we bail 
 # w/an error if threading was enabled
-if { [info exists ::tcl_platform(threaded)] } {
-    puts "ERROR: This version of tcl was compile with threading enabled.\
-          Sguil is NOT compatible with threading."
-    CleanExit 1
-}
+#if { [info exists ::tcl_platform(threaded)] } {
+#    puts "ERROR: This version of tcl was compile with threading enabled.\
+#          Sguil is NOT compatible with threading."
+#    CleanExit 1
+#}
 
 # Check for the existance of logger 
 foreach path [split $env(PATH) :] {
@@ -893,12 +893,35 @@ if { [info exists BIND_SENSOR_IP_ADDR] && $BIND_SENSOR_IP_ADDR != "" } {
 if [catch {eval $sensorSocketCmd} sensorSocket] {
   ErrorMessage "ERROR: Couldn't open sensor socket: $sensorSocket"
 }
+
+# Open a HTTPS and websockets if configured
+if { [info exists HTTPS] && $HTTPS } { 
+
+  if { [info exists WSS_PORT] } { 
+
+
+    foreach p [list uri base64 fileutil::magic::mimetype] {
+      if [catch {package require $p} pVersion] {
+          ErrorMessage "Error: Failed to load package $p. $p is required for HTTPS/WSS."
+      }
+
+    }
+
+    InitWebSocket $WSS_PORT
+    InfoMessage "HTTPS/WSS initialized."
+
+  } else {
+
+    ErrorMessage "ERROR: HTTPS enabled in config without defining WSS_PORT"
+
+  }
+
+}
+
 LogMessage "Sguild Initialized."
 
 signal trap {HUP} HupTrapped
 signal trap {QUIT TERM} CleanExit
-
-InitWebSocket 4444
 
 # Start the health check for sensoragents
 after 10000 SensorAgentsHealthCheck

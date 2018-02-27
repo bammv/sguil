@@ -1,7 +1,3 @@
-package require uri
-package require base64
-package require fileutil::magic::mimetype
-
 proc HttpDate { secs } {
 
     return [clock format $secs -gmt 1 -format {%a, %d %b %Y %T %Z}]]
