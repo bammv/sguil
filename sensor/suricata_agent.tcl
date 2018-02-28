@@ -316,10 +316,8 @@ proc ParseEveLine { line } {
         if { ![info exists packet(ipv4)] || !$packet(ipv4) } {
 
             # Create empty fields for non IPv4 types. Most likely to see ipv6
-            set packet(ip_sip) {}
-            set packet(ip_dip) {}
-            set src_ip {}
-            set dst_ip {}
+            set packet(ip_sip) [PacketHex2Dec [ip::toHex $src_ip] 2 9]
+            set packet(ip_dip) [PacketHex2Dec [ip::toHex $dst_ip] 2 9]
     
             # Set the IP proto
             set ip_proto_name [dict get $data proto]
@@ -416,7 +414,7 @@ proc ParseEveLine { line } {
 
         UpdateWaldoFile $ROW
         incr ROW
-        ReadNextEveLine
+        after 10 ReadNextEveLine
 
     }
     
