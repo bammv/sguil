@@ -268,7 +268,7 @@ proc RawDataRequest { socketID TRANS_ID sensor timestamp srcIP dstIP srcPort dst
 proc CheckLastPcapFile { { onetime {0} } } {
 
     global FILE_CHECK_IN_MSECS RAW_LOG_DIR CONNECTED
-    global SENSOR_ID DEBUG
+    global SENSOR_ID DEBUG FILE_PREFIX
 
     if {$CONNECTED && [info exists SENSOR_ID] } {
 
@@ -285,7 +285,7 @@ proc CheckLastPcapFile { { onetime {0} } } {
             if { [file exists $checkDir] && [file isdirectory $checkDir] } {
     
                 # Get the name of the newest file 
-                set logFile [lindex [lsort -decreasing [glob -nocomplain $checkDir/snort.log.*]] 0]
+                set logFile [lindex [lsort -decreasing [glob -nocomplain $checkDir/${FILE_PREFIX}.*]] 0]
 
             }
 
@@ -312,7 +312,7 @@ proc CheckLastPcapFile { { onetime {0} } } {
 
 proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto rawDataFileName type } {
 
-    global RAW_LOG_DIR DEBUG TCPDUMP TMP_DIR
+    global RAW_LOG_DIR DEBUG TCPDUMP TMP_DIR FILE_PREFIX
     global BACK_SECONDS FWD_SECONDS TCPDUMP_TRACKER PCAP_FILE_TRACKER
 
     SendLogMessage $type "Searching all files $BACK_SECONDS seconds before and $FWD_SECONDS seconds after $timestamp." $TRANS_ID
@@ -340,7 +340,7 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
         } else {
 
             # Find the first file
-            foreach logFile [ lsort -decreasing [glob -nocomplain $datedir/snort.log.*] ] {
+            foreach logFile [ lsort -decreasing [glob -nocomplain $datedir/${FILE_PREFIX}.*] ] {
 
                 set ft [lindex [split [file tail $logFile] .] 2]
 
@@ -354,7 +354,7 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
             }
 
 
-            foreach logFile [ lsort -decreasing [glob -nocomplain $datedir/snort.log.*] ] {
+            foreach logFile [ lsort -decreasing [glob -nocomplain $datedir/${FILE_PREFIX}.*] ] {
     
                 #SendLogMessage $type "logFile: $logFile" $TRANS_ID
                 set ft [lindex [split [file tail $logFile] .] 2]
