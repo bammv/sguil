@@ -897,6 +897,9 @@ if [catch {eval $sensorSocketCmd} sensorSocket] {
 # Open a HTTPS and websockets if configured
 if { [info exists HTTPS] && $HTTPS } { 
 
+  if { ![info exists HTML_PATH] || $HTML_PATH == "" ] } { set HTML_PATH {./html} }
+  if { ![file exists HTML_PATH] } { ErrorMessage "Error: HTTP configured by HTML_PATH ($HTML_PATH) does not exist." }
+
   if { [info exists WSS_PORT] } { 
 
 

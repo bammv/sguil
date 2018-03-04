@@ -30,8 +30,10 @@ proc SguildGetContentType { filepath } {
 
 proc SguildHttpRespond {sock filename } {
 
+    global DEBUG HTML_PATH
+
     fileevent $sock readable ""
-    set HTML_PATH {/usr/local/src/sguil.git/sguil/server/html}
+    #set HTML_PATH {/usr/local/src/sguil.git/sguil/server/html}
 
     set filepath $HTML_PATH/$filename
 
@@ -76,7 +78,7 @@ proc SguildSendHttpError { socketID {msg {}} } {
 
         set errorMsg "<title>404 ERROR</title>"
         puts $socketID "HTTP/1.0 404"
-        puts $socketID "Date: [ [clock seconds]]"
+        puts $socketID "Date: [ HttpDate [clock seconds]]"
         puts $socketID "Content-Length: [string length $errorMsg]"
         SguildHttpClose $socketID
 
@@ -123,6 +125,9 @@ proc SguildHttpAccept {sock ip port} {
         if {[eof $sock]} { SguildHttpClose $sock }
 
         if { $line != "" } { 
+
+            if { $DEBUG } { puts "HTTP: Request from $ip -> $line" }
+
             foreach {method url version} $line { break }
             switch -exact $method {
 
