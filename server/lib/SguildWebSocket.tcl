@@ -3,7 +3,7 @@ proc InitWebSocket { WS_PORT } {
     global WS_SERVER_SOCK KEY PEM
 
     package require websocket
-    ::websocket::loglevel debug
+    #::websocket::loglevel debug
 
     package require json::write
     ::json::write indented 0
@@ -23,9 +23,9 @@ proc InitWebSocket { WS_PORT } {
 
 proc handleConnect {client_socket IP_address port} {
 
-    global clientWebSockets socketInfo
+    global clientWebSockets socketInfo DEBUG
 
-    puts "DEBUG #### WebSocket connected --> $IP_address $port $client_socket"
+    if { $DEBUG} { puts "DEBUG #### WebSocket connected --> $IP_address $port $client_socket" } 
 
     if { [catch {tls::handshake $client_socket} results] } {
 
@@ -80,7 +80,6 @@ proc handleRead {client_socket} {
     
         if {[::websocket::test $WS_SERVER_SOCK $client_socket / $hdrs]} { 
 
-            puts "Incomming websocket connection received"
             ::websocket::upgrade $client_socket 
 
         } else {
@@ -97,14 +96,14 @@ proc handleRead {client_socket} {
 
 proc wsLiveCB {client_socket type_of_event {data_received {}}} { 
 
-    global clientWebSockets
+    global clientWebSockets DEBUG
 
-    puts "
-    inside wsLiveCB handler
-    =======================
-    client_socket: $client_socket
-    type_of_event: $type_of_event
-    data_received: $data_received\n"
+    #puts "
+    #inside wsLiveCB handler
+    #=======================
+    #client_socket: $client_socket
+    #type_of_event: $type_of_event
+    #data_received: $data_received\n"
 
     switch $type_of_event { 
         connect { SguildWebSocketConnect $client_socket $type_of_event $data_received}
@@ -115,11 +114,11 @@ proc wsLiveCB {client_socket type_of_event {data_received {}}} {
             SguildWebSocketMsgRcvd $client_socket $data_received
         }
         binary {}
-        error { puts "Event: error"; ClientExitClose $client_socket }
-        close { puts "Event: close"; ClientExitClose $client_socket }
-        timeout { puts "Event: timeout"; ClientExitClose $client_socket }
-        error { puts "DEBUG #### Event: error" }
-        timeout { puts "DEBUG #### Event: timeout" }
+        error { LogMessage "WebSocket: error"; ClientExitClose $client_socket }
+        close { ClientExitClose $client_socket }
+        timeout { ClientExitClose $client_socket }
+        error { LogMessage "WebSocket Error: $data_received" }
+        timeout { }
         ping {}
         pong {}
     }
@@ -128,7 +127,7 @@ proc wsLiveCB {client_socket type_of_event {data_received {}}} {
 
 proc SguildWebSocketConnect { client_socket type_of_event data_received } {
 
-    puts "DEBUG #### socket: $client_socket  type_of_event: $type_of_event  data_received: $data_received"
+    LogMessage "WebSocket Connect - socket: $client_socket  type_of_event: $type_of_event  data_received: $data_received"
 
 }
 
@@ -138,7 +137,6 @@ proc SguildWebSocketDisconnect { client_socket } {
 
     if { [info exists clientWebSockets] } {
 
-        puts "DEBUG #### killing websocket $client_socket"
         set clientWebSockets [ldelete $clientWebSockets $client_socket]
 
     }
@@ -150,11 +148,7 @@ proc SguildSendWebSocket { socketID msg } {
 
     global clientWebSockets
 
-    puts "DEBUG #### SguildSendWebSocket for $socketID: $msg"
-
     set objectName [lindex $msg 0]
-
-    #Sending websocket sock76 {"DeleteEventIDList":["7.5673150 7.5672875"]}
 
     switch -exact $objectName {
 
@@ -171,11 +165,8 @@ proc SguildSendWebSocket { socketID msg } {
                 			    set o [lindex $i 0]
                 			    set str {}
                 			    foreach s [lindex $i 1] { lappend str [json::write string $s] }
-                			    #puts "DEBUG #### str -> $str"
                 			    lappend values [json::write object $o [json::write array {*}$str]]
-                			    #puts "DEBUG #### values -> $values"
             			    }
-            			    #puts "DEBUG #### values -> $values"
         		  	}
         default { foreach v [lrange $msg 1 end] { lappend values [json::write string $v] } }
 
@@ -186,7 +177,6 @@ proc SguildSendWebSocket { socketID msg } {
     # The object name is our command
     set o [json::write object $objectName $a]
 
-    puts "Sending websocket $socketID $o"
     if { [catch {::websocket::send $socketID text "$o"} sendError] } { 
 
         return -code error -errorinfo $sendError
@@ -199,8 +189,6 @@ proc SguildWebSocketMsgRcvd { socketID jdata } {
 
     global clientWebSockets validSockets
 
-    puts "DEBUG #### jdata ---> $jdata "
-
     # Websocket data comes in via json
     if [catch {json::json2dict $jdata} pdata] {
 
@@ -208,8 +196,6 @@ proc SguildWebSocketMsgRcvd { socketID jdata } {
         return
 
     }
-
-    puts "DEBUG #### pdata ---> $pdata"
 
     if { [catch {dict keys $pdata} clientCmd] } {
 
@@ -227,7 +213,6 @@ proc SguildWebSocketMsgRcvd { socketID jdata } {
 
     set data "$clientCmd $values"
 
-    puts "DEBUG #### Converted JSON cmd -> Cmd: $clientCmd | Args: $values | data: $data"
 
     # Check to make the client validated itself
     if { $clientCmd != "ValidateUser" && \
