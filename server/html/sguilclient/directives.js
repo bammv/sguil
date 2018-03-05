@@ -25,17 +25,20 @@ angular.module('tabulator', [])
 
                 el.tabulator({
                     height:"450", // set height of table (optional)
-                    fitColumns:true, //fit columns to width of table (optional)
+                    //fitColumns:true, //fit columns to width of table (optional)
+                    layout:"fitColumns",
                     selectable: 1,
                     //pagination:"local",
                     //progressiveRender:true,
                     //progressiveRenderSize:50, 
                     columns:[ //Define Table Columns
                         //{formatter:transcriptIcon, width:40, align:"center", onContext:function(e, cell, val, data){ transcriptMenu(e, cell, val, data)}},
-                        {title:"", width:10,field:"priority", align:"center", sorter:"string", sortable:true, editable:false, formatter:function(value, data, cell, row, options, formatterParams){
+                        {title:"", width:10,field:"priority", align:"center", sorter:"string", sortable:true, editable:false, formatter:function(cell, formatterParams){
                           var r = "";
                           var p = "";
                           var color = 'red';
+                          var value = cell.getValue();
+                          var data = cell.getData();
 
                           switch (data.status) {
                               case '0': 
@@ -65,19 +68,19 @@ angular.module('tabulator', [])
                           return r;
 
                         },
-                        onContext:function(e, cell, val, data){ scope.priorityrightclick({arg1: data, arg2: e, arg3: scope.inputId});}},
+                        cellContext:function(e, cell){ scope.priorityrightclick({arg1: cell.getData(), arg2: e, arg3: scope.inputId});}},
                         {title:"#", width:20, field:"count", align:"center", sorter:"number", sortable:true, editable:false},
                         {title:"Sensor", width:100, field:"sensor", align:"left", sorter:"string", sortable:true, editable:false},
                         {title:"Event ID", width:75, field:"aid", align:"left", sorter:"number", sortable:true, editable:false,
-                            onContext:function(e, cell, val, data){ scope.eventrightclick({arg1: data, arg2: e, arg3: scope.inputId});}
+                            cellContext:function(e, cell){ scope.eventrightclick({arg1: cell.getData(), arg2: e, arg3: scope.inputId});}
                         },
                         {title:"Timestamp", width:130, field:"timestamp", align:"center", sorter:"date", sortable:true, editable:false},
-                        {title:"SourceIP", width:100, field:"srcip", align:"center", sorter:"string", sortable:true, editable:false,
-                            onContext:function(e, cell, val, data){ scope.srciprightclick({arg1: data, arg2: e, arg3: scope.inputId});}
+                        {title:"SourceIP", width:100, field:"srcip", align:"left", sorter:"string", sortable:true, editable:false,
+                            cellContext:function(e, cell){ scope.srciprightclick({arg1: cell.getData(), arg2: e, arg3: scope.inputId});}
                         },
                         {title:"SPt", width:50, field:"sport", align:"right", sorter:"number", sortable:true, editable:false},
-                        {title:"DestIP", width:100, field:"dstip", align:"center", sorter:"string", sortable:true, editable:false,
-                            onContext:function(e, cell, val, data){ scope.dstiprightclick({arg1: data, arg2: e, arg3: scope.inputId});}
+                        {title:"DestIP", width:100, field:"dstip", align:"left", sorter:"string", sortable:true, editable:false,
+                            cellContext:function(e, cell){ scope.dstiprightclick({arg1: cell.getData(), arg2: e, arg3: scope.inputId});}
                         },
                         {title:"DPt", width:50, field:"dport", align:"right", sorter:"number", sortable:true, editable:false},
                         {title:"P", width:20, field:"proto", align:"right", sorter:"number", sortable:true, editable:false},
@@ -90,9 +93,9 @@ angular.module('tabulator', [])
                         {title:"flowid", field:"flowid", visible:false}
                     ],                
 
-                    rowClick:function(e, id, data, row){
+                    rowClick:function(e, row){
 
-                        scope.rowclick({arg1: data});
+                        scope.rowclick({arg1: row.getData()});
 
                     },
 

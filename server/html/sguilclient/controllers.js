@@ -60,18 +60,30 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         var menuPositionY;
         var windowWidth;
         var windowHeight;
-        var mainTabs = [
+        //$scope.mainTabs = [];
+        $scope.mainTabs = [
             {
                 title: 'rtevents',
+                close: false,
+                content: '<tabulator input-id="rtevents" options="tableOptions" srciprightclick="displaySrcIPMenu(arg1, arg2, arg3)" dstiprightclick="displayDstIPMenu(arg1, arg2, arg3)" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>'
+            }
+        ];
+        /*
+        $scope.mainTabs = [
+            {
+                title: 'rtevents',
+                close: false,
                 content: '<tabulator input-id="rtevents" options="tableOptions" srciprightclick="displaySrcIPMenu(arg1, arg2, arg3)" dstiprightclick="displayDstIPMenu(arg1, arg2, arg3)" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>'
             },{
                 title: 'escalated',
+                close: false,
                 content: '<tabulator input-id="escalated" options="tableOptions" srciprightclick="displaySrcIPMenu(arg1, arg2, arg3)" dstiprightclick="displayDstIPMenu(arg1, arg2, arg3)" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>'
             }
         ]
-        $scope.mainTabs = mainTabs;
-        $scope.selectedIndex = 0;
-            
+        */
+        //$scope.mainTabs = mainTabs;
+        //$scope.selectedIndex = 0;
+
         // Listener for clicks outside the rcm if it is showing
         document.addEventListener( "click", function(e) {
           
@@ -584,6 +596,23 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
             $scope.dataLoading = true;
 
+            // Have to create and delete a dummy tab due to an odd bug
+            $scope.mainTabs.splice(0,1);
+
+            var newTab = new Object();
+            var tabName = "rtevents"
+            newTab.title = tabName;
+            newTab.close = false;
+            newTab.content= '<tabulator input-id="' + tabName + '" options="tableOptions" srciprightclick="displaySrcIPMenu(arg1, arg2, arg3)" dstiprightclick="displayDstIPMenu(arg1, arg2, arg3)" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>'
+            $scope.mainTabs.push(newTab);
+
+            var newTab = new Object();
+            var tabName = "escalated"
+            newTab.title = tabName;
+            newTab.close = false;
+            newTab.content= '<tabulator input-id="' + tabName + '" options="tableOptions" srciprightclick="displaySrcIPMenu(arg1, arg2, arg3)" dstiprightclick="displayDstIPMenu(arg1, arg2, arg3)" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>'
+            $scope.mainTabs.push(newTab);
+
             WebSocketService.wsConnect();
 
             var authMsg = { "ValidateUser" : [$scope.username,$scope.password] };
@@ -676,6 +705,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             var sensorList = [sensorArray.join(' ')];
             var cmd = {"MonitorSensors":sensorList}
             sendRequest(cmd,"none");
+
             var cmd = {"SendEscalatedEvents":''}
             sendRequest(cmd,"none");
             $mdDialog.hide();
@@ -998,13 +1028,12 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             var newTab = new Object();
             newTab.title = tabName;
             newTab.close = true;
-            newTab.content= '<tabulator input-id="' + tabName + '"" options="tableOptions" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>'
+            newTab.content= '<tabulator input-id="' + tabName + '" options="tableOptions" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>'
             $scope.mainTabs.push(newTab);
 
             var query = '(SELECT event.status, event.priority, sensor.hostname,  event.timestamp as datetime, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port, event.signature_gen, event.signature_id,  event.signature_rev FROM event IGNORE INDEX (event_p_key, sid_time) INNER JOIN sensor ON event.sid=sensor.sid WHERE event.timestamp > "2017-04-12" AND event.src_ip = INET_ATON("59.45.175.62") ) UNION ( SELECT event.status, event.priority, sensor.hostname,  event.timestamp as datetime, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port, event.signature_gen, event.signature_id,  event.signature_rev FROM event IGNORE INDEX (event_p_key, sid_time) INNER JOIN sensor ON event.sid=sensor.sid WHERE event.timestamp > "2017-04-12" AND  event.dst_ip = INET_ATON("59.45.175.62") ) ORDER BY datetime, src_port ASC LIMIT 1000'
             var cmd = {QueryDB:[$scope.nextQuery,query]};
-            //sendRequest(cmd,"none");
-
+            sendRequest(cmd,"none");
 
         }
 
@@ -1069,7 +1098,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     var newTab = new Object();
                     newTab.title = tabName;
                     newTab.close = true;
-                    newTab.content= '<tabulator input-id="' + tabName + '"" options="tableOptions" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>'
+                    newTab.content= '<tabulator input-id="' + tabName + '" options="tableOptions" srciprightclick="displaySrcIPMenu(arg1, arg2, arg3)" dstiprightclick="displayDstIPMenu(arg1, arg2, arg3)" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>'
                     $scope.mainTabs.push(newTab);
 
                     var query = '(SELECT \
