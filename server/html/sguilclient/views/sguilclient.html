@@ -11,7 +11,7 @@
                 -->
                 <h5 flex="" md-truncate="">{{ gmttime | date:'yyyy-MM-dd HH:mm:ss': 'UTC/GMT' }} GMT</h5>
 
-                <md-button class="md-icon-button" aria-label="User Info" ng-click="PlaySound()">
+                <md-button class="md-icon-button" aria-label="User Info"">
                   <md-icon md-svg-src="images/person_outline.svg"></md-icon>
                   <md-tooltip class="multiline-tt" md-direction="left">
                       Server: {{ cleanName }}<br>
@@ -26,9 +26,19 @@
                   <md-tooltip md-direction="left">Logout</md-tooltip>
                 </md-button>
 
-                <md-button class="md-icon-button" aria-label="More">
-                  <md-icon md-svg-icon="img/icons/more_vert.svg"></md-icon>
-                </md-button>
+                <md-menu>
+                  <md-button class="md-icon-button" aria-label="More" ng-click="topMenu($mdMenu, $event)">
+                    <md-icon md-svg-icon="img/icons/more_vert.svg"></md-icon>
+                  </md-button>
+                  <md-menu-content width="4">
+                    <md-menu-item>
+                      <md-button ng-click="showAbout($event)">
+                        <md-icon md-svg-icon="images/info_outline.svg" md-menu-align-target></md-icon>
+                        About Sguil
+                      </md-button>
+                    </md-menu-item>
+                  </md-menu-content>
+                </md-menu>
 
             </div>
         </md-toolbar>

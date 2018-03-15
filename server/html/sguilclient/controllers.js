@@ -1205,4 +1205,25 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             return nextID;
         }
 
+        $scope.topMenu = function($mdMenu, ev) {
+
+            var originatorEv;
+
+            console.log('topmenu');
+            originatorEv = ev;
+            $mdMenu.open(ev);
+
+        }
+
+        $scope.showAbout = function(ev) {
+            $mdDialog.show({
+              controller: DialogController,
+              templateUrl: '/sguilclient/views/aboutsguil.tmpl.html',
+              parent: angular.element(document.body),
+              targetEvent: ev,
+              clickOutsideToClose:true,
+              fullscreen: $scope.customFullscreen // Only for -xs, -sm breakpoints.
+            });
+          };
+
 }]);
