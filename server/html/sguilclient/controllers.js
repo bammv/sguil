@@ -45,6 +45,8 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         var srcipmenuState = 0;
         var dstipmenu = document.querySelector("#dstip-menu");
         var dstipmenuState = 0;
+        var sigmenu = document.querySelector("#signature-menu");
+        var sigmenuState = 0;
         var contextMenuClassName = "context-menu";
         var contextMenuItemClassName = "context-menu__item";
         var contextMenuLinkClassName = "context-menu__link";
@@ -61,12 +63,19 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         var menuPositionY;
         var windowWidth;
         var windowHeight;
+        var tabulatorContent = 'options="tableOptions" \
+                            srciprightclick="displaySrcIPMenu(arg1, arg2, arg3)" \
+                            dstiprightclick="displayDstIPMenu(arg1, arg2, arg3)" \
+                            priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" \
+                            eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" \
+                            signaturerightclick="displaySigRightClickMenu(arg1, arg2, arg3)" \
+                            rowclick="rowSelected(arg1)"'
         //$scope.mainTabs = [];
         $scope.mainTabs = [
             {
                 title: 'rtevents',
                 close: false,
-                content: '<tabulator input-id="rtevents" options="tableOptions" srciprightclick="displaySrcIPMenu(arg1, arg2, arg3)" dstiprightclick="displayDstIPMenu(arg1, arg2, arg3)" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>'
+                content: '<tabulator input-id="rtevents" ' + tabulatorContent + '></tabulator>'
             }
         ];
         /*
@@ -92,6 +101,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             var button = e.which || e.button;
             if ( button === 1 ) {
                 toggleEventMenuOff();
+                toggleSigMenuOff();
                 togglePriorityMenuOff();
                 toggleSrcipMenuOff();
                 toggleDstipMenuOff();
@@ -281,6 +291,18 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         }
         
+        $scope.displaySigRightClickMenu = function(data, e, tableName) {
+
+                e.preventDefault();
+                $scope.tableOptions.selectrow(tableName, data.id);
+                selectedEvent(data.id, $scope.userid);
+                if($scope.eventinfo.sig) {showSignatureInfo(data);};
+                if($scope.eventinfo.payload) {showPayloadInfo(data);};
+                toggleSigMenuOn();
+                positionMenu(e, sigmenu);
+
+        }
+        
         $scope.displaySrcIPMenu = function(data, e, tableName) {
 
                 e.preventDefault();
@@ -327,6 +349,12 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 eventmenu.classList.add( contextMenuActive );
             }
          }
+        function toggleSigMenuOn() {
+            if ( sigmenuState !== 1 ) {
+                sigmenuState = 1;
+                sigmenu.classList.add( contextMenuActive );
+            }
+         }
         function toggleSrcipMenuOn() {
             if ( srcipmenuState !== 1 ) {
                 srcipmenuState = 1;
@@ -349,6 +377,12 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
              if ( eventmenuState !== 0 ) {
                  eventmenuState = 0;
                  eventmenu.classList.remove( contextMenuActive );
+             }
+         }
+         function toggleSigMenuOff() {
+             if ( sigmenuState !== 0 ) {
+                 sigmenuState = 0;
+                 sigmenu.classList.remove( contextMenuActive );
              }
          }
          function toggleSrcipMenuOff() {
@@ -598,20 +632,20 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             $scope.dataLoading = true;
 
             // Have to create and delete a dummy tab due to an odd bug
-            $scope.mainTabs.splice(0,1);
+            $scope.mainTabs.splice(0);
 
             var newTab = new Object();
             var tabName = "rtevents"
             newTab.title = tabName;
             newTab.close = false;
-            newTab.content= '<tabulator input-id="' + tabName + '" options="tableOptions" srciprightclick="displaySrcIPMenu(arg1, arg2, arg3)" dstiprightclick="displayDstIPMenu(arg1, arg2, arg3)" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>'
+            newTab.content= '<tabulator input-id="' + tabName + '" ' + tabulatorContent + '></tabulator>';
             $scope.mainTabs.push(newTab);
 
             var newTab = new Object();
             var tabName = "escalated"
             newTab.title = tabName;
             newTab.close = false;
-            newTab.content= '<tabulator input-id="' + tabName + '" options="tableOptions" srciprightclick="displaySrcIPMenu(arg1, arg2, arg3)" dstiprightclick="displayDstIPMenu(arg1, arg2, arg3)" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>'
+            newTab.content= '<tabulator input-id="' + tabName + '" ' + tabulatorContent + '></tabulator>';
             $scope.mainTabs.push(newTab);
 
             WebSocketService.wsConnect();
@@ -1075,6 +1109,8 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 $scope.eventWhere += ' AND event.src_ip = INET_ATON(\''+ data.srcip + '\')';
             } else if (type === "dstip") {
                 $scope.eventWhere += ' AND event.dst_ip = INET_ATON(\''+ data.dstip + '\')';
+            } else if (type === "signature") {
+                $scope.eventWhere += ' AND event.signature = \''+ data.msg + '\'';
             } else {
                 var lookupip = $scope.eventinfo.dstip;
             }
@@ -1099,7 +1135,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     var newTab = new Object();
                     newTab.title = tabName;
                     newTab.close = true;
-                    newTab.content= '<tabulator input-id="' + tabName + '" options="tableOptions" srciprightclick="displaySrcIPMenu(arg1, arg2, arg3)" dstiprightclick="displayDstIPMenu(arg1, arg2, arg3)" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>'
+                    newTab.content= '<tabulator input-id="' + tabName + '" ' + tabulatorContent + '></tabulator>';
                     $scope.mainTabs.push(newTab);
 
                     var query = '(SELECT \

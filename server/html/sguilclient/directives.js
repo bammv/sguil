@@ -13,6 +13,7 @@ angular.module('tabulator', [])
                 priorityrightclick: '&',
                 srciprightclick: '&',
                 dstiprightclick: '&',
+                signaturerightclick: '&',
                 options: '=' ,
                 inputId: '@',
             },
@@ -84,7 +85,9 @@ angular.module('tabulator', [])
                         },
                         {title:"DPt", width:50, field:"dport", align:"right", sorter:"number", sortable:true, editable:false},
                         {title:"P", width:20, field:"proto", align:"right", sorter:"number", sortable:true, editable:false},
-                        {title:"Message", field:"msg", align:"left", sorter:"string", sortable:true, editable:false},
+                        {title:"Message", field:"msg", align:"left", sorter:"string", sortable:true, editable:false,
+                            cellContext:function(e, cell){ scope.signaturerightclick({arg1: cell.getData(), arg2: e, arg3: scope.inputId});}
+                        },
                         {title:"Status", field:"status", visible:false},
                         {title:"Category", field:"category", visible:false},
                         {title:"gid", field:"gid", visible:false},

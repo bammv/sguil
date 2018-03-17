@@ -84,6 +84,12 @@
           </md-menu-item>
       </nav>
 
+      <nav id="signature-menu" class="context-menu">
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="showEventSearchDialog($event, 'signature')">Search Events</md-button>
+          </md-menu-item>
+      </nav>
+
       <nav id="priority-menu" class="context-menu">
           <md-menu-item class="md-small">
               <md-button class="md-small" ng-click="updateEventStatus('1')">Update to NA</md-button>
