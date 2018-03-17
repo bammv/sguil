@@ -30,6 +30,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         $scope.queryResults = {};
 
         $scope.eventWhere = 'WHERE event.timestamp > \'2017-04-26\' AND  event.src_ip = INET_ATON(\'59.45.175.86\')'
+        $scope.queryLimit = 1000;
 
         // Keep all pending requests here until they get responses
         var callbacks = {};
@@ -1120,7 +1121,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                                 FROM event IGNORE INDEX (event_p_key, sid_time) \
                                 INNER JOIN sensor ON event.sid=sensor.sid ' +
                                 $scope.eventWhere +
-                                ') ORDER BY datetime, src_port ASC LIMIT 1000'
+                                ') ORDER BY datetime, src_port ASC LIMIT ' + $scope.queryLimit
 
                     //var query = '(SELECT event.status, event.priority, sensor.hostname,  event.timestamp as datetime, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port, event.signature_gen, event.signature_id,  event.signature_rev FROM event IGNORE INDEX (event_p_key, sid_time) INNER JOIN sensor ON event.sid=sensor.sid WHERE event.timestamp > "2017-04-12" AND event.src_ip = INET_ATON("59.45.175.62") ) UNION ( SELECT event.status, event.priority, sensor.hostname,  event.timestamp as datetime, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port, event.signature_gen, event.signature_id,  event.signature_rev FROM event IGNORE INDEX (event_p_key, sid_time) INNER JOIN sensor ON event.sid=sensor.sid WHERE event.timestamp > "2017-04-12" AND  event.dst_ip = INET_ATON("59.45.175.62") ) ORDER BY datetime, src_port ASC LIMIT 1000'
                     var cmd = {QueryDB:[tabName,query]};
