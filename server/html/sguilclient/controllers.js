@@ -3,8 +3,8 @@
 angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'ui.grid.selection', 'ngSanitize'])
  
 .controller('MainConsoleController',
-    ['$scope', '$rootScope', '$q', '$filter', '$document', '$location', '$interval', '$mdDialog', '$mdBottomSheet', 'WebSocketService','uiGridConstants', 'SguilClientService',
-    function ($scope, $rootScope, $q, $filter, $document, $location, $interval, $mdDialog, $mdBottomSheet, WebSocketService, uiGridConstants, SguilClientService) {
+    ['$scope', '$rootScope', '$q', '$filter', '$document', '$window', '$location', '$interval', '$mdDialog', '$mdBottomSheet', 'WebSocketService','uiGridConstants', 'SguilClientService',
+    function ($scope, $rootScope, $q, $filter, $document, $window, $location, $interval, $mdDialog, $mdBottomSheet, WebSocketService, uiGridConstants, SguilClientService) {
 
         $scope.eventinfo = {}
         $scope.eventinfo.sig = true;
@@ -1319,6 +1319,21 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         }
   
+        $scope.webLookup = function(type) {
+
+            var data = $scope.tableOptions.getselecteddata($scope.currentTableName)[0];
+
+            if (type === "srcip") {
+                var ip = data.srcip;
+            } else {
+                var ip = data.dstip;
+            }
+
+            var url = 'https://tcpiputils.com/ip/' + ip;
+            $window.open(url, '_blank');
+
+
+        }
 
         $scope.showAbout = function(ev) {
             $mdDialog.show({

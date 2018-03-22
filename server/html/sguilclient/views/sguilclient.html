@@ -81,11 +81,17 @@
           <md-menu-item class="md-small">
               <md-button class="md-small" ng-click="showEventSearchDialog($event, 'srcip')">Search Events</md-button>
           </md-menu-item>
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="webLookup('srcip')">TCPIPUtils Lookup</md-button>
+          </md-menu-item>
       </nav>
 
       <nav id="dstip-menu" class="context-menu">
           <md-menu-item class="md-small">
               <md-button class="md-small" ng-click="showEventSearchDialog($event, 'dstip')">Search Events</md-button>
+          </md-menu-item>
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="webLookup('dstip')">TCPIPUtils Lookup</md-button>
           </md-menu-item>
       </nav>
 
