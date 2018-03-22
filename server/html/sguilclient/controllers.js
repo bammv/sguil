@@ -28,8 +28,9 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         $scope.nextQuery = 0;
         $scope.nextTranscript = 0;
         $scope.queryResults = {};
+        $scope.eventHistory = [];
 
-        $scope.eventWhere = 'WHERE event.timestamp > \'2017-04-26\' AND  event.src_ip = INET_ATON(\'59.45.175.86\')'
+        $scope.eventWhere = "";
         $scope.queryLimit = 1000;
 
         // Keep all pending requests here until they get responses
@@ -227,6 +228,9 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                   break;
                case 'XscriptMainMsg':
                   XscriptMainMsg(messageObj.XscriptMainMsg);
+                  break;
+               case 'InsertHistoryResults':
+                  InsertHistoryResults(messageObj.InsertHistoryResults);
                   break;
               default:
                   console.log('Received Unknown Cmd: ', messageObj);
@@ -1087,7 +1091,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             var newTab = new Object();
             newTab.title = tabName;
             newTab.close = true;
-            newTab.content= '<md-content class="md-padding" style="min-height:224px;max-height:450px;height:450px"><div id="' + tabName + '" style="font-size:12px"></div></md-content>'
+            newTab.content= '<md-content class="md-padding" style="min-height:224px;max-height:450px;height:450px"><div id="' + tabName + '" style="font-size:12px;font-family:Consolas,monospace"></div></md-content>'
             $scope.mainTabs.push(newTab);
 
             console.log('Request -> ' + data.sensor + ' ' + splitAid[0] + ' ' + tabName + ' ' + data.timestamp + ' ' + data.srcip + ' ' + data.sport + ' ' + data.dstip + ' ' + data.dport + ' 1');
@@ -1252,6 +1256,70 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         }
 
+        $scope.showHistory = function(ev) {
+
+            var historyElement = angular.element( document.querySelector( '#history-table' ) );
+            var tableName = $scope.currentTableName
+            var data = $scope.tableOptions.getselecteddata(tableName)[0];   
+            var splitAid = data.id.split(".");
+            
+            // Delete existing data
+            $scope.eventHistory.length = 0;
+
+            $mdDialog.show({
+
+                contentElement: '#eventhistory',
+                parent: angular.element(document.body),
+                //targetEvent: ev,
+                clickOutsideToClose: true
+
+            });
+
+            /*
+            historyElement.tabulator({
+                layout:"fitColumns", //fit columns to width of table (optional)
+                columns:[
+                    {title:"Username", field:"username", align:"left"},
+                    {title:"Timestamp", field:"timestamp", align:"left"},
+                    {title:"Status", field:"status"},
+                    {title:"Description", field:"description", align:"left"},
+                    {title:"Comment", field:"comment", align:"left"},
+                ]
+            });
+            */
+
+            historyElement.tabulator("setData", $scope.eventHistory);
+
+            var cmd = {"EventHistoryRequest" : ["history-table",splitAid[0],splitAid[1]]};
+            sendRequest(cmd,"none");
+
+        };
+
+        function InsertHistoryResults(msg) {
+
+            var historyElement = angular.element( document.querySelector( '#history-table' ) );
+
+            if (msg[1] !== "done") {
+
+                var newData = {
+                    username:msg[3], 
+                    timestamp:msg[4], 
+                    status:msg[5], 
+                    description:msg[6], 
+                    comment:msg[7] 
+                }
+
+                $scope.eventHistory.push(newData);
+
+            } else {
+
+                historyElement.tabulator("setData", $scope.eventHistory);
+
+            }
+
+        }
+  
+
         $scope.showAbout = function(ev) {
             $mdDialog.show({
               controller: DialogController,
@@ -1261,6 +1329,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
               clickOutsideToClose:true,
               fullscreen: $scope.customFullscreen // Only for -xs, -sm breakpoints.
             });
-          };
+        };
 
 }]);
