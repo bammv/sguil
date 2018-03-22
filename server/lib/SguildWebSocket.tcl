@@ -159,6 +159,10 @@ proc SguildSendWebSocket { socketID msg } {
                                     lappend values [json::write string [lindex $msg 1]]
                                     foreach v [lindex $msg 2] { lappend values [json::write string $v] } 
                                 }
+        InsertHistoryResults	{
+                                    lappend values [json::write string [lindex $msg 1]]
+                                    foreach v [lindex $msg 2] { lappend values [json::write string $v] } 
+                                }
         SensorList 		{
             			    set v [lrange $msg 1 end]
             			    foreach i $v { 
