@@ -260,6 +260,7 @@ proc SguildWebSocketMsgRcvd { socketID jdata } {
       GetSancpFlagData    { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
       XscriptRequest      { eval $clientCmd $socketID [lrange $data 1 end] }
       WiresharkRequest    { eval $clientCmd $socketID [lrange $data 1 end] }
+      HttpPcapRequest     { eval $clientCmd $socketID [lrange $data 1 end] }
       SendPcap            { $clientCmd $socketID [lindex $data 1] }
       AbortXscript        { $clientCmd $socketID [lindex $data 1] }
       GetOpenPorts        { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }

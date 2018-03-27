@@ -268,6 +268,10 @@ proc RawDataFile { socketID fileName TRANS_ID bytes } {
 
         set callback [list GenerateXscript $outfile [lindex $transInfoArray($TRANS_ID) 0] [lindex $transInfoArray($TRANS_ID) 1] $TRANS_ID]
 
+    } elseif { $type == "http" } {
+
+        set callback [list HttpPcapAvailable $outfile $TRANS_ID]
+
     } else { 
 
         set callback [list PcapAvailable $outfile $TRANS_ID]
