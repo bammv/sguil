@@ -45,7 +45,7 @@
     </div>
 
 
-      <md-tabs md-autoselect md-border-bottom md-dynamic-height class="md-primary md-hue-3">
+      <md-tabs md-selected="selectedMainTab" md-autoselect md-border-bottom md-dynamic-height class="md-primary md-hue-3">
                   <!-- <div ui-grid="gridOptions" ui-grid-selection class="grid"></div> -->
           <!--
           <md-tab label="RT Events" md-on-select="newTabSelected('rtevents')">
@@ -74,6 +74,9 @@
           </md-menu-item>
           <md-menu-item class="md-small">
               <md-button class="md-small" ng-click="showHistory($event)">History</md-button>
+          </md-menu-item>
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="pcapRequest($event)">Request Pcap</md-button>
           </md-menu-item>
       </nav>
 
@@ -136,7 +139,7 @@
         <div layout="column" style="min-height:350px;max-height:350px;height:350px;width:50%;min-width:50%;max-width:50%">
             <div layout="column">
             <md-content>
-                <md-tabs md-border-bottom md-dynamic-height class="md-primary md-hue-3">
+                <md-tabs md-selected="selectedBottomTab" md-border-bottom md-dynamic-height class="md-primary md-hue-3">
                   <md-tab label="IP Info">
                       <md-toolbar layout="row" class="md-hue-1 md-xsmall toolbar-checkbox">
                           <div class="md-toolbar-tools">
@@ -171,6 +174,22 @@
                     <md-content class="md-padding" style="height:318px">
                        <!-- <div id="systemLog" style="font-family:monospace;font-size:12px" scroll-glue></div> -->
                        <div id="systemLog" style="font-size:12px" scroll-glue></div>
+                    </md-content>
+                  </md-tab>
+                  <md-tab label="Downloads">
+                    <md-content class="md-padding" style="height:318px">
+                        <div id="downloads">
+                            <div ng-repeat="pcapEvent in pcapDownloads">
+                                <md-toolbar class="md-small md-hue-1">
+                                    <div class="md-toolbar-tools">
+                                        <h2 flex="" md-truncate="">Event {{ pcapEvent }}</h2>
+                                        <md-progress-linear ng-disabled="showProgress(pcapEvent)" flex="" md-mode="indeterminate"></md-progress-linear>
+                                        <md-button ng-click="downloadPcap(pcapEvent)" ng-disabled="disablePcapButton(pcapEvent)" class="md-small md-hue-1">Get Pcap</md-button>
+                                    </div>
+                                </md-toolbar>
+                                <br>
+                            </div>
+                        </div>
                     </md-content>
                   </md-tab>
                 </md-tabs>

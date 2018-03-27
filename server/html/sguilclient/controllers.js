@@ -18,6 +18,8 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         $scope.eventinfo.lookupip = "";
         $scope.sensorNames = [];
         $scope.selected = [];
+        $scope.selectedMainTab = "";
+        $scope.selectedBottomTab = "";
         $scope.status = '  ';
         $scope.customFullscreen = false;
         $scope.tableOptions = {};
@@ -29,6 +31,9 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         $scope.nextTranscript = 0;
         $scope.queryResults = {};
         $scope.eventHistory = [];
+        $scope.pcapDownloads = [];
+        $scope.pcapStatus = {};
+        $scope.pcapURL = {};
 
         $scope.eventWhere = "";
         $scope.queryLimit = 1000;
@@ -231,6 +236,9 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                   break;
                case 'InsertHistoryResults':
                   InsertHistoryResults(messageObj.InsertHistoryResults);
+                  break;
+               case 'HttpPcapAvailable':
+                  HttpPcapAvailable(messageObj.HttpPcapAvailable);
                   break;
               default:
                   console.log('Received Unknown Cmd: ', messageObj);
@@ -1100,6 +1108,47 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         }
 
+        $scope.pcapRequest = function(ev) {
+
+            var data = $scope.tableOptions.getselecteddata($scope.currentTableName)[0];
+            var aid = data.aid;
+
+            $scope.pcapStatus[aid] = 0;
+            $scope.selectedBottomTab = 3;
+            $scope.pcapDownloads.push(data.aid);
+
+            console.log('Pcap requested for: ' + data.sensor + ' ' + data.id);
+            var splitAid = data.id.split(".");
+
+            console.log('Pcap Request -> ' + data.sensor + ' ' + splitAid[0] + ' ' + data.id + ' ' + data.timestamp + ' ' + data.srcip + ' ' + data.sport + ' ' + data.dstip + ' ' + data.dport );
+            var cmd = {HttpPcapRequest : [data.sensor,splitAid[0],data.id,data.timestamp,data.srcip,data.sport,data.dstip,data.dport,data.proto,0]};
+            sendRequest(cmd,"none");
+
+        }
+
+        $scope.showProgress = function(aid) {
+            return $scope.pcapStatus[aid] === 1;
+        }
+
+        $scope.disablePcapButton = function(aid) {
+            return $scope.pcapStatus[aid] === 0;
+        }
+
+        function HttpPcapAvailable(msg) {
+
+            var aid = msg[0];
+            var url = 'https://' + $scope.cleanName + '/' + msg[1];
+            $scope.pcapURL[aid] = url;
+            $scope.pcapStatus[aid] = 1;
+
+        }
+
+        $scope.downloadPcap = function(aid) {
+
+            $window.open($scope.pcapURL[aid], '_blank');
+
+        }
+
         $scope.showEventSearchDialog = function(event, type) {
 
             var data = $scope.tableOptions.getselecteddata($scope.currentTableName)[0];
@@ -1331,7 +1380,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
             var url = 'https://tcpiputils.com/ip/' + ip;
             $window.open(url, '_blank');
-
 
         }
 

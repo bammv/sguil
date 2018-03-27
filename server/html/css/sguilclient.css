@@ -2,6 +2,13 @@
   color: inherit;
 }
 
+md-button.md-xsmall{
+  min-height: 23px !important;
+  min-width: 46px !important;
+  font-size: 10px !important;
+  line-height: 0px; 
+}
+
 .ui-grid-top-panel {
     background: #8c9eff;
     color: white;
