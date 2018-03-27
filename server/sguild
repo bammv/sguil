@@ -41,7 +41,7 @@ proc DisplayUsage { cmdName } {
   puts "  -A <filename>: PATH to user access file (def: /etc/sguild/sguild.access)"
   puts "  -l <filepath>: PATH to sguild libraries (def: ./lib)"
   puts "  -O <filepath>: PATH to tls library, libtls1.*.so (def: \$LIBPATH)"
-  puts "  -C <directory>: Directory with sguild.pem and sguild.key files (def: /etc/sguild/certs)"
+  puts "  -C <directory>: Directory with certificate files chain.pem, cert.pem, and privkey.pem files (def: /etc/sguild/certs)"
   puts "  -L <directory>: Directory to write logfiles (def: /var/log/sguild)"
   puts "  -U <userid>:   User id to write logfiles"
   puts "  -G <groupid>:  Group id to write logfiles"
@@ -344,8 +344,10 @@ if {![file exists $CERTS_PATH] || ![file isdirectory $CERTS_PATH]} {
 }
 
 # Need sguild.key and sguild.pem
-set PEM [file join $CERTS_PATH sguild.pem]
-set KEY [file join $CERTS_PATH sguild.key]
+set PEM [file join $CERTS_PATH cert.pem]
+set KEY [file join $CERTS_PATH privkey.pem]
+set CHAIN [file join $CERTS_PATH chain.pem]
+
 if {![file exists $PEM] || ![file readable $PEM] } {
 
     puts "ERROR: $PEM does not exist or is not readable"
@@ -356,6 +358,13 @@ if {![file exists $PEM] || ![file readable $PEM] } {
 if {![file exists $KEY] || ![file readable $KEY] } {
 
     puts "ERROR: $KEY does not exist or is not readable"
+    DisplayUsage $argv0
+
+}
+
+if {![file exists $CHAIN] || ![file readable $CHAIN] } {
+
+    puts "ERROR: $CHAIN does not exist or is not readable"
     DisplayUsage $argv0
 
 }

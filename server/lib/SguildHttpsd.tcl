@@ -183,13 +183,13 @@ proc SguildHttpClose { socketID } {
 
 proc SguildInitHttps {} {
 
-    global PEM KEY
+    global PEM KEY CHAIN
 
     package require html
     #package require mimetype
 
-    ::tls::init -certfile $PEM -keyfile $KEY -tls1 1
-    ::tls::socket -server SguildHttpAccept 443 
+    ::tls::init -cafile $CHAIN -certfile $PEM -keyfile $KEY -tls1 1 -request 0 -require 0
+    ::tls::socket -server SguildHttpAccept 443
 
 }
 
