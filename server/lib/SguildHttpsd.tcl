@@ -186,9 +186,16 @@ proc SguildInitHttps {} {
     global PEM KEY CHAIN
 
     package require html
-    #package require mimetype
 
-    ::tls::init -cafile $CHAIN -certfile $PEM -keyfile $KEY -tls1 1 -request 0 -require 0
+    if { $CHAIN != "" } {
+
+        ::tls::init -cafile $CHAIN -certfile $PEM -keyfile $KEY -tls1 1 -request 0 -require 0
+
+    } else {
+
+        ::tls::init -certfile $PEM -keyfile $KEY -tls1 1 -request 0 -require 0
+
+    }
     ::tls::socket -server SguildHttpAccept 443
 
 }

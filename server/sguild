@@ -308,67 +308,6 @@ if { [info exists GROUP] } {
 
 }
 
-# OpenSSL is a requirement
-set VERSION "$VERSION OPENSSL ENABLED"
-set AGENT_VERSION "$AGENT_VERSION OPENSSL ENABLED"
-
-# Need a path to the tls libs
-if { [info exists TLS_PATH] } {
-
-    if [catch {load $TLS_PATH} tlsError] {
-
-        puts "ERROR: Unable to load tls libs ($TLS_PATH): $tlsError"
-        DisplayUsage $argv0
-
-    }
-
-}
-
-if { [catch {package require tls} tlsError] } {
-    puts "ERROR: The tcl tls package does NOT appear to be installed on this sysem."
-    puts "Please see http://tls.sourceforge.net/ for more info."
-    CleanExit 1
-}
-# Check for certs
-if {![info exists CERTS_PATH]} {
-
-    set CERTS_PATH /etc/sguild/certs
-
-}
-
-if {![file exists $CERTS_PATH] || ![file isdirectory $CERTS_PATH]} {
-
-    puts "ERROR: $CERTS_PATH does not exist or is not a directory"
-    DisplayUsage $argv0
-
-}
-
-# Need sguild.key and sguild.pem
-set PEM [file join $CERTS_PATH cert.pem]
-set KEY [file join $CERTS_PATH privkey.pem]
-set CHAIN [file join $CERTS_PATH chain.pem]
-
-if {![file exists $PEM] || ![file readable $PEM] } {
-
-    puts "ERROR: $PEM does not exist or is not readable"
-    DisplayUsage $argv0
-
-}
-
-if {![file exists $KEY] || ![file readable $KEY] } {
-
-    puts "ERROR: $KEY does not exist or is not readable"
-    DisplayUsage $argv0
-
-}
-
-if {![file exists $CHAIN] || ![file readable $CHAIN] } {
-
-    puts "ERROR: $CHAIN does not exist or is not readable"
-    DisplayUsage $argv0
-
-}
-
 if { ![info exists CONF_FILE] } {
   # No conf file specified check the defaults
   if { [file exists /etc/sguild/sguild.conf] } {
@@ -487,6 +426,68 @@ foreach sguildLib $sourceLibs {
     puts "ERROR: Missing library: $SGUILD_LIB_PATH/$sguildLib"
     CleanExit
   }
+}
+
+# OpenSSL is a requirement
+set VERSION "$VERSION OPENSSL ENABLED"
+set AGENT_VERSION "$AGENT_VERSION OPENSSL ENABLED"
+
+# Need a path to the tls libs
+if { [info exists TLS_PATH] } {
+
+    if [catch {load $TLS_PATH} tlsError] {
+
+        puts "ERROR: Unable to load tls libs ($TLS_PATH): $tlsError"
+        DisplayUsage $argv0
+
+    }
+
+}
+
+if { [catch {package require tls} tlsError] } {
+    puts "ERROR: The tcl tls package does NOT appear to be installed on this sysem."
+    puts "Please see http://tls.sourceforge.net/ for more info."
+    CleanExit 1
+}
+# Check for certs
+if {![info exists CERTS_PATH]} {
+
+    set CERTS_PATH /etc/sguild/certs
+
+}
+
+if {![file exists $CERTS_PATH] || ![file isdirectory $CERTS_PATH]} {
+
+    puts "ERROR: $CERTS_PATH does not exist or is not a directory"
+    DisplayUsage $argv0
+
+}
+
+# Need sguild.key and sguild.pem
+set PEM [file join $CERTS_PATH cert.pem]
+set KEY [file join $CERTS_PATH privkey.pem]
+set CHAIN [file join $CERTS_PATH chain.pem]
+
+if {![file exists $PEM] || ![file readable $PEM] } {
+
+    puts "ERROR: $PEM does not exist or is not readable"
+    DisplayUsage $argv0
+
+}
+
+if {![file exists $KEY] || ![file readable $KEY] } {
+
+    puts "ERROR: $KEY does not exist or is not readable"
+    DisplayUsage $argv0
+
+}
+
+if {![file exists $CHAIN] || ![file readable $CHAIN] } {
+
+    set CHAIN ""
+
+    InfoMessage "Could not find certificate chain (chain.pem). Errors may be displayed in browsers."
+
 }
 
 # Called in to add a user only
