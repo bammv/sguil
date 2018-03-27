@@ -11,7 +11,7 @@
                 -->
                 <h5 flex="" md-truncate="">{{ gmttime | date:'yyyy-MM-dd HH:mm:ss': 'UTC/GMT' }} GMT</h5>
 
-                <md-button class="md-icon-button" aria-label="User Info"">
+                <md-button class="md-icon-button" aria-label="User Info">
                   <md-icon md-svg-src="images/person_outline.svg"></md-icon>
                   <md-tooltip class="multiline-tt" md-direction="left">
                       Server: {{ cleanName }}<br>
@@ -58,7 +58,12 @@
           </md-tab>
           -->
           <md-tab ng-repeat="tab in mainTabs" md-on-select="newTabSelected(tab.title)">
-              <md-tab-label>{{tab.title}} <a ng-if="tab.close" ng-click="removeQuery($index,tab)"><md-icon md-svg-src="images/ic_close_white_16px.svg"></a></md-icon></md-tab-label>
+              <md-tab-label>
+                  {{tab.title}} 
+                  <a ng-if="tab.close" ng-click="removeQuery($index,tab)">
+                      <md-icon style="height: 12px; width: 12px;" md-svg-src="img/icons/ic_close_24px.svg"></md-icon>
+                  </a>
+              </md-tab-label>
               <md-tab-body><div compile="tab.content"></div></md-tab-body>
           </md-tab>
       </md-tabs>
@@ -68,7 +73,7 @@
               <md-button class="md-small" ng-click="transcriptRequest($event)">Transcript</md-button>
           </md-menu-item>
           <md-menu-item class="md-small">
-              <md-button class="md-small" ng-click="ctrl.checkVoicemail()">History</md-button>
+              <md-button class="md-small" ng-click="showHistory($event)">History</md-button>
           </md-menu-item>
       </nav>
 
@@ -76,11 +81,17 @@
           <md-menu-item class="md-small">
               <md-button class="md-small" ng-click="showEventSearchDialog($event, 'srcip')">Search Events</md-button>
           </md-menu-item>
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="webLookup('srcip')">TCPIPUtils Lookup</md-button>
+          </md-menu-item>
       </nav>
 
       <nav id="dstip-menu" class="context-menu">
           <md-menu-item class="md-small">
               <md-button class="md-small" ng-click="showEventSearchDialog($event, 'dstip')">Search Events</md-button>
+          </md-menu-item>
+          <md-menu-item class="md-small">
+              <md-button class="md-small" ng-click="webLookup('dstip')">TCPIPUtils Lookup</md-button>
           </md-menu-item>
       </nav>
 
@@ -288,6 +299,39 @@
             </md-dialog>
         </div>
     </div>
+
+    <div style="visibility: hidden">
+        <div class="md-dialog-container" id="eventhistory">
+        <md-dialog aria-label="Event History">
+              <md-toolbar>
+                <div class="md-toolbar-tools">
+                  <h2>Event History - {{ selectedRow }}</h2>
+                  <!--
+                  <span flex></span>
+                  <md-button class="md-icon-button" ng-click="cancel()">
+                    <md-icon md-svg-src="img/icons/ic_close_24px.svg" aria-label="Close dialog"></md-icon>
+                  </md-button>
+                  -->
+                </div>
+              </md-toolbar>
+          
+                <div id="history-table" class="md-dialog-content"></div>
+        </md-dialog>
+    </div>
+    </div>
+    <script>
+        $("#history-table").tabulator({
+            layout:"fitColumns", //fit columns to width of table (optional)
+            layoutColumnsOnNewData:true,
+                columns:[
+                    {title:"Username", field:"username", align:"left", width:"130"},
+                    {title:"Timestamp", field:"timestamp", align:"left", width:"130"},
+                    {title:"Status", field:"status", width:"80"},
+                    {title:"Description", field:"description", align:"left", width:"200"},
+                    {title:"Comment", field:"comment", align:"left"}
+                ]
+            });
+    </script>
 
     <!--
     <div style="visibility: hidden">
