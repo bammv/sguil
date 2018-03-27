@@ -738,6 +738,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
                 }
             });
+            $scope.selectedMainTab = 0;
         }
 
         $scope.monitor = function () {
