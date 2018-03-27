@@ -250,15 +250,13 @@ proc HttpPcapAvailable { filename TRANS_ID} {
 
     set nfilename "[file rootname $filename].pcap"
 
-    # Create a unique file path
-    set salt [format "%c%c" [GetRandAlphaNumInt] [GetRandAlphaNumInt] ]
     # make a hashed passwd
-    set hashedFile [::sha1::sha1 "${nfilename}${salt}"]
+    set randomHash [::sha1::sha1 [RandomString 20]]
 
-    set pcapURLMap($hashedFile) $filename
+    set pcapURLMap($randomHash) $filename
     
 
-    catch {SendSocket [lindex $transInfoArray($TRANS_ID) 0] [list HttpPcapAvailable [lindex $transInfoArray($TRANS_ID) 1] pcap/$hashedFile/[file tail $nfilename]]}
+    catch {SendSocket [lindex $transInfoArray($TRANS_ID) 0] [list HttpPcapAvailable [lindex $transInfoArray($TRANS_ID) 1] pcap/$randomHash/[file tail $nfilename]]}
 
 }
 
