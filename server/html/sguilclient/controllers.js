@@ -37,6 +37,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         $scope.eventWhere = "";
         $scope.queryLimit = 1000;
+        $scope.eventComment = "";
 
         // Keep all pending requests here until they get responses
         var callbacks = {};
@@ -1069,22 +1070,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             $scope.mainTabs.splice(index, 1);
         }
 
-        $scope.eventSearch = function(type) {
-
-            $scope.nextQuery++;
-            var tabName = 'Query' + $scope.nextQuery; 
-            var newTab = new Object();
-            newTab.title = tabName;
-            newTab.close = true;
-            newTab.content= '<tabulator input-id="' + tabName + '" options="tableOptions" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>'
-            $scope.mainTabs.push(newTab);
-
-            var query = '(SELECT event.status, event.priority, sensor.hostname,  event.timestamp as datetime, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port, event.signature_gen, event.signature_id,  event.signature_rev FROM event IGNORE INDEX (event_p_key, sid_time) INNER JOIN sensor ON event.sid=sensor.sid WHERE event.timestamp > "2017-04-12" AND event.src_ip = INET_ATON("59.45.175.62") ) UNION ( SELECT event.status, event.priority, sensor.hostname,  event.timestamp as datetime, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port, event.signature_gen, event.signature_id,  event.signature_rev FROM event IGNORE INDEX (event_p_key, sid_time) INNER JOIN sensor ON event.sid=sensor.sid WHERE event.timestamp > "2017-04-12" AND  event.dst_ip = INET_ATON("59.45.175.62") ) ORDER BY datetime, src_port ASC LIMIT 1000'
-            var cmd = {QueryDB:[$scope.nextQuery,query]};
-            sendRequest(cmd,"none");
-
-        }
-
         // sensor sensorID winID timestamp srcIP srcPort dstIP dstPort force
         $scope.transcriptRequest = function(event) {
 
@@ -1171,7 +1156,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
             $mdDialog.show({
 
-                //contentElement: '#alertSearch',
                 controller: DialogController,
                 templateUrl: '/sguilclient/views/alertsearch.tmpl.html',
                 parent: angular.element(document.body),
@@ -1243,9 +1227,28 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             };
         }
 
-        $scope.updateEventStatus= function(status) {
+        $scope.escalateEvent = function(status) {
 
-            //$scope.PlaySound('pewpew');
+            $scope.eventComment = 'Enter required comment here.'
+            $mdDialog.show({
+
+                controller: DialogController,
+                templateUrl: '/sguilclient/views/comment.tmpl.html',
+                parent: angular.element(document.body),
+                targetEvent: event,
+                scope: $scope,
+                preserveScope: true,
+                clickOutsideToClose: true
+
+            })
+                .then(function() {
+                    console.log('You entered: ' + $scope.eventComment);
+                    $scope.updateEventStatus('2');
+                }, function() {
+                    console.log('You cancelled the dialog.');
+                });
+        }
+        $scope.updateEventStatus= function(status) {
 
             if ($scope.currentTableName !== "") {
                 // Can select an alert per tab, make sure we have the right one.
@@ -1253,10 +1256,15 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 var tableName = $scope.currentTableName
                 var data = $scope.tableOptions.getselecteddata(tableName)[0];
                 var nextID = nextRowID(data.id);
+                if (status === "2") {
+                    var comment = $scope.eventComment;
+                } else {
+                    var comment = 'none';
+                }
                 $scope.tableOptions.selectrow(tableName, nextID);
                 $scope.selectedRow = nextID;
                 $scope.tableOptions.deleterow(data.id);
-                phater('none', status, data.id);
+                phater(comment, status, data.id);
                 selectedEvent(nextID, $scope.userid);
                 $scope.clickSignature();
                 $scope.clickPayload();

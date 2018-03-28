@@ -1,0 +1,12 @@
+<md-dialog layout-padding flex="50">
+    <form ng-cloak>
+        <md-input-container class="md-block">
+            <label>Escalation Comment</label>
+            <textarea ng-model="eventComment" rows="2" md-select-on-focus></textarea>
+        </md-input-container>
+        <md-dialog-actions layout="row" layout-align="center">
+            <md-button class="md-raised md-primary" ng-click="answer('search')">Submit</md-button>
+            <md-button class="md-raised md-primary" ng-click="cancel()">Cancel</md-button>
+        </md-dialog-actions>
+    </form>
+</md-dialog>

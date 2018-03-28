@@ -73,10 +73,10 @@
               <md-button class="md-small" ng-click="transcriptRequest($event)">Transcript</md-button>
           </md-menu-item>
           <md-menu-item class="md-small">
-              <md-button class="md-small" ng-click="showHistory($event)">History</md-button>
+              <md-button class="md-small" ng-click="pcapRequest($event)">Request Pcap</md-button>
           </md-menu-item>
           <md-menu-item class="md-small">
-              <md-button class="md-small" ng-click="pcapRequest($event)">Request Pcap</md-button>
+              <md-button class="md-small" ng-click="showHistory($event)">History</md-button>
           </md-menu-item>
       </nav>
 
@@ -109,7 +109,7 @@
               <md-button class="md-small" ng-click="updateEventStatus('1')">Update to NA</md-button>
           </md-menu-item>
           <md-menu-item class="md-small">
-              <md-button class="md-small" ng-click="updateEventStatus('2')">Escalate Event</md-button>
+              <md-button class="md-small" ng-click="escalateEvent('2')">Escalate Event</md-button>
           </md-menu-item>
           <md-menu-item class="md-small">
               <md-button class="md-small" ng-click="updateEventStatus('11')">Update to Cat 1</md-button>
@@ -351,23 +351,5 @@
                 ]
             });
     </script>
-
-    <!--
-    <div style="visibility: hidden">
-        <div class="md-dialog-container" id="alertSearch">
-            <md-dialog layout-padding>
-                <md-input-container class="md-block">
-                    <label>Query</label>
-                    <textarea ng-model="eventWhere" rows="10" md-select-on-focus></textarea>
-                </md-input-container>
-                <section layout="row" layout-sm="column" layout-align="center center" layout-wrap>
-                      <md-button class="md-raised md-primary" ng-click="eventSearch()">Cancel</md-button>
-                      <md-button class="md-raised md-primary" ng-click="eventSearch()">Search</md-button>
-                </section>
-            </md-dialog>
-        </div>
-    </div>
-    -->
-
 
 </div>
