@@ -800,16 +800,17 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         // Use function keys to trigger status buttons
         $(document).keydown(function(event){
 
+            console.log('KeyCode: ' + event.keyCode);
             switch (event.keyCode) {
-              case 112: event.preventDefault(); $scope.updateEventStatus(11); break;
-              case 113: event.preventDefault(); $scope.updateEventStatus(12); break;
-              case 114: event.preventDefault(); $scope.updateEventStatus(13); break;
-              case 115: event.preventDefault(); $scope.updateEventStatus(14); break;
-              case 116: event.preventDefault(); $scope.updateEventStatus(15); break;
-              case 117: event.preventDefault(); $scope.updateEventStatus(16); break;
-              case 118: event.preventDefault(); $scope.updateEventStatus(17); break;
-              case 119: event.preventDefault(); $scope.updateEventStatus(1); break;
-              case 120: event.preventDefault(); $scope.updateEventStatus(2); break;
+              case 112: event.preventDefault(); $scope.updateEventStatus('11'); break;
+              case 113: event.preventDefault(); $scope.updateEventStatus('12'); break;
+              case 114: event.preventDefault(); $scope.updateEventStatus('13'); break;
+              case 115: event.preventDefault(); $scope.updateEventStatus('14'); break;
+              case 116: event.preventDefault(); $scope.updateEventStatus('15'); break;
+              case 117: event.preventDefault(); $scope.updateEventStatus('16'); break;
+              case 118: event.preventDefault(); $scope.updateEventStatus('17'); break;
+              case 119: event.preventDefault(); $scope.updateEventStatus('1'); break;
+              case 120: event.preventDefault(); $scope.escalateEvent('2'); break;
             }
 
 
@@ -1241,19 +1242,27 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 //var id = $scope.selectedRow;
                 var tableName = $scope.currentTableName
                 var data = $scope.tableOptions.getselecteddata(tableName)[0];
-                var nextID = nextRowID(data.id);
+
+                if (tableName === 'rtevents' || tableName == 'escalated') {
+                    var nextID = nextRowID(data.id);
+                    $scope.tableOptions.selectrow(tableName, nextID);
+                    $scope.tableOptions.deleterow(data.id);
+                    $scope.selectedRow = nextID;
+                    selectedEvent(nextID, $scope.userid);
+                    $scope.clickSignature();
+                    $scope.clickPayload();
+                } else {
+                    $scope.tableOptions.updaterow(tableName, data.id, {status:status});
+                    $scope.tableOptions.rowreformat(tableName, data.id);
+                }
+
                 if (status === "2") {
                     var comment = $scope.eventComment;
                 } else {
                     var comment = 'none';
                 }
-                $scope.tableOptions.selectrow(tableName, nextID);
-                $scope.tableOptions.deleterow(data.id);
+
                 phater(comment, status, data.id);
-                $scope.selectedRow = nextID;
-                selectedEvent(nextID, $scope.userid);
-                $scope.clickSignature();
-                $scope.clickPayload();
             }
         }
 

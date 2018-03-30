@@ -22,7 +22,7 @@ angular.module('tabulator', [])
 
                 //scope.uniqueId = 'eventtable' + uniqueId++;
                 //scope.inputId =  inputId;
-                console.log('input-id: ' + scope.inputId);
+                //console.log('input-id: ' + scope.inputId);
 
                 el.tabulator({
                     height:"450", // set height of table (optional)
@@ -106,7 +106,7 @@ angular.module('tabulator', [])
                 
                 angular.extend(scope.options, {
                     selectrow: function(tname, data){
-                        console.log('Selecting: ' + data);
+                        //console.log('Selecting: ' + data);
                         var myElement = angular.element( document.querySelector( '#' + tname ) );
                         myElement.tabulator("selectRow", data);
                     },
@@ -118,11 +118,15 @@ angular.module('tabulator', [])
                         var data = myElement.tabulator("getSelectedData"); 
                         return data;
                     },
+                    getrow: function(tname, index){
+                        var myElement = angular.element( document.querySelector('#' + tname) );
+                        var data = myElement.tabulator("getRow", index); 
+                        return data;
+                    },
                     getdata: function(tname){
                         var data = "";
                         var myElement = angular.element( document.querySelector('#' + tname) );
                         data = myElement.tabulator("getData"); 
-                        console.log('data: ', data)
                         return data;
                     },
                     getrowposition: function(tname, index){
@@ -145,6 +149,11 @@ angular.module('tabulator', [])
                     updaterow: function(tname, id, data){
                         var myElement = angular.element( document.querySelector( '#' + tname ) );
                         myElement.tabulator("updateRow", id, data); 
+                    },
+                    rowreformat: function(tname, id){
+                        var myElement = angular.element( document.querySelector( '#' + tname ) );
+                        var row = myElement.tabulator("getRow", id);
+                        row.reformat();
                     },
                     setdata: function(tname, data){
                         var myElement = angular.element( document.querySelector( '#' + tname ) );
