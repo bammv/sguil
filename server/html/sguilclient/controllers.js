@@ -76,7 +76,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                             priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" \
                             eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" \
                             signaturerightclick="displaySigRightClickMenu(arg1, arg2, arg3)" \
-                            rowclick="rowSelected(arg1)"'
+                            rowclick="rowSelected(arg1, arg2)"'
         //$scope.mainTabs = [];
         $scope.mainTabs = [
             {
@@ -121,8 +121,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             console.log('New Tab: ', tableName)
         }
 
-        $scope.rowSelected = function(data) {
-            console.log('Selected :' + data.id);
+        $scope.rowSelected = function(data, row) {
             $scope.selectedRow = data.id;
             $scope.eventinfo.srcip = data.srcip;
             $scope.eventinfo.dstip = data.dstip;
@@ -1262,9 +1261,9 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     var comment = 'none';
                 }
                 $scope.tableOptions.selectrow(tableName, nextID);
-                $scope.selectedRow = nextID;
                 $scope.tableOptions.deleterow(data.id);
                 phater(comment, status, data.id);
+                $scope.selectedRow = nextID;
                 selectedEvent(nextID, $scope.userid);
                 $scope.clickSignature();
                 $scope.clickPayload();
@@ -1285,21 +1284,17 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
             var nextID = "";
             var data = $scope.tableOptions.getdata($scope.currentTableName);
-        
+            var row = $scope.tableOptions.getrowposition($scope.currentTableName, selectedID);
+
             // Check to see if there is another row to select 
             if (data.length <= 1) { return }
 
-            var i = 0;
-            for (i = 0; i < data.length; i++) {
-        
-                if (data[i].aid == selectedID) { 
-        
-                    var j = i + 1;
-                    nextID = data[j].aid;
-            
-                }
-
+            if (data.length > row + 1) {
+                var nextRow = row + 1;
+            } else {
+                var nextRow = row - 1;
             }
+            nextID = data[nextRow].aid
 
             return nextID;
         }
