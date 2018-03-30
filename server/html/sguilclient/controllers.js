@@ -118,7 +118,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         $scope.newTabSelected = function(tableName) {
             $scope.currentTableName = tableName;
-            console.log('New Tab: ', tableName)
         }
 
         $scope.rowSelected = function(data, row) {
@@ -501,8 +500,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
                 var sigElement = angular.element( document.querySelector( '#eventSignature' ) );
                 var ruleInfo = data.InsertRuleData[0];
-
-                console.log('Rcvd our RuleRequest callback. ' + ruleInfo);
 
                 sigElement.empty();
                 sigElement.append('<br>');
@@ -917,7 +914,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
             } else {
 
-                console.log('Results -> ', $scope.queryResults[tabName])
                 $scope.tableOptions.setdata(tabName, $scope.queryResults[tabName]);
 
             }
@@ -1074,8 +1070,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
             var tableName = $scope.currentTableName
             var data = $scope.tableOptions.getselecteddata(tableName)[0];   
-            
-            console.log('Transript requested for: ' + data.sensor + ' ' + data.id);
             var splitAid = data.id.split(".");
 
             $scope.nextTranscript++;
@@ -1087,7 +1081,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             newTab.content= '<md-content class="md-padding" style="min-height:224px;max-height:450px;height:450px"><div id="' + tabName + '" style="font-size:12px;font-family:Consolas,monospace"></div></md-content>'
             $scope.mainTabs.push(newTab);
 
-            console.log('Request -> ' + data.sensor + ' ' + splitAid[0] + ' ' + tabName + ' ' + data.timestamp + ' ' + data.srcip + ' ' + data.sport + ' ' + data.dstip + ' ' + data.dport + ' 1');
             var cmd = {XscriptRequest : [data.sensor,splitAid[0],tabName,data.timestamp,data.srcip,data.sport,data.dstip,data.dport,0]};
             sendRequest(cmd,"none");
 
@@ -1102,10 +1095,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             $scope.selectedBottomTab = 3;
             $scope.pcapDownloads.push(data.aid);
 
-            console.log('Pcap requested for: ' + data.sensor + ' ' + data.id);
             var splitAid = data.id.split(".");
-
-            console.log('Pcap Request -> ' + data.sensor + ' ' + splitAid[0] + ' ' + data.id + ' ' + data.timestamp + ' ' + data.srcip + ' ' + data.sport + ' ' + data.dstip + ' ' + data.dport );
             var cmd = {HttpPcapRequest : [data.sensor,splitAid[0],data.id,data.timestamp,data.srcip,data.sport,data.dstip,data.dport,data.proto,0]};
             sendRequest(cmd,"none");
 
@@ -1139,8 +1129,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             var data = $scope.tableOptions.getselecteddata($scope.currentTableName)[0];
             var date = $filter('date')(new Date(data.timestamp),'yyyy-MM-dd');
 
-            console.log('Event Search for: ' + type);
-            
             $scope.eventWhere = 'WHERE event.timestamp > \'' + date + '\'';
 
             if (type === "srcip") {
@@ -1241,7 +1229,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
             })
                 .then(function() {
-                    console.log('You entered: ' + $scope.eventComment);
                     $scope.updateEventStatus('2');
                 }, function() {
                     console.log('You cancelled the dialog.');
@@ -1303,7 +1290,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
             var originatorEv;
 
-            console.log('topmenu');
             originatorEv = ev;
             $mdMenu.open(ev);
 
