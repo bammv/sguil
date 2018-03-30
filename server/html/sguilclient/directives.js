@@ -98,7 +98,7 @@ angular.module('tabulator', [])
 
                     rowClick:function(e, row){
 
-                        scope.rowclick({arg1: row.getData()});
+                        scope.rowclick({arg1: row.getData(), arg2: row.getPosition(true)});
 
                     },
 
@@ -106,6 +106,7 @@ angular.module('tabulator', [])
                 
                 angular.extend(scope.options, {
                     selectrow: function(tname, data){
+                        console.log('Selecting: ' + data);
                         var myElement = angular.element( document.querySelector( '#' + tname ) );
                         myElement.tabulator("selectRow", data);
                     },
@@ -123,6 +124,12 @@ angular.module('tabulator', [])
                         data = myElement.tabulator("getData"); 
                         console.log('data: ', data)
                         return data;
+                    },
+                    getrowposition: function(tname, index){
+                        var data = "";
+                        var myElement = angular.element( document.querySelector('#' + tname) );
+                        var position = myElement.tabulator("getRowPosition", index, true); 
+                        return position;
                     },
                     addrow: function(tname, data){
                         var myElement = angular.element( document.querySelector( '#' + tname ) );
