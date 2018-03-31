@@ -800,7 +800,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         // Use function keys to trigger status buttons
         $(document).keydown(function(event){
 
-            console.log('KeyCode: ' + event.keyCode);
             switch (event.keyCode) {
               case 112: event.preventDefault(); $scope.updateEventStatus('11'); break;
               case 113: event.preventDefault(); $scope.updateEventStatus('12'); break;
