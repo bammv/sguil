@@ -155,7 +155,7 @@ proc SguildWebSocketMsgRcvd { socketID jdata } {
       SendSensorList      { $clientCmd $socketID }
       SendEscalatedEvents { $clientCmd $socketID }
       SendDBInfo          { $clientCmd $socketID }
-      ValidateUser        { ValidateUser $socketID [lindex $data 1] [lindex $data 2] }
+      ValidateUser        { ValidateUser $socketID [lindex $data 1] [lindex $data 2] websocket }
       PING                { ClientPingRcvd $socketID }
       UserMessage         { UserMsgRcvd $socketID [lindex $data 1] }
       SendGlobalQryList   { catch {SendSocket $socketID [list GlobalQryList $GLOBAL_QRY_LIST]} }

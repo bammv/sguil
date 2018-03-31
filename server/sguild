@@ -4,7 +4,7 @@ exec tclsh "$0" "$@"
 
 # $Id: sguild,v 1.194 2013/09/05 00:38:45 bamm Exp $ #
 
-# Copyright (C) 2002-2013 Robert (Bamm) Visscher <bamm@sguil.net>
+# Copyright (C) 2002-2018 Robert (Bamm) Visscher <bamm@sguil.net>
 #
 # This program is distributed under the terms of version 3 of the 
 # GNU Public License.  See LICENSE for further details.
@@ -15,8 +15,8 @@ exec tclsh "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.9.0"
-set AGENT_VERSION "SGUIL-0.9.0"
+set VERSION "SGUIL-1.0.0"
+set AGENT_VERSION "SGUIL-1.0.0"
 # DB Version
 set DB_VERSION "0.14"
 # Counter for tracking xscript transactions

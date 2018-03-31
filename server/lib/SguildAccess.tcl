@@ -348,7 +348,7 @@ proc LogClientAccess { message } {
 
 }
 
-proc ValidateUser { socketID username password } {
+proc ValidateUser { socketID username password {type {raw socket}} } {
 
     global validSockets socketInfo userIDArray WEBSOCKETS
 
@@ -376,7 +376,7 @@ proc ValidateUser { socketID username password } {
          "UPDATE user_info SET last_login='[GetCurrentTimeStamp]' WHERE uid=$userIDArray($socketID)"
 
         # Log the access
-        LogClientAccess "[GetCurrentTimeStamp]: $socketID - $username logged in from $socketInfo($socketID)"
+        LogClientAccess "[GetCurrentTimeStamp]: $socketID - $username logged in from $socketInfo($socketID) via $type"
 
         # Mark the socket as valid
         lappend validSockets $socketID
@@ -385,7 +385,7 @@ proc ValidateUser { socketID username password } {
         catch { SendSocket $socketID [list UserID $userIDArray($socketID)] } tmpError
 
         # Log message
-        SendSystemInfoMsg sguild "User $username logged in from [lindex $socketInfo($socketID) 0]"
+        SendSystemInfoMsg sguild "User $username logged in from [lindex $socketInfo($socketID) 0] via $type"
 
         # Update the socket information array
         lappend socketInfo($socketID) $username
@@ -395,7 +395,7 @@ proc ValidateUser { socketID username password } {
         #Failed
         set validSockets [ldelete $validSockets $socketID]
         catch {SendSocket $socketID [list UserID INVALID]} tmpError
-        SendSystemInfoMsg sguild "User $username denied access from [lindex $socketInfo($socketID) 0]"
+        SendSystemInfoMsg sguild "User $username denied access from [lindex $socketInfo($socketID) 0] via $type"
 
     }
 
