@@ -3,20 +3,20 @@
 angular.module('MainConsole')
  
 .factory('WebSocketService',
-    ['$rootScope', '$q', '$filter', 
-    function ($rootScope, $q, $filter) {
+    ['$rootScope', '$q', '$filter', '$location', 
+    function ($rootScope, $q, $filter, $location) {
 
         var service = {};
 
         
         service.wsConnect = function() {
 
-            // Cheat to get just the hostname
-            var parser = document.createElement('a');
-            parser.href = $rootScope.servername;
-            $rootScope.cleanName = parser.hostname;
+            // Websocket is at wss://hostname:port/ws
+            var host = $location.host();
+            var port = $location.port();
+            var wsUrl = 'wss://' + host + ':' + port + '/ws';
 
-            var ws = new WebSocket($rootScope.servername);
+            var ws = new WebSocket(wsUrl);
     
             ws.onopen = function(){  
                 $rootScope.connected = 1;

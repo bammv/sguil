@@ -28,9 +28,9 @@ proc SguildGetContentType { filepath } {
 
 }
 
-proc SguildHttpRespond {sock filename } {
+proc SguildHttpRespond {sock ip port filename hdrs} {
 
-    global DEBUG HTML_PATH pcapURLMap
+    global DEBUG HTML_PATH pcapURLMap clientWebSockets socketInfo WS_SERVER_SOCK
 
     fileevent $sock readable ""
     #set HTML_PATH {/usr/local/src/sguil.git/sguil/server/html}
@@ -43,10 +43,26 @@ proc SguildHttpRespond {sock filename } {
 
     } else {
 
-        # Check to see if this is a pcap requet
         set fileroot [lindex [file split $filename] 0]
         
-        if { $fileroot == "pcap" } {
+        if { $fileroot == "ws" } {
+
+            chan configure $sock -translation crlf
+            lappend clientWebSockets $sock
+            set socketInfo($sock) [list $ip $port]
+            if {[::websocket::test $WS_SERVER_SOCK $sock / $hdrs]} {
+
+                ::websocket::upgrade $sock
+
+            } else {
+
+                #close $client_socket
+                set clientWebSockets [ldelete $clientWebSockets $sock]
+                ClientExitClose $sock
+
+            }
+
+        } elseif { $fileroot == "pcap" } {
 
             # Second index is the key to the file path
             set fileKey [lindex [file split $filename] 1]
@@ -113,17 +129,17 @@ proc SguildHttpFileFinished { socketID fileID filepath bytes {error {}} } {
 
 }
 
-proc SguildHttpParser {sock ip reqstring} {
+proc SguildHttpParser {sock ip port reqstring hdrs} {
 
     array set req $reqstring
 
     if { $req(path) == "" } { 
 
-        SguildHttpRespond $sock index.html 
+        SguildHttpRespond $sock $ip $port index.html $hdrs 
 
     } else {
 
-        SguildHttpRespond $sock $req(path)
+        SguildHttpRespond $sock $ip $port $req(path) $hdrs
 
     }
 
@@ -133,15 +149,25 @@ proc SguildHttpAccept {sock ip port} {
 
     global DEBUG
 
-    if {[catch {
+    if {![catch {gets $sock} line] } {
 
-        gets $sock line
+        chan configure $sock -translation crlf
+        while {[gets $sock header_line]>=0 && $header_line ne ""} {
 
-        for {set c 0} {[gets $sock temp]>=0 && $temp ne "\r" && $temp ne ""} {incr c} {
+            if {[regexp -expanded {^( [^\s:]+ ) \s* : \s* (.+)} $header_line -> header_name header_value]} {
 
-            if {$c == 30} { SguildHttpError $sock "Too many lines from $ip" }
+                lappend hdrs $header_name $header_value
+
+            } else {
+
+                break
+
+            }
 
         }
+
+        # Things break w/o this
+        lappend hdrs sec-websocket-protocol {}
 
         if {[eof $sock]} { SguildHttpClose $sock }
 
@@ -152,19 +178,19 @@ proc SguildHttpAccept {sock ip port} {
             foreach {method url version} $line { break }
             switch -exact $method {
 
-                GET { SguildHttpParser $sock $ip [uri::split $url] }
+                GET { SguildHttpParser $sock $ip $port [uri::split $url] $hdrs}
                 default { SguildHttpError $sock "Unsupported method $method from $ip" }
 
             }
         }
 
-     } msg] } {
+     } else {
 
         if { $DEBUG } { puts "Error in SguildHttpAccept: $msg" }
+        catch {close $sock}
 
     }
 
-    catch {close $sock}
 
 }
 
@@ -183,7 +209,7 @@ proc SguildHttpClose { socketID } {
 
 proc SguildInitHttps {} {
 
-    global PEM KEY CHAIN
+    global PEM KEY CHAIN WS_SERVER_SOCK HTTPS_PORT
 
     package require html
 
@@ -196,7 +222,11 @@ proc SguildInitHttps {} {
         ::tls::init -certfile $PEM -keyfile $KEY -tls1 1 -request 0 -require 0
 
     }
-    ::tls::socket -server SguildHttpAccept 443
+
+    set WS_SERVER_SOCK [::tls::socket -server SguildHttpAccept $HTTPS_PORT]
+    ::websocket::server $WS_SERVER_SOCK
+    ::websocket::live $WS_SERVER_SOCK * wsLiveCB
+
 
 }
 

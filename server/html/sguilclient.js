@@ -36,7 +36,7 @@ angular.module('SguilClient', [
     function ($rootScope, $location) {
 
         // Update your server name and port here
-        $rootScope.servername = 'wss://lazyvranch.sguil.net:4444/';
+        //$rootScope.servername = 'wss://lazyvranch.sguil.net:443/ws';
         $rootScope.connected = 0;
         $rootScope.loggedin = 0;
 
