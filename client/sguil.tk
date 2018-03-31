@@ -8,7 +8,7 @@ exec wish "$0" "$@"
 # Sguil - A tcl/tk interface for network security monitoring       #
 ####################################################################
 
-# Copyright (C) 2002-2013 Robert (Bamm) Visscher <bamm@sguil.net>
+# Copyright (C) 2002-2018 Robert (Bamm) Visscher <bamm@sguil.net>
 #
 # This program is distributed under the terms of version 3 of the 
 # GNU Public License.  See LICENSE for further details.
@@ -19,7 +19,7 @@ exec wish "$0" "$@"
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.9.0"
+set VERSION "SGUIL-1.0.0"
 
 # Load extended tcl
 if [catch {package require Tclx} tclxVersion] {
@@ -1880,7 +1880,7 @@ proc SensorList { sensorList } {
    -foreground navy -text\
   "Sguil - A tcl/tk interface for network security monitoring\n\
    \n\
-   Copyright (C) 2002-2013 Robert (Bamm) Visscher <bamm@sguil.net>\n\
+   Copyright (C) 2002-2018 Robert (Bamm) Visscher <bamm@sguil.net>\n\
    \n\
    This program is distributed under the terms of version 3 of the\n\
    GNU Public License.  See LICENSE for further details.\n\

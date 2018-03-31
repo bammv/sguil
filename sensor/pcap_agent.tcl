@@ -4,7 +4,7 @@ exec tclsh "$0" "$@"
 
 # $Id: pcap_agent.tcl,v 1.13 2011/03/10 22:03:33 bamm Exp $ #
 
-# Copyright (C) 2002-2013 Robert (Bamm) Visscher <bamm@sguil.net>
+# Copyright (C) 2002-2018 Robert (Bamm) Visscher <bamm@sguil.net>
 #
 # This program is distributed under the terms of version 3 of the
 # GNU Public License.  See LICENSE for further details.
@@ -18,7 +18,7 @@ exec tclsh "$0" "$@"
 #
 
 # Don't touch these
-set VERSION "SGUIL-0.9.0"
+set VERSION "SGUIL-1.0.0"
 set CONNECTED 0
 set env(TZ) UTC
 

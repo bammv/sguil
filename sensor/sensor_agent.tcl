@@ -4,7 +4,7 @@ exec tclsh "$0" "$@"
 
 # $Id: sensor_agent.tcl,v 1.64 2008/03/21 16:13:41 bamm Exp $ #
 
-# Copyright (C) 2002-2008 Robert (Bamm) Visscher <bamm@sguil.net>
+# Copyright (C) 2002-2018 Robert (Bamm) Visscher <bamm@sguil.net>
 #
 # This program is distributed under the terms of version 1.0 of the
 # Q Public License.  See LICENSE.QPL for further details.
@@ -23,7 +23,7 @@ puts "See documentation for details"
 exit
 
 # Don't touch these
-set VERSION "SGUIL-0.6.1"
+set VERSION "SGUIL-1.0.0"
 set CONNECTED 0
 set SANCPFILEWAIT 0
 set SSNFILEWAIT 0

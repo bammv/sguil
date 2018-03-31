@@ -1,6 +1,6 @@
 #!/usr/bin/env tclsh
 
-# Copyright (C) 2002-2017 Robert (Bamm) Visscher <bamm@sguil.net>
+# Copyright (C) 2002-2018 Robert (Bamm) Visscher <bamm@sguil.net>
 #
 # This program is distributed under the terms of version 3 of the
 # GNU Public License.  See LICENSE for further details.
@@ -15,7 +15,7 @@
 # Config options in suricata_agent.conf.
 #
 # Don't touch these
-set VERSION "SGUIL-0.9.0"
+set VERSION "SGUIL-1.0.0"
 set CONNECTED 0
 set EXIT_ON_FAIL 0
 
