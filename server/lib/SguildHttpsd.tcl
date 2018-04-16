@@ -186,7 +186,7 @@ proc SguildHttpAccept {sock ip port} {
 
      } else {
 
-        if { $DEBUG } { puts "Error in SguildHttpAccept: $msg" }
+        if { $DEBUG } { puts "Error in SguildHttpAccept: $line" }
         catch {close $sock}
 
     }

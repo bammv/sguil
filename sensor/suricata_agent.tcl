@@ -351,9 +351,9 @@ proc ParseEveLine { line } {
     
         } else {
     
-            foreach i { icmp_type icmp_code icmp_id icmp_seq } { lappend msg $packet($i) } 
+            foreach i { icmp_type icmp_code icmp_csum icmp_id icmp_seq } { lappend msg $packet($i) } 
     
-            }
+        }
     
         # Add src and dest ports
         
