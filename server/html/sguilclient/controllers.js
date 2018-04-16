@@ -1285,7 +1285,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             $scope.mainTabs.push(newTab);
 
             var host = $location.host();
-            var url = 'http://' + host + ':8443/_search';
+            var url = 'https://' + host + ':8443/_search';
             //var url = "http://lazyvranch.sguil.net:9200/_search"
             var creds = btoa($scope.username + ':' + $scope.password);
             var auth = {'Authorization': 'Basic ' + creds};
