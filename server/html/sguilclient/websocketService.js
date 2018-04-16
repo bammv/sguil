@@ -14,7 +14,8 @@ angular.module('MainConsole')
             // Websocket is at wss://hostname:port/ws
             var host = $location.host();
             var port = $location.port();
-            var wsUrl = 'wss://' + host + ':' + port + '/ws';
+            //var wsUrl = 'wss://' + host + ':' + port + '/ws';
+            var wsUrl = 'wss://lazyvranch.sguil.net:443/ws'
 
             var ws = new WebSocket(wsUrl);
     

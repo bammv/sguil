@@ -45,23 +45,22 @@
     </div>
 
 
-      <md-tabs md-selected="selectedMainTab" md-autoselect md-border-bottom md-dynamic-height class="md-primary md-hue-3">
-                  <!-- <div ui-grid="gridOptions" ui-grid-selection class="grid"></div> -->
+      <md-tabs md-selected="selectedMainTab" md-autoselect md-border-bottom md-dynamic-height class="md-primary md-hue-1">
           <!--
-          <md-tab label="RT Events" md-on-select="newTabSelected('rtevents')">
+          <md-tab label="RT Events" md-on-select="newTabSelected('rtevents', 'event')">
               <md-content md-scroll-y layout="column">
                   <tabulator input-id="rtevents" options="tableOptions" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>
               </md-content>
           </md-tab>
-          <md-tab label="Escalated" md-on-select="newTabSelected('escalated')">
+          <md-tab label="Escalated" md-on-select="newTabSelected('escalated', 'event')">
                   <tabulator input-id="escalated" options="tableOptions" priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" eventrightclick="displayRightClickMenu(arg1, arg2, arg3)" rowclick="rowSelected(arg1)"></tabulator>
           </md-tab>
           -->
-          <md-tab ng-repeat="tab in mainTabs" md-on-select="newTabSelected(tab.title)">
+          <md-tab ng-repeat="tab in mainTabs" md-on-select="newTabSelected(tab.title, tab.type)">
               <md-tab-label>
                   {{tab.title}} 
                   <a ng-if="tab.close" ng-click="removeQuery($index,tab)">
-                      <md-icon style="height: 12px; width: 12px;" md-svg-src="img/icons/ic_close_24px.svg"></md-icon>
+                      <md-icon md-svg-src="img/icons/ic_close_24px.svg"></md-icon>
                   </a>
               </md-tab-label>
               <md-tab-body><div compile="tab.content"></div></md-tab-body>
@@ -80,21 +79,15 @@
           </md-menu-item>
       </nav>
 
-      <nav id="srcip-menu" class="context-menu">
+      <nav id="ip-menu" class="context-menu">
           <md-menu-item class="md-small">
-              <md-button class="md-small" ng-click="showEventSearchDialog($event, 'srcip')">Search Events</md-button>
+              <md-button class="md-small" ng-click="showEventSearchDialog($event, selectedFieldName)">Search Events</md-button>
           </md-menu-item>
           <md-menu-item class="md-small">
-              <md-button class="md-small" ng-click="webLookup('srcip')">TCPIPUtils Lookup</md-button>
-          </md-menu-item>
-      </nav>
-
-      <nav id="dstip-menu" class="context-menu">
-          <md-menu-item class="md-small">
-              <md-button class="md-small" ng-click="showEventSearchDialog($event, 'dstip')">Search Events</md-button>
+              <md-button class="md-small" ng-click="showElasticSearchDialog($event, selectedFieldName)">Search Elastic </md-button>
           </md-menu-item>
           <md-menu-item class="md-small">
-              <md-button class="md-small" ng-click="webLookup('dstip')">TCPIPUtils Lookup</md-button>
+              <md-button class="md-small" ng-click="webLookup(selectedFieldName)">TCPIPUtils Lookup</md-button>
           </md-menu-item>
       </nav>
 
@@ -138,15 +131,14 @@
 
         <div layout="column" style="min-height:350px;max-height:350px;height:350px;width:50%;min-width:50%;max-width:50%">
             <div layout="column">
-            <md-content>
-                <md-tabs md-selected="selectedBottomTab" md-border-bottom md-dynamic-height class="md-primary md-hue-3">
+                <md-tabs md-selected="selectedBottomTab" md-border-bottom md-dynamic-height class="md-primary md-hue-1">
                   <md-tab label="IP Info">
-                      <md-toolbar layout="row" class="md-hue-1 md-xsmall toolbar-checkbox">
+                      <md-toolbar layout="row" class="md-hue-3 md-xsmall toolbar-checkbox">
                           <div class="md-toolbar-tools">
                             <h2 class="md-toolbar-tools" style="color:white">Lookup Address: {{ eventinfo.lookupip }}</h2>
                             <md-radio-group layout="row" ng-model="eventinfo.whois" ng-change="displayWhoisData" class="md-toolbar-tools">
                                 <md-radio-button value="none" class="md-toolbar-tools md-primary" style="color:white">None</md-radio-button>
-                                <md-radio-button value="srcip" class="md-toolbar-tools md-primary" style="color:white">SrcIP</md-radio-button>
+                                <md-radio-button value="src_ip" class="md-toolbar-tools md-primary" style="color:white">SrcIP</md-radio-button>
                                 <md-radio-button value="dstip" class="md-toolbar-tools md-primary" style="color:white">DstIP</md-radio-button>
                             </md-radio-group>
                           </div>
@@ -180,11 +172,11 @@
                     <md-content class="md-padding" style="height:318px">
                         <div id="downloads">
                             <div ng-repeat="pcapEvent in pcapDownloads">
-                                <md-toolbar class="md-small md-hue-1">
+                                <md-toolbar class="md-small md-hue-2">
                                     <div class="md-toolbar-tools">
                                         <h2 flex="" md-truncate="">Event {{ pcapEvent }}</h2>
                                         <md-progress-linear ng-disabled="showProgress(pcapEvent)" flex="" md-mode="indeterminate"></md-progress-linear>
-                                        <md-button ng-click="downloadPcap(pcapEvent)" ng-disabled="disablePcapButton(pcapEvent)" class="md-small md-hue-1">Get Pcap</md-button>
+                                        <md-button ng-click="downloadPcap(pcapEvent)" ng-disabled="disablePcapButton(pcapEvent)" class="md-small md-hue-2">Get Pcap</md-button>
                                     </div>
                                 </md-toolbar>
                                 <br>
@@ -193,17 +185,30 @@
                     </md-content>
                   </md-tab>
                 </md-tabs>
-            </md-content>
             </div>
         </div>
 
         <div layout="column" style="width:50%">
 
-            <div layout="column">
+            <div layout="column" ng-show="displayJSONData" id="jsonDataDisplay" style="height:345px">
+                <md-toolbar layout="row" class="md-hue-1 md-small toolbar-checkbox">
+                    <div class="md-toolbar-tools">
+                    <h2 class="md-toolbar-tools" style="color:white">Additional Details</h2>
+                    </div>
+                </md-toolbar>
+                <md-content flex="100">
+                    <table class="flowtable">
+                        <tr ng-repeat="(key, value) in jsonData">
+                            <td><b>{{ key }}:</b></td><td>{{ value }}</td>
+                        </tr>
+                    </table>
+                </md-content>
+            </div>
+            <div layout="column" ng-show="displayEventData" id="eventDataDisplay">
 
                 <div layout="column">
                 <md-content>
-                    <md-toolbar layout="row" class="md-hue-3 md-small toolbar-checkbox">
+                    <md-toolbar layout="row" class="md-hue-1 md-small toolbar-checkbox">
                         <div class="md-toolbar-tools">
                         <md-checkbox ng-model="eventinfo.sig" ng-change="clickSignature()" aria-label="Signature Checkbox"></md-checkbox>
                         <h2 class="md-toolbar-tools" style="color:white">Signature</h2>
@@ -218,7 +223,7 @@
                 <div class="md-content" layout="row">
     
                     <div layout="column" style="width:70%">
-                        <md-toolbar layout="row" class="md-hue-3 md-small">
+                        <md-toolbar layout="row" class="md-hue-1 md-small">
                         <div class="md-toolbar-tools">
                             <md-checkbox ng-model="eventinfo.payload" ng-change="clickPayload()" aria-label="Payload Checkbox"></md-checkbox>
                             <h2 class="md-toolbar-tools" style="color:white">Hex Payload</h2>
@@ -231,7 +236,7 @@
                     <md-divider></md-divider>
                 
                     <div layout="column" style="width:30%">
-                        <md-toolbar layout="row" class="md-hue-3 md-small">
+                        <md-toolbar layout="row" class="md-hue-1 md-small">
                             <div class="md-toolbar-tools">
                             <h2 class="md-toolbar-tools" style="color:white">Ascii Payload</h2>
                             </div>

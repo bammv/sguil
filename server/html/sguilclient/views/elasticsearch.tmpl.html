@@ -1,0 +1,54 @@
+<!-- <md-dialog layout-padding flex="50"> -->
+<md-dialog>
+        <md-toolbar class="md-hue-1">
+            <h2 class="md-toolbar-tools">
+                <span>Elasticsearch Query</span>
+            </h2>
+        </md-toolbar>
+    <div class="md-padding">
+        <div layout-gt-xs="row">
+            <md-input-container style="margin-right: 10px;" flex="50">
+                <label>event_type:</label>
+                <md-select ng-model="elasticSearch.eventType">
+                    <md-option ng-repeat="eventType in elasticSearch.eventTypes" value="{{eventType}}">
+                        {{eventType}}
+                    </md-option>
+                </md-select>
+            </md-input-container>
+            <md-input-container>
+                <label>Search Results Limit</label>
+                <input ng-model="elasticSearch.limit">
+            </md-input-container>
+        </div>
+        <div layout-gt-xs="row">
+            <md-input-container>
+                <label>Start Date</label>
+                <md-datepicker ng-model="elasticSearch.startDate" ng-model-options="{ timezone: 'utc' }"></md-datepicker>
+            </md-input-container>
+            <md-input-container>
+                <label>Start Time</label>
+                <input ng-model="elasticSearch.startDate" ng-model-options="{ timezone: 'utc' }" type="time" placeholder="HH:mm:ss" required>
+            </md-input-container>
+        </div>
+        <div layout-gt-xs="row">
+            <md-input-container>
+                <label>End Date</label>
+                <md-datepicker ng-model="elasticSearch.endDate" ng-model-options="{ timezone: 'utc'}"></md-datepicker>
+            </md-input-container>
+            <md-input-container>
+                <label>End Time</label>
+                <input ng-model="elasticSearch.endDate" ng-model-options="{ timezone: 'utc'}" type="time" placeholder="HH:mm:ss" required>
+            </md-input-container>
+        </div>
+        <md-content md-theme="blue-grey">
+            <md-input-container class="md-block">
+                <label>Query</label>
+                <textarea ng-model="elasticSearch.query" rows="2" md-select-on-focus></textarea>
+            </md-input-container>
+        </md-content>
+        <md-dialog-actions layout="row" layout-align="center">
+            <md-button class="md-raised md-primary" ng-click="answer('search')">Search</md-button>
+            <md-button class="md-raised md-primary" ng-click="cancel()">Cancel</md-button>
+        </md-dialog-actions>
+    </div>
+</md-dialog>

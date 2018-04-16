@@ -3,27 +3,32 @@
 angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'ui.grid.selection', 'ngSanitize'])
  
 .controller('MainConsoleController',
-    ['$scope', '$rootScope', '$q', '$filter', '$document', '$window', '$location', '$interval', '$mdDialog', '$mdBottomSheet', 'WebSocketService','uiGridConstants', 'SguilClientService',
-    function ($scope, $rootScope, $q, $filter, $document, $window, $location, $interval, $mdDialog, $mdBottomSheet, WebSocketService, uiGridConstants, SguilClientService) {
+    ['$scope', '$rootScope', '$q', '$filter', '$document', '$window', '$location', '$http', '$interval', '$mdDialog', '$mdBottomSheet', 'WebSocketService','uiGridConstants', 'SguilClientService',
+    function ($scope, $rootScope, $q, $filter, $document, $window, $location, $http, $interval, $mdDialog, $mdBottomSheet, WebSocketService, uiGridConstants, SguilClientService) {
 
+        $scope.displayEventData = true;
+        $scope.displayJSONData = false;
+        $scope.jsonData = {};
         $scope.eventinfo = {}
         $scope.eventinfo.sig = true;
         $scope.eventinfo.payload = true;
         $scope.eventinfo.msg = "";
         $scope.eventinfo.whois = "none";
-        $scope.eventinfo.srcip = "";
-        $scope.eventinfo.srcname = "";
-        $scope.eventinfo.dstip = "";
-        $scope.eventinfo.dstname = "";
+        $scope.eventinfo.src_ip = "";
+        $scope.eventinfo.dest_ip = "";
         $scope.eventinfo.lookupip = "";
         $scope.sensorNames = [];
         $scope.selected = [];
         $scope.selectedMainTab = "";
         $scope.selectedBottomTab = "";
+        $scope.selectedFieldName = "";
         $scope.status = '  ';
         $scope.customFullscreen = false;
         $scope.tableOptions = {};
+        $scope.flowTableOptions = {};
+        $scope.httpTableOptions = {};
         $scope.currentTableName = "";
+        $scope.currentTableType = "";
         $scope.rtqueue = 0;
         $scope.equeue = 0;
         $scope.eventQuery = [];
@@ -39,6 +44,13 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         $scope.queryLimit = 1000;
         $scope.eventComment = "";
 
+        $scope.elasticResults = {};
+        $scope.elasticSearch = {};
+        $scope.elasticSearch.eventTypes = ['flow','http'];
+        $scope.elasticSearch.eventType = 'flow';
+        $scope.elasticSearch.limit = "1000";
+        $scope.elasticSearch.nextQuery = 0;
+
         // Keep all pending requests here until they get responses
         var callbacks = {};
         // Create a unique callback ID to map requests to responses
@@ -48,10 +60,8 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         var eventmenuState = 0;
         var prioritymenu = document.querySelector("#priority-menu");
         var prioritymenuState = 0;
-        var srcipmenu = document.querySelector("#srcip-menu");
-        var srcipmenuState = 0;
-        var dstipmenu = document.querySelector("#dstip-menu");
-        var dstipmenuState = 0;
+        var ipmenu = document.querySelector("#ip-menu");
+        var ipmenuState = 0;
         var sigmenu = document.querySelector("#signature-menu");
         var sigmenuState = 0;
         var contextMenuClassName = "context-menu";
@@ -70,19 +80,24 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         var menuPositionY;
         var windowWidth;
         var windowHeight;
-        var tabulatorContent = 'options="tableOptions" \
-                            srciprightclick="displaySrcIPMenu(arg1, arg2, arg3)" \
-                            dstiprightclick="displayDstIPMenu(arg1, arg2, arg3)" \
+        var tabulatorContent = 'eventoptions="tableOptions" \
+                            iprightclick="displayIPMenu(arg1, arg2, arg3, arg4)" \
                             priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" \
                             eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" \
                             signaturerightclick="displaySigRightClickMenu(arg1, arg2, arg3)" \
-                            rowclick="rowSelected(arg1, arg2)"'
+                            rowclick="rowSelected(arg1, arg2)"';
+        var flowTabulatorContent = 'flowoptions="flowTableOptions" \
+                            iprightclick="displayIPMenu(arg1, arg2, arg3, arg4)" \
+                            flowclick="flowSelected(arg1, arg2)"';
+        var httpTabulatorContent = 'httpoptions="httpTableOptions" \
+                            iprightclick="displayIPMenu(arg1, arg2, arg3, arg4)" \
+                            httpclick="httpSelected(arg1, arg2)"';
         //$scope.mainTabs = [];
         $scope.mainTabs = [
             {
                 title: 'rtevents',
                 close: false,
-                content: '<tabulator input-id="rtevents" ' + tabulatorContent + '></tabulator>'
+                content: '<eventtabulator input-id="rtevents" ' + tabulatorContent + '></eventtabulator>'
             }
         ];
         /*
@@ -110,20 +125,28 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 toggleEventMenuOff();
                 toggleSigMenuOff();
                 togglePriorityMenuOff();
-                toggleSrcipMenuOff();
-                toggleDstipMenuOff();
+                toggleipMenuOff();
             }
 
         });
 
-        $scope.newTabSelected = function(tableName) {
+        $scope.newTabSelected = function(tableName, dataType) {
+
             $scope.currentTableName = tableName;
+            $scope.currentTableType = dataType;
+            
+            // Show detail based on table type
+            switch (dataType) {
+                case 'event': $scope.displayEventData = true; $scope.displayJSONData = false; break;
+                case 'flow': $scope.displayEventData = false; $scope.displayJSONData = true; break;
+                case 'http': $scope.displayEventData = false; $scope.displayJSONData = true; break;
+            }
         }
 
         $scope.rowSelected = function(data, row) {
             $scope.selectedRow = data.id;
-            $scope.eventinfo.srcip = data.srcip;
-            $scope.eventinfo.dstip = data.dstip;
+            $scope.eventinfo.src_ip = data.src_ip;
+            $scope.eventinfo.dest_ip = data.dest_ip;
 
             if ($scope.currentTableName === 'rtevents') {
                 var cmd = {UserSelectedEvent : [data.aid,$scope.userid]}
@@ -134,6 +157,54 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             if($scope.eventinfo.sig) {showSignatureInfo(data);};
             if($scope.eventinfo.payload) {showPayloadInfo(data);};
             displayWhoisData();
+        }
+
+        $scope.flowSelected = function(data, row) {
+
+            $scope.eventinfo.src_ip = data.src_ip;
+            $scope.eventinfo.dest_ip = data.dest_ip;
+            displayWhoisData();
+
+            $scope.jsonData = {};
+            var newkey = "";
+
+            angular.forEach(data, function(value, key) {
+
+                if (typeof value === 'object') {
+                    angular.forEach(value, function(nextvalue, nextkey) {
+                        newkey = key + '.' + nextkey;
+                        $scope.jsonData[newkey] = nextvalue;
+                    });
+                } else {
+                    $scope.jsonData[key] = value;
+                }
+
+            });
+
+        }
+
+        $scope.httpSelected = function(data, row) {
+
+            $scope.eventinfo.src_ip = data.src_ip;
+            $scope.eventinfo.dest_ip = data.dest_ip;
+            displayWhoisData();
+
+            $scope.jsonData = {};
+            var newkey = "";
+
+            angular.forEach(data, function(value, key) {
+
+                if (typeof value === 'object') {
+                    angular.forEach(value, function(nextvalue, nextkey) {
+                        newkey = key + '.' + nextkey;
+                        $scope.jsonData[newkey] = nextvalue;
+                    });
+                } else {
+                    $scope.jsonData[key] = value;
+                }
+
+            });
+
         }
 
         // Setup any callbacks before making the request.
@@ -216,7 +287,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                   InsertSystemInfoMsg(messageObj.InsertSystemInfoMsg);
                   break;
                case 'InfoMessage':
-                  InfoMessage(messageObj.InfoMessage);
+                  InfoMessage(messageObj.InfoMessage[0]);
                   break;
                case 'UserMessage':
                   UserMessage(messageObj.UserMessage);
@@ -269,10 +340,10 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             if($scope.eventinfo.whois === "none") {
                 $scope.eventinfo.lookupip = ""
                 return;
-            } else if ($scope.eventinfo.whois === "srcip") {
-                $scope.eventinfo.lookupip = $scope.eventinfo.srcip;
+            } else if ($scope.eventinfo.whois === "src_ip") {
+                $scope.eventinfo.lookupip = $scope.eventinfo.src_ip;
             } else {
-                $scope.eventinfo.lookupip = $scope.eventinfo.dstip;
+                $scope.eventinfo.lookupip = $scope.eventinfo.dest_ip;
             }
 
             if ($scope.eventinfo.lookupip === "") { return; }
@@ -314,31 +385,23 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         }
         
-        $scope.displaySrcIPMenu = function(data, e, tableName) {
+        $scope.displayIPMenu = function(data, e, field, tableName) {
+
+                $scope.selectedFieldName = field;
 
                 e.preventDefault();
-                $scope.tableOptions.selectrow(tableName, data.id);
-                selectedEvent(data.id, $scope.userid);
-                if($scope.eventinfo.sig) {showSignatureInfo(data);};
-                if($scope.eventinfo.payload) {showPayloadInfo(data);};
-                toggleSrcipMenuOn();
-                positionMenu(e, srcipmenu);
-                $scope.eventinfo.srcip = data.srcip;
-                $scope.eventinfo.dstip = data.dstip;
+                toggleipMenuOn();
+                positionMenu(e, ipmenu);
 
-        }
+                $scope.eventinfo.src_ip = data.src_ip;
+                $scope.eventinfo.dest_ip = data.dest_ip;
 
-        $scope.displayDstIPMenu = function(data, e, tableName) {
-
-                e.preventDefault();
-                $scope.tableOptions.selectrow(tableName, data.id);
-                selectedEvent(data.id, $scope.userid);
-                if($scope.eventinfo.sig) {showSignatureInfo(data);};
-                if($scope.eventinfo.payload) {showPayloadInfo(data);};
-                toggleDstipMenuOn();
-                positionMenu(e, dstipmenu);
-                $scope.eventinfo.srcip = data.srcip;
-                $scope.eventinfo.dstip = data.dstip;
+                if ($scope.currentTableType === "event") {
+                    selectedEvent(data.id, $scope.userid);
+                    $scope.tableOptions.selectrow(tableName, data.id);
+                    if($scope.eventinfo.sig) {showSignatureInfo(data);};
+                    if($scope.eventinfo.payload) {showPayloadInfo(data);};
+                }
 
         }
 
@@ -366,16 +429,10 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 sigmenu.classList.add( contextMenuActive );
             }
          }
-        function toggleSrcipMenuOn() {
-            if ( srcipmenuState !== 1 ) {
-                srcipmenuState = 1;
-                srcipmenu.classList.add( contextMenuActive );
-            }
-         }
-        function toggleDstipMenuOn() {
-            if ( dstipmenuState !== 1 ) {
-                dstipmenuState = 1;
-                dstipmenu.classList.add( contextMenuActive );
+        function toggleipMenuOn() {
+            if ( ipmenuState !== 1 ) {
+                ipmenuState = 1;
+                ipmenu.classList.add( contextMenuActive );
             }
          }
         function togglePriorityMenuOn() {
@@ -396,16 +453,10 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                  sigmenu.classList.remove( contextMenuActive );
              }
          }
-         function toggleSrcipMenuOff() {
-             if ( srcipmenuState !== 0 ) {
-                 srcipmenuState = 0;
-                 srcipmenu.classList.remove( contextMenuActive );
-             }
-         }
-         function toggleDstipMenuOff() {
-             if ( dstipmenuState !== 0 ) {
-                 dstipmenuState = 0;
-                 dstipmenu.classList.remove( contextMenuActive );
+         function toggleipMenuOff() {
+             if ( ipmenuState !== 0 ) {
+                 ipmenuState = 0;
+                 ipmenu.classList.remove( contextMenuActive );
              }
          }
          function togglePriorityMenuOff() {
@@ -646,15 +697,17 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             var newTab = new Object();
             var tabName = "rtevents"
             newTab.title = tabName;
+            newTab.type = 'event';
             newTab.close = false;
-            newTab.content= '<tabulator input-id="' + tabName + '" ' + tabulatorContent + '></tabulator>';
+            newTab.content= '<eventtabulator input-id="' + tabName + '" ' + tabulatorContent + '></eventtabulator>';
             $scope.mainTabs.push(newTab);
 
             var newTab = new Object();
             var tabName = "escalated"
             newTab.title = tabName;
+            newTab.type = 'event';
             newTab.close = false;
-            newTab.content= '<tabulator input-id="' + tabName + '" ' + tabulatorContent + '></tabulator>';
+            newTab.content= '<eventtabulator input-id="' + tabName + '" ' + tabulatorContent + '></eventtabulator>';
             $scope.mainTabs.push(newTab);
 
             WebSocketService.wsConnect();
@@ -812,7 +865,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
               case 120: event.preventDefault(); $scope.escalateEvent('2'); break;
             }
 
-
         });
 
         // Process InsertEvent Messages from websocket
@@ -841,7 +893,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             */
             /*
             status[0],priority[1],category[2],sensorName[3],timestamp[4],sid[5],cid[6],signature[7],
-            srcip[8],dstip[9],ipproto[10],srcport[11],dstport[12],gid[13],sig_id[14],rev[15],flowid[16],
+            src_ip[8],dest_ip[9],ipproto[10],srcport[11],dstport[12],gid[13],sig_id[14],rev[15],flowid[16],
             flowid[17],count[18]
             0,3,Misc activity,suricata-int,2017-03-27 21:31:26,11,91943,ET CHAT IRC PRIVMSG command,
             192.168.8.8,139.162.227.51,6,36462,6667,1,2002026,21,162391436034155,162391436034155,1
@@ -857,8 +909,8 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 aid:aid, 
                 id:aid, 
                 msg:msg[7],
-                srcip:msg[8], 
-                dstip:msg[9], 
+                src_ip:msg[8], 
+                dest_ip:msg[9], 
                 proto:msg[10],
                 sport:msg[11], 
                 dport:msg[12], 
@@ -897,8 +949,8 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     aid:aid, 
                     id:aid, 
                     msg:msg[7],
-                    srcip:msg[8], 
-                    dstip:msg[9], 
+                    src_ip:msg[8], 
+                    dest_ip:msg[9], 
                     proto:msg[10],
                     sport:msg[11], 
                     dport:msg[12], 
@@ -906,7 +958,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     signature_id:msg[14],
                     rev:msg[15],
                     count:"1"
-
                 }
 
                 $scope.queryResults[tabName].push(newData);
@@ -947,13 +998,13 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         }
 
-        function InfoMessage(data) {
+        function InfoMessage(msg) {
             $mdDialog.show(
                 $mdDialog.alert()
                   .parent(angular.element(document.querySelector('#SguilConsole')))
                   .clickOutsideToClose(true)
                   //.title('alert title')
-                  .textContent(data[0])
+                  .textContent(msg)
                   .ariaLabel('Info Message')
                   .ok('Dismiss')
                   //.targetEvent(ev)
@@ -1065,7 +1116,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             $scope.mainTabs.splice(index, 1);
         }
 
-        // sensor sensorID winID timestamp srcIP srcPort dstIP dstPort force
+        // sensor sensorID winID timestamp srcIP srcPort dest_ip dstPort force
         $scope.transcriptRequest = function(event) {
 
             var tableName = $scope.currentTableName
@@ -1077,11 +1128,12 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             //var tabName = 'Xscript' + $scope.nextTranscript; 
             var newTab = new Object();
             newTab.title = tabName;
+            newTab.type = 'transcript';
             newTab.close = true;
             newTab.content= '<md-content class="md-padding" style="min-height:224px;max-height:450px;height:450px"><div id="' + tabName + '" style="font-size:12px;font-family:Consolas,monospace"></div></md-content>'
             $scope.mainTabs.push(newTab);
 
-            var cmd = {XscriptRequest : [data.sensor,splitAid[0],tabName,data.timestamp,data.srcip,data.sport,data.dstip,data.dport,0]};
+            var cmd = {XscriptRequest : [data.sensor,splitAid[0],tabName,data.timestamp,data.src_ip,data.sport,data.dest_ip,data.dport,0]};
             sendRequest(cmd,"none");
 
         }
@@ -1096,7 +1148,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             $scope.pcapDownloads.push(data.aid);
 
             var splitAid = data.id.split(".");
-            var cmd = {HttpPcapRequest : [data.sensor,splitAid[0],data.id,data.timestamp,data.srcip,data.sport,data.dstip,data.dport,data.proto,0]};
+            var cmd = {HttpPcapRequest : [data.sensor,splitAid[0],data.id,data.timestamp,data.src_ip,data.sport,data.dest_ip,data.dport,data.proto,0]};
             sendRequest(cmd,"none");
 
         }
@@ -1112,7 +1164,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         function HttpPcapAvailable(msg) {
 
             var aid = msg[0];
-            var url = 'https://' + $scope.cleanName + '/' + msg[1];
+            var url = 'https://' + $location.host() + '/' + msg[1];
             $scope.pcapURL[aid] = url;
             $scope.pcapStatus[aid] = 1;
 
@@ -1124,6 +1176,144 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         }
 
+        $scope.showElasticSearchDialog = function(event, field) {
+
+            if ($scope.currentTableType === "event") {
+                var data = $scope.tableOptions.getselecteddata($scope.currentTableName)[0];
+                var timestamp = data.timestamp;
+            } else if ($scope.currentTableType === "flow") {
+                var data = $scope.flowTableOptions.flowgetselecteddata($scope.currentTableName) [0];
+                var timestamp = data.flow.start;
+            } else {
+                var data = $scope.httpTableOptions.httpgetselecteddata($scope.currentTableName) [0];
+                var timestamp = data.timestamp;
+            }
+
+            // Add an hour before and after
+            var startDate = new Date(timestamp + ' UTC');
+            startDate.setHours(startDate.getHours() - 1);
+            var endDate = new Date(timestamp + ' UTC');
+            endDate.setHours(endDate.getHours() + 1);
+
+            // Set up the vars for the dialog
+            $scope.elasticSearch.startDate = startDate;
+            $scope.elasticSearch.endDate = endDate;
+            if (field === "src_ip") {
+                $scope.elasticSearch.query = data.src_ip;
+            } else {
+                $scope.elasticSearch.query = data.dest_ip;
+            }
+
+            $mdDialog.show({
+
+                controller: DialogController,
+                templateUrl: '/sguilclient/views/elasticsearch.tmpl.html',
+                parent: angular.element(document.body),
+                targetEvent: event,
+                scope: $scope,
+                preserveScope: true,
+                clickOutsideToClose: true
+
+            })
+                .then(function() {
+
+                    var query =
+                    {
+                        "version": true,
+                        "size": $scope.elasticSearch.limit,
+                        "sort": [
+                            {
+                                "timestamp": {
+                                    "order": "asc",
+                                    "unmapped_type": "boolean"
+                                }
+                            }
+                        ],
+                        "query": {
+                            "bool": {
+                                "must": [
+                                {
+                                    "query_string": {
+                                        "query": JSON.stringify($scope.elasticSearch.query),
+                                        "analyze_wildcard": true,
+                                        "default_field": "*"
+                                    }
+                                },
+                                {
+                                    "match_phrase": {
+                                      "event_type": {
+                                        "query": JSON.stringify($scope.elasticSearch.eventType)
+                                      }
+                                    }
+                                  },
+                                {
+                                    "range": {
+                                        "timestamp": {
+                                            "gte": $scope.elasticSearch.startDate.getTime(),
+                                            "lte": $scope.elasticSearch.endDate.getTime(),
+                                            "format": "epoch_millis"
+                                        }
+                                    }
+                                }
+                            ],
+                            "filter": [],
+                            "should": [],
+                            "must_not": []
+                            }
+                        }
+                    }
+
+                    $scope.elasticSearchRequest(query);
+
+                }
+            );
+        }
+
+        $scope.elasticSearchRequest = function(query) {
+
+            $scope.elasticSearch.nextQuery++;
+            var tabName = 'ESQuery' + $scope.elasticSearch.nextQuery; 
+            var newTab = new Object();
+            newTab.title = tabName;
+            newTab.type = $scope.elasticSearch.eventType;
+            newTab.close = true;
+            if (newTab.type === 'flow') {
+                newTab.content= '<flowtabulator input-id="' + tabName + '" ' + flowTabulatorContent + '></flowtabulator>';
+            } else {
+                newTab.content= '<httptabulator input-id="' + tabName + '" ' + httpTabulatorContent + '></httptabulator>';
+            }
+            $scope.mainTabs.push(newTab);
+
+            //var url = 'http://' + host + ':8443/_search';
+            //var url = "http://lazyvranch.sguil.net:9200/_search"
+            var creds = btoa($scope.username + ':' + $scope.password);
+            var auth = {'Authorization': 'Basic ' + creds};
+
+            $http.post(url, query, {headers: auth}).then(function(response) {
+
+                var hits = response.data.hits;
+                var totalMatches = response.data.hits.total;
+                var totalReturned = response.data.hits.hits.length;
+                InfoMessage('Elasticsearch Query returned ' + totalReturned + ' of ' + totalMatches + ' rows.');
+
+                if (totalReturned > 0) {
+                    $scope.elasticResults[tabName] = [];
+                    for (var i=0; i < totalReturned ; i++) {
+                        $scope.elasticResults[tabName].push(hits.hits[i]._source);
+                    }
+                    if ($scope.elasticSearch.eventType === 'flow') {
+                        $scope.flowTableOptions.flowsetdata(tabName, $scope.elasticResults[tabName]);
+                    } else {
+                        $scope.httpTableOptions.httpsetdata(tabName, $scope.elasticResults[tabName]);
+                    }
+                }
+
+            }, function(response) {
+                InfoMessage('Elasticsearch query failed: ' + JSON.stringify(response));
+            });
+
+        }
+
         $scope.showEventSearchDialog = function(event, type) {
 
             var data = $scope.tableOptions.getselecteddata($scope.currentTableName)[0];
@@ -1131,14 +1321,14 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
             $scope.eventWhere = 'WHERE event.timestamp > \'' + date + '\'';
 
-            if (type === "srcip") {
-                $scope.eventWhere += ' AND event.src_ip = INET_ATON(\''+ data.srcip + '\')';
-            } else if (type === "dstip") {
-                $scope.eventWhere += ' AND event.dst_ip = INET_ATON(\''+ data.dstip + '\')';
+            if (type === "src_ip") {
+                $scope.eventWhere += ' AND event.src_ip = INET_ATON(\''+ data.src_ip + '\')';
+            } else if (type === "dest_ip") {
+                $scope.eventWhere += ' AND event.dst_ip = INET_ATON(\''+ data.dest_ip + '\')';
             } else if (type === "signature") {
                 $scope.eventWhere += ' AND event.signature = \''+ data.msg + '\'';
             } else {
-                var lookupip = $scope.eventinfo.dstip;
+                var lookupip = $scope.eventinfo.dest_ip;
             }
 
             $mdDialog.show({
@@ -1159,8 +1349,9 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     var tabName = 'Query' + $scope.nextQuery; 
                     var newTab = new Object();
                     newTab.title = tabName;
+                    newTab.type = 'event';
                     newTab.close = true;
-                    newTab.content= '<tabulator input-id="' + tabName + '" ' + tabulatorContent + '></tabulator>';
+                    newTab.content= '<eventtabulator input-id="' + tabName + '" ' + tabulatorContent + '></eventtabulator>';
                     $scope.mainTabs.push(newTab);
 
                     var query = '(SELECT \
@@ -1370,10 +1561,10 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
             var data = $scope.tableOptions.getselecteddata($scope.currentTableName)[0];
 
-            if (type === "srcip") {
-                var ip = data.srcip;
+            if (type === "src_ip") {
+                var ip = data.src_ip;
             } else {
-                var ip = data.dstip;
+                var ip = data.dest_ip;
             }
 
             var url = 'https://tcpiputils.com/ip/' + ip;

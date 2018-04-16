@@ -8,11 +8,18 @@ angular.module('SguilClient', [
     'ngRoute',
     'ngMaterial',
     'ngAria',
-    'tabulator',
+    'tabulatorModule',
+    'flowTabulatorModule',
+    'httpTabulatorModule',
     'compile',
     'ui.grid'
 ])
  
+.config(function($mdThemingProvider) {
+    $mdThemingProvider.theme('blue-grey', 'default')
+      .primaryPalette('blue')
+  })
+
 .config(['$routeProvider', function ($routeProvider) {
 
     $routeProvider
