@@ -6,6 +6,7 @@ angular.module('httpTabulatorModule', [])
         replace: true,
         scope: { 
             httpclick: '&',
+            eventrightclick: '&',
             iprightclick: '&',
             httpoptions: '=' ,
             inputId: '@'
@@ -20,7 +21,9 @@ angular.module('httpTabulatorModule', [])
                 selectable: 1,
                 columns:[ //Define Table Columns
                     {title:"Host", field:"host", align:"left", sorter:"string", sortable:true, editable:false},
-                    {title:"Flow ID", field:"flow_id", align:"left", sorter:"number", sortable:true, editable:false},
+                    {title:"Flow ID", field:"flow_id", align:"left", sorter:"number", sortable:true, editable:false,
+                        cellContext:function(e, cell){ scope.eventrightclick({arg1: cell.getData(), arg2: e, arg3: scope.inputId});}
+                    },
                     {title:"timestamp", field:"timestamp", align:"left", sorter:"date", sortable:true, editable:false, 
                         mutator:function(value, data, type, mutatorParams, cell){
                             var timestamp = $filter('date')(new Date(value), 'yyyy-MM-dd HH:mm:ss', 'UTC/GMT');
@@ -54,6 +57,11 @@ angular.module('httpTabulatorModule', [])
                 httpselectrow: function(tname, data){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
                     myElement.tabulator("selectRow", data);
+                },
+                httpgetselecteddata: function(tname){
+                    var myElement = angular.element( document.querySelector( '#' + tname ) );
+                    var data = myElement.tabulator("getSelectedData"); 
+                    return data;
                 },
                 httpsetdata: function(tname, data){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );

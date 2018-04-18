@@ -42,10 +42,20 @@ angular.module('SguilClient', [
 
     function ($rootScope, $location) {
 
-        // Update your server name and port here
-        //$rootScope.servername = 'wss://lazyvranch.sguil.net:443/ws';
+        $rootScope.urlscheme = {};
         $rootScope.connected = 0;
         $rootScope.loggedin = 0;
+        
+        // Adjust your URLs if you have a custom install
+        var host = $location.host();
+        var port = $location.port();
+        $rootScope.urlscheme.https = 'https://' + host + ':' + port;
+        $rootScope.urlscheme.websocket = 'wss://' + host + ':' + port;
+        $rootScope.urlscheme.elastic = 'https://' + host + ':8443';
+
+        //$rootScope.urlscheme.https = 'https://' + host + ':' + port;
+        //$rootScope.urlscheme.websocket = 'wss://192.168.8.250';
+        //$rootScope.urlscheme.elastic = 'http://192.168.8.250:9200';
 
     }
 

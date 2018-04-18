@@ -6,6 +6,7 @@ angular.module('flowTabulatorModule', [])
         replace: true,
         scope: { 
             flowclick: '&',
+            eventrightclick: '&',
             iprightclick: '&',
             flowoptions: '=' ,
             inputId: '@'
@@ -20,7 +21,9 @@ angular.module('flowTabulatorModule', [])
                 selectable: 1,
                 columns:[ //Define Table Columns
                     {title:"Host", field:"host", align:"left", sorter:"string", sortable:true, editable:false},
-                    {title:"Flow ID", field:"flow_id", align:"left", sorter:"number", sortable:true, editable:false},
+                    {title:"Flow ID", field:"flow_id", align:"left", sorter:"number", sortable:true, editable:false,
+                        cellContext:function(e, cell){ scope.eventrightclick({arg1: cell.getData(), arg2: e, arg3: scope.inputId});}
+                    },
                     {title:"State", field:"flow.state", align:"left", sorter:"string", sortable:true, editable:false},
                     {title:"Alerted", field:"flow.alerted", align:"left", sorter:"string", sortable:true, editable:false},
                     {title:"Flow Start", field:"flow.start", align:"center", sorter:"date", sortable:true, editable:false, 
@@ -62,6 +65,11 @@ angular.module('flowTabulatorModule', [])
                     //console.log('Selecting: ' + data);
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
                     myElement.tabulator("selectRow", data);
+                },
+                flowgetselecteddata: function(tname){
+                    var myElement = angular.element( document.querySelector( '#' + tname ) );
+                    var data = myElement.tabulator("getSelectedData"); 
+                    return data;
                 },
                 flowsetdata: function(tname, data){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );

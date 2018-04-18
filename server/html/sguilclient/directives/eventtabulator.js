@@ -71,11 +71,11 @@ angular.module('tabulatorModule', [])
                     {title:"SourceIP", width:100, field:"src_ip", align:"left", sorter:"string", sortable:true, editable:false,
                         cellContext:function(e, cell){ scope.iprightclick({arg1: cell.getData(), arg2: e, arg3: cell.getField(), arg4: scope.inputId});}
                     },
-                    {title:"SPt", width:50, field:"sport", align:"right", sorter:"number", sortable:true, editable:false},
+                    {title:"SPt", width:50, field:"src_port", align:"right", sorter:"number", sortable:true, editable:false},
                     {title:"DestIP", width:100, field:"dest_ip", align:"left", sorter:"string", sortable:true, editable:false,
                         cellContext:function(e, cell){ scope.iprightclick({arg1: cell.getData(), arg2: e, arg3: cell.getField(), arg4: scope.inputId});}
                     },
-                    {title:"DPt", width:50, field:"dport", align:"right", sorter:"number", sortable:true, editable:false},
+                    {title:"DPt", width:50, field:"dest_port", align:"right", sorter:"number", sortable:true, editable:false},
                     {title:"P", width:20, field:"proto", align:"right", sorter:"number", sortable:true, editable:false},
                     {title:"Message", field:"msg", align:"left", sorter:"string", sortable:true, editable:false,
                         cellContext:function(e, cell){ scope.signaturerightclick({arg1: cell.getData(), arg2: e, arg3: scope.inputId});}
