@@ -46,13 +46,17 @@ angular.module('SguilClient', [
         $rootScope.connected = 0;
         $rootScope.loggedin = 0;
         
-        // Adjust your URLs if you have a custom install
+        /*
+        The default assumes all pieces are installed on the same 
+        host with elastic fronted by an https proxy on port 8443
+        */
         var host = $location.host();
         var port = $location.port();
         $rootScope.urlscheme.https = 'https://' + host + ':' + port;
         $rootScope.urlscheme.websocket = 'wss://' + host + ':' + port;
         $rootScope.urlscheme.elastic = 'https://' + host + ':8443';
 
+        // Adjust your URLs if you have a custom install
         //$rootScope.urlscheme.https = 'https://' + host + ':' + port;
         //$rootScope.urlscheme.websocket = 'wss://192.168.8.250';
         //$rootScope.urlscheme.elastic = 'http://192.168.8.250:9200';
