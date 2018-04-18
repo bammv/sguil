@@ -1234,7 +1234,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                                 "must": [
                                 {
                                     "query_string": {
-                                        "query": JSON.stringify($scope.elasticSearch.query),
+                                        "query": $scope.elasticSearch.query,
                                         "analyze_wildcard": true,
                                         "default_field": "*"
                                     }
@@ -1242,7 +1242,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                                 {
                                     "match_phrase": {
                                       "event_type": {
-                                        "query": JSON.stringify($scope.elasticSearch.eventType)
+                                        "query": $scope.elasticSearch.eventType
                                       }
                                     }
                                   },
@@ -1309,8 +1309,9 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     }
                 }
 
-            }, function(response) {
-                InfoMessage('Elasticsearch query failed: ' + JSON.stringify(response));
+            }, function(failure) {
+                //console.log('Failed: ', failure)
+                InfoMessage('Elasticsearch query failed: ' + failure.status + ' (' + failure.statusText + ')');
             });
 
         }
