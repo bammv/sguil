@@ -39,7 +39,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         $scope.pcapDownloads = [];
         $scope.pcapStatus = {};
         $scope.pcapURL = {};
-
+        $scope.searchComplete = {};
         $scope.eventWhere = "";
         $scope.queryLimit = 1000;
         $scope.eventComment = "";
@@ -971,6 +971,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             } else {
 
                 $scope.tableOptions.setdata(tabName, $scope.queryResults[tabName]);
+                $scope.searchComplete[tabName] = true;
 
             }
 
@@ -1187,6 +1188,13 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         }
 
+        $scope.showSearchProgress = function(tabname) {
+            if (tabname === 'rtevents' || tabname == 'escalated' || $scope.searchComplete[tabname] === true) { 
+                return false;
+            } else {
+                return true;
+            }
+        }
         $scope.showProgress = function(aid) {
             return $scope.pcapStatus[aid] === 1;
         }
@@ -1311,6 +1319,8 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             newTab.title = tabName;
             newTab.type = $scope.elasticSearch.eventType;
             newTab.close = true;
+            $scope.searchComplete[tabName] = false;
+
             if (newTab.type === 'flow') {
                 newTab.content= '<flowtabulator input-id="' + tabName + '" ' + flowTabulatorContent + '></flowtabulator>';
             } else {
@@ -1341,10 +1351,11 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                         $scope.httpTableOptions.httpsetdata(tabName, $scope.elasticResults[tabName]);
                     }
                 }
+                $scope.searchComplete[tabName] = true;
 
             }, function(failure) {
-                //console.log('Failed: ', failure)
                 InfoMessage('Elasticsearch query failed: ' + failure.status + ' (' + failure.statusText + ')');
+                $scope.searchComplete[tabName] = true;
             });
 
         }
@@ -1386,6 +1397,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     newTab.title = tabName;
                     newTab.type = 'event';
                     newTab.close = true;
+                    $scope.searchComplete[tabName] = false;
                     newTab.content= '<eventtabulator input-id="' + tabName + '" ' + tabulatorContent + '></eventtabulator>';
                     $scope.mainTabs.push(newTab);
 

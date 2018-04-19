@@ -63,7 +63,12 @@
                       <md-icon md-svg-src="img/icons/ic_close_24px.svg"></md-icon>
                   </a>
               </md-tab-label>
-              <md-tab-body><div compile="tab.content"></div></md-tab-body>
+              <md-tab-body>
+                  <div ng-style="{'display': showSearchProgress(tab.title)?'block':'none'}">
+                      <md-progress-linear flex="" md-mode="indeterminate"></md-progress-linear>
+                  </div>
+                  <div compile="tab.content"></div>
+              </md-tab-body>
           </md-tab>
       </md-tabs>
 
