@@ -1,10 +1,21 @@
+html, body {
+  height: 100vh;
+  padding: 0;
+  margin: 0;
+}
+
+.top-container {
+  height: 450px;
+  max-height: 450px;
+}
+.bottom-container {
+  height: 30vh;
+  max-height: 30vh;
+}
+
 md-list-item, md-list-item .md-list-item-inner {
   min-height: 20px;
   height: 25px;
-}
-
-.md-tab > md-icon {
-  color: inherit;
 }
 
 md-button.md-xsmall{
@@ -102,9 +113,21 @@ md-tooltip ._md-content {
       min-height: 24px;
       max-height: 24px; }
 
+.md-tab > md-icon {
+  color: inherit;
+}
+
+/*
+md-pagination-wrapper {
+  height: 32px;
+}
+md-tab-item {
+  padding: 5px !important;
+}
 md-tabs-wrapper, md-tabs-canvas, md-pagination-wrapper {
     height: 32px !important;
 }
+*/
 
 md-menu-item.md-small {
   min-height: 24px;

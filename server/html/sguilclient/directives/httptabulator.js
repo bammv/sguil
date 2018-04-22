@@ -15,7 +15,7 @@ angular.module('httpTabulatorModule', [])
         link: function (scope, el, attribs) {
 
             el.tabulator({
-                height:"450", // set height of table (optional)
+                height:"100%", // set height of table (optional)
                 layout:"fitDataFill",
                 layoutColumnsOnNewData:true,
                 selectable: 1,
