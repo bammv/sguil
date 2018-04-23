@@ -81,6 +81,11 @@ angular.module('httpTabulatorModule', [])
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
                     var data = myElement.tabulator("getSelectedData"); 
                     return data;
+                },
+                httpdownload: function(tname, filename){
+                    var myElement = angular.element( document.querySelector( '#' + tname ) );
+                    var data = myElement.tabulator("download", "csv", filename);
+                    return data;
                 }
             });
         }

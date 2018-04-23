@@ -39,13 +39,14 @@
             </div>
         </md-toolbar>
     </div>
-    <div id="top-container" flex="60">
+    <div id="top-container" flex="65">
         <md-tabs layout-fill md-selected="selectedMainTab" md-autoselect md-border-bottom class="md-primary md-hue-1">
             <md-tab ng-repeat="tab in mainTabs" md-on-select="newTabSelected(tab.title, tab.type)">
                 <md-tab-label>
                     {{tab.title}} 
                     <a ng-if="tab.close" ng-click="removeQuery($index,tab)">
-                        <md-icon md-svg-src="img/icons/ic_close_24px.svg"></md-icon>
+                        <md-icon md-svg-src="images/ic_cancel_24px.svg"></md-icon>
+                        <md-tooltip md-direction="bottom">Close Tab</md-tooltip>
                     </a>
                 </md-tab-label>
                 <md-tab-body>
@@ -53,13 +54,33 @@
                         <div ng-style="{'display': showSearchProgress(tab.title)?'block':'none'}">
                             <md-progress-linear flex="" md-mode="indeterminate"></md-progress-linear>
                         </div>
-                        <div flex="100" compile="tab.content"></div>
+                        <md-toolbar ng-if="tab.close" layout="row" class="md-hue-3 md-small toolbar-checkbox">
+                            <div class="md-toolbar-tools">
+                            <a ng-if="tab.refresh" ng-click="refreshQuery($index,tab)">
+                                <md-icon md-svg-src="img/icons/ic_refresh_24px.svg"></md-icon>
+                                <md-tooltip md-direction="bottom">Rerun Query</md-tooltip>
+                            </a>
+                            <a ng-if="tab.edit" ng-click="editQuery($index,tab)">
+                                <md-icon md-svg-src="images/ic_edit_24px.svg"></md-icon>
+                                <md-tooltip md-direction="bottom">Edit Query</md-tooltip>
+                            </a>
+                            <a ng-if="tab.save" ng-click="saveQuery($index,tab)">
+                                <md-icon md-svg-src="images/ic_save_24px.svg"></md-icon>
+                                <md-tooltip md-direction="bottom">Save Results</md-tooltip>
+                            </a>
+                            <a ng-if="tab.view" ng-click="showQuery($index,tab)">
+                                <md-icon md-svg-src="images/ic_eye_24px.svg"></md-icon>
+                                <md-tooltip md-direction="bottom">View Query</md-tooltip>
+                            </a>
+                            </div>
+                        </md-toolbar>
+                        <div layout-fill compile="tab.content"></div>
                     </div>
                 </md-tab-body>
             </md-tab>
         </md-tabs>
     </div>
-    <div class="bottom-container" flex="40" layout="row">
+    <div class="bottom-container" flex="35" layout="row">
         <div layout="column" style="width: 50%">
                 <md-tabs layout-fill md-selected="selectedBottomTab" md-border-bottom class="md-primary md-hue-1">
                   <md-tab label="IP Info">
@@ -130,9 +151,22 @@
                 <md-content flex="100">
                     <table class="flowtable">
                         <tr ng-repeat="(key, value) in jsonData">
-                            <td><b>{{ key }}:</b></td><td>{{ value }}</td>
+                            <!--
+                            <td style="text-align: left; vertical-align: middle;">
+                                <md-checkbox ng-change=upateColumnVis(key) class="table"></md-checkbox>
+                            </td>
+                            -->
+                            <td><b>{{ key }}:</b></td>
+                            <td>{{ value }}</td>
                         </tr>
                     </table>
+                    <!--
+                    <div ng-repeat="(key, value) in jsonData">
+                        <md-checkbox>
+                              <b>{{ key }}:</b> {{value}}
+                        </md-checkbox>
+                    </div>
+                    -->
                 </md-content>
             </div>
 
@@ -282,10 +316,10 @@
     
         <nav id="ip-menu" class="context-menu">
             <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="showEventSearchDialog($event, selectedFieldName)">Search Events</md-button>
+                <md-button class="md-small" ng-click="prepEventSearchDialog($event, selectedFieldName)">Search Events</md-button>
             </md-menu-item>
             <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="showElasticSearchDialog($event, selectedFieldName)">Search Elastic </md-button>
+                <md-button class="md-small" ng-click="prepElasticSearchDialog($event, selectedFieldName)">Search Elastic </md-button>
             </md-menu-item>
             <md-menu-item class="md-small">
                 <md-button class="md-small" ng-click="webLookup(selectedFieldName)">TCPIPUtils Lookup</md-button>

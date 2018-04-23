@@ -99,6 +99,9 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             {
                 title: 'rtevents',
                 close: false,
+                refresh: false,
+                save: false,
+                edit: false,
                 content: '<eventtabulator input-id="rtevents" ' + tabulatorContent + '></eventtabulator>'
             }
         ];
@@ -208,6 +211,12 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             });
 
         }
+
+        /*
+        $scope.updateColumnVis = function(columnname) {
+
+        }
+        */
 
         // Setup any callbacks before making the request.
         // Set the callback to "none" if no callback required
@@ -704,6 +713,10 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             newTab.title = tabName;
             newTab.type = 'event';
             newTab.close = false;
+            newTab.refresh = false;
+            newTab.save = false;
+            newTab.edit = false;
+            newTab.view = false;
             newTab.content= '<eventtabulator input-id="' + tabName + '" ' + tabulatorContent + '></eventtabulator>';
             $scope.mainTabs.push(newTab);
 
@@ -712,6 +725,10 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             newTab.title = tabName;
             newTab.type = 'event';
             newTab.close = false;
+            newTab.refresh = false;
+            newTab.save = false;
+            newTab.edit = false;
+            newTab.view = false;
             newTab.content= '<eventtabulator input-id="' + tabName + '" ' + tabulatorContent + '></eventtabulator>';
             $scope.mainTabs.push(newTab);
 
@@ -1118,10 +1135,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         }
 
-        $scope.removeQuery= function(index){
-            $scope.mainTabs.splice(index, 1);
-        }
-
         $scope.pcapRequest = function(event, requestType) {
 
             var tableName = $scope.currentTableName;
@@ -1170,6 +1183,10 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 newTab.title = tabName;
                 newTab.type = 'transcript';
                 newTab.close = true;
+                newTab.refresh = false;
+                newTab.save = true;
+                newTab.edit = false;
+                newTab.view = false;
                 newTab.content= '<md-content class="md-padding" style="min-height:224px;max-height:450px;height:450px"><div id="' + tabName + '" style="font-size:12px;font-family:Consolas,monospace"></div></md-content>'
                 $scope.mainTabs.push(newTab);
                 var cmd = {XscriptRequest : [sensor,net_name,tabName,timestamp,data.src_ip,data.src_port,data.dest_ip,data.dest_port,0]};
@@ -1218,7 +1235,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         }
 
-        $scope.showElasticSearchDialog = function(event, field) {
+        $scope.prepElasticSearchDialog = function(event, field) {
 
             if ($scope.currentTableType === "event") {
                 var data = $scope.tableOptions.getselecteddata($scope.currentTableName)[0];
@@ -1245,6 +1262,11 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             } else {
                 $scope.elasticSearch.query = data.dest_ip;
             }
+
+            $scope.displayElasticSearchDialog();
+        }
+
+        $scope.displayElasticSearchDialog = function() {
 
             $mdDialog.show({
 
@@ -1305,28 +1327,38 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                         }
                     }
 
-                    $scope.elasticSearchRequest(query);
+                    $scope.elasticSearch.nextQuery++;
+                    var tabName = 'ESQuery' + $scope.elasticSearch.nextQuery; 
+                    var newTab = new Object();
+                    newTab.title = tabName;
+                    newTab.type = $scope.elasticSearch.eventType;
+                    newTab.close = true;
+                    newTab.refresh = true;
+                    newTab.save = true;
+                    newTab.view = true;
+                    newTab.edit = true;
+                    newTab.view = true;
+                    newTab.startDate = $scope.elasticSearch.startDate;
+                    newTab.endDate = $scope.elasticSearch.endDate;
+                    newTab.eventType = $scope.elasticSearch.eventType; 
+                    newTab.query_string = $scope.elasticSearch.query; 
+                    newTab.query = query;
+                    $scope.searchComplete[tabName] = false;
+
+                    if (newTab.type === 'flow') {
+                        newTab.content= '<flowtabulator input-id="' + tabName + '" ' + flowTabulatorContent + '></flowtabulator>';
+                    } else {
+                        newTab.content= '<httptabulator input-id="' + tabName + '" ' + httpTabulatorContent + '></httptabulator>';
+                    }
+
+                    $scope.mainTabs.push(newTab);
+                    $scope.runElasticSearchRequest(query, tabName)
 
                 }
             );
         }
 
-        $scope.elasticSearchRequest = function(query) {
-
-            $scope.elasticSearch.nextQuery++;
-            var tabName = 'ESQuery' + $scope.elasticSearch.nextQuery; 
-            var newTab = new Object();
-            newTab.title = tabName;
-            newTab.type = $scope.elasticSearch.eventType;
-            newTab.close = true;
-            $scope.searchComplete[tabName] = false;
-
-            if (newTab.type === 'flow') {
-                newTab.content= '<flowtabulator input-id="' + tabName + '" ' + flowTabulatorContent + '></flowtabulator>';
-            } else {
-                newTab.content= '<httptabulator input-id="' + tabName + '" ' + httpTabulatorContent + '></httptabulator>';
-            }
-            $scope.mainTabs.push(newTab);
+        $scope.runElasticSearchRequest = function(query, tabName) {
 
             var host = $location.host();
             var url = $rootScope.urlscheme.elastic + '/_search';
@@ -1360,7 +1392,71 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         }
 
-        $scope.showEventSearchDialog = function(event, type) {
+        $scope.removeQuery= function(index){
+            $scope.mainTabs.splice(index, 1);
+        }
+
+        $scope.refreshQuery = function(index,tab) {
+
+            $scope.searchComplete[tab.title] = false;
+
+            if (tab.type === "event") {
+                $scope.queryResults[tab.title] = [];
+                var cmd = {QueryDB:[tab.title,tab.query]};
+                sendRequest(cmd,"none");
+            } else if (tab.type == "flow") {
+                $scope.elasticResults[tab.title] = {};
+                $scope.flowTableOptions.flowsetdata(tab.title, []);
+                $scope.runElasticSearchRequest(tab.query, tab.title);
+            } else if (tab.type == "http") {
+                $scope.elasticResults[tab.title] = {};
+                $scope.httpTableOptions.httpsetdata(tab.title, [])
+                $scope.runElasticSearchRequest(tab.query, tab.title);
+            }
+
+        }
+
+        $scope.editQuery = function(index, tab) {
+
+            if (tab.type === "event") {
+                $scope.eventWhere = tab.eventWhere;
+                $scope.displayEventSearchDialog();
+            } else if ((tab.type === "flow") || (tab.type === "http")) {
+                $scope.elasticSearch.startDate = tab.startDate;
+                $scope.elasticSearch.endDate = tab.endDate;
+                $scope.elasticSearch.query = tab.query_string;
+                $scope.elasticSearch.eventType = tab.eventType;
+                $scope.displayElasticSearchDialog();
+            } 
+        }
+
+        $scope.saveQuery = function(index, tab) {
+            var filename = tab.title + ".csv";
+
+            if (tab.type === "event") {
+                $scope.tableOptions.download(tab.title, filename);
+            } else if (tab.type == "flow") {
+                $scope.flowTableOptions.flowdownload(tab.title, filename);
+            } else if (tab.type == "http") {
+                $scope.httpTableOptions.httpdownload(tab.title, filename);
+            }
+        }
+
+        $scope.showQuery = function(index, tab) {
+
+            console.log('In showQuery');
+            $mdDialog.show(
+                $mdDialog.alert()
+                  .parent(angular.element(document.querySelector('#SguilConsole')))
+                  .clickOutsideToClose(true)
+                  .title('Query Details')
+                  .textContent(JSON.stringify(tab.query,null,"    "))
+                  .ariaLabel('Query Details')
+                  .ok('Dismiss')
+            );
+        }
+
+        $scope.prepEventSearchDialog = function(event, type) {
 
             var data = $scope.tableOptions.getselecteddata($scope.currentTableName)[0];
             var date = $filter('date')(new Date(data.timestamp),'yyyy-MM-dd');
@@ -1377,6 +1473,11 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 var lookupip = $scope.eventinfo.dest_ip;
             }
 
+            $scope.displayEventSearchDialog();
+
+        }
+
+        $scope.displayEventSearchDialog = function() {
             $mdDialog.show({
 
                 controller: DialogController,
@@ -1390,16 +1491,19 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             })
                 .then(function() {
 
-                    //console.log('Query: ' + $scope.eventWhere );
                     $scope.nextQuery++;
                     var tabName = 'Query' + $scope.nextQuery; 
                     var newTab = new Object();
                     newTab.title = tabName;
                     newTab.type = 'event';
                     newTab.close = true;
+                    newTab.refresh = true;
+                    newTab.save = true;
+                    newTab.edit = true;
+                    newTab.view = true;
+                    newTab.eventWhere = $scope.eventWhere;
                     $scope.searchComplete[tabName] = false;
                     newTab.content= '<eventtabulator input-id="' + tabName + '" ' + tabulatorContent + '></eventtabulator>';
-                    $scope.mainTabs.push(newTab);
 
                     var query = '(SELECT \
                                 event.status, \
@@ -1422,7 +1526,9 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                                 $scope.eventWhere +
                                 ') ORDER BY datetime, src_port ASC LIMIT ' + $scope.queryLimit
 
-                    //var query = '(SELECT event.status, event.priority, sensor.hostname,  event.timestamp as datetime, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port, event.signature_gen, event.signature_id,  event.signature_rev FROM event IGNORE INDEX (event_p_key, sid_time) INNER JOIN sensor ON event.sid=sensor.sid WHERE event.timestamp > "2017-04-12" AND event.src_ip = INET_ATON("59.45.175.62") ) UNION ( SELECT event.status, event.priority, sensor.hostname,  event.timestamp as datetime, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port, event.signature_gen, event.signature_id,  event.signature_rev FROM event IGNORE INDEX (event_p_key, sid_time) INNER JOIN sensor ON event.sid=sensor.sid WHERE event.timestamp > "2017-04-12" AND  event.dst_ip = INET_ATON("59.45.175.62") ) ORDER BY datetime, src_port ASC LIMIT 1000'
+                    newTab.query = query;
+                    $scope.mainTabs.push(newTab);
+
                     var cmd = {QueryDB:[tabName,query]};
                     $scope.queryResults[tabName] = [];
                     sendRequest(cmd,"none");

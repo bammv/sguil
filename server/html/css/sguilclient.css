@@ -41,7 +41,6 @@ md-button.md-xsmall{
 */
 
 table.flowtable {
-  font-size: 12px;
   background-color: #EEEEEE;
   text-align: left;
   border-collapse: collapse;
@@ -52,7 +51,10 @@ table.flowtable tr {
   border-bottom: 1px solid #1C6EA4;
 }
 table.flowtable td {
-  padding: 3px 20px;
+  padding: 3px 32px;
+}
+md-checkbox.table md-container.table {
+  padding: 0px 0px;
 }
 
 /*

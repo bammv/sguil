@@ -89,6 +89,11 @@ angular.module('flowTabulatorModule', [])
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
                     var data = myElement.tabulator("getSelectedData"); 
                     return data;
+                },
+                flowdownload: function(tname, filename){
+                    var myElement = angular.element( document.querySelector( '#' + tname ) );
+                    var data = myElement.tabulator("download", "csv", filename);
+                    return data;
                 }
             });
         }

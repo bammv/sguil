@@ -148,6 +148,11 @@ angular.module('tabulatorModule', [])
                 setdata: function(tname, data){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
                     myElement.tabulator("setData", data); 
+                },
+                download: function(tname, filename){
+                    var myElement = angular.element( document.querySelector( '#' + tname ) );
+                    var data = myElement.tabulator("download", "csv", filename);
+                    return data;
                 }
             });
         }
