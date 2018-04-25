@@ -25,21 +25,6 @@ md-button.md-xsmall{
   line-height: 0px; 
 }
 
-/*
-.ui-grid-top-panel {
-    background: #8c9eff;
-    color: white;
-}
-*/
-
-/*
-.flowtable td {
-  padding-top:5px;
-  padding-bottom:5;
-  padding-left:10px;   
-}
-*/
-
 table.flowtable {
   background-color: #EEEEEE;
   text-align: left;
@@ -51,24 +36,12 @@ table.flowtable tr {
   border-bottom: 1px solid #1C6EA4;
 }
 table.flowtable td {
+  font-size: 12px;
   padding: 3px 32px;
 }
 md-checkbox.table md-container.table {
   padding: 0px 0px;
 }
-
-/*
-table, th , td:nth-child(odd) {
-  background-color: #f1f1f1;
-  padding-left: 5px;
-  width: 100px;
-}
-table td:nth-child(even) {
-  background-color: #ffffff;
-  padding-left: 5px;
-  
-}
-*/
 
 md-tooltip .md-content {
     height: auto !important;
@@ -95,25 +68,29 @@ md-tooltip ._md-content {
     font-family: monospace;
 }
 
-  md-toolbar.md-small {
+md-toolbar.md-small {
     height: 32px;
     min-height: 32px;
-    max-height: 32px; }
-    md-toolbar.md-small .md-toolbar-tools {
-      font-size: 14px;
-      height: 32px;
-      min-height: 32px;
-      max-height: 32px; }
+    max-height: 32px;
+}
+md-toolbar.md-small .md-toolbar-tools {
+    font-size: 14px;
+    height: 32px;
+    min-height: 32px;
+    max-height: 32px;
+}
 
-  md-toolbar.md-xsmall {
+md-toolbar.md-xsmall {
     height: 24px;
     min-height: 24px;
-    max-height: 24px; }
-    md-toolbar.md-xsmall .md-toolbar-tools {
-      font-size: 14px;
-      height: 24px;
-      min-height: 24px;
-      max-height: 24px; }
+    max-height: 24px;
+}
+md-toolbar.md-xsmall .md-toolbar-tools {
+    font-size: 14px;
+    height: 24px;
+    min-height: 24px;
+    max-height: 24px; 
+}
 
 .md-tab > md-icon {
   color: inherit;

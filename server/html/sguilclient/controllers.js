@@ -1352,6 +1352,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     }
 
                     $scope.mainTabs.push(newTab);
+                    console.log('mainTabs: ', $scope.mainTabs);
                     $scope.runElasticSearchRequest(query, tabName)
 
                 }
@@ -1444,13 +1445,19 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         $scope.showQuery = function(index, tab) {
 
-            console.log('In showQuery');
+            var content = ""
+
+            if (tab.type === "event") {
+                content = tab.query;
+            } else {
+                content = JSON.stringify(tab.query, null, 2)
+            }
             $mdDialog.show(
                 $mdDialog.alert()
                   .parent(angular.element(document.querySelector('#SguilConsole')))
                   .clickOutsideToClose(true)
                   .title('Query Details')
-                  .textContent(JSON.stringify(tab.query,null,"    "))
+                  .htmlContent('<pre>' + content + '</pre>')
                   .ariaLabel('Query Details')
                   .ok('Dismiss')
             );

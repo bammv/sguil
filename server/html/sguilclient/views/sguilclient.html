@@ -54,22 +54,22 @@
                         <div ng-style="{'display': showSearchProgress(tab.title)?'block':'none'}">
                             <md-progress-linear flex="" md-mode="indeterminate"></md-progress-linear>
                         </div>
-                        <md-toolbar ng-if="tab.close" layout="row" class="md-hue-3 md-small toolbar-checkbox">
-                            <div class="md-toolbar-tools">
-                            <a ng-if="tab.refresh" ng-click="refreshQuery($index,tab)">
-                                <md-icon md-svg-src="img/icons/ic_refresh_24px.svg"></md-icon>
+                        <md-toolbar ng-if="tab.close" layout="row" class="md-hue-3 md-xsmall" style="fill: white; color:white">
+                            <div>
+                            <a ng-if="tab.refresh" ng-click="refreshQuery($index,tab)" style="fill: white; color:white">
+                                <md-icon  md-svg-src="img/icons/ic_refresh_24px.svg" style="fill: white; color:white"></md-icon>
                                 <md-tooltip md-direction="bottom">Rerun Query</md-tooltip>
                             </a>
                             <a ng-if="tab.edit" ng-click="editQuery($index,tab)">
-                                <md-icon md-svg-src="images/ic_edit_24px.svg"></md-icon>
+                                <md-icon md-svg-src="images/ic_edit_24px.svg" style="fill: white; color:white"></md-icon>
                                 <md-tooltip md-direction="bottom">Edit Query</md-tooltip>
                             </a>
                             <a ng-if="tab.save" ng-click="saveQuery($index,tab)">
-                                <md-icon md-svg-src="images/ic_save_24px.svg"></md-icon>
+                                <md-icon md-svg-src="images/ic_save_24px.svg" style="fill: white; color:white"></md-icon>
                                 <md-tooltip md-direction="bottom">Save Results</md-tooltip>
                             </a>
                             <a ng-if="tab.view" ng-click="showQuery($index,tab)">
-                                <md-icon md-svg-src="images/ic_eye_24px.svg"></md-icon>
+                                <md-icon md-svg-src="images/ic_eye_24px.svg" style="fill: white; color:white"></md-icon>
                                 <md-tooltip md-direction="bottom">View Query</md-tooltip>
                             </a>
                             </div>
