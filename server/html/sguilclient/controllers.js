@@ -1448,7 +1448,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             var content = ""
 
             if (tab.type === "event") {
-                content = tab.query;
+                content = tab.query.replace(/\s+/g,' ').trim();
             } else {
                 content = JSON.stringify(tab.query, null, 2)
             }
