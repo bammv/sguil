@@ -20,6 +20,7 @@ angular.module('tabulatorModule', [])
             el.tabulator({
                 height:"100%", // set height of table (optional)
                 layout:"fitColumns",
+                layoutColumnsOnNewData:true,
                 selectable: 1,
                 //pagination:"local",
                 //progressiveRender:true,

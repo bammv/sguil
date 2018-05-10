@@ -35,12 +35,29 @@ table.flowtable tr {
   border-top: 1px solid #1C6EA4;
   border-bottom: 1px solid #1C6EA4;
 }
+table.flowtable th {
+  font-size: 12px;
+  padding: 3px 32px;
+}
 table.flowtable td {
   font-size: 12px;
   padding: 3px 32px;
 }
-md-checkbox.table md-container.table {
-  padding: 0px 0px;
+md-checkbox.md-checkbox-small {
+    vertical-align: middle !important;
+    display: block;
+    margin: 8px;
+    margin: 0px;
+}
+md-checkbox.md-checkbox-small .md-icon {
+    transform: scale(.75);
+    padding: 0px 0px;
+    vertical-align: middle !important;
+ }
+  
+md-checkbox.md-checkbox-small .md-label {
+    margin-left: 25px;
+    vertical-align: middle !important;
 }
 
 md-tooltip .md-content {

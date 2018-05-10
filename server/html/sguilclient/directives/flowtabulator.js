@@ -20,34 +20,34 @@ angular.module('flowTabulatorModule', [])
                 layoutColumnsOnNewData:true,
                 selectable: 1,
                 columns:[ //Define Table Columns
-                    {title:"Host", field:"host", align:"left", sorter:"string", sortable:true, editable:false},
-                    {title:"Flow ID", field:"flow_id", align:"left", sorter:"number", sortable:true, editable:false,
+                    {title:"Host", field:"host", align:"left", sorter:"string", sortable:true, editable:false, visible:true},
+                    {title:"Flow ID", field:"flow_id", align:"left", sorter:"number", sortable:true, editable:false, visible:true,
                         cellContext:function(e, cell){ scope.eventrightclick({arg1: cell.getData(), arg2: e, arg3: scope.inputId});}
                     },
-                    {title:"State", field:"flow.state", align:"left", sorter:"string", sortable:true, editable:false},
-                    {title:"Alerted", field:"flow.alerted", align:"left", sorter:"string", sortable:true, editable:false},
-                    {title:"Flow Start", field:"flow.start", align:"center", sorter:"date", sortable:true, editable:false, 
+                    {title:"State", field:"flow.state", align:"left", sorter:"string", sortable:true, editable:false, visible:true},
+                    {title:"Alerted", field:"flow.alerted", align:"left", sorter:"string", sortable:true, editable:false, visible:true},
+                    {title:"Flow Start", field:"flow.start", align:"center", sorter:"date", sortable:true, editable:false, visible:true, 
                         mutator:function(value, data, type, mutatorParams, cell){
                             var timestamp = $filter('date')(new Date(value), 'yyyy-MM-dd HH:mm:ss', 'UTC/GMT');
                             return timestamp;
                         }
                     },
-                    {title:"Flow End", field:"flow.end", align:"center", sorter:"date", sortable:true, editable:false, 
+                    {title:"Flow End", field:"flow.end", align:"center", sorter:"date", sortable:true, editable:false, visible:true, 
                         mutator:function(value, data, type, mutatorParams, cell){
                             var timestamp = $filter('date')(new Date(value), 'yyyy-MM-dd HH:mm:ss', 'UTC/GMT');
                             return timestamp;
                         }
                     },
-                    {title:"SourceIP", field:"src_ip", align:"left", sorter:"string", sortable:true, editable:false,
+                    {title:"SourceIP", field:"src_ip", align:"left", sorter:"string", sortable:true, editable:false, visible:true,
                         cellContext:function(e, cell){ scope.iprightclick({arg1: cell.getData(), arg2: e, arg3: cell.getField(), arg4: scope.inputId});}
                     },
-                    {title:"SPt", field:"src_port", align:"right", sorter:"number", sortable:true, editable:false},
-                    {title:"Dest IP", field:"dest_ip", align:"left", sorter:"string", sortable:true, editable:false,
+                    {title:"SPt", field:"src_port", align:"right", sorter:"number", sortable:true, editable:false, visible:true},
+                    {title:"Dest IP", field:"dest_ip", align:"left", sorter:"string", sortable:true, editable:false, visible:true,
                         cellContext:function(e, cell){ scope.iprightclick({arg1: cell.getData(), arg2: e, arg3: cell.getField(), arg4: scope.inputId});}
                     },
-                    {title:"DPt", field:"dest_port", align:"right", sorter:"number", sortable:true, editable:false},
-                    {title:"Proto", field:"proto", align:"right", sorter:"string", sortable:true, editable:false},
-                    {title:"App Proto", field:"app_proto", align:"right", sorter:"string", sortable:true, editable:false},
+                    {title:"DPt", field:"dest_port", align:"right", sorter:"number", sortable:true, editable:false, visible:true},
+                    {title:"Proto", field:"proto", align:"right", sorter:"string", sortable:true, editable:false, visible:true},
+                    {title:"App Proto", field:"app_proto", align:"right", sorter:"string", sortable:true, editable:false, visible:true},
                     {title:"SPkts", field:"flow.pkts_toserver", sorter:"number",visible:true, editable:false, align:"right"},
                     {title:"SBytes", field:"flow.bytes_toserver", sorter:"number",visible:true, editable:false, align:"right"},
                     {title:"DPkts", field:"flow.pkts_toclient", sorter:"number",visible:true, editable:false, align:"right"},
@@ -94,7 +94,28 @@ angular.module('flowTabulatorModule', [])
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
                     var data = myElement.tabulator("download", "csv", filename);
                     return data;
+                },
+                flowgetcolumns: function(tname){
+                    var myElement = angular.element( document.querySelector( '#' + tname ) );
+                    var data = myElement.tabulator("getColumns");
+                    return data;
+                },
+                flowgetcolumndefinitions: function(tname){
+                    var myElement = angular.element( document.querySelector( '#' + tname ) );
+                    var data = myElement.tabulator("getColumnDefinitions");
+                    return data;
+                },
+                flowtogglecolumn: function(tname, column){
+                    var myElement = angular.element( document.querySelector( '#' + tname ) );
+                    var data = myElement.tabulator("toggleColumn", column);
+                    return data;
+                },
+                flowaddcolumn: function(tname, item){
+                    var myElement = angular.element( document.querySelector( '#' + tname ) );
+                    var data = myElement.tabulator("addColumn", item, false );
+                    return data;
                 }
+
             });
         }
     };
