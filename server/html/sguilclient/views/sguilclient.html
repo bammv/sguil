@@ -54,7 +54,7 @@
                         <div ng-style="{'display': showSearchProgress(tab.title)?'block':'none'}">
                             <md-progress-linear flex="" md-mode="indeterminate"></md-progress-linear>
                         </div>
-                        <md-toolbar ng-if="tab.close" layout="row" class="md-hue-3 md-xsmall" style="fill: white; color:white">
+                        <md-toolbar ng-if="tab.toolbar" layout="row" class="md-hue-3 md-xsmall" style="fill: white; color:white">
                             <div>
                             <a ng-if="tab.refresh" ng-click="refreshQuery($index,tab)" style="fill: white; color:white">
                                 <md-icon  md-svg-src="img/icons/ic_refresh_24px.svg" style="fill: white; color:white"></md-icon>

@@ -733,6 +733,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             newTab.title = tabName;
             newTab.type = 'event';
             newTab.close = false;
+            newTab.toolbar = false;
             newTab.refresh = false;
             newTab.save = false;
             newTab.edit = false;
@@ -745,6 +746,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             newTab.title = tabName;
             newTab.type = 'event';
             newTab.close = false;
+            newTab.toolbar = false;
             newTab.refresh = false;
             newTab.save = false;
             newTab.edit = false;
@@ -1120,6 +1122,9 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     debugElement.append(container);
                     debugElement.append('<br>');
                     break;
+                case 'DONE':
+                    $scope.searchComplete[tabName] = true;
+                    break;
                 default:
                     console.log('Received Unknown Xscript Msg: ', data);
                     break;
@@ -1203,8 +1208,9 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 newTab.title = tabName;
                 newTab.type = 'transcript';
                 newTab.close = true;
+                newTab.toolbar = false;
                 newTab.refresh = false;
-                newTab.save = true;
+                newTab.save = false;
                 newTab.edit = false;
                 newTab.view = false;
                 newTab.content= '<md-content class="md-padding" style="min-height:224px;max-height:450px;height:450px"><div id="' + tabName + '" style="font-size:12px;font-family:Consolas,monospace"></div></md-content>'
@@ -1353,6 +1359,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     newTab.title = tabName;
                     newTab.type = $scope.elasticSearch.eventType;
                     newTab.close = true;
+                    newTab.toolbar = true;
                     newTab.refresh = true;
                     newTab.save = true;
                     newTab.view = true;
@@ -1564,6 +1571,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     newTab.title = tabName;
                     newTab.type = 'event';
                     newTab.close = true;
+                    newTab.toolbar = true;
                     newTab.refresh = true;
                     newTab.save = true;
                     newTab.edit = true;
