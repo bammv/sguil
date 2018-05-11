@@ -65,6 +65,8 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         var ipmenuState = 0;
         var sigmenu = document.querySelector("#signature-menu");
         var sigmenuState = 0;
+        var countmenu = document.querySelector("#count-menu");
+        var countmenuState = 0;
         var contextMenuClassName = "context-menu";
         var contextMenuItemClassName = "context-menu__item";
         var contextMenuLinkClassName = "context-menu__link";
@@ -85,6 +87,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                             iprightclick="displayIPMenu(arg1, arg2, arg3, arg4)" \
                             priorityrightclick="displayPriorityRightClickMenu(arg1, arg2, arg3)" \
                             eventrightclick="displayEventRightClickMenu(arg1, arg2, arg3)" \
+                            countrightclick="displayCountRightClickMenu(arg1, arg2, arg3)" \
                             signaturerightclick="displaySigRightClickMenu(arg1, arg2, arg3)" \
                             rowclick="rowSelected(arg1, arg2)"';
         var flowTabulatorContent = 'flowoptions="flowTableOptions" \
@@ -129,6 +132,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             var button = e.which || e.button;
             if ( button === 1 ) {
                 toggleEventMenuOff();
+                toggleCountMenuOff();
                 toggleSigMenuOff();
                 togglePriorityMenuOff();
                 toggleipMenuOff();
@@ -407,6 +411,18 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         }
         
+        $scope.displayCountRightClickMenu = function(data, e, tableName) {
+
+                e.preventDefault();
+                $scope.tableOptions.selectrow(tableName, data.id);
+                selectedEvent(data.id, $scope.userid);
+                if($scope.eventinfo.sig) {showSignatureInfo(data);};
+                if($scope.eventinfo.payload) {showPayloadInfo(data);};
+                toggleCountMenuOn();
+                positionMenu(e, countmenu);
+
+        }
+        
         $scope.displaySigRightClickMenu = function(data, e, tableName) {
 
                 e.preventDefault();
@@ -457,6 +473,12 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 eventmenu.classList.add( contextMenuActive );
             }
          }
+        function toggleCountMenuOn() {
+            if ( countmenuState !== 1 ) {
+                countmenuState = 1;
+                countmenu.classList.add( contextMenuActive );
+            }
+         }
         function toggleSigMenuOn() {
             if ( sigmenuState !== 1 ) {
                 sigmenuState = 1;
@@ -479,6 +501,12 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
              if ( eventmenuState !== 0 ) {
                  eventmenuState = 0;
                  eventmenu.classList.remove( contextMenuActive );
+             }
+         }
+         function toggleCountMenuOff() {
+             if ( countmenuState !== 0 ) {
+                 countmenuState = 0;
+                 countmenu.classList.remove( contextMenuActive );
              }
          }
          function toggleSigMenuOff() {
@@ -1160,6 +1188,32 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         }
 
+        $scope.getCorrelatedEvents = function() {
+
+            var tableName = $scope.currentTableName;
+            var data = $scope.tableOptions.getselecteddata(tableName)[0]; 
+            var reqid = data.id;
+            var tabName = "C" + reqid.replace(".", "_");
+
+            var newTab = new Object();
+            newTab.title = tabName;
+            newTab.type = 'event';
+            newTab.close = true;
+            newTab.toolbar = false;
+            newTab.refresh = false;
+            newTab.save = false;
+            newTab.edit = false;
+            newTab.view = false;
+            newTab.content= '<eventtabulator input-id="' + tabName + '" ' + tabulatorContent + '></eventtabulator>';
+            $scope.mainTabs.push(newTab);
+            $scope.queryResults[tabName] = [];
+
+            // GetCorrelatedEvents $eventID $correlateFrame.tablelist
+            var cmd = {GetCorrelatedEvents : [reqid, tabName]};
+            sendRequest(cmd,"none");
+
+        }
+
         $scope.pcapRequest = function(event, requestType) {
 
             var tableName = $scope.currentTableName;
@@ -1653,6 +1707,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     console.log('You cancelled the dialog.');
                 });
         }
+
         $scope.updateEventStatus= function(status) {
 
             if ($scope.currentTableName !== "") {

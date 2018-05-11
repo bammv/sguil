@@ -8,6 +8,7 @@ angular.module('tabulatorModule', [])
         scope: { 
             rowclick: '&',
             eventrightclick: '&',
+            countrightclick: '&',
             priorityrightclick: '&',
             iprightclick: '&',
             signaturerightclick: '&',
@@ -63,7 +64,9 @@ angular.module('tabulatorModule', [])
 
                     },
                     cellContext:function(e, cell){ scope.priorityrightclick({arg1: cell.getData(), arg2: e, arg3: scope.inputId});}},
-                    {title:"#", width:20, field:"count", align:"center", sorter:"number", sortable:true, editable:false},
+                    {title:"#", width:20, field:"count", align:"center", sorter:"number", sortable:true, editable:false,
+                        cellContext:function(e, cell){ scope.countrightclick({arg1: cell.getData(), arg2: e, arg3: scope.inputId});}
+                    },
                     {title:"Sensor", width:100, field:"sensor", align:"left", sorter:"string", sortable:true, editable:false},
                     {title:"Event ID", width:75, field:"aid", align:"left", sorter:"number", sortable:true, editable:false,
                         cellContext:function(e, cell){ scope.eventrightclick({arg1: cell.getData(), arg2: e, arg3: scope.inputId});}
