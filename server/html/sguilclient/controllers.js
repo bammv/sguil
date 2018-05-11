@@ -26,6 +26,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         $scope.customFullscreen = false;
         $scope.tableOptions = {};
         $scope.flowTableOptions = {};
+        $scope.flowDisplay = {};
         $scope.httpTableOptions = {};
         $scope.currentTableName = "";
         $scope.currentTableType = "";
@@ -168,11 +169,14 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
             $scope.eventinfo.src_ip = data.src_ip;
             $scope.eventinfo.dest_ip = data.dest_ip;
+
             displayWhoisData();
 
             $scope.jsonData = {};
-            var newkey = "";
+            $scope.flowDisplay = {};
 
+
+            var newkey = "";
             angular.forEach(data, function(value, key) {
 
                 if (typeof value === 'object') {
@@ -185,6 +189,16 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 }
 
             });
+
+            // Populate appropriate checkboxes
+            var keyName, i = "";
+            var visibleValue = "";
+            var defs = $scope.flowTableOptions.flowgetcolumndefinitions($scope.currentTableName);
+            for( i = defs.length; i--; ) {
+                keyName = defs[i].field;
+                visibleValue = defs[i].visible;
+                $scope.flowDisplay[keyName] = visibleValue;
+            }
 
         }
 
@@ -195,6 +209,8 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             displayWhoisData();
 
             $scope.jsonData = {};
+            $scope.flowDisplay = {};
+
             var newkey = "";
 
             angular.forEach(data, function(value, key) {
@@ -210,13 +226,17 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
             });
 
-        }
+            // Populate appropriate checkboxes
+            var keyName, i = "";
+            var visibleValue = "";
+            var defs = $scope.httpTableOptions.httpgetcolumndefinitions($scope.currentTableName);
+            for( i = defs.length; i--; ) {
+                keyName = defs[i].field;
+                visibleValue = defs[i].visible;
+                $scope.flowDisplay[keyName] = visibleValue;
+            }
 
-        /*
-        $scope.updateColumnVis = function(columnname) {
-
         }
-        */
 
         // Setup any callbacks before making the request.
         // Set the callback to "none" if no callback required
@@ -713,6 +733,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             newTab.title = tabName;
             newTab.type = 'event';
             newTab.close = false;
+            newTab.toolbar = false;
             newTab.refresh = false;
             newTab.save = false;
             newTab.edit = false;
@@ -725,6 +746,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             newTab.title = tabName;
             newTab.type = 'event';
             newTab.close = false;
+            newTab.toolbar = false;
             newTab.refresh = false;
             newTab.save = false;
             newTab.edit = false;
@@ -1100,6 +1122,9 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     debugElement.append(container);
                     debugElement.append('<br>');
                     break;
+                case 'DONE':
+                    $scope.searchComplete[tabName] = true;
+                    break;
                 default:
                     console.log('Received Unknown Xscript Msg: ', data);
                     break;
@@ -1183,8 +1208,9 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 newTab.title = tabName;
                 newTab.type = 'transcript';
                 newTab.close = true;
+                newTab.toolbar = false;
                 newTab.refresh = false;
-                newTab.save = true;
+                newTab.save = false;
                 newTab.edit = false;
                 newTab.view = false;
                 newTab.content= '<md-content class="md-padding" style="min-height:224px;max-height:450px;height:450px"><div id="' + tabName + '" style="font-size:12px;font-family:Consolas,monospace"></div></md-content>'
@@ -1333,6 +1359,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     newTab.title = tabName;
                     newTab.type = $scope.elasticSearch.eventType;
                     newTab.close = true;
+                    newTab.toolbar = true;
                     newTab.refresh = true;
                     newTab.save = true;
                     newTab.view = true;
@@ -1352,7 +1379,6 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     }
 
                     $scope.mainTabs.push(newTab);
-                    console.log('mainTabs: ', $scope.mainTabs);
                     $scope.runElasticSearchRequest(query, tabName)
 
                 }
@@ -1390,6 +1416,47 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 InfoMessage('Elasticsearch query failed: ' + failure.status + ' (' + failure.statusText + ')');
                 $scope.searchComplete[tabName] = true;
             });
+
+        }
+
+        $scope.toggleColumnVisibility = function(event, keyName){
+
+            if ($scope.currentTableType === "flow") {
+
+                var defs = $scope.flowTableOptions.flowgetcolumndefinitions($scope.currentTableName);
+                var results = defs.find( item => item.field === keyName );
+                if (typeof results != 'undefined') {
+                    // Column exist. Toggle visibility
+                    $scope.flowTableOptions.flowtogglecolumn($scope.currentTableName, keyName)
+                    // Column defs do not update automagically
+                    if (results.visible === true) {
+                        results.visible = false;
+                    } else {
+                        results.visible = true;
+                    }
+                } else {
+                    //Column does not exist. Create it
+                    $scope.flowTableOptions.flowaddcolumn($scope.currentTableName, {title:keyName, field:keyName, visible: true})
+                }
+
+            } else {
+
+                var defs = $scope.httpTableOptions.httpgetcolumndefinitions($scope.currentTableName);
+                var results = defs.find( item => item.field === keyName );
+                if (typeof results != 'undefined') {
+                    // Column exist. Toggle visibility
+                    $scope.httpTableOptions.httptogglecolumn($scope.currentTableName, keyName)
+                    if (results.visible === true) {
+                        results.visible = false;
+                    } else {
+                        results.visible = true;
+                    }
+                } else {
+                    //Column does not exist. Create it
+                    $scope.httpTableOptions.httpaddcolumn($scope.currentTableName, {title:keyName, field:keyName, visible: true})
+                }
+
+            }
 
         }
 
@@ -1504,6 +1571,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     newTab.title = tabName;
                     newTab.type = 'event';
                     newTab.close = true;
+                    newTab.toolbar = true;
                     newTab.refresh = true;
                     newTab.save = true;
                     newTab.edit = true;

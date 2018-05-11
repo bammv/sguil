@@ -54,7 +54,7 @@
                         <div ng-style="{'display': showSearchProgress(tab.title)?'block':'none'}">
                             <md-progress-linear flex="" md-mode="indeterminate"></md-progress-linear>
                         </div>
-                        <md-toolbar ng-if="tab.close" layout="row" class="md-hue-3 md-xsmall" style="fill: white; color:white">
+                        <md-toolbar ng-if="tab.toolbar" layout="row" class="md-hue-3 md-xsmall" style="fill: white; color:white">
                             <div>
                             <a ng-if="tab.refresh" ng-click="refreshQuery($index,tab)" style="fill: white; color:white">
                                 <md-icon  md-svg-src="img/icons/ic_refresh_24px.svg" style="fill: white; color:white"></md-icon>
@@ -81,7 +81,7 @@
         </md-tabs>
     </div>
     <div class="bottom-container" flex="35" layout="row">
-        <div layout="column" style="width: 50%">
+        <div layout="column" style="width: 50%;">
                 <md-tabs layout-fill md-selected="selectedBottomTab" md-border-bottom class="md-primary md-hue-1">
                   <md-tab label="IP Info">
                       <div layout="column" layout-fill>
@@ -150,12 +150,15 @@
                 </md-toolbar>
                 <md-content flex="100">
                     <table class="flowtable">
+                        <tr>
+                            <th>Display</th>
+                            <th>Field</th>
+                            <th>Value</th>
+                        </tr>
                         <tr ng-repeat="(key, value) in jsonData">
-                            <!--
-                            <td style="text-align: left; vertical-align: middle;">
-                                <md-checkbox ng-change=upateColumnVis(key) class="table"></md-checkbox>
+                            <td>
+                                <md-checkbox ng-model="flowDisplay[key]" ng-click="toggleColumnVisibility($event, key)" md-no-ink class="md-checkbox-small" aria-label="Toggle Column"></md-checkbox>
                             </td>
-                            -->
                             <td><b>{{ key }}:</b></td>
                             <td>{{ value }}</td>
                         </tr>
