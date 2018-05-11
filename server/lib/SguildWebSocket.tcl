@@ -142,7 +142,7 @@ proc SguildWebSocketMsgRcvd { socketID jdata } {
 
       DeleteEventIDList   { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
       EventHistoryRequest { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
-      GetCorrelatedEvents { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
+      GetCorrelatedEvents { $clientCmd $socketID [lindex $data 1] [lindex $data 2] websocket }
       GetIcmpData         { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
       GetIPData           { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }
       GetPayloadData      { $clientCmd $socketID [lindex $data 1] [lindex $data 2] }

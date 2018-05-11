@@ -228,7 +228,7 @@ proc UserMsgRcvd { socketID userMsg } {
   }
 }
 
-proc GetCorrelatedEvents { socketID eid winName } {
+proc GetCorrelatedEvents { socketID eid winName {requestType {raw}} } {
   global correlatedEventArray eventIDArray
   if { [info exists eventIDArray] } {
     catch {SendSocket $socketID\
@@ -239,6 +239,7 @@ proc GetCorrelatedEvents { socketID eid winName } {
     foreach row $correlatedEventArray($eid) {
       catch {SendSocket $socketID [list InsertQueryResults $winName [eval FormatStdToQuery $row]]}
     }
+    if { $requestType == "websocket" } { catch {SendSocket $socketID [list InsertQueryResults $winName done]} }
   }
 }
 
