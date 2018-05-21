@@ -18,6 +18,21 @@ md-list-item, md-list-item .md-list-item-inner {
   height: 25px;
 }
 
+.tabbutton {
+  padding: 0 0px 0 0px;
+  margin: 0px 0px 0px 0px;
+  min-width: 12px;
+  min-height: 12px;
+  line-height: 24px;
+  border-radius: 3px;
+  font-size: 14px;
+  text-align: center;
+  text-transform: uppercase;
+  text-decoration:none;
+  border: none;
+  outline: none;
+}
+
 md-button.md-xsmall{
   min-height: 23px !important;
   min-width: 46px !important;

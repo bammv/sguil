@@ -48,14 +48,46 @@
                         <md-icon md-svg-src="images/ic_cancel_24px.svg"></md-icon>
                         <md-tooltip md-direction="bottom">Close Tab</md-tooltip>
                     </a>
+                    <md-menu ng-if="tab.toolbar">
+                      <a ng-click="topMenu($mdMenu, $event)">
+                        <md-icon md-svg-icon="images/filled_arrow_drop_down_circle-24px.svg"></md-icon>
+                        <md-tooltip md-direction="bottom">Menu Options</md-tooltip>
+                      </a>
+                      <md-menu-content width="2">
+                        <md-menu-item ng-if="tab.refresh" class="md-small">
+                            <md-button ng-click="refreshQuery($index,tab)">
+                                <md-icon md-svg-src="img/icons/ic_refresh_24px.svg" md-menu-align-target></md-icon>
+                                Refresh
+                            </md-button>
+                        </md-menu-item>
+                        <md-menu-item ng-if="tab.edit" class="md-small">
+                            <md-button ng-click="editQuery($index,tab)">
+                                <md-icon md-svg-src="images/ic_edit_24px.svg" md-menu-align-target></md-icon>
+                                Edit
+                            </md-button>
+                        </md-menu-item>
+                        <md-menu-item ng-if="tab.save" class="md-small">
+                            <md-button ng-click="saveQuery($index,tab)">
+                                <md-icon md-svg-src="images/ic_save_24px.svg" md-menu-align-target></md-icon>
+                                Save
+                            </md-button>
+                        </md-menu-item>
+                        <md-menu-item ng-if="tab.view" class="md-small">
+                            <md-button ng-click="showQuery($index,tab)">
+                                <md-icon md-svg-src="images/ic_eye_24px.svg" md-menu-align-target></md-icon>
+                                View
+                            </md-button>
+                        </md-menu-item>
+                      </md-menu-content>
+                    </md-menu>
                 </md-tab-label>
                 <md-tab-body>
                     <div layout-fill layout=column>
                         <div ng-style="{'display': showSearchProgress(tab.title)?'block':'none'}">
                             <md-progress-linear flex="" md-mode="indeterminate"></md-progress-linear>
                         </div>
+                        <!--
                         <md-toolbar ng-if="tab.toolbar" layout="row" class="md-hue-3 md-xsmall" style="fill: white; color:white">
-                            <div>
                             <a ng-if="tab.refresh" ng-click="refreshQuery($index,tab)" style="fill: white; color:white">
                                 <md-icon  md-svg-src="img/icons/ic_refresh_24px.svg" style="fill: white; color:white"></md-icon>
                                 <md-tooltip md-direction="bottom">Rerun Query</md-tooltip>
@@ -72,8 +104,8 @@
                                 <md-icon md-svg-src="images/ic_eye_24px.svg" style="fill: white; color:white"></md-icon>
                                 <md-tooltip md-direction="bottom">View Query</md-tooltip>
                             </a>
-                            </div>
                         </md-toolbar>
+                        -->
                         <div layout-fill compile="tab.content"></div>
                     </div>
                 </md-tab-body>

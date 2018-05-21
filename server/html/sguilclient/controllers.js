@@ -766,7 +766,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             newTab.save = false;
             newTab.edit = false;
             newTab.view = false;
-            newTab.content= '<eventtabulator input-id="' + tabName + '" ' + tabulatorContent + '></eventtabulator>';
+            newTab.content = '<eventtabulator input-id="' + tabName + '" ' + tabulatorContent + '></eventtabulator>';
             $scope.mainTabs.push(newTab);
 
             var newTab = new Object();
