@@ -339,7 +339,7 @@ proc GetSancpFlagData { socketID sensorID xid } {
 }
 proc GetIPData { socketID sid cid } {
   set query\
-   "SELECT INET_NTOA(src_ip), INET_NTOA(dst_ip), ip_ver, ip_hlen, ip_tos, ip_len, ip_id,\
+   "SELECT INET6_NTOA(src_ip), INET6_NTOA(dst_ip), ip_ver, ip_hlen, ip_tos, ip_len, ip_id,\
     ip_flags, ip_off, ip_ttl, ip_csum\
    FROM event\
    WHERE sid=$sid and cid=$cid"
@@ -404,7 +404,7 @@ proc GetOpenPorts { socketID sid cid } {
 	return
     }
     set query\
-	"SELECT INET_NTOA(event.dst_ip), data.data_payload from event, data WHERE event.sid=data.sid AND event.cid=data.cid AND event.unified_event_ref=$event_id"
+	"SELECT INET6_NTOA(event.dst_ip), data.data_payload from event, data WHERE event.sid=data.sid AND event.cid=data.cid AND event.unified_event_ref=$event_id"
     foreach row [mysqlsel $dbSocketID "$query" -list] {
     catch {SendSocket $socketID [list InsertOpenPortsData $row]} tmpError
     }

@@ -186,14 +186,17 @@ proc ValidateIPAddress { fullip } {
 #
 proc InetAtoN { ipaddress } {
 
-    if { $ipaddress == "" } { return "" }
-    set octetlist [split $ipaddress "."]
-    set oct1 [lindex $octetlist 0]
-    set oct2 [lindex $octetlist 1]
-    set oct3 [lindex $octetlist 2]
-    set oct4 [lindex $octetlist 3]
-    set decIP [expr ($oct1 * 16777216.0) + ($oct2 * 65536.0) + ($oct3 * 256.0) + $oct4]
-    return $decIP
+    if { $ipaddress == "" } { return 0 }
+    package require ip
+    set ipv [ip::version $ipaddress]
+    if { $ipv == 4 } {
+      set normalized [format %08x [ip::toInteger $ipaddress]]
+    } else {
+      set normalized [string map {: ""} [ip::normalize $ipaddress]]
+    }
+
+    set decIP [binary decode hex $normalized]
+    return $ipaddress
 }
 
 proc GetCurrentTimeStamp {} {

@@ -23,9 +23,9 @@ CATCOUNT||Counts of Events by Category||query||SELECT status.description, COUNT(
 
 TOPTEN||Top Ten Events||query||SELECT count(event.signature) as Count, event.signature from event, sensor WHERE event.sid = sensor.sid and %%SENSORS%% and event.timestamp > %%STARTTIME%% and event.timestamp < %%ENDTIME%% GROUP BY event.signature ORDER BY Count desc LIMIT 10||2||
 
-TOPTENSIP||Top Ten Source IP's||query||SELECT count(event.src_ip) as count, INET_NTOA(event.src_ip) FROM event, sensor WHERE event.sid = sensor.sid AND %%SENSORS%% AND event.timestamp > %%STARTTIME%% AND event.timestamp < %%ENDTIME%% GROUP BY event.src_ip order by count desc limit 10||2||
+TOPTENSIP||Top Ten Source IP's||query||SELECT count(event.src_ip) as count, INET6_NTOA(event.src_ip) FROM event, sensor WHERE event.sid = sensor.sid AND %%SENSORS%% AND event.timestamp > %%STARTTIME%% AND event.timestamp < %%ENDTIME%% GROUP BY event.src_ip order by count desc limit 10||2||
 
-TOPTENDIP||Top Ten Dest IP's||query||SELECT count(event.dst_ip) as count, INET_NTOA(event.dst_ip) FROM event, sensor WHERE event.sid = sensor.sid AND %%SENSORS%% AND event.timestamp > %%STARTTIME%% AND event.timestamp < %%ENDTIME%% GROUP BY event.dst_ip order by count desc limit 10||2||
+TOPTENDIP||Top Ten Dest IP's||query||SELECT count(event.dst_ip) as count, INET6_NTOA(event.dst_ip) FROM event, sensor WHERE event.sid = sensor.sid AND %%SENSORS%% AND event.timestamp > %%STARTTIME%% AND event.timestamp < %%ENDTIME%% GROUP BY event.dst_ip order by count desc limit 10||2||
 
 TOPTENSPORT||Top Ten Source Ports||query||SELECT count(event.src_port) as count, event.src_port FROM event, sensor WHERE event.sid = sensor.sid AND %%SENSORS%% AND event.timestamp > %%STARTTIME%% AND event.timestamp < %%ENDTIME%% GROUP BY event.src_port order by count desc limit 10||2||
 

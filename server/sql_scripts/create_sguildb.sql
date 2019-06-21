@@ -13,20 +13,20 @@ CREATE TABLE sensor
   public_key	VARCHAR(255) DEFAULT NULL,
   PRIMARY KEY (sid),
   INDEX hostname_idx (hostname)
-) ENGINE = MYISAM;
+);
 
 CREATE TABLE portscan
 (
   hostname	VARCHAR(255),
   timestamp	DATETIME,
-  src_ip	VARCHAR(16),
+  src_ip	VARBINARY(16),
   src_port	INT UNSIGNED,
-  dst_ip	VARCHAR(16),
+  dst_ip	VARBINARY(16),
   dst_port	INT UNSIGNED,
   data		TEXT,
   INDEX ps_src_ip (src_ip),
   INDEX ps_timestamp (timestamp)
-) ENGINE = MYISAM;
+);
 
 CREATE TABLE status
 (
@@ -34,16 +34,16 @@ CREATE TABLE status
   description	VARCHAR(255) NOT NULL,
   long_desc     VARCHAR(255),
   PRIMARY KEY (status_id)
-) ENGINE = MYISAM;
+);
 
 CREATE TABLE autocat
 (
   autoid	INT UNSIGNED NOT NULL AUTO_INCREMENT,
   erase		DATETIME,
   sensorname	VARCHAR(255),
-  src_ip	VARCHAR(18),
+  src_ip	VARBINARY(16),
   src_port	INT UNSIGNED, 
-  dst_ip	VARCHAR(18),
+  dst_ip	VARBINARY(16),
   dst_port	INT UNSIGNED, 
   ip_proto	TINYINT UNSIGNED,
   signature	VARCHAR(255),
@@ -53,7 +53,7 @@ CREATE TABLE autocat
   uid		INT UNSIGNED	NOT NULL,
   comment	VARCHAR(255),
   PRIMARY KEY (autoid)
-) ENGINE = MYISAM;
+);
 
 CREATE TABLE history
 (
@@ -64,7 +64,7 @@ CREATE TABLE history
   status	SMALLINT UNSIGNED	NOT NULL,
   comment	VARCHAR(255),
   INDEX log_time (timestamp)
-) ENGINE = MYISAM;
+);
 
 CREATE TABLE user_info
 (
@@ -73,7 +73,7 @@ CREATE TABLE user_info
   last_login	DATETIME,
   password	VARCHAR(42),
   PRIMARY KEY (uid)
-) ENGINE = MYISAM;
+);
 
 CREATE TABLE nessus_data
 (
@@ -83,7 +83,7 @@ CREATE TABLE nessus_data
   level	        VARCHAR(20),
   description		TEXT,
   INDEX rid (rid)
-) ENGINE = MYISAM;
+);
 
 CREATE TABLE nessus
 (
@@ -94,7 +94,7 @@ CREATE TABLE nessus
   timeend       DATETIME,
   PRIMARY KEY (rid),
   INDEX ip (ip)
-) ENGINE = MYISAM;
+);
 
 CREATE TABLE IF NOT EXISTS `pads`
 (
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS `pads`
   application           VARCHAR(255)     NOT NULL,
   hex_payload           VARCHAR(255),
   PRIMARY KEY (sid,asset_id)
-) ENGINE = MYISAM;
+);
 
 INSERT INTO status (status_id, description, long_desc) VALUES (0, "New", "Real Time Event");
 INSERT INTO status (status_id, description, long_desc) VALUES (1, "No Further Action Required", "No Further Action Required");
@@ -127,6 +127,6 @@ CREATE TABLE version
 (
   version	VARCHAR(32),
   installed	DATETIME
-) ENGINE = MYISAM;
+);
 
 INSERT INTO version (version, installed) VALUES ("0.14", now());

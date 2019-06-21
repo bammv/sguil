@@ -108,9 +108,9 @@ proc CreateNewSancpTable { tableName } {
         end_time      DATETIME                NOT NULL,    \
         duration      INT UNSIGNED            NOT NULL,    \
         ip_proto      TINYINT UNSIGNED        NOT NULL,    \
-        src_ip        INT UNSIGNED,                        \
+        src_ip        VARBINARY(16),                       \
         src_port      SMALLINT UNSIGNED,                   \
-        dst_ip        INT UNSIGNED,                        \
+        dst_ip        VARBINARY(16),                       \
         dst_port      SMALLINT UNSIGNED,                   \
         src_pkts      INT UNSIGNED            NOT NULL,    \
         src_bytes     INT UNSIGNED            NOT NULL,    \
@@ -161,9 +161,9 @@ proc CreateSancpMergeTable { dbSocketID } {
         end_time      DATETIME                NOT NULL,    \
         duration      INT UNSIGNED            NOT NULL,    \
         ip_proto      TINYINT UNSIGNED        NOT NULL,    \
-        src_ip        INT UNSIGNED,                        \
+        src_ip        VARBINARY(16),                       \
         src_port      SMALLINT UNSIGNED,                   \
-        dst_ip        INT UNSIGNED,                        \
+        dst_ip        VARBINARY(16),                       \
         dst_port      SMALLINT UNSIGNED,                   \
         src_pkts      INT UNSIGNED            NOT NULL,    \
         src_bytes     INT UNSIGNED            NOT NULL,    \
@@ -241,12 +241,18 @@ proc LoadFile { fileName table } {
     }
 
     if { $DBHOST != "localhost" && $DBHOST != "127.0.0.1" } {
-        set dbCmd "LOAD DATA CONCURRENT LOCAL INFILE '$fileName' INTO TABLE `$table`\
-                   FIELDS TERMINATED BY '|'"
+        set dbCmd "LOAD DATA CONCURRENT LOCAL INFILE '$fileName' INTO TABLE `$table` \
+                   FIELDS TERMINATED BY '|' \
+		   (sid, sancpid, start_time, end_time, duration, ip_proto, @var8, src_port, \
+		   @var10, dst_port, src_pkts, src_bytes, dst_pkts, dst_bytes, src_flags, dst_flags) \
+		   SET src_ip = INET6_ATON(@var8), dst_ip = INET6_ATON(@var10)"
     } else {
         #set dbCmd "LOAD DATA CONCURRENT INFILE '$fileName' INTO TABLE `$table`
-        set dbCmd "LOAD DATA CONCURRENT LOCAL INFILE '$fileName' INTO TABLE `$table`\
-                   FIELDS TERMINATED BY '|'"
+        set dbCmd "LOAD DATA CONCURRENT LOCAL INFILE '$fileName' INTO TABLE `$table` \
+                   FIELDS TERMINATED BY '|' \
+		   (sid, sancpid, start_time, end_time, duration, ip_proto, @var8, src_port, \
+		   @var10, dst_port, src_pkts, src_bytes, dst_pkts, dst_bytes, src_flags, dst_flags) \
+		   SET src_ip = INET6_ATON(@var8), dst_ip = INET6_ATON(@var10)"
     }
 
     if [catch {mysqlexec $LOADERD_DB_ID $dbCmd} execResults] {
