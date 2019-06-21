@@ -9,7 +9,7 @@ proc SancpQueryRequest { selectedTable whereList } {
     if {!$CONNECTED} {ErrorMessage "Not connected to sguild. Query aborted"; return}
 
     set COLUMNS "sensor.hostname, sancp.sid, sancp.sancpid, sancp.start_time as datetime,\
-     sancp.end_time, INET_NTOA(sancp.src_ip), sancp.src_port, INET_NTOA(sancp.dst_ip),\
+     sancp.end_time, INET6_NTOA(sancp.src_ip), sancp.src_port, INET6_NTOA(sancp.dst_ip),\
      sancp.dst_port, sancp.ip_proto, sancp.src_pkts, sancp.src_bytes, sancp.dst_pkts,\
      sancp.dst_bytes"
 

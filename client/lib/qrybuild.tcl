@@ -1,4 +1,7 @@
 # $Id: qrybuild.tcl,v 1.45 2008/06/19 19:11:25 hanashi Exp $ #
+
+package require ip
+
 proc QryBuild { tableSelected whereTmp } {
 
     global RETURN_FLAG SELECTEDTABLE SELECT_LIMIT
@@ -40,7 +43,7 @@ proc QryBuild { tableSelected whereTmp } {
     set funcList(main) [list Common Strings Comparison Logical DateTime DateMacros]
     set funcList(mainevent) [list Categories]
     set funcList(mainsancp) [list FlagMacros]
-    set funcList(Common) [list {INET_ATON() INET_ATON()} {LIMIT LIMIT} {LIKE LIKE} {AND AND} {OR OR} {NOT NOT}]
+    set funcList(Common) [list {INET6_ATON() INET6_ATON()} {LIMIT LIMIT} {LIKE LIKE} {AND AND} {OR OR} {NOT NOT}]
     set funcList(Strings) [list {LIKE LIKE} {REGEXP REGEXP} {RLIKE RLIKE}]
     set funcList(Logical) [list {AND AND} {OR OR} {NOT NOT} {LIKE LIKE}]
     set funcList(Comparison) [list {= =} {!= !=} {< <} {> >} {<=> <=>}]
@@ -190,9 +193,6 @@ update
     destroy $qryBldWin
 
     set whereBoxList ""
-
-    # Do INET_ATON/INET_NTOA substitutions
-    regsub -all {\#(\d+\.\d+\.\d+\.\d+)\#} $returnWhere {INET_ATON("\1")} returnWhere
 
     # Do the #hostname# subsitution
     set RE {(#[a-zA-Z0-9_\.]+#)}
@@ -531,6 +531,7 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
     # Check that the content is in valid format and store it in varibles
     set fullip [$ipBox get]
     set iplist [ValidateIPAddress $fullip]
+    set ipversion [ip::version [lindex $iplist 0]]
 
     if { $iplist==0 } { 
 	ErrorMessage "Error.  Invalid IP Address"
@@ -543,13 +544,13 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
     }
     set qryType [$srcdstBox get]
 
-    if { [lindex $iplist 1] == 32 } {
+    if { 4 == $ipversion && 32 == [lindex $iplist 1] || 6 ==  $ipversion && 128 == [lindex $iplist 1] } {
 
         # Query a single IP
         if { $qryType == "src" || $qryType == "dst" } {
-            set inserttext "${SELECTEDTABLE}.${qryType}_ip = INET_ATON('[lindex $iplist 0]')"
+            set inserttext "${SELECTEDTABLE}.${qryType}_ip = INET6_ATON('[lindex $iplist 0]')"
         } else {
-            set inserttext "${SELECTEDTABLE}.src_ip = INET_ATON('[lindex $iplist 0]') AND ${SELECTEDTABLE}.dst_ip = INET_ATON('[lindex $iplist 0]')"
+            set inserttext "${SELECTEDTABLE}.src_ip = INET6_ATON('[lindex $iplist 0]') AND ${SELECTEDTABLE}.dst_ip = INET6_ATON('[lindex $iplist 0]')"
         }
 
     } else { 
@@ -557,17 +558,15 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
         set networknumber [lindex $iplist 2]
         set bcastaddress [lindex $iplist 3]
         # find the decimal values for the ip network and broadcast addresses
-        set decNetwork [InetAtoN $networknumber]
-        set decBcast [InetAtoN $bcastaddress]
     
         # build the ip part of the query.  It will look the same no matter what table we are working with. 
         if { $qryType == "src" } {
-	    set inserttext "${SELECTEDTABLE}.src_ip BETWEEN ${decNetwork} AND ${decBcast} "
+	    set inserttext "${SELECTEDTABLE}.src_ip BETWEEN INET6_ATON('${networknumber}') AND INET6_ATON('${bcastaddress}') "
         } elseif { $qryType  == "dst" } {
-	    set inserttext "${SELECTEDTABLE}.dst_ip BETWEEN ${decNetwork} AND ${decBcast} "
+	    set inserttext "${SELECTEDTABLE}.dst_ip BETWEEN INET6_ATON('${networknumber}') AND INET6_ATON('${bcastaddress}') "
         } else {
-	    set inserttext "(${SELECTEDTABLE}.dst_ip BETWEEN ${decNetwork} AND ${decBcast} \
-		    OR ${SELECTEDTABLE}.src_ip BETWEEN ${decNetwork} AND ${decBcast}) "
+	    set inserttext "(${SELECTEDTABLE}.dst_ip BETWEEN INET6_ATON('${networknumber}') AND INET6_ATON('${bcastaddress}') \
+		    OR ${SELECTEDTABLE}.src_ip BETWEEN INET6_ATON('${networknumber}') AND INET6_ATON('${bcastaddress}') "
         }
     
         # do something depending on who called us
