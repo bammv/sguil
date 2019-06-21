@@ -231,8 +231,21 @@ proc DecodeIPv6 { P } {
     # Somebody want to write this?
     # For now set fake info
     set packet(ipv6) 1
-    set packet(ip_sip) "0.0.0.0"
-    set packet(ip_dip) "0.0.0.0"
+    set packet(ip_ver) [string index $P 0]
+    set packet(ip_proto) [PacketHex2Dec $P 12 13]
+    set packet(ip_sip) [PacketHex2Dec $P 16 47]
+    set packet(ip_dip) [PacketHex2Dec $P 48 79]
+
+    set P [string range $P 40 end]
+
+    switch -exact --  $packet(ip_proto) {
+
+        1       { DecodeICMP $P }
+        6       { DecodeTCP $P }
+        17      { DecodeUDP $P }
+        default { puts "Unknown IP protocol type $P for IPv6 packet" }
+
+    }
 
 }
 
@@ -313,11 +326,23 @@ proc ParseEveLine { line } {
         set dst_ip [dict get $data dest_ip]
 
         # Add IP info
-        if { ![info exists packet(ipv4)] || !$packet(ipv4) } {
+        if { (![info exists packet(ipv4)] || !$packet(ipv4)) && (![info exists packet(ipv6)] || !$packet(ipv6)) } {
 
             # Create empty fields for non IPv4 types. Most likely to see ipv6
-            set packet(ip_sip) [PacketHex2Dec [ip::toHex $src_ip] 2 9]
-            set packet(ip_dip) [PacketHex2Dec [ip::toHex $dst_ip] 2 9]
+
+	    set ipv [ip::version $src_ip]
+	    switch -exact -- $ipv {
+		    4 { 
+            		set packet(ip_sip) [PacketHex2Dec [ip::toHex $src_ip] 2 9]
+            		set packet(ip_dip) [PacketHex2Dec [ip::toHex $dst_ip] 2 9]
+	      	      }
+	            6 {
+	        	binary scan [ip::Normalize6 $src_ip] H32 out
+			set packet(ip_sip) [PacketHex2Dec out 0 31]
+	        	binary scan [ip::Normalize6 $dst_ip] H32 out
+			set packet(ip_dip) [PacketHex2Dec out 0 31]
+	    	      }
+	    }
     
             # Set the IP proto
             set ip_proto_name [dict get $data proto]
