@@ -2203,7 +2203,7 @@ source $SGUILLIB/SguilAutoCat.tcl
 source $SGUILLIB/SguilElasticSearch.tcl
 
 # Load TableList
-package require tablelist 5.14
+package require tablelist
 
 # Images for tablelist checkbuttons
 if { [file exists $SGUILLIB/images/checked.gif] } {
