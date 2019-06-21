@@ -1592,9 +1592,9 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             $scope.eventWhere = 'WHERE event.timestamp > \'' + date + '\'';
 
             if (type === "src_ip") {
-                $scope.eventWhere += ' AND event.src_ip = INET_ATON(\''+ data.src_ip + '\')';
+                $scope.eventWhere += ' AND event.src_ip = INET6_ATON(\''+ data.src_ip + '\')';
             } else if (type === "dest_ip") {
-                $scope.eventWhere += ' AND event.dst_ip = INET_ATON(\''+ data.dest_ip + '\')';
+                $scope.eventWhere += ' AND event.dst_ip = INET6_ATON(\''+ data.dest_ip + '\')';
             } else if (type === "signature") {
                 $scope.eventWhere += ' AND event.signature = \''+ data.msg + '\'';
             } else {
@@ -1642,8 +1642,8 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                                 event.sid, \
                                 event.cid, \
                                 event.signature, \
-                                INET_NTOA(event.src_ip), \
-                                INET_NTOA(event.dst_ip), \
+                                INET6_NTOA(event.src_ip), \
+                                INET6_NTOA(event.dst_ip), \
                                 event.ip_proto, \
                                 event.src_port, \
                                 event.dst_port, \
@@ -1667,7 +1667,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 });
 
             /*
-            2017-04-20 02:40:54 pid(14755)  Client Command Received: QueryDB .eventPane.pane0.childsite.eventTabs.canvas.notebook.cs.page3.cs.query_1.tablelist {( SELECT event.status, event.priority, sensor.hostname,  event.timestamp as datetime, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port, event.signature_gen, event.signature_id,  event.signature_rev FROM event IGNORE INDEX (event_p_key, sid_time) INNER JOIN sensor ON event.sid=sensor.sid WHERE event.timestamp > '2017-04-12' AND  event.src_ip = INET_ATON('59.45.175.62') ) UNION ( SELECT event.status, event.priority, sensor.hostname,  event.timestamp as datetime, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port, event.signature_gen, event.signature_id,  event.signature_rev FROM event IGNORE INDEX (event_p_key, sid_time) INNER JOIN sensor ON event.sid=sensor.sid WHERE event.timestamp > '2017-04-12' AND  event.dst_ip = INET_ATON('59.45.175.62') ) ORDER BY datetime, src_port ASC LIMIT 1000}
+            2017-04-20 02:40:54 pid(14755)  Client Command Received: QueryDB .eventPane.pane0.childsite.eventTabs.canvas.notebook.cs.page3.cs.query_1.tablelist {( SELECT event.status, event.priority, sensor.hostname,  event.timestamp as datetime, event.sid, event.cid, event.signature, INET6_NTOA(event.src_ip), INET6_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port, event.signature_gen, event.signature_id,  event.signature_rev FROM event IGNORE INDEX (event_p_key, sid_time) INNER JOIN sensor ON event.sid=sensor.sid WHERE event.timestamp > '2017-04-12' AND  event.src_ip = INET6_ATON('59.45.175.62') ) UNION ( SELECT event.status, event.priority, sensor.hostname,  event.timestamp as datetime, event.sid, event.cid, event.signature, INET6_NTOA(event.src_ip), INET6_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port, event.signature_gen, event.signature_id,  event.signature_rev FROM event IGNORE INDEX (event_p_key, sid_time) INNER JOIN sensor ON event.sid=sensor.sid WHERE event.timestamp > '2017-04-12' AND  event.dst_ip = INET6_ATON('59.45.175.62') ) ORDER BY datetime, src_port ASC LIMIT 1000}
             */
 
         }
