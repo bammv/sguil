@@ -381,11 +381,11 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
         # Use ip or vlan for the filter
         if {$proto != "6" && $proto != "17"} {
 
-            set tcpdumpFilter "(ip and host $srcIP and host $dstIP and proto $proto) or (vlan and host $srcIP and host $dstIP and proto $proto)"
+            set tcpdumpFilter "((ip or ip6) and host $srcIP and host $dstIP and proto $proto) or (vlan and host $srcIP and host $dstIP and proto $proto)"
 
         } else {
 
-            set tcpdumpFilter "(ip and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto) or (vlan and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto)"
+            set tcpdumpFilter "((ip or ip6) and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto) or (vlan and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto)"
 
         }
 
