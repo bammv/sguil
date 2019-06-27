@@ -446,7 +446,7 @@ proc MergePcapFiles { rawDataFileName TRANS_ID type } {
         # Strip the 24 byte pcap header from all but the first file and append them to the main
         foreach pcapFile [lrange $PCAP_FILE_TRACKER($rawDataFileName) 1 end] {
 
-            if { [file size $pcapFile] > 24 } { 
+            if { [file exists $pcapFile] && [file size $pcapFile] > 24 } {
 
                 set pID [open $pcapFile r]
                 fconfigure $pID -translation binary
