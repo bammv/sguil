@@ -6,7 +6,7 @@ proc ProcessPadsAsset { dataList } {
     global PADS_CID agentStatusList
 
     set sid [lindex $dataList 1]
-    set d_intIP [lindex $dataList 6]
+    set d_inetIP [lindex $dataList 5]
     set d_port [lindex $dataList 8]
     set ip_proto [lindex $dataList 9]
     set app [lindex $dataList 11]
@@ -17,7 +17,7 @@ proc ProcessPadsAsset { dataList } {
     set tmpQuery \
       "SELECT timestamp, application \
       FROM pads \
-      WHERE sid=$sid AND ip=$d_intIP AND port=$d_port AND ip_proto=$ip_proto \
+      WHERE sid=$sid AND ip=INET_ATON('$d_inetIP') AND port=$d_port AND ip_proto=$ip_proto \
       ORDER BY timestamp DESC"
 
     set results [MysqlSelect $tmpQuery]
@@ -38,7 +38,7 @@ proc ProcessPadsAsset { dataList } {
 
         # Insert data into the asset DB
         if { [catch {InsertAsset $sensorName $sid $PADS_CID($sid) $timestamp \
-         $d_intIP $service $d_port $ip_proto $app $hex_payload} insertError] } {
+         $s_inetIP $service $d_port $ip_proto $app $hex_payload} insertError] } {
 
             # INSERT failed. Log a message and try reprocess the asset.
             LogMessage "Error inserting PADS data: $insertError"
@@ -49,7 +49,7 @@ proc ProcessPadsAsset { dataList } {
 
         # Send RT Alert
         AlertAsset new-asset $sensorName $sid $PADS_CID($sid) $timestamp \
-         $intTime $s_inetIP $s_intIP $d_inetIP $d_intIP $s_port $d_port $service $ip_proto $app
+         $intTime $s_inetIP $s_inetIP $d_inetIP $d_inetIP $s_port $d_port $service $ip_proto $app
 
     } else {
 
@@ -75,7 +75,7 @@ proc ProcessPadsAsset { dataList } {
 
             # Insert data into the asset DB
             if { [catch {InsertAsset $sensorName $sid $PADS_CID($sid) $timestamp \
-             $d_intIP $service $d_port $ip_proto $app $hex_payload} insertError] } {
+             $s_inetIP $service $d_port $ip_proto $app $hex_payload} insertError] } {
 
                 # INSERT failed. Log a message and try reprocess the asset.
                 LogMessage "Error inserting PADS data: $insertError"
@@ -86,7 +86,7 @@ proc ProcessPadsAsset { dataList } {
 
             # Send RT Alert
             AlertAsset changed-asset $sensorName $sid $PADS_CID($sid) $timestamp \
-             $intTime $s_inetIP $s_intIP $d_inetIP $d_intIP $s_port $d_port $service $ip_proto $app
+             $intTime $s_inetIP $s_inetIP $d_inetIP $d_inetIP $s_port $d_port $service $ip_proto $app
 
         }
 
@@ -143,7 +143,7 @@ proc AlertAsset { type sensorName sid aid timestamp intTime s_inetIP s_intIP d_i
 proc InsertAsset { sensorName sid aid timestamp intIP service port ip_proto app hex_payload } {
 
     set tmpQuery "INSERT INTO pads (hostname, sid, asset_id, timestamp, ip, service, port, ip_proto, application, hex_payload) \
-                  VALUES ('$sensorName', '$sid', '$aid', '$timestamp', '$intIP', '$service', '$port', '$ip_proto', '[MysqlEscapeString $app]', '$hex_payload')" 
+                  VALUES ('$sensorName', '$sid', '$aid', '$timestamp', INET6_ATON('$intIP'), '$service', '$port', '$ip_proto', '[MysqlEscapeString $app]', '$hex_payload')"
 
     if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
 
@@ -177,7 +177,7 @@ proc GetAssetData { socketID sid asset_id } {
 #        hostname              VARCHAR(255)     NOT NULL,         \
 #        sid                   INT UNSIGNED     NOT NULL,         \
 #        timestamp             DATETIME         NOT NULL,         \
-#        ip                    INT UNSIGNED     NOT NULL,         \
+#        ip                    VARBINARY(16)    NOT NULL,         \
 #        port                  INT UNSIGNED     NOT NULL,         \
 #        ip_proto              TINYINT UNSIGNED NOT NULL,         \
 #        application           VARCHAR(255)     NOT NULL          \
