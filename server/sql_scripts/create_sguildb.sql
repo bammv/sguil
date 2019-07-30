@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS `pads`
   sid                   INT UNSIGNED     NOT NULL,
   asset_id              INT UNSIGNED     NOT NULL,
   timestamp             DATETIME         NOT NULL,
-  ip                    INT UNSIGNED     NOT NULL,
+  ip                    VARBINARY(16)    NOT NULL,
   service               VARCHAR(40)      NOT NULL,
   port                  INT UNSIGNED     NOT NULL,
   ip_proto              TINYINT UNSIGNED NOT NULL,
