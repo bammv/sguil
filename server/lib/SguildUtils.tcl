@@ -1,5 +1,8 @@
 # $Id: SguildUtils.tcl,v 1.15 2011/05/29 15:17:32 bamm Exp $ #
 
+package require ip
+package require textutil
+
 proc Daemonize {} {
     global PID_FILE env LOGGER
     set childPID [fork]
@@ -111,83 +114,73 @@ proc GetHostbyAddr { ip } {
   return $hostname
 }
 
-# ValidateIPAddress:  Verifies that a string fits a.b.c.d/n CIDR format.
-#                     the / notation is optional. 
-#                     returns a list with the following elements or 0 if the syntax is invalid:
+# ValidateIPAddress:  Verifies that a string is a proper IP address with optionan / CIDR notation.
+#                     Returns a list with the following elements or 0 if the syntax is invalid:
 #                     { ipaddress } { maskbits } { networknumber } { broadcastaddress }
 #                     for example:
 #                     given 10.2.1.3/24 it will return:
-#                     { 10.2.1.3 } { 24 } { 10.2.1.0 }
+#                     { 10.2.1.3 } { 24 } { 10.2.1.0 } { 10.2.1.255 }
 proc ValidateIPAddress { fullip } {
 
     set valid 0
-    
-    set valid [regexp "^((\\d{1,3})\.(\\d{1,3})\.(\\d{1,3})\.(\\d{1,3}))(/)?(\\d{1,2})?$" \
-	    $fullip foo ipaddress oct1 oct2 oct3 oct4 slash maskbits]
-    if { !$valid } { return 0 }
-    
-    if { $oct1 < 0 || $oct1 > 255 } { set valid 0 }
-    if { $oct2 < 0 || $oct2 > 255 } { set valid 0 }
-    if { $oct3 < 0 || $oct3 > 255 } { set valid 0 }
-    if { $oct4 < 0 || $oct4 > 255 } { set valid 0 }
-    if { $maskbits!="" && ($maskbits < 0 || $maskbits > 32) } { set valid 0 }
-    if { !$valid } { return 0 }
 
-    # if the bitmask is 32 or absent, return the ip address as the network number
-    if { $maskbits=="" || $maskbits == 32 } {
-	set iplist [list $ipaddress 32 $ipaddress $ipaddress]
-    } else { 
-	if { $maskbits > 23 } {
-	    set hostbits [expr 32 - $maskbits]
-	    set hostmask [expr pow(2,$hostbits)]
-	    set netmask [expr 256 - $hostmask]
-	    set netmask [expr round($netmask)]
-	    set netoct [expr $oct4 & $netmask]
-	    set netnumber "${oct1}.${oct2}.${oct3}.${netoct}"
-	    set bcastoct [expr $netoct + round($hostmask) - 1 ]
-	    set bcastaddress "${oct1}.${oct2}.${oct3}.${bcastoct}"
-	} elseif { $maskbits > 15 } {
-	    set hostbits [expr 24 - $maskbits]
-	    set hostmask [expr pow(2,$hostbits)]
-	    set netmask [expr 256 - $hostmask]
-	    set netmask [expr round($netmask)]
-	    set netoct [expr $oct3 & $netmask]
-	    set netnumber "${oct1}.${oct2}.${netoct}.0"
-	    set bcastoct [expr $netoct + round($hostmask) - 1 ]
-	    set bcastaddress "${oct1}.${oct2}.${bcastoct}.255"
-	} elseif { $maskbits > 7 } {
-	    set hostbits [expr 16 - $maskbits]
-	    set hostmask [expr pow(2,$hostbits)]
-	    set netmask [expr 256 - $hostmask]
-	    set netmask [expr round($netmask)]
-	    set netoct [expr $oct3 & $netmask]
-	    set netnumber "${oct1}.${netoct}.0.0"
-	    set bcastoct [expr $netoct + round($hostmask) - 1 ]
-	    set bcastaddress "${oct1}.${bcastoct}.255.255"
-	} else {
-	    set hostbits [expr 8 - $maskbits]
-	    set hostmask [expr pow(2,$hostbits)]
-	    set netmask [expr 256 - $hostmask]
-	    set netmask [expr round($netmask)]
-	    set netoct [expr $oct3 & $netmask]
-	    set netnumber "${netoct}.0.0.0"
-	    set bcastoct [expr $netoct + round($hostmask) - 1 ]
-	    set bcastaddress "${bcastoct}.255.255.255"
-	}
-	set iplist [list $ipaddress $maskbits $netnumber $bcastaddress]
+    set version [ip::version $fullip]
+    if { -1 == $version } { return 0 }
+
+    foreach {ipaddress mask} [split $fullip /] break
+
+    set mask [ip::mask $fullip]
+    switch -exact $version {
+        4 {
+            if { "" == $mask } {
+                set mask 32
+                set netnumber $fullip
+                set bcastaddress $fullip
+            } elseif { $mask < 0 || $mask > 32} {
+                return 0
+            } else {
+                set netnumber [ip::prefix $fullip]
+                set bcastaddress [ip::broadcastAddress $fullip]
+            }
+          }
+        6 {
+            if { "" == $mask } {
+                set mask 128
+                set netnumber $fullip
+                set bcastaddress $fullip
+            } elseif { $mask < 0 || $mask > 128} {
+                return 0
+            } else {
+                set netnumber [ip::prefix $fullip]
+                set hostpart ""
+                set reminder [expr 128 - $mask]
+                set hostpart [string repeat 0 $mask]
+                append hostpart [string repeat 1 $reminder]
+                set normIP [ip::normalize $ipaddress]
+                set ipparts [split $normIP ":"]
+                set binip ""
+                foreach part $ipparts {
+                        binary scan [binary format H* $part] B* bits
+                        append binip $bits
+                }
+                set bbin [expr (0b$binip | 0b$hostpart)]
+                set bhex [format %032llx $bbin]
+                set bcastaddress [join [textutil::splitn $bhex 4] :]
+            }
+          }
     }
+
+    set iplist [list $ipaddress $mask $netnumber $bcastaddress]
 
     return $iplist
 }
-
 #
-# InetAtoN:  Convert a string dotted quad ip address to decimal ala
-#            INET_ATON in mysql
+# InetAtoN:  Convert a string notation of an ip address to number ala
+#            INET6_ATON in mysql
 #
 proc InetAtoN { ipaddress } {
 
     if { $ipaddress == "" } { return 0 }
-    package require ip
     set ipv [ip::version $ipaddress]
     if { $ipv == 4 } {
       set normalized [format %08x [ip::toInteger $ipaddress]]
@@ -196,7 +189,7 @@ proc InetAtoN { ipaddress } {
     }
 
     set decIP [binary decode hex $normalized]
-    return $ipaddress
+    return decIP
 }
 
 proc GetCurrentTimeStamp {} {

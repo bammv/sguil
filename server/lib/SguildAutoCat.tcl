@@ -20,6 +20,7 @@
 #  | comment    | varchar(255)         | YES  |     | NULL    |                |
 #  +------------+----------------------+------+-----+---------+----------------+
 
+package require ip
 
 # Return a list of all autocats in the DB
 proc GetAutoCatList {} {
@@ -197,7 +198,7 @@ proc AddAutoCatRule { rid rList } {
 
 	    # IP is valid and now we have a list with our ip range (net number - bcast address)
 	    # if it was a single address and not a net, these numbers will be the same
-	    set tmpVar [list [InetAtoN [lindex $ipList 2]] [InetAtoN [lindex $ipList 3]]]
+	    set tmpVar [list [ip::normalize [lindex $ipList 2]] [ip::normalize [lindex $ipList 3]]]
 
 	}
 	
@@ -232,8 +233,8 @@ proc AutoCat { data } {
 	    } elseif { $rIndex != 7 } {
 		# ip address match vars are a list with a low and high ip address
 		set dataVar [InetAtoN [lindex $data $rIndex]]
-		set netIP [lindex $rMatch 0]
-		set bcastIP [lindex $rMatch 1]
+		set netIP [InetAtoN [lindex $rMatch 0]]
+		set bcastIP [InetAtoN [lindex $rMatch 1]]
 		if { $dataVar < $netIP || $dataVar > $bcastIP } {
 		    set MATCH 0
                     break
