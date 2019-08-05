@@ -13,22 +13,22 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
     # (
     #
     #   SELECT sensor.hostname, sancp.sancpid, sancp.start_time as datetime, sancp.end_time, 
-    #          INET_NTOA(sancp.src_ip), sancp.src_port, INET_NTOA(sancp.dst_ip), sancp.dst_port,
+    #          INET6_NTOA(sancp.src_ip), sancp.src_port, INET6_NTOA(sancp.dst_ip), sancp.dst_port,
     #          sancp.ip_proto, sancp.src_pkts, sancp.src_bytes, sancp.dst_pkts, sancp.dst_bytes
     #   FROM sancp
     #   IGNORE INDEX (p_key) 
     #   INNER JOIN sensor ON sancp.sid=sensor.sid
-    #   WHERE sancp.start_time > '2005-08-02' AND sancp.src_ip = INET_ATON('82.96.96.3')
+    #   WHERE sancp.start_time > '2005-08-02' AND sancp.src_ip = INET6_ATON('82.96.96.3')
     #
     # ) UNION (
     #
     #   SELECT sensor.hostname, sancp.sancpid, sancp.start_time as datetime, sancp.end_time,
-    #          INET_NTOA(sancp.src_ip), sancp.src_port, INET_NTOA(sancp.dst_ip), sancp.dst_port,
+    #          INET6_NTOA(sancp.src_ip), sancp.src_port, INET6_NTOA(sancp.dst_ip), sancp.dst_port,
     #          sancp.ip_proto, sancp.src_pkts, sancp.src_bytes, sancp.dst_pkts, sancp.dst_bytes
     #   FROM sancp
     #   IGNORE INDEX (p_key)
     #   INNER JOIN sensor ON sancp.sid=sensor.sid
-    #   WHERE sancp.start_time > '2005-08-02' AND sancp.dst_ip = INET_ATON('82.96.96.3')
+    #   WHERE sancp.start_time > '2005-08-02' AND sancp.dst_ip = INET6_ATON('82.96.96.3')
     #
     # ) 
     #
@@ -96,12 +96,12 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 
         if { $tableName == "pads" } {
 
-            lappend whereTmp "$globalWhere $tableName.ip = INET_ATON('$srcIP')"
+            lappend whereTmp "$globalWhere $tableName.ip = INET6_ATON('$srcIP')"
 
         } else {
 
-	    lappend whereTmp "$globalWhere $tableName.src_ip = INET_ATON('$srcIP')"
-            lappend whereTmp "$globalWhere $tableName.dst_ip = INET_ATON('$srcIP')"
+	    lappend whereTmp "$globalWhere $tableName.src_ip = INET6_ATON('$srcIP')"
+            lappend whereTmp "$globalWhere $tableName.dst_ip = INET6_ATON('$srcIP')"
 
         }
 
@@ -149,12 +149,12 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 
         if { $tableName == "pads" } {
 
-            lappend whereTmp "$globalWhere $tableName.ip = INET_ATON('$dstIP')"
+            lappend whereTmp "$globalWhere $tableName.ip = INET6_ATON('$dstIP')"
 
         } else {
 
-	    lappend whereTmp "$globalWhere $tableName.src_ip = INET_ATON('$dstIP')"
-            lappend whereTmp "$globalWhere $tableName.dst_ip = INET_ATON('$dstIP')"
+	    lappend whereTmp "$globalWhere $tableName.src_ip = INET6_ATON('$dstIP')"
+            lappend whereTmp "$globalWhere $tableName.dst_ip = INET6_ATON('$dstIP')"
 
         }
 
@@ -176,7 +176,7 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 
         }
 
-	lappend whereTmp "$globalWhere $tableName.src_ip  = INET_ATON('$srcIP') AND $tableName.dst_ip = INET_ATON('$dstIP')"
+	lappend whereTmp "$globalWhere $tableName.src_ip  = INET6_ATON('$srcIP') AND $tableName.dst_ip = INET6_ATON('$dstIP')"
 
     } elseif { $queryType == "category" } {
 
@@ -256,7 +256,7 @@ proc SsnQueryRequest { whereStatement } {
   global CONNECTED
   if {!$CONNECTED} {ErrorMessage "Not connected to sguild. Query aborted"; return}
   set selectQuery "SELECT sensor.hostname, sessions.xid, sessions.start_time, sessions.end_time,\
-   INET_NTOA(sessions.src_ip), sessions.src_port, INET_NTOA(sessions.dst_ip), sessions.dst_port,\
+   INET6_NTOA(sessions.src_ip), sessions.src_port, INET6_NTOA(sessions.dst_ip), sessions.dst_port,\
    sessions.ip_proto, sessions.src_pckts, sessions.src_bytes, sessions.dst_pckts, sessions.dst_bytes\
    FROM sessions INNER JOIN sensor ON sessions.sid=sensor.sid $whereStatement"
   regsub -all {\n} $selectQuery {} selectQuery
@@ -306,7 +306,7 @@ proc DBQueryRequest { selectedTable whereList {winTitle {none} } } {
   
     set COLUMNS "event.status, event.priority, sensor.hostname, \
      event.timestamp as datetime, event.sid, event.cid, event.signature,\
-     INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto,\
+     INET6_NTOA(event.src_ip), INET6_NTOA(event.dst_ip), event.ip_proto,\
      event.src_port, event.dst_port, event.signature_gen, event.signature_id, \
      event.signature_rev"
 
@@ -411,7 +411,7 @@ proc PadsQueryRequest { table where } {
     if {!$CONNECTED} {ErrorMessage "Not connected to sguild. Query aborted"; return}
 
     set COLUMNS "pads.hostname, pads.sid, pads.asset_id, pads.timestamp as datetime, \
-     INET_NTOA(pads.ip), pads.ip_proto, pads.service, pads.port, pads.application"
+     INET6_NTOA(pads.ip), pads.ip_proto, pads.service, pads.port, pads.application"
 
     set tmpQuery "SELECT $COLUMNS FROM pads [lindex $where 0]"
     regsub -all {\n} $tmpQuery {} selectQuery

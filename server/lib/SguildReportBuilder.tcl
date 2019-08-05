@@ -39,7 +39,7 @@ proc ReportBuilder { socketID type sid cid } {
         }
        IP {
             set query\
-                "SELECT INET_NTOA(src_ip), INET_NTOA(dst_ip), ip_ver, ip_hlen, ip_tos, ip_len, ip_id,\
+                "SELECT INET6_NTOA(src_ip), INET6_NTOA(dst_ip), ip_ver, ip_hlen, ip_tos, ip_len, ip_id,\
                 ip_flags, ip_off, ip_ttl, ip_csum\
                 FROM event\
                 WHERE sid=$sid and cid=$cid"

@@ -133,7 +133,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id   
     # Insert Event Hdr
     if [catch { InsertEventHdr $tablePrefix $sid $cid $u_event_id $u_event_ref $u_ref_time \
                 $msg $sig_gen $sig_id $sig_rev $timestamp $priority $class_type \
-                $status $dec_sip $dec_dip $ip_proto $ip_ver $ip_hlen $ip_tos \
+                $status $str_sip $str_dip $ip_proto $ip_ver $ip_hlen $ip_tos \
                 $ip_len $ip_id $ip_flags $ip_off $ip_ttl $ip_csum $icmp_type \
                 $icmp_code $src_port $dst_port } tmpError] {
 

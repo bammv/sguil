@@ -236,10 +236,10 @@ proc InsertEventHdr { tablePostfix sid cid u_event_id u_event_ref u_ref_time msg
     set tmpValues \
          "'$sid', '$cid', '$u_event_id', '$u_event_ref', '$u_ref_time', '[mysqlescape $msg]',  \
          '$sig_gen', '$sig_id', '$sig_rev', '$timestamp', '$priority',   \
-         '$class_type', '$status', '$dec_sip', '$dec_dip', '$ip_proto',  \
+         '$class_type', '$status', INET6_ATON('$dec_sip'), INET6_ATON('$dec_dip'), '$ip_proto',  \
          '$ip_ver', '$ip_hlen', '$ip_tos', '$ip_len', '$ip_id',          \
          '$ip_flags', '$ip_off', '$ip_ttl', '$ip_csum'"
-                                                                                                                       
+
     # ICMP, TCP, & UDP have extra columns
     if { $ip_proto == "1" } {
                                                                                                                        

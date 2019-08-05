@@ -29,9 +29,7 @@ proc GenericEvent { agentSocketID eventList } {
     set refID [lindex $eventList 7]
     set msg [hex2string [lindex $eventList 8]]
     set inet_sip [lindex $eventList 9]
-    set dec_sip [InetAtoN $inet_sip]
     set inet_dip [lindex $eventList 10]
-    set dec_dip [InetAtoN $inet_dip]
     set ip_proto [lindex $eventList 11]
     set src_port [lindex $eventList 12]
     set dst_port [lindex $eventList 13]
@@ -46,8 +44,8 @@ proc GenericEvent { agentSocketID eventList } {
 
     # Insert data into the event hdr
     if [catch { InsertEventHdr $tablePrefix $sensorID $alertID $alertID $refID $timestamp \
-                $msg $gen_id $sig_id $revision $timestamp $priority $class $status $dec_sip \
-                $dec_dip $ip_proto {} {} {} {} {} {} {} {} {} {} {} $src_port $dst_port } tmpError] {
+                $msg $gen_id $sig_id $revision $timestamp $priority $class $status $inet_sip \
+                $inet_dip $ip_proto {} {} {} {} {} {} {} {} {} {} {} $src_port $dst_port } tmpError] {
 
         # DEBUG Foo
         LogMessage "ERROR: While inserting event info: $tmpError"

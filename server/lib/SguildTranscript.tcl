@@ -1,5 +1,7 @@
 # $Id: SguildTranscript.tcl,v 1.22 2013/09/05 00:38:45 bamm Exp $ #
 
+package require ip
+
 proc InitRawFileArchive { date sensor srcIP dstIP srcPort dstPort ipProto } {
   global LOCAL_LOG_DIR
   # Check to make sure our dirs exists. We use <rootdir>/date/sensorName/*.raw
@@ -298,10 +300,20 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
   # to figure out the true src. So we assume the low port was the server
   # port. We can get that info from the file name.
   # Filename example: 208.185.243.68:6667_67.11.255.148:3470-6.raw
-  regexp {^(.*):(.*)_(.*):(.*)-([0-9]+)\.raw$} [file tail $fileName] allMatch srcIP srcPort dstIP dstPort ipProto
-                                                                                                            
-  set srcMask [TcpFlowFormat $srcIP $srcPort $dstIP $dstPort]
-  set dstMask [TcpFlowFormat $dstIP $dstPort $srcIP $srcPort]
+
+  if {[regexp {^(.*):(.*)_(.*):(.*)-([0-9]+)\.raw$} [file tail $fileName] allMatch srcIP srcPort dstIP dstPort ipProto] == 1} {
+    if {[string first : $srcIP] != -1} {
+      set ipVersion 6
+    } else {
+      set ipVersion 4
+    }
+  } else {
+    LogMessage "GenerateXscript: unable to parse $fileName"
+    return
+  }
+
+  set srcMask [TcpFlowFormat $ipVersion $srcIP $srcPort $dstIP $dstPort]
+  set dstMask [TcpFlowFormat $ipVersion $dstIP $dstPort $srcIP $srcPort]
   #catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR START]}
   catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Sensor Name:" [lindex $transInfoArray($TRANS_ID) 4]]}
   catch {SendSocket $clientSocketID [list XscriptMainMsg $winName HDR "Timestamp:" [lindex $transInfoArray($TRANS_ID) 5]]}
@@ -356,10 +368,30 @@ proc GenerateXscript { fileName clientSocketID winName TRANS_ID } {
 
 }
 
-proc TcpFlowFormat { srcIP srcPort dstIP dstPort } {
-  set tmpSrcIP [split $srcIP .]
-  set tmpDstIP [split $dstIP .]
-  set tmpData [eval format "%03i.%03i.%03i.%03i.%05i-%03i.%03i.%03i.%03i.%05i" $tmpSrcIP $srcPort $tmpDstIP $dstPort]
+proc TcpFlowFormat { ipVersion srcIP srcPort dstIP dstPort } {
+
+  switch -exact $ipVersion {
+    4 {
+        LogMessage "TcpFlowFormat: IP Version: $ipVersion"
+        set tmpSrcIP [split $srcIP .]
+        set tmpDstIP [split $dstIP .]
+        set tmpData [eval format "%03i.%03i.%03i.%03i.%05i-%03i.%03i.%03i.%03i.%05i" $tmpSrcIP $srcPort $tmpDstIP $dstPort]
+      }
+    6 {
+        # XXX untested, don't have tcpflow that supports IPv6, so the transcript stays empty
+        # at least it doesn't break sguild anymore
+        LogMessage "TcpFlowFormat: IP Version: $ipVersion"
+        set srcIP [ip::normalize $srcIP]
+        set dstIP [ip::normalize $dstIP]
+        set tmpSrcIP [split $srcIP :]
+        set tmpDstIP [split $dstIP :]
+        set tmpData [eval format "%s.%s.%s.%s.%s.%s.%s.%s.%05i-%s.%s.%s.%s.%s.%s.%s.%s.%05i" $tmpSrcIP $srcPort $tmpDstIP $dstPort]
+      }
+    default {
+        LogMessage "TcpFlowFormat: Unknown IP Version: $ipVersion"
+        return
+      }
+  }
   return $tmpData
 }
 

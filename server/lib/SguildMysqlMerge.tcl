@@ -88,8 +88,8 @@ proc CreateMysqlMainEventMergeTable {} {
         priority              INT UNSIGNED,                     \
         class                 VARCHAR(20),                      \
         status                SMALLINT UNSIGNED DEFAULT 0,      \
-        src_ip                INT UNSIGNED,                     \
-        dst_ip                INT UNSIGNED,                     \
+        src_ip                VARBINARY(16),                    \
+        dst_ip                VARBINARY(16),                    \
         src_port              INT UNSIGNED,                     \
         dst_port              INT UNSIGNED,                     \
         icmp_type             TINYINT UNSIGNED,                 \
@@ -288,8 +288,8 @@ proc CreateEventTable { tableName } {
         priority              INT UNSIGNED,                     \
         class                 VARCHAR(20),                      \
         status                SMALLINT UNSIGNED DEFAULT 0,      \
-        src_ip                INT UNSIGNED,                     \
-        dst_ip                INT UNSIGNED,                     \
+        src_ip                VARBINARY(16),                    \
+        dst_ip                VARBINARY(16),                    \
         src_port              INT UNSIGNED,                     \
         dst_port              INT UNSIGNED,                     \
         icmp_type             TINYINT UNSIGNED,                 \

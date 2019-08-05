@@ -5,25 +5,16 @@ proc HttpDate { secs } {
 
 proc SguildGetContentType { filepath } {
 
-    set m [fileutil::magic::mimetype $filepath]
+    set ext [file extension $filepath]
 
-    # If fileutil can't determine the type, then try by extension.
-    # We only server css, js, images
-    if { $m == "" } {
+    switch -exact $ext {
 
-        set ext [file extension $filepath]
-
-        switch -exact $ext {
-
-            ".css"	{ set m "text/css" }
-            ".js"	{ set m "text/javascript" }
-            ".svg"	{ set m "image/svg+xml" }
-            default	{ }
-
-        }
+        ".css"	{ set m "text/css" }
+        ".js"	{ set m "text/javascript" }
+        ".svg"	{ set m "image/svg+xml" }
+        default	{ }
 
     }
-
     return $m
 
 }

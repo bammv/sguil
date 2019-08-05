@@ -190,7 +190,7 @@ proc DeleteEventIDList { socketID status comment eidList } {
             } else {
 
                 set escalateArray($tmpEid) [FlatDBQuery\
-                 "SELECT 2, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.sid=[lindex [split $tmpEid .] 0] AND event.cid=[lindex [split $tmpEid .] 1]"]
+                 "SELECT 2, event.priority, event.class, sensor.hostname, event.timestamp, event.sid, event.cid, event.signature, INET6_NTOA(event.src_ip), INET6_NTOA(event.dst_ip), event.ip_proto, event.src_port, event.dst_port FROM event, sensor WHERE event.sid=sensor.sid AND event.sid=[lindex [split $tmpEid .] 0] AND event.cid=[lindex [split $tmpEid .] 1]"]
 
             }
 

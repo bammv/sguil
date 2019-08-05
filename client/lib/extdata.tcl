@@ -456,7 +456,9 @@ proc GetHostbyAddr { ip } {
                 foreach homeNet $HOME_NET {
 
                     set netMask [ip::mask $homeNet]
-                    if { [ip::equal ${ip}/${netMask} $homeNet] } { set nameserver local }
+		    if { [ip::version $ip] == [ip::version $homeNet] } {
+                        if { [ip::equal ${ip}/${netMask} $homeNet] } { set nameserver local }
+		    }
 
                 }
 

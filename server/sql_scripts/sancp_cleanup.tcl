@@ -198,9 +198,9 @@ set createQuery "                                      \
     end_time      DATETIME                NOT NULL,    \
     duration      INT UNSIGNED            NOT NULL,    \
     ip_proto      TINYINT UNSIGNED        NOT NULL,    \
-    src_ip        INT UNSIGNED,                        \
+    src_ip        VARBINARY(16),                       \
     src_port      SMALLINT UNSIGNED,                   \
-    dst_ip        INT UNSIGNED,                        \
+    dst_ip        VARBINARY(16),                       \
     dst_port      SMALLINT UNSIGNED,                   \
     src_pkts      INT UNSIGNED            NOT NULL,    \
     src_bytes     INT UNSIGNED            NOT NULL,    \

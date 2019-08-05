@@ -7,9 +7,9 @@
 #  | autoid     | int(10) unsigned     | NO   | PRI | NULL    | auto_increment |
 #  | erase      | datetime             | YES  |     | NULL    |                |
 #  | sensorname | varchar(255)         | YES  |     | NULL    |                |
-#  | src_ip     | varchar(18)          | YES  |     | NULL    |                |
+#  | src_ip     | varbinary(16)        | YES  |     | NULL    |                |
 #  | src_port   | int(10) unsigned     | YES  |     | NULL    |                |
-#  | dst_ip     | varchar(18)          | YES  |     | NULL    |                |
+#  | dst_ip     | varbinary(16)        | YES  |     | NULL    |                |
 #  | dst_port   | int(10) unsigned     | YES  |     | NULL    |                |
 #  | ip_proto   | tinyint(3) unsigned  | YES  |     | NULL    |                |
 #  | signature  | varchar(255)         | YES  |     | NULL    |                |
@@ -20,6 +20,7 @@
 #  | comment    | varchar(255)         | YES  |     | NULL    |                |
 #  +------------+----------------------+------+-----+---------+----------------+
 
+package require ip
 
 # Return a list of all autocats in the DB
 proc GetAutoCatList {} {
@@ -27,7 +28,7 @@ proc GetAutoCatList {} {
     set aquery \
       "SELECT \
          autocat.active, autocat.autoid, autocat.erase, autocat.sensorname, \
-         autocat.src_ip, autocat.src_port, autocat.dst_ip, autocat.dst_port, \
+         INET6_NTOA(autocat.src_ip), autocat.src_port, INET6_NTOA(autocat.dst_ip), autocat.dst_port, \
          autocat.ip_proto, autocat.signature, autocat.status, user_info.username, \
          autocat.timestamp, autocat.comment                \
        FROM autocat, user_info WHERE autocat.uid=user_info.uid"
@@ -49,8 +50,8 @@ proc LoadAutoCats {} {
 
     set aquery \
       "SELECT \
-         autoid, erase, sensorname, src_ip, src_port, \
-         dst_ip, dst_port, ip_proto, signature, status, comment \
+         autoid, erase, sensorname, INET6_NTOA(src_ip), src_port, \
+         INET6_NTOA(dst_ip), dst_port, ip_proto, signature, status, comment \
        FROM autocat \
        WHERE active='Y'"
 
@@ -135,8 +136,8 @@ proc EnableAutoCatRule { socketID rid } {
 
     set aquery \
       "SELECT \
-         autoid, erase, sensorname, src_ip, src_port, \
-         dst_ip, dst_port, ip_proto, signature, status \
+         autoid, erase, sensorname, INET6_NTOA(src_ip), src_port, \
+         INET6_NTOA(dst_ip), dst_port, ip_proto, signature, status \
        FROM autocat \
        WHERE autoid='$rid'"
 
@@ -197,7 +198,7 @@ proc AddAutoCatRule { rid rList } {
 
 	    # IP is valid and now we have a list with our ip range (net number - bcast address)
 	    # if it was a single address and not a net, these numbers will be the same
-	    set tmpVar [list [InetAtoN [lindex $ipList 2]] [InetAtoN [lindex $ipList 3]]]
+	    set tmpVar [list [ip::normalize [lindex $ipList 2]] [ip::normalize [lindex $ipList 3]]]
 
 	}
 	
@@ -232,8 +233,8 @@ proc AutoCat { data } {
 	    } elseif { $rIndex != 7 } {
 		# ip address match vars are a list with a low and high ip address
 		set dataVar [InetAtoN [lindex $data $rIndex]]
-		set netIP [lindex $rMatch 0]
-		set bcastIP [lindex $rMatch 1]
+		set netIP [InetAtoN [lindex $rMatch 0]]
+		set bcastIP [InetAtoN [lindex $rMatch 1]]
 		if { $dataVar < $netIP || $dataVar > $bcastIP } {
 		    set MATCH 0
                     break
@@ -285,8 +286,11 @@ proc AutoCatRequest { clientSocketID ruleList } {
         lappend tables $t
 
         if { $v != "none" && $v != "NONE" && $v != "any" && $v != "ANY" } {
-
-            lappend values "\'$v\'"
+	    if { $t == "src_ip" || $t == "dst_ip" } {
+                lappend values "INET6_ATON(\'$v\')"
+            } else {
+                lappend values "\'$v\'"
+            }
 
         } else {
 

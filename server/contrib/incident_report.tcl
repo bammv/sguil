@@ -485,7 +485,7 @@ foreach status "11 12 13 14 15 16 17" {
         }
 
         set tmpQuery \
-            "SELECT COUNT(signature), INET_NTOA(src_ip), signature_id, signature \
+            "SELECT COUNT(signature), INET6_NTOA(src_ip), signature_id, signature \
              FROM event \
              WHERE $WHERE \
              GROUP BY signature, src_ip \
@@ -531,9 +531,9 @@ foreach status "11 12 13 14 15 16 17" {
         #################
 
         if { $status == 15 && $CHAT } {
-            set HOME_NET_CONSTR "src_ip >= INET_ATON('$HOME_NET_START') AND src_ip <= INET_ATON('$HOME_NET_END')"
+            set HOME_NET_CONSTR "src_ip >= INET6_ATON('$HOME_NET_START') AND src_ip <= INET6_ATON('$HOME_NET_END')"
             set tmpQuery \
-                "SELECT COUNT(signature) as sCount, INET_NTOA(src_ip), signature_id, signature \
+                "SELECT COUNT(signature) as sCount, INET6_NTOA(src_ip), signature_id, signature \
                  FROM event \
                  WHERE timestamp $TIMECONSTR AND status=15 AND signature LIKE 'CHAT%' AND $HOME_NET_CONSTR \
                  GROUP BY signature, src_ip \

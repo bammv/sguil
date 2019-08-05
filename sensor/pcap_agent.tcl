@@ -381,11 +381,11 @@ proc CreateRawDataFile { TRANS_ID timestamp srcIP srcPort dstIP dstPort proto ra
         # Use ip or vlan for the filter
         if {$proto != "6" && $proto != "17"} {
 
-            set tcpdumpFilter "(ip and host $srcIP and host $dstIP and proto $proto) or (vlan and host $srcIP and host $dstIP and proto $proto)"
+            set tcpdumpFilter "((ip or ip6) and host $srcIP and host $dstIP and proto $proto) or (vlan and host $srcIP and host $dstIP and proto $proto)"
 
         } else {
 
-            set tcpdumpFilter "(ip and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto) or (vlan and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto)"
+            set tcpdumpFilter "((ip or ip6) and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto) or (vlan and host $srcIP and host $dstIP and port $srcPort and port $dstPort and proto $proto)"
 
         }
 
@@ -446,7 +446,7 @@ proc MergePcapFiles { rawDataFileName TRANS_ID type } {
         # Strip the 24 byte pcap header from all but the first file and append them to the main
         foreach pcapFile [lrange $PCAP_FILE_TRACKER($rawDataFileName) 1 end] {
 
-            if { [file size $pcapFile] > 24 } { 
+            if { [file exists $pcapFile] && [file size $pcapFile] > 24 } {
 
                 set pID [open $pcapFile r]
                 fconfigure $pID -translation binary
