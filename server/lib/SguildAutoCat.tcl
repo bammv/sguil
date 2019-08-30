@@ -318,8 +318,8 @@ proc AutoCatRequest { clientSocketID ruleList } {
         return
 
     }
-    
-    if { [catch {AddAutoCatRule $rid [lrange $ruleList 1 end]} tmpError] } {
+
+    if { [catch {ProcessAutoCat "$rid $ruleList"} tmpError] } {
 
         catch {SendSocket $clientSocketID [list ErrorMessage "Error inserting autocat rule: $rid"] 1} tmpError
 
