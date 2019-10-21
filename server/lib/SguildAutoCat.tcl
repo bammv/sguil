@@ -319,14 +319,20 @@ proc AutoCatRequest { clientSocketID ruleList } {
 
     }
 
-    if { [catch {ProcessAutoCat "$rid $ruleList"} tmpError] } {
+    set aquery \
+      "SELECT \
+         autoid, erase, sensorname, src_ip, src_port, \
+         dst_ip, dst_port, ip_proto, signature, status, comment \
+       FROM autocat \
+       WHERE autoid='$rid'"
 
-        catch {SendSocket $clientSocketID [list ErrorMessage "Error inserting autocat rule: $rid"] 1} tmpError
+    foreach line [MysqlSelect $aquery list] {
+      if { [catch {ProcessAutoCat $line} tmpError] } {
+          catch {SendSocket $clientSocketID [list ErrorMessage "Error inserting autocat rule: $rid"] 1} tmpError
 
-    } else {
-        
-        catch {SendSocket $clientSocketID [list InfoMessage "AutoCat rule $rid successfully implemented."]} tmpError
-
+      } else {
+          catch {SendSocket $clientSocketID [list InfoMessage "AutoCat rule $rid successfully implemented."]} tmpError
+      }
     }
 
 }
