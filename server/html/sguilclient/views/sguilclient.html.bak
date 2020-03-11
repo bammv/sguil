@@ -1,6 +1,6 @@
-<div id="SguilConsole" ng-cloak layout-fill style="height: 100vh;" layout="column">
+<div id="SguilConsole" ng-cloak>
 
-    <div role="main" aria-hidden="false">
+    <div layout="column" role="main" aria-hidden="false">
         <md-toolbar class="md-hue-2">
             <div class="md-toolbar-tools">
 
@@ -11,12 +11,12 @@
                 <md-button class="md-raised md-warn md-hue-2" ng-disabled="buttonstatus.pane1" ng-disabled="all.status" ng-click="showPane('pane1')">P1: {{ pane1.length }}</md-button>
                 <md-button class="md-raised md-warn md-hue-2" ng-disabled="buttonstatus.pane2" ng-click="showPane('pane2')">P2: {{ pane2.length }}</md-button>
                 <md-button class="md-raised md-warn md-hue-4" ng-disabled="buttonstatus.pane3" ng-click="showPane('pane3')">P3: {{ pane3.length }}</md-button>
-                <md-button class="md-raised md-warn md-hue-4" ng-disabled="buttonstatus.pane4" ng-click="showPane('pane4')">P4: {{ pane4.length }}</md-button>
-
+                <md-button class="md-raised md-warn md-hue-4" ng-disabled="buttonstatus.pane4" ng-click="showPane('pane4')">P4: {{ pane4.length }}</md-button
+                
                 <md-button class="md-icon-button" aria-label="User Info">
                   <md-icon md-svg-src="images/person_outline.svg"></md-icon>
                   <md-tooltip class="multiline-tt" md-direction="left">
-                      Server: {{ host }}<br>
+                      Server: {{ cleanName }}<br>
                       Username: {{ username }}<br>
                       User ID: {{ userid }}<br>
                       Selected Event: {{ selectedRow }}
@@ -45,84 +45,92 @@
             </div>
         </md-toolbar>
     </div>
-    <div id="top-container" flex="65">
-        <md-tabs layout-fill md-selected="selectedMainTab" md-autoselect md-border-bottom class="md-primary md-hue-1">
+
+
+    <div id="top-container" flex="60" layout="row">
+        <md-tabs md-selected="selectedMainTab" md-autoselect md-border-bottom md-dynamic-height class="md-primary md-hue-1">
             <md-tab ng-repeat="tab in mainTabs" md-on-select="newTabSelected(tab.title, tab.type)">
                 <md-tab-label>
                     {{tab.title}} 
                     <a ng-if="tab.close" ng-click="removeQuery($index,tab)">
-                        <md-icon md-svg-src="images/ic_cancel_24px.svg"></md-icon>
-                        <md-tooltip md-direction="bottom">Close Tab</md-tooltip>
+                        <md-icon md-svg-src="img/icons/ic_close_24px.svg"></md-icon>
                     </a>
-                    <md-menu ng-if="tab.toolbar">
-                      <a ng-click="topMenu($mdMenu, $event)">
-                        <md-icon md-svg-icon="images/filled_arrow_drop_down_circle-24px.svg"></md-icon>
-                        <md-tooltip md-direction="bottom">Menu Options</md-tooltip>
-                      </a>
-                      <md-menu-content width="2">
-                        <md-menu-item ng-if="tab.refresh" class="md-small">
-                            <md-button ng-click="refreshQuery($index,tab)">
-                                <md-icon md-svg-src="img/icons/ic_refresh_24px.svg" md-menu-align-target></md-icon>
-                                Refresh
-                            </md-button>
-                        </md-menu-item>
-                        <md-menu-item ng-if="tab.edit" class="md-small">
-                            <md-button ng-click="editQuery($index,tab)">
-                                <md-icon md-svg-src="images/ic_edit_24px.svg" md-menu-align-target></md-icon>
-                                Edit
-                            </md-button>
-                        </md-menu-item>
-                        <md-menu-item ng-if="tab.save" class="md-small">
-                            <md-button ng-click="saveQuery($index,tab)">
-                                <md-icon md-svg-src="images/ic_save_24px.svg" md-menu-align-target></md-icon>
-                                Save
-                            </md-button>
-                        </md-menu-item>
-                        <md-menu-item ng-if="tab.view" class="md-small">
-                            <md-button ng-click="showQuery($index,tab)">
-                                <md-icon md-svg-src="images/ic_eye_24px.svg" md-menu-align-target></md-icon>
-                                View
-                            </md-button>
-                        </md-menu-item>
-                      </md-menu-content>
-                    </md-menu>
                 </md-tab-label>
                 <md-tab-body>
-                    <div layout-fill layout=column>
-                        <div ng-style="{'display': showSearchProgress(tab.title)?'block':'none'}">
-                            <md-progress-linear flex="" md-mode="indeterminate"></md-progress-linear>
-                        </div>
-                        <!--
-                        <md-toolbar ng-if="tab.toolbar" layout="row" class="md-hue-3 md-xsmall" style="fill: white; color:white">
-                            <a ng-if="tab.refresh" ng-click="refreshQuery($index,tab)" style="fill: white; color:white">
-                                <md-icon  md-svg-src="img/icons/ic_refresh_24px.svg" style="fill: white; color:white"></md-icon>
-                                <md-tooltip md-direction="bottom">Rerun Query</md-tooltip>
-                            </a>
-                            <a ng-if="tab.edit" ng-click="editQuery($index,tab)">
-                                <md-icon md-svg-src="images/ic_edit_24px.svg" style="fill: white; color:white"></md-icon>
-                                <md-tooltip md-direction="bottom">Edit Query</md-tooltip>
-                            </a>
-                            <a ng-if="tab.save" ng-click="saveQuery($index,tab)">
-                                <md-icon md-svg-src="images/ic_save_24px.svg" style="fill: white; color:white"></md-icon>
-                                <md-tooltip md-direction="bottom">Save Results</md-tooltip>
-                            </a>
-                            <a ng-if="tab.view" ng-click="showQuery($index,tab)">
-                                <md-icon md-svg-src="images/ic_eye_24px.svg" style="fill: white; color:white"></md-icon>
-                                <md-tooltip md-direction="bottom">View Query</md-tooltip>
-                            </a>
-                        </md-toolbar>
-                        -->
-                        <div layout-fill compile="tab.content"></div>
+                    <div ng-style="{'display': showSearchProgress(tab.title)?'block':'none'}">
+                        <md-progress-linear flex="" md-mode="indeterminate"></md-progress-linear>
                     </div>
+                    <div style="max-height: 80vh" compile="tab.content"></div>
                 </md-tab-body>
             </md-tab>
         </md-tabs>
     </div>
-    <div class="bottom-container" flex="35" layout="row">
-        <div layout="column" style="width: 50%;">
-                <md-tabs layout-fill md-selected="selectedBottomTab" md-border-bottom class="md-primary md-hue-1">
+
+    <nav id="eventid-menu" class="context-menu">
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="pcapRequest($event, 'xscript')">Transcript</md-button>
+        </md-menu-item>
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="pcapRequest($event, 'pcap')">Request Pcap</md-button>
+        </md-menu-item>
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="showHistory($event)">History</md-button>
+        </md-menu-item>
+    </nav>
+
+    <nav id="ip-menu" class="context-menu">
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="showEventSearchDialog($event, selectedFieldName)">Search Events</md-button>
+        </md-menu-item>
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="showElasticSearchDialog($event, selectedFieldName)">Search Elastic </md-button>
+        </md-menu-item>
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="webLookup(selectedFieldName)">TCPIPUtils Lookup</md-button>
+        </md-menu-item>
+    </nav>
+
+    <nav id="signature-menu" class="context-menu">
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="showEventSearchDialog($event, 'signature')">Search Events</md-button>
+        </md-menu-item>
+    </nav>
+
+    <nav id="priority-menu" class="context-menu">
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="updateEventStatus('1')">Update to NA</md-button>
+        </md-menu-item>
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="escalateEvent('2')">Escalate Event</md-button>
+        </md-menu-item>
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="updateEventStatus('11')">Update to Cat 1</md-button>
+        </md-menu-item>
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="updateEventStatus('12')">Update to Cat 2</md-button>
+        </md-menu-item>
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="updateEventStatus('13')">Update to Cat 3</md-button>
+        </md-menu-item>
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="updateEventStatus('14')">Update to Cat 4</md-button>
+        </md-menu-item>
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="updateEventStatus('15')">Update to Cat 5</md-button>
+        </md-menu-item>
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="updateEventStatus('16')">Update to Cat 6</md-button>
+        </md-menu-item>
+        <md-menu-item class="md-small">
+            <md-button class="md-small" ng-click="updateEventStatus('17')">Update to Cat 7</md-button>
+        </md-menu-item>
+    </nav>
+
+    <div class="bottom-container" layout="row">
+        <div layout="column" style="min-height:350px;max-height:350px;height:350px;width:50%;min-width:50%;max-width:50%">
+            <div layout="column">
+                <md-tabs md-selected="selectedBottomTab" md-border-bottom md-dynamic-height class="md-primary md-hue-1">
                   <md-tab label="IP Info">
-                      <div layout="column" layout-fill>
                       <md-toolbar layout="row" class="md-hue-3 md-xsmall toolbar-checkbox">
                           <div class="md-toolbar-tools">
                             <h2 class="md-toolbar-tools" style="color:white">Lookup Address: {{ eventinfo.lookupip }}</h2>
@@ -133,34 +141,33 @@
                             </md-radio-group>
                           </div>
                       </md-toolbar>
-                      <md-content>
-                      <div id="whoisLog" style="font-size:12px"></div>
+                      <md-content class="md-padding" style="min-height:294px;max-height:294px;height:294px">
+                          <div id="whoisLog" style="font-size:12px"></div>
                       </md-content>
-                      </div>
                   </md-tab>
                   <md-tab label="Chat">
-                    <div layout-fill layout="column">
-                    <md-content style="height: 100%" class="md-padding" scroll-glue>
+                    <md-content class="md-padding" style="min-height:224px;max-height:224px;height:224px" scroll-glue>
                         <div id="chatLog" style="font-size:12px" scroll-glue></div>
                     </md-content>
                     <div>
                         <md-content class="md-no-momentum">
                             <md-input-container class="md-icon-float md-block">
+                              <!-- Use floating label instead of placeholder -->
                               <label>Send Message</label>
                               <md-icon md-svg-src="img/icons/ic_comment_24px.svg" class="name"></md-icon>
                               <input ng-model="eventinfo.msg" type="text" ng-keyup="$event.keyCode == 13 && sendMsg()">
                             </md-input-container>
                         </md-content>
                     </div>   
-                    </div>
                   </md-tab>
                   <md-tab label="Log">
-                    <md-content class="md-padding">
+                    <md-content class="md-padding" style="height:318px">
+                       <!-- <div id="systemLog" style="font-family:monospace;font-size:12px" scroll-glue></div> -->
                        <div id="systemLog" style="font-size:12px" scroll-glue></div>
                     </md-content>
                   </md-tab>
                   <md-tab label="Downloads">
-                    <md-content class="md-padding">
+                    <md-content class="md-padding" style="height:318px">
                         <div id="downloads">
                             <div ng-repeat="pcapEvent in pcapDownloads">
                                 <md-toolbar class="md-small md-hue-2">
@@ -176,11 +183,12 @@
                     </md-content>
                   </md-tab>
                 </md-tabs>
+            </div>
         </div>
 
-        <div layout="column" style="height: 100%; width: 50%;">
+        <div layout="column" style="width:50%">
 
-            <div layout="column" ng-show="displayJSONData" id="jsonDataDisplay">
+            <div layout="column" ng-show="displayJSONData" id="jsonDataDisplay" style="height:345px">
                 <md-toolbar layout="row" class="md-hue-1 md-small toolbar-checkbox">
                     <div class="md-toolbar-tools">
                     <h2 class="md-toolbar-tools" style="color:white">Additional Details</h2>
@@ -188,46 +196,30 @@
                 </md-toolbar>
                 <md-content flex="100">
                     <table class="flowtable">
-                        <tr>
-                            <th>Display</th>
-                            <th>Field</th>
-                            <th>Value</th>
-                        </tr>
                         <tr ng-repeat="(key, value) in jsonData">
-                            <td>
-                                <md-checkbox ng-model="flowDisplay[key]" ng-click="toggleColumnVisibility($event, key)" md-no-ink class="md-checkbox-small" aria-label="Toggle Column"></md-checkbox>
-                            </td>
-                            <td><b>{{ key }}:</b></td>
-                            <td>{{ value }}</td>
+                            <td><b>{{ key }}:</b></td><td>{{ value }}</td>
                         </tr>
                     </table>
-                    <!--
-                    <div ng-repeat="(key, value) in jsonData">
-                        <md-checkbox>
-                              <b>{{ key }}:</b> {{value}}
-                        </md-checkbox>
-                    </div>
-                    -->
                 </md-content>
             </div>
+            <div layout="column" ng-show="displayEventData" id="eventDataDisplay">
 
-            <div layout="column" ng-show="displayEventData" id="eventDataDisplay" style="height: 100%;">
-
-                <div layout="column" flex="45">
+                <div layout="column">
+                <md-content>
                     <md-toolbar layout="row" class="md-hue-1 md-small toolbar-checkbox">
                         <div class="md-toolbar-tools">
                         <md-checkbox ng-model="eventinfo.sig" ng-change="clickSignature()" aria-label="Signature Checkbox"></md-checkbox>
                         <h2 class="md-toolbar-tools" style="color:white">Signature</h2>
                         </div>
                     </md-toolbar>
-                    <md-content>
-                        <div id="eventSignature" style="font-family:monospace;font-size:12px;"></div>
-                    </md-content>
+                    <div id="eventSignature" style="height:100px;font-family:monospace;font-size:12px;">
+                    </div>
+                </md-content>
                 </div>
-                
-                <div layout="column" flex="55">
+
                 <md-content>
-                <div layout="row" flex="100">
+                <div class="md-content" layout="row">
+    
                     <div layout="column" style="width:70%">
                         <md-toolbar layout="row" class="md-hue-1 md-small">
                         <div class="md-toolbar-tools">
@@ -235,7 +227,8 @@
                             <h2 class="md-toolbar-tools" style="color:white">Hex Payload</h2>
                         </div>
                         </md-toolbar>
-                        <div id="payloadHex" style="font-family:monospace;font-size:12px;"> </div>
+                        <div id="payloadHex" style="height:186px;font-family:monospace;font-size:12px;">
+                        </div>
                     </div>
 
                     <md-divider></md-divider>
@@ -246,12 +239,12 @@
                             <h2 class="md-toolbar-tools" style="color:white">Ascii Payload</h2>
                             </div>
                         </md-toolbar>
-                        <div id="payloadAscii" style="font-family:monospace;font-size:12px;">
+                        <div id="payloadAscii" style="height:186px;font-family:monospace;font-size:12px;">
                         </div>
                     </div>
+
                 </div>
                 </md-content>
-                </div>
 
             </div>
         </div>
@@ -331,83 +324,23 @@
 
     <div style="visibility: hidden">
         <div class="md-dialog-container" id="eventhistory">
-            <md-dialog aria-label="Event History">
-                <md-toolbar>
-                    <div class="md-toolbar-tools">
-                        <h2>Event History - {{ selectedRow }}</h2>
-                    </div>
-                </md-toolbar>
+        <md-dialog aria-label="Event History">
+              <md-toolbar>
+                <div class="md-toolbar-tools">
+                  <h2>Event History - {{ selectedRow }}</h2>
+                  <!--
+                  <span flex></span>
+                  <md-button class="md-icon-button" ng-click="cancel()">
+                    <md-icon md-svg-src="img/icons/ic_close_24px.svg" aria-label="Close dialog"></md-icon>
+                  </md-button>
+                  -->
+                </div>
+              </md-toolbar>
           
                 <div id="history-table" class="md-dialog-content"></div>
-            </md-dialog>
-        </div>
+        </md-dialog>
     </div>
-
-    <nav id="eventid-menu" class="context-menu">
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="pcapRequest($event, 'xscript')">Transcript</md-button>
-            </md-menu-item>
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="pcapRequest($event, 'pcap')">Request Pcap</md-button>
-            </md-menu-item>
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="showHistory($event)">History</md-button>
-            </md-menu-item>
-        </nav>
-    
-        <nav id="ip-menu" class="context-menu">
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="prepEventSearchDialog($event, selectedFieldName)">Search Events</md-button>
-            </md-menu-item>
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="prepElasticSearchDialog($event, selectedFieldName)">Search Elastic </md-button>
-            </md-menu-item>
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="webLookup(selectedFieldName)">TCPIPUtils Lookup</md-button>
-            </md-menu-item>
-        </nav>
-    
-        <nav id="signature-menu" class="context-menu">
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="showEventSearchDialog($event, 'signature')">Search Events</md-button>
-            </md-menu-item>
-        </nav>
-    
-        <nav id="count-menu" class="context-menu">
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="getCorrelatedEvents()">View Correlated Events</md-button>
-            </md-menu-item>
-        </nav>
-    
-        <nav id="priority-menu" class="context-menu">
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="updateEventStatus('1')">Update to NA</md-button>
-            </md-menu-item>
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="escalateEvent('2')">Escalate Event</md-button>
-            </md-menu-item>
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="updateEventStatus('11')">Update to Cat 1</md-button>
-            </md-menu-item>
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="updateEventStatus('12')">Update to Cat 2</md-button>
-            </md-menu-item>
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="updateEventStatus('13')">Update to Cat 3</md-button>
-            </md-menu-item>
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="updateEventStatus('14')">Update to Cat 4</md-button>
-            </md-menu-item>
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="updateEventStatus('15')">Update to Cat 5</md-button>
-            </md-menu-item>
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="updateEventStatus('16')">Update to Cat 6</md-button>
-            </md-menu-item>
-            <md-menu-item class="md-small">
-                <md-button class="md-small" ng-click="updateEventStatus('17')">Update to Cat 7</md-button>
-            </md-menu-item>
-        </nav>
+    </div>
     <script>
         $("#history-table").tabulator({
             layout:"fitColumns", //fit columns to width of table (optional)

@@ -18,6 +18,14 @@ angular.module('SguilClient', [
 .config(function($mdThemingProvider) {
     $mdThemingProvider.theme('blue-grey', 'default')
       .primaryPalette('blue')
+
+      $mdThemingProvider.theme('top-pane')
+      .primaryPalette('blue')
+      .accentPalette('blue-grey');
+
+      $mdThemingProvider.theme('bottom-pane')
+      .primaryPalette('indigo')
+      .accentPalette('blue');
   })
 
 .config(['$routeProvider', function ($routeProvider) {
@@ -57,9 +65,10 @@ angular.module('SguilClient', [
         $rootScope.urlscheme.elastic = 'https://' + host + ':8443';
 
         // Adjust your URLs if you have a custom install
+        // Dev uri's
         //$rootScope.urlscheme.https = 'https://' + host + ':' + port;
-        //$rootScope.urlscheme.websocket = 'wss://192.168.8.250';
-        //$rootScope.urlscheme.elastic = 'http://192.168.8.250:9200';
+        //$rootScope.urlscheme.websocket = 'wss://demo.sguil.net';
+        //$rootScope.urlscheme.elastic = 'https://demo.sguil.net:8443';
 
     }
 

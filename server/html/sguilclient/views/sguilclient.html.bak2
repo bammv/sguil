@@ -1,10 +1,23 @@
 <div id="SguilConsole" ng-cloak layout-fill style="height: 100vh;" layout="column">
 
     <div role="main" aria-hidden="false">
+        <!-- <md-toolbar class="md-hue-2 md-small"> -->
+        <!--
+        <md-sidenav class="md-sidenav-left _md md-locked-open" md-component-id="left" md-is-locked-open="true" md-whiteframe="2">
+            <section layout="column" layout-align="center center">
+            </section>
+        </md-sidenav>
+        -->
         <md-toolbar class="md-hue-2">
             <div class="md-toolbar-tools">
 
+                <md-button class="md-icon-button" target="_blank" href="http://www.sguil.net">
+                    <md-icon md-svg-src="images/sguil-icon-new.svg"></md-icon>
+                    <md-tooltip md-direction="bottom">www.sguil.net</md-tooltip>
+                </md-button>
+
                 <h2 flex="" md-truncate="">Sguil RealTime Console</h2>
+
                 <h5 flex="" md-truncate="">{{ gmttime | date:'yyyy-MM-dd HH:mm:ss': 'UTC/GMT' }} GMT</h5>
 
                 <md-button class="md-raised md-primary" ng-disabled="buttonstatus.all" ng-click="showPane('all')">Total: {{ totalAlerts }}</md-button>
@@ -45,8 +58,16 @@
             </div>
         </md-toolbar>
     </div>
-    <div id="top-container" flex="65">
+    <!-- 
+    <div layout-fill>
+    -->
+    <!-- <div layout="row" id="top-container" flex="65"> -->
+    <div flex="66" layout="row" id="top-container">
+        <md-content flex >
+        <!--
         <md-tabs layout-fill md-selected="selectedMainTab" md-autoselect md-border-bottom class="md-primary md-hue-1">
+        -->
+        <md-tabs layout-fill md-selected="selectedMainTab" md-autoselect md-border-bottom>
             <md-tab ng-repeat="tab in mainTabs" md-on-select="newTabSelected(tab.title, tab.type)">
                 <md-tab-label>
                     {{tab.title}} 
@@ -117,8 +138,10 @@
                 </md-tab-body>
             </md-tab>
         </md-tabs>
+        </md-content>
     </div>
-    <div class="bottom-container" flex="35" layout="row">
+    <!-- <div class="bottom-container" flex="35" layout="row"> -->
+    <div class="bottom-container" flex layout="row">
         <div layout="column" style="width: 50%;">
                 <md-tabs layout-fill md-selected="selectedBottomTab" md-border-bottom class="md-primary md-hue-1">
                   <md-tab label="IP Info">
@@ -213,7 +236,8 @@
 
             <div layout="column" ng-show="displayEventData" id="eventDataDisplay" style="height: 100%;">
 
-                <div layout="column" flex="45">
+                 <div layout="column" flex="45"> 
+                <!-- <div layout="column" flex> -->
                     <md-toolbar layout="row" class="md-hue-1 md-small toolbar-checkbox">
                         <div class="md-toolbar-tools">
                         <md-checkbox ng-model="eventinfo.sig" ng-change="clickSignature()" aria-label="Signature Checkbox"></md-checkbox>
@@ -226,6 +250,7 @@
                 </div>
                 
                 <div layout="column" flex="55">
+                <!-- <div layout="column" flex> -->
                 <md-content>
                 <div layout="row" flex="100">
                     <div layout="column" style="width:70%">
@@ -256,6 +281,9 @@
             </div>
         </div>
     </div>
+    <!-- 
+    </div>
+    -->
 
     <div style="visibility: hidden">
        <div class="md-dialog-container" id="sguilLogin">

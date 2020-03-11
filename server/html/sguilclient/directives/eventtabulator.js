@@ -71,7 +71,7 @@ angular.module('tabulatorModule', [])
                     {title:"Event ID", width:75, field:"aid", align:"left", sorter:"number", sortable:true, editable:false,
                         cellContext:function(e, cell){ scope.eventrightclick({arg1: cell.getData(), arg2: e, arg3: scope.inputId});}
                     },
-                    {title:"Timestamp", width:130, field:"timestamp", align:"center", sorter:"date", sortable:true, editable:false},
+                    {title:"Timestamp", width:130, field:"timestamp", align:"center", editable:false, sorter:"datetime", sortable:true, sorterParams:{format:"YYYY-MM-DD hh:mm:ss", alignEmptyValues:"top"}},
                     {title:"SourceIP", width:100, field:"src_ip", align:"left", sorter:"string", sortable:true, editable:false,
                         cellContext:function(e, cell){ scope.iprightclick({arg1: cell.getData(), arg2: e, arg3: cell.getField(), arg4: scope.inputId});}
                     },
@@ -152,6 +152,10 @@ angular.module('tabulatorModule', [])
                 setdata: function(tname, data){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
                     myElement.tabulator("setData", data); 
+                },
+                setsort: function(tname, column, dir){
+                    var myElement = angular.element( document.querySelector( '#' + tname ) );
+                    myElement.tabulator("setSort", column, dir); 
                 },
                 download: function(tname, filename){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );

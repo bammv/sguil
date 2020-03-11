@@ -127,7 +127,11 @@ md-toolbar.md-xsmall .md-toolbar-tools {
 .md-tab > md-icon {
   color: inherit;
 }
-
+md-sidenav.md-locked-open {
+  width:     140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
 /*
 md-pagination-wrapper {
   height: 32px;

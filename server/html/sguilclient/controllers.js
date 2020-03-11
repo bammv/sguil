@@ -51,6 +51,20 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         $scope.elasticSearch.eventType = 'flow';
         $scope.elasticSearch.limit = "1000";
         $scope.elasticSearch.nextQuery = 0;
+        
+        $scope.host = $location.host();
+        $scope.totalAlerts = 0;
+        $scope.pane1 = [];
+        $scope.pane2 = [];
+        $scope.pane3 = [];
+        $scope.pane4 = [];
+        $scope.buttonstatus = {};
+        $scope.buttonstatus.all = true;
+        $scope.buttonstatus.pane1 = false;
+        $scope.buttonstatus.pane2 = false;
+        $scope.buttonstatus.pane3 = false;
+        $scope.buttonstatus.pane4 = false;
+        $scope.buttonstatus.current = "all";
 
         // Keep all pending requests here until they get responses
         var callbacks = {};
@@ -999,10 +1013,39 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 newData.count = msg[18];
             };
 
-              //console.log('data -> ' + JSON.stringify(newData));
-              //$scope.gridOptions.data.push(newData);
-              $scope.tableOptions.addrow(tableName, newData);
+            //console.log('data -> ' + JSON.stringify(newData));
+            //$scope.gridOptions.data.push(newData);
+            $scope.tableOptions.addrow(tableName, newData);
+            if (tableName === 'rtevents') {
 
+                $scope.totalAlerts++
+                switch (newData.priority) {
+                    case '1': $scope.pane1.push(newData); break;
+                    case '2': $scope.pane2.push(newData); break;
+                    case '3': $scope.pane3.push(newData); break;
+                    case '4': $scope.pane4.push(newData); break;
+                }
+
+            }
+
+        }
+
+        $scope.showPane = function(pane) {
+            if ( pane === 'all') {
+                $scope.tableOptions.setdata('rtevents', $scope.pane1.concat($scope.pane2, $scope.pane3, $scope.pane4));
+                $scope.tableOptions.setsort('rtevents', 'timestamp', 'asc');
+                $scope.buttonstatus.all = true;
+                $scope.buttonstatus.pane1 = false;
+                $scope.buttonstatus.pane2 = false;
+                $scope.buttonstatus.pane3 = false;
+                $scope.buttonstatus.pane4 = false;
+                $scope.buttonstatus.current = "all";
+            } else {
+                $scope.tableOptions.setdata('rtevents', $scope[pane]);
+                $scope.buttonstatus[pane] = true;
+                $scope.buttonstatus[$scope.buttonstatus.current] = false;
+                $scope.buttonstatus.current = pane;
+            }
         }
 
         function InsertQueryResults(msg){
@@ -1160,13 +1203,29 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             }
 
         }
+
+        function DeleteAid(pane, aid_id) {
+                for (let p of pane) {
+                    if (p.aid === aid_id) {
+                        pane.splice(pane.indexOf(p), 1);
+                        break;
+                    }
+                }
+                return pane;
+        }
   
         function DeleteEvents(aidList) {
 
+            var m = "";
             var a = "";
             for (a = 0; a < aidList.length; a++) {
                 var aid_id = aidList[a];
                 $scope.tableOptions.deleterow(aid_id);
+                $scope.totalAlerts--
+                $scope.pane1 = DeleteAid($scope.pane1, aid_id);
+                $scope.pane2 = DeleteAid($scope.pane2, aid_id);
+                $scope.pane3 = DeleteAid($scope.pane3, aid_id);
+                $scope.pane4 = DeleteAid($scope.pane4, aid_id);
             }
 
         }
