@@ -7,6 +7,11 @@ proc SguildGetContentType { filepath } {
 
     set m [fileutil::magic::mimetype $filepath]
 
+    # Fixup for weird magic detection causing file download on IE
+    if { $m == "{exported SGML document text}"  } {
+        set m "text/html"
+    }
+
     # If fileutil can't determine the type, then try by extension.
     # We only server css, js, images
     if { $m == "" } {
