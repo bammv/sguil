@@ -157,6 +157,7 @@ set CUR_SEL_FRAME(name) 0
 set COUNTER 0
 set SEARCHFRAME 1
 set SELECT_LIMIT 1000
+set WHOISLIST "none"
 set ES_PROFILE(host) {https://192.168.8.10}
 set ES_PROFILE(user) {}
 set ES_PROFILE(pass) {}
@@ -2457,7 +2458,9 @@ set ipDataFrame [frame [$detailTabs childsite 0].ipDataFrame]
        -text "Src IP" -command GetWhoisData]
       set whoisDstButton [radiobutton $whoisDataButtonsFrame.whoisDstButton -variable WHOISLIST -value dstip\
        -text "Dst IP" -command GetWhoisData]
-      pack $whoisLabel $whoisNoneButton $whoisSrcButton $whoisDstButton -side left
+      set whoisBothButton [radiobutton $whoisDataButtonsFrame.whoisBothButton -variable WHOISLIST -value both\
+       -text "Both" -command GetWhoisData]
+      pack $whoisLabel $whoisNoneButton $whoisSrcButton $whoisDstButton $whoisBothButton -side left
     set whoisDataTextFrame [frame $whoisDataFrame.whoisDataTextFrame]
       set whoisText [text $whoisDataTextFrame.whoisText -width 20 -height 8\
        -yscrollcommand "$whoisDataTextFrame.whoisScroll set" -background white -state disabled]
@@ -2471,7 +2474,7 @@ set ipDataFrame [frame [$detailTabs childsite 0].ipDataFrame]
 
 pack $ipDataFrame -expand true -fill both -padx 0 -pady 0
 
-$whoisNoneButton invoke
+#$whoisNoneButton invoke
 
 #
 # Sensor Status Tab
