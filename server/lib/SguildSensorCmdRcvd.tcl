@@ -54,7 +54,7 @@ proc SensorCmdRcvd { socketID } {
     }
 
     # Catch poorly formatted cmds
-    if { $sensorCmd != "" } { 
+    if { $sensorCmd != "" } {
       if { [catch {eval $cmd} tmpError] } {
           LogMessage "Error: Improper sensor cmd received: $data: $tmpError"
       }
@@ -132,7 +132,7 @@ proc DiskReport { socketID fileSystem percentage } {
 
     global agentSensorNameArray
 
-    if [info exists agentSensorNameArray($socketID)] { 
+    if [info exists agentSensorNameArray($socketID)] {
         SendSystemInfoMsg $agentSensorNameArray($socketID) "$fileSystem $percentage"
     }
 
@@ -142,7 +142,7 @@ proc SystemMsgRcvd { socketID msg } {
 
     global agentSensorNameArray
 
-    if [info exists agentSensorNameArray($socketID)] { 
+    if [info exists agentSensorNameArray($socketID)] {
         SendSystemInfoMsg $agentSensorNameArray($socketID) $msg
     }
 

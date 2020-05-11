@@ -49,7 +49,7 @@ proc SguildHttpRespond {sock ip port filename hdrs} {
     } else {
 
         set fileroot [lindex [file split $filename] 0]
-        
+
         if { $fileroot == "ws" } {
 
             chan configure $sock -translation crlf
@@ -130,7 +130,7 @@ proc SguildHttpFileFinished { socketID fileID filepath bytes {error {}} } {
 
     # Do we need to do more than this?
     catch {close $fileID}
-    SguildHttpClose $socketID 
+    SguildHttpClose $socketID
 
 }
 
@@ -138,9 +138,9 @@ proc SguildHttpParser {sock ip port reqstring hdrs} {
 
     array set req $reqstring
 
-    if { $req(path) == "" } { 
+    if { $req(path) == "" } {
 
-        SguildHttpRespond $sock $ip $port index.html $hdrs 
+        SguildHttpRespond $sock $ip $port index.html $hdrs
 
     } else {
 
@@ -176,7 +176,7 @@ proc SguildHttpAccept {sock ip port} {
 
         if {[eof $sock]} { SguildHttpClose $sock }
 
-        if { $line != "" } { 
+        if { $line != "" } {
 
             if { $DEBUG } { puts "HTTP: Request from $ip -> $line" }
 
@@ -289,7 +289,7 @@ proc HttpPcapAvailable { filename TRANS_ID} {
     set randomHash [::sha1::sha1 [RandomString 20]]
 
     set pcapURLMap($randomHash) $filename
-    
+
 
     catch {SendSocket [lindex $transInfoArray($TRANS_ID) 0] [list HttpPcapAvailable [lindex $transInfoArray($TRANS_ID) 1] pcap/$randomHash/[file tail $nfilename]]}
 

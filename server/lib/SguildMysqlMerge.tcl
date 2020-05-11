@@ -30,7 +30,7 @@ proc InitializeMysqlMergeTables {} {
             ErrorMessage "Error trying to get a list of $tableName tables: $mergeTableListArray($tableName)"
 
         }
- 
+
         if { $mergeTableListArray($tableName) != "" } {
 
             # Drop and recreate the merge table on init
@@ -123,7 +123,7 @@ proc CreateMysqlMainEventMergeTable {} {
         ) ENGINE=MERGE UNION=([join $tmpTables ,])              \
         "
     mysqlexec $MAIN_DB_SOCKETID $createQuery
-   
+
 }
 
 proc CreateMysqlMainTcpHdrMergeTable {} {
@@ -323,7 +323,7 @@ proc CreateEventTable { tableName } {
         ) ENGINE=MyISAM                                         \
         "
     mysqlexec $MAIN_DB_SOCKETID $createQuery
-    lappend mergeTableListArray(event) $tableName 
+    lappend mergeTableListArray(event) $tableName
 
 }
 
@@ -350,7 +350,7 @@ proc CreateTcpHdrTable { tableName } {
         "
 
     mysqlexec $MAIN_DB_SOCKETID $createQuery
-    lappend mergeTableListArray(tcphdr) $tableName 
+    lappend mergeTableListArray(tcphdr) $tableName
 
 }
 
@@ -371,7 +371,7 @@ proc CreateUdpHdrTable { tableName } {
         "
 
     mysqlexec $MAIN_DB_SOCKETID $createQuery
-    lappend mergeTableListArray(udphdr) $tableName 
+    lappend mergeTableListArray(udphdr) $tableName
 
 }
 
@@ -393,7 +393,7 @@ proc CreateIcmpHdrTable { tableName } {
         "
 
     mysqlexec $MAIN_DB_SOCKETID $createQuery
-    lappend mergeTableListArray(icmphdr) $tableName 
+    lappend mergeTableListArray(icmphdr) $tableName
 
 }
 
@@ -413,6 +413,6 @@ proc CreateDataTable { tableName } {
         "
 
     mysqlexec $MAIN_DB_SOCKETID $createQuery
-    lappend mergeTableListArray(data) $tableName 
+    lappend mergeTableListArray(data) $tableName
 
 }

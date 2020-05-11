@@ -45,11 +45,11 @@ proc EmailEvents { detail sanitize } {
 	pack $gpgBox $buttonBox -side top -fill none -expand 0 -pady 0
         iwidgets::Labeledwidget::alignlabels $fromBox $toBox $ccBox $bccBox $subjectBox
 	set MessageText [HumanText $detail $sanitize $winname $curselection]
-	
+
 	# insert the String into the textbox
 	$textBox insert end $MessageText
 
-	#  Once this whole mess is displayed, enable the send button and wait for a click	
+	#  Once this whole mess is displayed, enable the send button and wait for a click
 	$textBox insert end $EMAIL_TAIL
 	$buttonBox buttonconfigure send -state normal
 	$editEmail configure -cursor left_ptr
@@ -65,7 +65,7 @@ proc EmailEvents { detail sanitize } {
 	    set EmailBody [$textBox get 0.0 end]
 	    set EmailRecips $EmailTo
 	    if { [llength $EmailCC] > 0 } {
-		lappend EmailRecips [lrange $EmailCC 0 end] 
+		lappend EmailRecips [lrange $EmailCC 0 end]
 	    }
 	    if { [llength $EmailBCC] > 0 } {
 		lappend EmailRecips [lrange $EmailBCC 0 end]
@@ -88,11 +88,11 @@ proc EmailEvents { detail sanitize } {
             mime::setheader $token Subject $EmailSubj
             smtp::sendmessage $token -recipients $EmailTo -servers $MAILSERVER -originator $EmailFrom
             mime::finalize $token
-	}  
+	}
 	destroy $editEmail
 	return
     }
-}	
+}
 proc ExportResults { currentTab type } {
     global CUR_SEL_PANE RETURN_FLAG env quote header
 
@@ -104,7 +104,7 @@ proc ExportResults { currentTab type } {
     set exportPromptFrame [$exportPromptWin childsite]
     set exportCBox [combobox $exportPromptFrame.cBox -dropdown false -labeltext "Separator:"]
     set checkBox [checkbox $exportPromptFrame.oBox -labeltext "Options" -labelpos n -orient vertical]
-      $checkBox add quotebox -text "Quote Text Fields" -variable quote 
+      $checkBox add quotebox -text "Quote Text Fields" -variable quote
       $checkBox add headerbox -text "Include Field Names in First Row" -variable header
     #$checkBox select quotebox
     #$checkBox select headerbox
@@ -114,20 +114,20 @@ proc ExportResults { currentTab type } {
     wm geometry $exportPromptWin +[winfo pointerx .]+[winfo pointery .]
     pack $exportCBox $checkBox
     $exportPromptWin activate
-    
+
     tkwait variable RETURN_FLAG
-    
+
     if {$RETURN_FLAG == 0} {destroy $exportPromptWin; return}
-    
+
     set SepChar [$exportCBox get]
     destroy $exportPromptWin
-  
+
     set tabLabel [winfo name $currentTab]
     regsub -all { } $tabLabel {_} defaultname
     set defaultname "${defaultname}.csv"
     set filename [tk_getSaveFile -initialdir $env(HOME) -initialfile $defaultname]
     if { $filename == "" } {return}
-    
+
     if [catch {open $filename w} fileID] {
 	puts "Error: Could not create/open $filename: $fileID"
 	return
@@ -141,7 +141,7 @@ proc ExportResults { currentTab type } {
           ExportHumanSSNText $winname $fileID
         }
     } else {
-        
+
         WriteResultsToFileID $winname $SepChar $quote $header $fileID
     }
 
@@ -200,14 +200,14 @@ proc TextReport  { detail sanitize } {
 }
 
 
-	
+
 
 proc ReportResponse { type data } {
-    
+
     global REPORT_DONE REPORT_RESULTS COUNTER
 
     # take the data and format it based on the type of request
-    # when the data is formatted toggle REPORT_DONE to signal the 
+    # when the data is formatted toggle REPORT_DONE to signal the
     # requesting proc that the data is ready
 
     switch -exact $type {
@@ -215,9 +215,9 @@ proc ReportResponse { type data } {
 	TCP -
 	ICMP -
 	PAYLOAD -
-	UDP { 
+	UDP {
 	    # UDP, IP, TCP, ICMP and PAYLOAD are all the same
-	    if { $data == "done" } { 
+	    if { $data == "done" } {
 		set REPORT_DONE 1
 		return
 	    }
@@ -225,20 +225,20 @@ proc ReportResponse { type data } {
 	}
 	BUILDER -
 	PORTSCAN {
-	    # We gotta get tricky here since this data is going to 
+	    # We gotta get tricky here since this data is going to
 	    # come back in more than one response
-	    
+
 	    if { $data != "done" } {
 		lappend REPORT_RESULTS $data
 	    } else {
 		set REPORT_DONE 1
 	    }
 	}
-	
+
     }
 }
-	
-proc PHBReport {} { 
+
+proc PHBReport {} {
     global RETURN_FLAG REPORTNUM REPORT_DONE REPORT_RESULTS monitorList REPORT_QRY_LIST sbList
 #    puts $REPORT_QRY_LIST
 #    puts [string length $REPORT_QRY_LIST]
@@ -257,14 +257,14 @@ proc PHBReport {} {
 		set rType($cIndex) $type
 		set rSQL($cIndex) $sql
 		set rFields($cIndex) $fields
-		
+
 		regexp -indices -start $scanindex {.*?\|\|.*?\|\|.*?\|\|.*?\|\|.*?\|(\|)} $REPORT_QRY_LIST match endindex
 		set scanindex [expr [lindex $endindex 1] + 1]
-	    } else { 
+	    } else {
 		set stop 1
 	    }
 	}
-    } else { 
+    } else {
 	InfoMessage "There are no reports defined.  Reports are defined on the Sguil Server at this time."
 	return
     }
@@ -304,9 +304,9 @@ proc PHBReport {} {
 		    -command "$phbReport.buttonBox buttonconfigure 0 -state normal"
 	    set i 1
 	}
-	
+
     }
-    pack $currentBox -side top -anchor w -pady 0 
+    pack $currentBox -side top -anchor w -pady 0
     set selectAll [button $sensorFrame.selectAll -text "Select All" \
 	    -command "$phbReport.buttonBox buttonconfigure 0 -state normal; ReportSelectAll"]
     pack $selectAll -side top -fill x -pady 0
@@ -339,7 +339,7 @@ proc PHBReport {} {
       $orderButton add up -text "\u2191" -command "MoveReportUp $reportFrame"
       $orderButton add down -text "\u2193" -command "MoveReportDown $reportFrame"
     pack $reportBox $orderButton -side left -expand 1 -fill both
-    
+
     set buttonBox [buttonbox $phbReport.buttonBox]
       $buttonBox add build  -state disabled -text "Build Report" -command "set RETURN_FLAG 1"
       $buttonBox add cancel -text "Cancel" -command "set RETURN_FLAG 0"
@@ -398,7 +398,7 @@ proc ReportSelectAll {} {
 	}
     }
 }
-	    
+
 proc MoveReportUp { reportFrame } {
 
     set reportBox $reportFrame.reportBox
@@ -447,7 +447,7 @@ proc BuildPHBReport { sensors datetimestart datetimeend sName sDesc sType sSql s
     $reportButtonBox add reportCloseButton -text "Close" -command "destroy $phbReportOut; return" -state disabled
     $reportButtonBox add reportSaveButton -text "Save Report" -command "SavePHBReport $reportText" -state disabled
     pack $reportText -expand true -fill both
-    pack $reportButtonBox -expand false 
+    pack $reportButtonBox -expand false
     $reportText insert end "Summary Report\n"
     $reportText insert end "===============================================================\n"
     $reportText insert end "\n"
@@ -463,7 +463,7 @@ proc BuildPHBReport { sensors datetimestart datetimeend sName sDesc sType sSql s
 	if { $Type($i) == "query" } {
 	    set REPORT_RESULTS {}
 	    SendToSguild [list ReportRequest BUILDER $Name($i) $datalist]
-    
+
 	    # wait for the response to fill in
 	    tkwait variable REPORT_DONE
 	    # Reset REPORT_DONE to 0 for the next report
@@ -481,11 +481,11 @@ proc BuildPHBReport { sensors datetimestart datetimeend sName sDesc sType sSql s
 		    }
 		    $reportText insert end "\n"
 		}
-	    }	
+	    }
 	    $reportText insert end "\n"
 	    #$reportText insert end "${REPORT_RESULTS}\n"
 	    #puts $REPORT_RESULTS
-	    # clear REPORT_RESULTS 
+	    # clear REPORT_RESULTS
 	    set REPORT_RESULTS {}
 	} else {
 	    $reportText insert end $Sql($i)
@@ -538,14 +538,14 @@ proc HumanText { detail sanitize winname curselection } {
 	    #
 	    # Send the Report Request to the server
 	    SendToSguild [list ReportRequest IP [lindex $eventID 0] [lindex $eventID 1]]
-	    
+
 	    # wait for the response to fill in
 	    tkwait variable REPORT_DONE
 	    # Reset REPORT_DONE to 0 for the next report
 	    set REPORT_DONE 0
-	    
+
 	    set eventIpHdr $REPORT_RESULTS
-	    # clear REPORT_RESULTS 
+	    # clear REPORT_RESULTS
 	    set REPORT_RESULTS ""
 	    set ReturnString "${ReturnString}IPVer=[lindex $eventIpHdr 2] "
 	    set ReturnString "${ReturnString}hlen=[lindex $eventIpHdr 3] "
@@ -557,7 +557,7 @@ proc HumanText { detail sanitize winname curselection } {
 	    set ReturnString "${ReturnString}ttl=[lindex $eventIpHdr 9] "
 	    set ReturnString "${ReturnString}chksum=[lindex $eventIpHdr 10]\n"
 	    set ReturnString "${ReturnString}Protocol: [$winname getcells $selectedIndex,ipproto] "
-	    
+
 	    #
 	    # If it is TCP or UDP put in port numbers
 	    #
@@ -565,19 +565,19 @@ proc HumanText { detail sanitize winname curselection } {
 		    [$winname getcells $selectedIndex,ipproto] == "17"} {
 		set ReturnString "${ReturnString}sport=[$winname getcells $selectedIndex,srcport] -> "
 		set ReturnString "${ReturnString}dport=[$winname getcells $selectedIndex,dstport]\n\n"
-		
+
 		#
 		# If TCP get the TCP hdr, parse it out and insert
 		#
 		if {[$winname getcells $selectedIndex,ipproto] == "6"} {
 		    # Send the Report Request to the server
 		    SendToSguild [list ReportRequest TCP [lindex $eventID 0] [lindex $eventID 1]]
-		    
+
 		    # wait for the response to fill in
 		    tkwait variable REPORT_DONE
 		    # Reset REPORT_DONE to 0 for the next report
 		    set REPORT_DONE 0
-		    
+
 		    set eventTcpHdr $REPORT_RESULTS
 		    set REPORT_RESULTS ""
 		    if { $eventTcpHdr == "error"} {
@@ -654,24 +654,24 @@ proc HumanText { detail sanitize winname curselection } {
 		    set ReturnString "${ReturnString}${rstFlag}"
 		    set ReturnString "${ReturnString}${synFlag}"
 		    set ReturnString "${ReturnString}${finFlag} "
-		    
+
 		    set ReturnString "${ReturnString}Win=[lindex $eventTcpHdr 5] "
 		    set ReturnString "${ReturnString}urp=[lindex $eventTcpHdr 6] "
 		    set ReturnString "${ReturnString}chksum=[lindex $eventTcpHdr 7]\n"
 		}
-		
+
 		#
 		# If UDP get the UDP hdr and Insert it
 		#
 		if {[$winname getcells $selectedIndex,ipproto] == "17"} {
 		    # Send the Report Request to the server
 		    SendToSguild [list ReportRequest UDP [lindex $eventID 0] [lindex $eventID 1]]
-		    
+
 		    # wait for the response to fill in
 		    tkwait variable REPORT_DONE
 		    # Reset REPORT_DONE to 0 for the next report
 		    set REPORT_DONE 0
-		    
+
 		    set eventUdpHdr $REPORT_RESULTS
 		    set REPORT_RESULTS ""
 		    if { $eventUdpHdr == "error" } {
@@ -681,19 +681,19 @@ proc HumanText { detail sanitize winname curselection } {
 		    set ReturnString "${ReturnString}chksum=[lindex $eventUdpHdr 1]\n"
 		}
 	    }
-	    
-	    # 
+
+	    #
 	    # If ICMP get the ICMP hdr and payload, parse and insert
 	    #
 	    if {[$winname getcells $selectedIndex,ipproto] == "1"} {
 		# Send the Report Request to the server
 		SendToSguild [list ReportRequest ICMP [lindex $eventID 0] [lindex $eventID 1]]
-		
+
 		# wait for the response to fill in
 		tkwait variable REPORT_DONE
 		# Reset REPORT_DONE to 0 for the next report
 		set REPORT_DONE 0
-		
+
 		set eventIcmpHdr $REPORT_RESULTS
 		set REPORT_RESULTS ""
 		set ReturnString "${ReturnString}Type=[lindex $eventIcmpHdr 0] "
@@ -701,7 +701,7 @@ proc HumanText { detail sanitize winname curselection } {
 		set ReturnString "${ReturnString}chksum=[lindex $eventIcmpHdr 2] "
 		set ReturnString "${ReturnString}ID=[lindex $eventIcmpHdr 3] "
 		set ReturnString "${ReturnString}seq=[lindex $eventIcmpHdr 4]\n"
-		
+
 		# If the ICMP packet is a dest unreachable or a time exceeded,
 		# check to see if it is network, host, port unreachable or admin prohibited or filtered
 		# then show some other stuff
@@ -711,7 +711,7 @@ proc HumanText { detail sanitize winname curselection } {
 			set ReturnString "${ReturnString}Gateway Address=[lindex $ICMPList 0] "
 		    }
 		    set ReturnString "${ReturnString}Orig Protocol=[lindex $ICMPList 1] "
-		    
+
 		    if { $sanitize == 0 } {
 			set ReturnString "${ReturnString}\
 				    Orig Src IP:Port->Dst IP:Port [lindex $ICMPList 2]:"
@@ -719,37 +719,37 @@ proc HumanText { detail sanitize winname curselection } {
 			set ReturnString "${ReturnString}Orig Src IP:Port->Dst IP:Port a.b.c.d:"
 		    }
 		    set ReturnString "${ReturnString}[lindex $ICMPList 4]->"
-			
+
 		    if { $sanitize == 0 } {
 			set ReturnString "${ReturnString}[lindex $ICMPList 3]:"
 			} else {
 			    set ReturnString "${ReturnString}e.f.g.h:"
 			}
-			
+
 			# Dest Port
-		
+
 		    set ReturnString "${ReturnString}[lindex $ICMPList 5]\n"
-			
+
 		}
-		
+
 	    }
 	    # Get and insert the pack payload all pretty like if detail is set to 1
 	    if { $detail == "1" } {
 		# Send the Report Request to the server
 		SendToSguild [list ReportRequest PAYLOAD [lindex $eventID 0] [lindex $eventID 1]]
-		
+
 		# wait for the response to fill in
 		tkwait variable REPORT_DONE
 		# Reset REPORT_DONE to 0 for the next report
 		set REPORT_DONE 0
-		
+
 		set eventPayload [lindex $REPORT_RESULTS 0]
 		set REPORT_RESULTS ""
 		if { $eventPayload == "error" } {
 		    ErrorMessage "Error getting payload data."
 		}
 		set ReturnString "${ReturnString}Payload:\n"
-		if {$eventPayload  == "" || [string length $eventPayload] == 0 || $eventPayload == "{}"} { 
+		if {$eventPayload  == "" || [string length $eventPayload] == 0 || $eventPayload == "{}"} {
 		    set ReturnString "${ReturnString}None.\n"
 		} else {
 		    set dataLength [string length $eventPayload]
@@ -783,15 +783,15 @@ proc HumanText { detail sanitize winname curselection } {
 	    # Send the Report Request to the server
 	    SendToSguild [list ReportRequest PORTSCAN [lindex [$winname getcells $selectedIndex,date] 0]\
 		    [$winname getcells $selectedIndex,srcip]]
-	    
+
 	    # wait for the response to fill in
 	    tkwait variable REPORT_DONE
 	    # Reset REPORT_DONE to 0 for the next report
 	    set REPORT_DONE 0
-	    
+
 	    set psdata $REPORT_RESULTS
 	    set REPORT_RESULTS ""
-	    
+
 	    for { set i 0 } { $i < [llength $psdata] } {incr i} {
 		if { $sanitize == 1 } {
 		    set psrow1 [lreplace [lindex $psdata $i] 2 2 "a.b.c.d"]
@@ -807,9 +807,9 @@ proc HumanText { detail sanitize winname curselection } {
     destroy $progressShell
     return $ReturnString
 }
-    
+
 #  I have disabled use of this proc while I think about how the heck to use it.
-#  Not gonna delete it for now, but it is dead code 
+#  Not gonna delete it for now, but it is dead code
 
 #proc DelimitedText { detail sanitize winname curselection delimiter} {
 #    global DEBUG REPORT_DONE REPORT_RESULTS
@@ -834,14 +834,14 @@ proc HumanText { detail sanitize winname curselection } {
 #	    #
 #	    # Send the Report Request to the server
 #	    SendToSguild "ReportRequest IP [lindex $eventID 0] [lindex $eventID 1]"
-#	    
+#
 #	    # wait for the response to fill in
 #	    tkwait variable REPORT_DONE
 #	    # Reset REPORT_DONE to 0 for the next report
 #	    set REPORT_DONE 0
-#	    
+#
 #	    set eventIpHdr $REPORT_RESULTS
-#	    # clear REPORT_RESULTS 
+#	    # clear REPORT_RESULTS
 #	    set REPORT_RESULTS ""
 #	    set ReturnString "${ReturnString}[lindex $eventIpHdr 2]${delimiter}"
 #	    set ReturnString "${ReturnString}[lindex $eventIpHdr 3]${delimiter}"
@@ -853,7 +853,7 @@ proc HumanText { detail sanitize winname curselection } {
 #	    set ReturnString "${ReturnString}[lindex $eventIpHdr 9]${delimiter}"
 #	    set ReturnString "${ReturnString}[lindex $eventIpHdr 10]${delimiter}"
 #	    set ReturnString "${ReturnString}[$winname.protoFrame.list get $selectedIndex]${delimiter}"
-#	    
+#
 #	    #
 #	    # If it is TCP or UDP put in port numbers
 #	    #
@@ -861,19 +861,19 @@ proc HumanText { detail sanitize winname curselection } {
 #		    [$winname.protoFrame.list get $selectedIndex] == "17"} {
 #		set ReturnString "${ReturnString}[$winname.srcPortFrame.list get $selectedIndex]${delimiter}"
 #		set ReturnString "${ReturnString}[$winname.dstPortFrame.list get $selectedIndex]${delimiter}"
-#		
+#
 #		#
 #		# If TCP get the TCP hdr, parse it out and insert
 #		#
 #		if {[$winname.protoFrame.list get $selectedIndex] == "6"} {
 #		    # Send the Report Request to the server
 #		    SendToSguild "ReportRequest TCP [lindex $eventID 0] [lindex $eventID 1]"
-#		    
+#
 #		    # wait for the response to fill in
 #		    tkwait variable REPORT_DONE
 #		    # Reset REPORT_DONE to 0 for the next report
 #		    set REPORT_DONE 0
-#		    
+#
 #		    set eventTcpHdr $REPORT_RESULTS
 #		    set REPORT_RESULTS ""
 #		    if { $eventTcpHdr == "error"} {
@@ -950,24 +950,24 @@ proc HumanText { detail sanitize winname curselection } {
 #		    set ReturnString "${ReturnString}${rstFlag}"
 #		    set ReturnString "${ReturnString}${synFlag}"
 #		    set ReturnString "${ReturnString}${finFlag}${delimiter}"
-#		    
+#
 #		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 5]${delimiter}"
 #		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 6]${delimiter}"
 #		    set ReturnString "${ReturnString}[lindex $eventTcpHdr 7]${delimiter}"
 #		}
-#		
+#
 #		#
 #		# If UDP get the UDP hdr and Insert it
 #		#
 #		if {[$winname.protoFrame.list get $selectedIndex] == "17"} {
 #		    # Send the Report Request to the server
 #		    SendToSguild "ReportRequest UDP [lindex $eventID 0] [lindex $eventID 1]"
-#		    
+#
 #		    # wait for the response to fill in
 #		    tkwait variable REPORT_DONE
 #		    # Reset REPORT_DONE to 0 for the next report
 #		    set REPORT_DONE 0
-#		    
+#
 #		    set eventUDPHdr $REPORT_RESULTS
 #		    set REPORT_RESULTS ""
 #		    if { $eventUdpHdr == "error" } {
@@ -977,19 +977,19 @@ proc HumanText { detail sanitize winname curselection } {
 #		    set ReturnString "${ReturnString}[lindex $eventUdpHdr 1]${delimiter}"
 #		}
 #	    }
-#	    
-#	    # 
+#
+#	    #
 #	    # If ICMP get the ICMP hdr and payload, parse and insert
 #	    #
 #	    if {[$winname.protoFrame.list get $selectedIndex] == "1"} {
 #		# Send the Report Request to the server
 #		SendToSguild "ReportRequest ICMP [lindex $eventID 0] [lindex $eventID 1]"
-#		
+#
 #		# wait for the response to fill in
 #		tkwait variable REPORT_DONE
 #		# Reset REPORT_DONE to 0 for the next report
 #		set REPORT_DONE 0
-#		
+#
 #		set eventIcmpHdr $REPORT_RESULTS
 #		set REPORT_RESULTS ""
 #		set ReturnString "${ReturnString}[lindex $eventIcmpHdr 0]${delimiter}"
@@ -997,7 +997,7 @@ proc HumanText { detail sanitize winname curselection } {
 #		set ReturnString "${ReturnString}[lindex $eventIcmpHdr 2]${delimiter}"
 #		set ReturnString "${ReturnString}[lindex $eventIcmpHdr 3]${delimiter}"
 #		set ReturnString "${ReturnString}[lindex $eventIcmpHdr 4]${delimiter}"
-#		
+#
 #		# If the ICMP packet is a dest unreachable or a time exceeded,
 #		# check to see if it is network, host, port unreachable or admin prohibited or filtered
 #		# then show some other stuff
@@ -1005,22 +1005,22 @@ proc HumanText { detail sanitize winname curselection } {
 #		    if {[lindex $eventIcmpHdr 1] == "0" || [lindex $eventIcmpHdr 1] == "4"\
 #			    || [lindex $eventIcmpHdr 1] == "9" || [lindex $eventIcmpHdr 1] == "13"\
 #			    || [lindex $eventIcmpHdr 1] == "1" || [lindex $eventIcmpHdr 1] == "3"} {
-#			
+#
 #			#  There may be 32-bits of NULL padding at the start of the payload
 #			set offset 0
 #			set pldata [lindex $eventIcmpHdr 5]
-#			
+#
 #			if {[string range $pldata 0 7] == "00000000"} {
 #			    set offset 8
 #			}
 #			# puts [string range $pldata [expr $offset+24] [expr $offset+25]]
-#			
+#
 #			# Build the protocol
 #			set protohex [string range $pldata [expr $offset+18] [expr $offset+19]]
 #			set ReturnString "${ReturnString}Orig Protocol=[format "%i" 0x$protohex] "
-#			
+#
 #			if { $sanitize == 0 } {
-#			    # Build the src address 
+#			    # Build the src address
 #			    set srchex1 [string range $pldata [expr $offset+24] [expr $offset+25]]
 #			    set srchex2 [string range $pldata [expr $offset+26] [expr $offset+27]]
 #			    set srchex3 [string range $pldata [expr $offset+28] [expr $offset+29]]
@@ -1030,12 +1030,12 @@ proc HumanText { detail sanitize winname curselection } {
 #			} else {
 #			    set ReturnString "${ReturnString}a.b.c.d${delimiter}"
 #			}
-#			
+#
 #			# Find and build the src port
 #			set hdroffset [expr [string index $pldata [expr ($offset+1)]] * 8 + $offset]
 #			set sporthex [string range $pldata $hdroffset [expr $hdroffset+3]]
 #			set ReturnString "${ReturnString}[format "%i" 0x$sporthex]${delimiter}"
-#			
+#
 #			if { $sanitize == 0 } {
 #			    # Build the dst address
 #			    set dsthex1 [string range $pldata [expr $offset+32] [expr $offset+33]]
@@ -1048,11 +1048,11 @@ proc HumanText { detail sanitize winname curselection } {
 #			} else {
 #			    set ReturnString "${ReturnString}e.f.g.h${delimiter}"
 #			}
-#			
+#
 #			# Dest Port
 #			set dporthex [string range $pldata [expr $hdroffset+4] [expr $hdroffset+7]]
 #			set ReturnString "${ReturnString}[format "%i" 0x$dporthex]${delimiter}"
-#			
+#
 #		    }
 #		}
 #	    }
@@ -1060,18 +1060,18 @@ proc HumanText { detail sanitize winname curselection } {
 #	    if { $detail == "1" } {
 #		# Send the Report Request to the server
 #		SendToSguild "ReportRequest PAYLOAD [lindex $eventID 0] [lindex $eventID 1]"
-#		
+#
 #		# wait for the response to fill in
 #		tkwait variable REPORT_DONE
 #		# Reset REPORT_DONE to 0 for the next report
 #		set REPORT_DONE 0
-#		
+#
 #		set eventPayload [lindex $REPORT_RESULTS 0]
 #		set REPORT_RESULTS ""
 #		if { $eventPayload == "error" } {
 #		    ErrorMessage "Error getting payload data."
 #		}
-#		if {$eventPayload  == "" || [string length $eventPayload] == 0 || $eventPayload == "{}"} { 
+#		if {$eventPayload  == "" || [string length $eventPayload] == 0 || $eventPayload == "{}"} {
 #		    set ReturnString "${ReturnString}None${delimiter}"
 #		} else {
 #		    set dataLength [string length $eventPayload]
@@ -1104,15 +1104,15 @@ proc HumanText { detail sanitize winname curselection } {
 #	    # Send the Report Request to the server
 #	    SendToSguild "ReportRequest PORTSCAN [lindex [$winname.dateTimeFrame.list get $selectedIndex] 0]\
 #		    [$winname.srcIPFrame.list get $selectedIndex]"
-#	    
+#
 #	    # wait for the response to fill in
 #	    tkwait variable REPORT_DONE
 #	    # Reset REPORT_DONE to 0 for the next report
 #	    set REPORT_DONE 0
-#	    
+#
 #	    set psdata $REPORT_RESULTS
 #	    set REPORT_RESULTS ""
-#	    
+#
 #	    for { set i 0 } { $i < [llength $psdata] } {incr i} {
 #		if { $sanitize == 1 } {
 #		    set psrow1 [lreplace [lindex $psdata $i] 2 2 "a.b.c.d"]
@@ -1125,10 +1125,10 @@ proc HumanText { detail sanitize winname curselection } {
 #	}
 #	set ReturnString "${ReturnString}\n"
 #    }
-#    
+#
 #    return $ReturnString
 #}
-    
+
 proc ExportHumanText { winname } {
 
     # leaving the sanitize toggle in here in case I want it later
@@ -1155,7 +1155,7 @@ proc ExportHumanText { winname } {
 	    set ReturnString "${ReturnString}[$winname getcells $i,srcport] -> e.f.g.h:"
 	    set ReturnString "${ReturnString}[$winname getcells $i,dstport]\n"
 	}
-	
+
     }
     return $ReturnString
 }
@@ -1179,8 +1179,8 @@ proc ExportDelimitedText { winname SepChar quote header} {
 	set ReturnString "${ReturnString}[$winname getcells $i,alertID]${SepChar}"
 
 	set ReturnString "${ReturnString}[$winname getcells $i,date]${SepChar}"
-	
-	
+
+
 	if { $sanitize == 0 } {
 	    set ReturnString "${ReturnString}[$winname getcells $i,srcip]${SepChar}"
 	    set ReturnString "${ReturnString}[$winname getcells $i,srcport]${SepChar}"
@@ -1223,7 +1223,7 @@ proc ExportHumanSSNText { winname } {
 	    set ReturnString "${ReturnString}[$winname getcells $i,srcport] -> e.f.g.h:"
 	    set ReturnString "${ReturnString}[$winname getcells $i,dstport]\n"
 	}
-	
+
 	set ReturnString "${ReturnString}Source Packets:[$winname getcells $i,srcpckts] "
 	set ReturnString "${ReturnString}Bytes:[$winname getcells $i,srcbytes]\n"
 	set ReturnString "${ReturnString}Dest Packets:[$winname getcells $i,dstpckts] "
@@ -1232,7 +1232,7 @@ proc ExportHumanSSNText { winname } {
     return $ReturnString
 }
 proc ExportDelimitedSSNText { winname SepChar quote header } {
-    
+
     if {$SepChar == "<TAB>"} {set SepChar "\t"}
     if { $header == 1 } {
 	set ReturnString "Sensor${SepChar}SSN ID${SepChar}Start Time${SepChar}End Time${SepChar}Source IP${SepChar}Source Port\
@@ -1260,7 +1260,7 @@ proc ExportDelimitedSSNText { winname SepChar quote header } {
 	    set ReturnString "${ReturnString}[$winname getcells $i,srcport]${SepChar}e.f.g.h${SepChar}"
 	    set ReturnString "${ReturnString}[$winname getcells $i,dstport]${SepChar}"
 	}
-	
+
 	set ReturnString "${ReturnString}[$winname getcells $i,srcpckts]${SepChar}"
 	set ReturnString "${ReturnString}[$winname getcells $i,srcbytes]${SepChar}"
 	set ReturnString "${ReturnString}[$winname getcells $i,dstpckts]${SepChar}"
@@ -1278,7 +1278,7 @@ proc WriteResultsToFileID { w SepChar quote header fileID } {
 
         set t [$w columncount]
         set i 0
-        while { $i < $t } { 
+        while { $i < $t } {
             lappend h [$w columncget $i -name]
             incr i
         }
@@ -1290,7 +1290,7 @@ proc WriteResultsToFileID { w SepChar quote header fileID } {
     # Write table contents to file
     set s [$w size]
     set i 0
-    while { $i < $s } { 
+    while { $i < $s } {
 
         puts $fileID [join [$w getcells $i,0 $i,end] $SepChar]
         incr i

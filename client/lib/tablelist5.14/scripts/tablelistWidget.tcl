@@ -68,7 +68,7 @@ namespace eval tablelist {
 	}
     }
     if {$usingTile} {
-	createTileAliases 
+	createTileAliases
     }
 
     variable pngSupported [expr {($::tk_version >= 8.6 &&
@@ -86,16 +86,16 @@ namespace eval tablelist {
 	variable scaling
 	set factor [tk scaling]
 	if {$factor < 1.4} {
-	    set scaling 100 
+	    set scaling 100
 	} elseif {$factor < 1.7} {
-	    set scaling 125 
+	    set scaling 125
 	} elseif {$factor < 2.1} {
-	    set scaling 150 
+	    set scaling 150
 	} else {
 	    set scaling 200
 	}
     }
-    getScalingPercentage 
+    getScalingPercentage
 
     #
     # The array configSpecs is used to handle configuration options.  The
@@ -208,7 +208,7 @@ namespace eval tablelist {
     #
     # Extend the elements of the array configSpecs
     #
-    extendConfigSpecs 
+    extendConfigSpecs
 
     variable configOpts [lsort [array names configSpecs]]
 
@@ -378,7 +378,7 @@ namespace eval tablelist {
     lappend cellConfigSpecs(-valign)		- center
 
     #
-    # Use a list to facilitate the handling of the command options 
+    # Use a list to facilitate the handling of the command options
     #
     variable cmdOpts [list \
 	activate activatecell applysorting attrib bbox bodypath bodytag \
@@ -419,7 +419,7 @@ namespace eval tablelist {
 	    }
 	}
     }
-    restrictCmdOpts 
+    restrictCmdOpts
 
     #
     # Use lists to facilitate the handling of miscellaneous options
@@ -468,7 +468,7 @@ namespace eval tablelist {
 	    set arrowStyles [lreplace $arrowStyles $idx $idx]
 	}
     }
-    restrictArrowStyles 
+    restrictArrowStyles
 
     #
     # The array maxIndentDepths holds the current max.
@@ -578,7 +578,7 @@ proc tablelist::createBindings {} {
     # Define the binding tags TablelistKeyNav and TablelistBody
     #
     mwutil::defineKeyNav Tablelist
-    defineTablelistBody 
+    defineTablelistBody
 
     #
     # Define the virtual events <<Button3>> and <<ShiftButton3>>
@@ -612,8 +612,8 @@ proc tablelist::createBindings {} {
     #
     # Define the binding tags TablelistSubLabel and TablelistArrow
     #
-    defineTablelistSubLabel 
-    defineTablelistArrow 
+    defineTablelistSubLabel
+    defineTablelistArrow
 
     #
     # Define the binding tag TablelistEdit if the file tablelistEdit.tcl exists
@@ -1850,7 +1850,7 @@ proc tablelist::curcellselectionSubCmd {win argList} {
 	set opt [mwutil::fullOpt "option" [lindex $argList 0] $curSelOpts]
 	set constraint [lsearch -exact $curSelOpts $opt]
     }
-    
+
 
     synchronize $win
     displayItems $win
@@ -6510,7 +6510,7 @@ proc tablelist::rowSelection {win opt first last} {
 # tablelist::moveTo
 #
 # Adjusts the view in the tablelist window win so that the non-hidden item
-# given by data(fraction) appears at the top of the window.  
+# given by data(fraction) appears at the top of the window.
 #------------------------------------------------------------------------------
 proc tablelist::moveTo win {
     upvar ::tablelist::ns${win}::data data

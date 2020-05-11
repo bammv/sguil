@@ -1,6 +1,6 @@
 # $Id: SguildSensorAgentComms.tcl,v 1.33 2011/05/29 15:41:16 bamm Exp $ #
 
-# Get the sid and cid for the agent. Create it if it doesn't exist. 
+# Get the sid and cid for the agent. Create it if it doesn't exist.
 # Send the agent [AgentSid {type} {sid}]
 proc RegisterAgent { socketID type sensorName netName } {
 
@@ -64,7 +64,7 @@ proc RegisterAgent { socketID type sensorName netName } {
 proc SendSensorAgent { socketID msg } {
 
     global agentSocketArray agentSensorNameArray
-    
+
     set RFLAG 1
     if { [catch { puts $socketID $msg } sendError] } {
 
@@ -110,7 +110,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id   
     #} else {
     #    puts "DEBUG #### First event from $sensorName"
     #}
-      
+
 
     if { [array exists LAST_EVENT_ID] \
       && [info exists LAST_EVENT_ID($sensorName)] \
@@ -129,7 +129,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id   
     # Table Prefix
     set tmpDate [clock format [clock scan $timestamp -gmt true] -gmt true -format "%Y%m%d"]
     set tablePrefix "${sensorName}_${tmpDate}"
-    
+
     # Insert Event Hdr
     if [catch { InsertEventHdr $tablePrefix $sid $cid $u_event_id $u_event_ref $u_ref_time \
                 $msg $sig_gen $sig_id $sig_rev $timestamp $priority $class_type \
@@ -143,7 +143,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id   
         SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
         return
 
-    } 
+    }
 
     # Insert ICMP, TCP, or UDP hdrs
     switch -exact -- $ip_proto {
@@ -158,7 +158,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id   
                      return
                  }
          }
-        
+
          6  {    if [catch { InsertTCPHdr $tablePrefix $sid $cid $tcp_seq $tcp_ack $tcp_off $tcp_res \
                              $tcp_flags $tcp_win $tcp_csum $tcp_urp } tmpError] {
                      SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
@@ -171,27 +171,27 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id   
                  }
          }
 
-         1  {    
-                 
+         1  {
+
                      if [catch { InsertICMPHdr $tablePrefix $sid $cid $icmp_csum $icmp_id $icmp_seq } \
                          tmpError] {
                          SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
-  
+
                          # DEBUG Foo
                          LogMessage "ERROR: While inserting ICMP header: $tmpError"
                          #exit
 
                          return
                      }
-        
+
          }
     }
 
     # Insert Payload
-    if { $data_payload != "" } { 
+    if { $data_payload != "" } {
         if [catch { InsertDataPayload $tablePrefix $sid $cid $data_payload } tmpError] {
             SendSensorAgent $socketID [list Failed $req_socketID $cid $tmpError]
-  
+
             # DEBUG Foo
             LogMessage "ERROR: While inserting data payload: $tmpError"
             #exit
@@ -207,7 +207,7 @@ proc BYEventRcvd { socketID req_socketID status sid cid sensorName u_event_id   
       $str_dip $ip_proto $src_port $dst_port $sig_gen $sig_id $sig_rev $u_event_id $u_event_ref]
 
     # Send by/op_sguil confirmation
-    SendSensorAgent $socketID [list Confirm $req_socketID $cid] 
+    SendSensorAgent $socketID [list Confirm $req_socketID $cid]
 
     # Update last event
     set LAST_EVENT_ID($sensorName) $eventID
@@ -275,7 +275,7 @@ proc SnortStatsRcvd { socketID statsList } {
 
         foreach clientSocket $clientList {
 
-            if [catch {SendSocket $clientSocket [list UpdateSnortStats [linsert $statsList 1 $sensorName]]} tmpError] { 
+            if [catch {SendSocket $clientSocket [list UpdateSnortStats [linsert $statsList 1 $sensorName]]} tmpError] {
                  puts "\n\n $tmpError \n\n"
             }
 

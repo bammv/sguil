@@ -116,9 +116,9 @@ namespace eval ::dkfFontSel {
 
 	# Labels for the framed boxes & focus accelerators for their contents
 	foreach {subname row col focusWin} {
-	    Family 0 1 .family     
+	    Family 0 1 .family
 	    Style  0 5 .style.sBold
-	    Size   4 1 .size.b8    
+	    Size   4 1 .size.b8
 	    Sample 7 1 .sample.text
 	} {
 	    set l [label $w.lbl$subname]

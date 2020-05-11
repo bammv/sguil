@@ -1,7 +1,7 @@
 'use strict';
- 
+
 angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'ui.grid.selection', 'ngSanitize'])
- 
+
 .controller('MainConsoleController',
     ['$scope', '$rootScope', '$q', '$filter', '$document', '$window', '$location', '$http', '$interval', '$mdDialog', '$mdBottomSheet', 'WebSocketService','uiGridConstants', 'SguilClientService',
     function ($scope, $rootScope, $q, $filter, $document, $window, $location, $http, $interval, $mdDialog, $mdBottomSheet, WebSocketService, uiGridConstants, SguilClientService) {
@@ -51,7 +51,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         $scope.elasticSearch.eventType = 'flow';
         $scope.elasticSearch.limit = "1000";
         $scope.elasticSearch.nextQuery = 0;
-        
+
         $scope.host = $location.host();
         $scope.totalAlerts = 0;
         $scope.pane1 = [];
@@ -141,7 +141,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
         // Listener for clicks outside the rcm if it is showing
         document.addEventListener( "click", function(e) {
-          
+
             //console.log('left button');
             var button = e.which || e.button;
             if ( button === 1 ) {
@@ -158,7 +158,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
             $scope.currentTableName = tableName;
             $scope.currentTableType = dataType;
-            
+
             // Show detail based on table type
             switch (dataType) {
                 case 'event': $scope.displayEventData = true; $scope.displayJSONData = false; break;
@@ -424,7 +424,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 }
 
         }
-        
+
         $scope.displayCountRightClickMenu = function(data, e, tableName) {
 
                 e.preventDefault();
@@ -436,7 +436,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 positionMenu(e, countmenu);
 
         }
-        
+
         $scope.displaySigRightClickMenu = function(data, e, tableName) {
 
                 e.preventDefault();
@@ -448,7 +448,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 positionMenu(e, sigmenu);
 
         }
-        
+
         $scope.displayIPMenu = function(data, e, field, tableName) {
 
                 $scope.selectedFieldName = field;
@@ -480,7 +480,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 positionMenu(e, prioritymenu);
 
         }
-        
+
         function toggleEventMenuOn() {
             if ( eventmenuState !== 1 ) {
                 eventmenuState = 1;
@@ -549,7 +549,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
            menuWidth = eventmenu.offsetWidth + 4;
            menuHeight = eventmenu.offsetHeight + 4;
-         
+
            windowWidth = window.innerWidth;
            windowHeight = window.innerHeight;
 
@@ -615,7 +615,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 sigElement.empty();
 
             }
-            
+
         };
 
         var showSignatureInfo = function (data) {
@@ -631,7 +631,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 sigElement.empty();
                 sigElement.append('<br>');
                 sigElement.append(ruleInfo);
-                
+
             });
 
         };
@@ -761,8 +761,8 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             });
 
         };
- 
-        
+
+
         $scope.login = function () {
 
             $scope.dataLoading = true;
@@ -842,7 +842,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         }
 
         $scope.sensorselect = function () {
-            
+
             var cmd = {"SendSensorList":"0"};
 
             sendRequest(cmd, "SensorList").then(function(data) {
@@ -867,7 +867,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     var uList = [];
                     for (var ii=0; ii < nn; ii++) {
                         var u = userArray[ii];
-                        uList.push(u); 
+                        uList.push(u);
                         //console.log('  User ' + ii + ': ' + u);
                     }
                     $scope.sensorNames.push(sensorName + ": " + uList.join(" "));
@@ -988,18 +988,18 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             var aid = msg[5] + '.' + msg[6];
             var newData = {
                 status:msg[0],
-                priority:msg[1], 
+                priority:msg[1],
                 category:msg[2],
-                sensor:msg[3], 
-                timestamp:msg[4], 
-                aid:aid, 
-                id:aid, 
+                sensor:msg[3],
+                timestamp:msg[4],
+                aid:aid,
+                id:aid,
                 msg:msg[7],
-                src_ip:msg[8], 
-                dest_ip:msg[9], 
+                src_ip:msg[8],
+                dest_ip:msg[9],
                 proto:msg[10],
-                src_port:msg[11], 
-                dest_port:msg[12], 
+                src_port:msg[11],
+                dest_port:msg[12],
                 gid:msg[13],
                 signature_id:msg[14],
                 rev:msg[15],
@@ -1007,7 +1007,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 //count:msg[18]
               };
             // If count isn't included at element 18, add it
-            if (!msg[18]) { 
+            if (!msg[18]) {
                 newData.count = 1;
             } else {
                 newData.count = msg[18];
@@ -1058,17 +1058,17 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 var aid = msg[5] + "." + msg[6];
                 var newData = {
                     status:msg[1],
-                    priority:msg[2], 
-                    sensor:msg[3], 
-                    timestamp:msg[4], 
-                    aid:aid, 
-                    id:aid, 
+                    priority:msg[2],
+                    sensor:msg[3],
+                    timestamp:msg[4],
+                    aid:aid,
+                    id:aid,
                     msg:msg[7],
-                    src_ip:msg[8], 
-                    dest_ip:msg[9], 
+                    src_ip:msg[8],
+                    dest_ip:msg[9],
                     proto:msg[10],
-                    src_port:msg[11], 
-                    dest_port:msg[12], 
+                    src_port:msg[11],
+                    dest_port:msg[12],
                     gid:msg[13],
                     signature_id:msg[14],
                     rev:msg[15],
@@ -1101,7 +1101,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             var aid_id = argsArray[0];
             var newcount = argsArray[1];
             var newpriority = argsArray[2];
-        
+
             $scope.tableOptions.updaterow('rtevents', aid_id, {count:newcount});
         }
 
@@ -1136,7 +1136,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             logElement.append('[' + now + ']<b> ' + user + ':</b> ' + msg + '<br>');
 
         }
-  
+
         function UserMessage (data) {
 
             var chatElement = angular.element( document.querySelector( '#chatLog' ) );
@@ -1157,7 +1157,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             logElement.append('[' + now + ']<b> ' + user + ':</b> ' + msg + '<br>');
 
         }
-  
+
         function XscriptMainMsg (data) {
 
             var tabName = data[0];
@@ -1213,7 +1213,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 }
                 return pane;
         }
-  
+
         function DeleteEvents(aidList) {
 
             var m = "";
@@ -1250,7 +1250,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         $scope.getCorrelatedEvents = function() {
 
             var tableName = $scope.currentTableName;
-            var data = $scope.tableOptions.getselecteddata(tableName)[0]; 
+            var data = $scope.tableOptions.getselecteddata(tableName)[0];
             var reqid = data.id;
             var tabName = "C" + reqid.replace(".", "_");
 
@@ -1283,11 +1283,11 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             var data = {};
             var sensor = "";
             var reqid = "";
-            
+
             // Show detail based on table type
             switch (dataType) {
-                case 'event': 
-                    data = $scope.tableOptions.getselecteddata(tableName)[0]; 
+                case 'event':
+                    data = $scope.tableOptions.getselecteddata(tableName)[0];
                     //splitAid = data.id.split(".");
                     net_name = data.id.split(".")[0];
                     reqid = data.id;
@@ -1295,16 +1295,16 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     timestamp = data.timestamp;
                     sensor = data.sensor;
                     break;
-                case 'flow': 
-                    data = $scope.flowTableOptions.flowgetselecteddata(tableName)[0]; 
+                case 'flow':
+                    data = $scope.flowTableOptions.flowgetselecteddata(tableName)[0];
                     net_name = data.net_name;
                     reqid = data.flow_id;
                     tabName = "T" + reqid;
                     timestamp = data.flow.start;
                     sensor = data.host;
                     break;
-                case 'http': 
-                    data = $scope.httpTableOptions.httpgetselecteddata(tableName)[0]; 
+                case 'http':
+                    data = $scope.httpTableOptions.httpgetselecteddata(tableName)[0];
                     net_name = data.net_name;
                     reqid = data.flow_id;
                     tabName = "T" + reqid;
@@ -1345,7 +1345,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
         }
 
         $scope.showSearchProgress = function(tabname) {
-            if (tabname === 'rtevents' || tabname == 'escalated' || $scope.searchComplete[tabname] === true) { 
+            if (tabname === 'rtevents' || tabname == 'escalated' || $scope.searchComplete[tabname] === true) {
                 return false;
             } else {
                 return true;
@@ -1467,7 +1467,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     }
 
                     $scope.elasticSearch.nextQuery++;
-                    var tabName = 'ESQuery' + $scope.elasticSearch.nextQuery; 
+                    var tabName = 'ESQuery' + $scope.elasticSearch.nextQuery;
                     var newTab = new Object();
                     newTab.title = tabName;
                     newTab.type = $scope.elasticSearch.eventType;
@@ -1480,8 +1480,8 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                     newTab.view = true;
                     newTab.startDate = $scope.elasticSearch.startDate;
                     newTab.endDate = $scope.elasticSearch.endDate;
-                    newTab.eventType = $scope.elasticSearch.eventType; 
-                    newTab.query_string = $scope.elasticSearch.query; 
+                    newTab.eventType = $scope.elasticSearch.eventType;
+                    newTab.query_string = $scope.elasticSearch.query;
                     newTab.query = query;
                     $scope.searchComplete[tabName] = false;
 
@@ -1608,7 +1608,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 $scope.elasticSearch.query = tab.query_string;
                 $scope.elasticSearch.eventType = tab.eventType;
                 $scope.displayElasticSearchDialog();
-            } 
+            }
         }
 
         $scope.saveQuery = function(index, tab) {
@@ -1679,7 +1679,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
                 .then(function() {
 
                     $scope.nextQuery++;
-                    var tabName = 'Query' + $scope.nextQuery; 
+                    var tabName = 'Query' + $scope.nextQuery;
                     var newTab = new Object();
                     newTab.title = tabName;
                     newTab.type = 'event';
@@ -1814,7 +1814,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             var data = $scope.tableOptions.getdata($scope.currentTableName);
             var row = $scope.tableOptions.getrowposition($scope.currentTableName, selectedID);
 
-            // Check to see if there is another row to select 
+            // Check to see if there is another row to select
             if (data.length <= 1) { return }
 
             if (data.length > row + 1) {
@@ -1840,9 +1840,9 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
 
             var historyElement = angular.element( document.querySelector( '#history-table' ) );
             var tableName = $scope.currentTableName
-            var data = $scope.tableOptions.getselecteddata(tableName)[0];   
+            var data = $scope.tableOptions.getselecteddata(tableName)[0];
             var splitAid = data.id.split(".");
-            
+
             // Delete existing data
             $scope.eventHistory.length = 0;
 
@@ -1882,11 +1882,11 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             if (msg[1] !== "done") {
 
                 var newData = {
-                    username:msg[3], 
-                    timestamp:msg[4], 
-                    status:msg[5], 
-                    description:msg[6], 
-                    comment:msg[7] 
+                    username:msg[3],
+                    timestamp:msg[4],
+                    status:msg[5],
+                    description:msg[6],
+                    comment:msg[7]
                 }
 
                 $scope.eventHistory.push(newData);
@@ -1898,7 +1898,7 @@ angular.module('MainConsole', ['material.svgAssetsCache', 'luegg.directives', 'u
             }
 
         }
-  
+
         $scope.webLookup = function(type) {
 
             var data = $scope.tableOptions.getselecteddata($scope.currentTableName)[0];

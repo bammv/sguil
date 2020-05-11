@@ -907,7 +907,7 @@ proc tablelist::updateCursor {win row col} {
 	    } else {
 		variable editCursor
 		if {![info exists editCursor]} {
-		    makeEditCursor 
+		    makeEditCursor
 		}
 		set cursor $editCursor
 	    }

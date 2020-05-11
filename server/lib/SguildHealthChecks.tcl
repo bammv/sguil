@@ -3,8 +3,8 @@
 # SensorAgentsHealthCheck is called to initialize the check for connected
 # tunnels. First we send  PING and then go back thru and check who
 # successfully replied w/a PONG.
-# 
-# 
+#
+#
 proc SensorAgentsHealthCheck { { userRequest { 0 } } } {
 
     global sensorAgentActive sensorAgentResponse
@@ -13,7 +13,7 @@ proc SensorAgentsHealthCheck { { userRequest { 0 } } } {
     set query "SELECT hostname, active FROM sensor ORDER BY hostname ASC"
     set sensorList [MysqlSelect $query]
 
-    foreach  sensorInfo $sensorList { 
+    foreach  sensorInfo $sensorList {
         set sensorName [lindex $sensorInfo 0]
         set sensorActive [lindex $sensorInfo 1]
         if { $sensorActive == "Y" } {
@@ -79,7 +79,7 @@ proc SensorAgentPongRcvd { socketID } {
 #       if { $sensorAgentActive($sensorName) == "active" } {
 #            set message [format "%-20s  %s"\
 #                    $sensorName \
-#                    $sensorAgentResponse($sensorName)] 
+#                    $sensorAgentResponse($sensorName)]
 #        }
 #        InfoMessage "$message"
 #        SendSystemInfoMsg sguild $message
@@ -89,7 +89,7 @@ proc SensorAgentPongRcvd { socketID } {
 
 proc SendClientSensorStatusInfo { socketID } {
 
-    global agentStatusList 
+    global agentStatusList
 
     if { [array exists agentStatusList] && [array names agentStatusList] != "" } {
 
@@ -130,7 +130,7 @@ proc ClientPingRcvd { socketID } {
     catch {SendSocket $socketID PONG}
 
     update
-    
+
 }
 
 proc CheckClientStatus { socketID } {
@@ -144,11 +144,11 @@ proc CheckClientStatus { socketID } {
             unset LastClientCheckIn($socketID)
             catch {close $socketID}
             ClientExitClose $socketID
-    
+
         } else {
-    
+
             after 60000 CheckClientStatus $socketID
-    
+
         }
 
     }

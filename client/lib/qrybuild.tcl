@@ -6,14 +6,14 @@ proc QryBuild { tableSelected whereTmp } {
 
     set RETURN_FLAG 0
     set SELECTEDTABLE $tableSelected
-    
+
     if {$SELECTEDTABLE == "empty"} {
 	set SELECTEDTABLE "event"
     }
     if {$whereTmp == "empty"} {
 	set whereTmp "WHERE"
     }
-    
+
     # Grab the current pointer locations
     set xy [winfo pointerxy .]
     # Create the window
@@ -23,7 +23,7 @@ proc QryBuild { tableSelected whereTmp } {
 	wm deiconify $qryBldWin
 	return
     }
-    
+
     toplevel $qryBldWin
     wm title $qryBldWin "Query Builder"
     set height [winfo height .]
@@ -33,7 +33,7 @@ proc QryBuild { tableSelected whereTmp } {
     set x [expr ( ( $width / 2 ) - 350)]
     if { $x < 0 } { set x 0 }
     wm geometry $qryBldWin +$x+$y
-    
+
     # Create some arrays for the lists
     # funclist are lists of {LABEL FUNCTION} pairs.  In most cases they will be the same.
     set mlst [list Tables Functions]
@@ -54,25 +54,25 @@ proc QryBuild { tableSelected whereTmp } {
     foreach tableName $tableList {
 	set funcList($tableName) $tableColumnArray($tableName)
     }
-    
+
     # Main Frame
     set mainFrame [frame $qryBldWin.mFrame -background #dcdcdc -borderwidth 1]
 
-    # Query Type Box 
+    # Query Type Box
     set qryFrame [frame $mainFrame.qFrame]
       set qryTypeBox [radiobox $qryFrame.qTypeBox -orient horizontal -labeltext "Select Query Type" -labelpos n -foreground darkblue]
         $qryTypeBox add event -text "Events" -selectcolor red -foreground black
         #$qryTypeBox add sessions -text "Sessions" -selectcolor red -foreground black
-        $qryTypeBox add sancp -text "Sancp" -selectcolor red -foreground black  
-        $qryTypeBox add pads -text "PADS" -selectcolor red -foreground black  
- 
+        $qryTypeBox add sancp -text "Sancp" -selectcolor red -foreground black
+        $qryTypeBox add pads -text "PADS" -selectcolor red -foreground black
+
         $qryTypeBox select $SELECTEDTABLE
         $qryTypeBox configure -command {typeChange}
       #pack the children of the queryFrame
       pack $qryTypeBox -side left -expand false
     # Edit Frame
     set editFrame [frame $mainFrame.eFrame -background black -borderwidth 1]
-      
+
     set whereFrame [frame $editFrame.whereFrame]
     set cnt 0
     foreach where $whereTmp {
@@ -96,21 +96,21 @@ proc QryBuild { tableSelected whereTmp } {
     pack $maxRowsText -side bottom -expand no
 
 
-      
-      # Button box on left of edit box 
+
+      # Button box on left of edit box
       set mainBB1 [buttonbox $editFrame.mbb1 -padx 0 -pady 0 -orient vertical]
       foreach logical $funcList(Logical) {
 	      $mainBB1 add [lindex $logical 0] -text [lindex $logical 0] -padx 0 -pady 0 -command "ScrolledTextInsert [lindex $logical 1]"
       }
       # One last button for the left side that acts differently
       $mainBB1 add ipAddress -text "IP Address" -padx 0 -pady 0 -command "IPAddress2SQL builder"
-      
+
       # button box to right of main edit box
       set mainBB2 [buttonbox $editFrame.mbb2 -padx 0 -pady 0 -orient vertical]
       foreach comparison $funcList(Comparison) {
           $mainBB2 add [lindex $comparison 0] -text [lindex $comparison 0] -padx 0 -pady 0 -command "ScrolledTextInsert [lindex $comparison 1]"
       }
-      
+
       # packing children of edit frame
       pack $mainBB1 -side left -fill y
       pack $whereFrame -side left -fill both -expand true
@@ -143,27 +143,27 @@ proc QryBuild { tableSelected whereTmp } {
 	    $flagBox add $f -text [string totitle $f]
 	}
 	set logicBox [radiobox $flagFrame.lBox]
-	  $logicBox add only -text "ONLY selected flags" 
+	  $logicBox add only -text "ONLY selected flags"
 	  $logicBox add and -text "AT LEAST selected flags"
 	  $logicBox add not -text "NOT selected flags"
 	  $logicBox select only
 	set insertButton [button $flagFrame.iButton -command "addToEditBoxFlags $flagFrame" -text "Insert"]
-	
+
 	# packing children of flag Frame
 	pack $srcdstBox $flagBox $logicBox $insertButton -side top -fill both -expand true
-      
+
       # packing children of select frame
       pack $metaList $catList $itemList -side left -fill both -expand true
       iwidgets::Labeledwidget::alignlabels $metaList $catList $itemList
-    
+
     # Button box for Submit/Cancel
     set buttonFrame [frame $mainFrame.bFrame]
       set submitButton [button $buttonFrame.submitButton -text "Submit" -command "set RETURN_FLAG 1"]
       set cancelButton [button $buttonFrame.cancelButton -text "Cancel" -command "set RETURN_FLAG 0"]
-      pack $submitButton $cancelButton -side left -expand true 
-    # pack the qryFrame to the top no fill no expand	
+      pack $submitButton $cancelButton -side left -expand true
+    # pack the qryFrame to the top no fill no expand
     pack $qryFrame -side top  -expand true
-    
+
     # pack the main edit frame to the top fill and expand
     pack $editFrame -side top -fill both -expand yes
 
@@ -199,7 +199,7 @@ update
     set substitution {[GetSQLAddrsFromHostname "\1"]}
     set returnWhere [subst [regsub -all $RE $returnWhere $substitution]]
 
-    return $returnWhere  
+    return $returnWhere
 
 }
 
@@ -210,7 +210,7 @@ proc AddWhereBox { frame cnt } {
     set st $f.st
     set ub $f.ub
 
-    frame $f 
+    frame $f
     scrolledtext $st -textbackground white -vscrollmode dynamic \
 		-sbwidth 10 -hscrollmode none -wrap word -visibleitems 60x3 -textfont ourFixedFont \
 		-labeltext "Edit Where Clause $cnt"
@@ -227,9 +227,9 @@ proc AddWhereBox { frame cnt } {
 proc DeleteWhereBox { oldFrame oldSt } {
 
     global whereBoxList
-   
+
     set whereBoxList [ldelete $whereBoxList $oldSt]
-    destroy $oldFrame 
+    destroy $oldFrame
 
 }
 
@@ -239,7 +239,7 @@ proc AddUnion { frame oldFrame oldSt oldUb cnt } {
 
     # Change the button on the calling where box.
     $oldUb configure -text "Delete" -command "DeleteWhereBox $oldFrame $oldSt"
-    
+
     # Create new where box
     set st [AddWhereBox $frame $cnt]
     lappend whereBoxList $st
@@ -264,7 +264,7 @@ proc IsWhereBox { win } {
             break
 
         }
-        
+
     }
 
     return $FOCUS
@@ -277,7 +277,7 @@ proc ScrolledTextInsert { data } {
 
     set currentWin [focus]
 
-    if { [IsWhereBox $currentWin] } { 
+    if { [IsWhereBox $currentWin] } {
 
         $currentWin insert insert "$data "
 
@@ -292,15 +292,15 @@ proc ScrolledTextInsert { data } {
 
 proc updateCatList { selectFrame } {
     global funcList metaSelection SELECTEDTABLE
-     
+
     $selectFrame.cList delete 0 end
     #$selectFrame.cList delete entry 0 end
     $selectFrame.iList delete 0 end
-    
+
     set sel [$selectFrame.mList getcurselection]
     set metaSelection $sel
 #    puts $tableSelected
-    if {$sel == "Tables"} { 
+    if {$sel == "Tables"} {
 	if { $SELECTEDTABLE == "event" } {
 	    set localTableList [list event data icmphdr tcphdr udphdr sensor]
 	} elseif { $SELECTEDTABLE == "sessions" } {
@@ -321,13 +321,13 @@ proc updateCatList { selectFrame } {
 	}
     }
 }
-    
+
 proc updateItemList { selectFrame} {
     global funcList catSelection metaSelection
-    
+
     $selectFrame.iList delete 0 end
     #$selectFrame.iList delete entry 0 end
-    
+
     eval set sel [$selectFrame.cList getcurselection]
     set catSelection $sel
     if {$metaSelection == "Tables"} {
@@ -349,8 +349,8 @@ proc updateItemList { selectFrame} {
 proc addToEditBox { selectFrame } {
 
     global catSelection metaSelection funcList
-    
-    
+
+
     set currentWin [focus]
     if { ![IsWhereBox $currentWin] } {
         tk_messageBox -type ok -parent .qryBldWin \
@@ -364,12 +364,12 @@ proc addToEditBox { selectFrame } {
     } else {
 	set addText [lindex [lindex $funcList($catSelection) [$selectFrame.iList curselection]]  1]
     }
-    
+
     $currentWin insert insert "$addText "
 }
 
 proc addToEditBoxFlags { flagFrame } {
-    
+
     set currentWin [focus]
     if { ![IsWhereBox $currentWin] } {
         tk_messageBox -type ok -parent .qryBldWin \
@@ -390,22 +390,22 @@ proc addToEditBoxFlags { flagFrame } {
     if {[lsearch -exact $flaglist "R1"] > -1} { set decimalFlag [expr $decimalFlag + 64] }
     if {[lsearch -exact $flaglist "R2"] > -1} { set decimalFlag [expr $decimalFlag + 128] }
     # puts $decimalFlag
-    
+
     set target [$flagFrame.sdBox get]
     set target "${target}_flags"
-   
+
     # logic time (dusts off the old bitmath)
     set logic [$flagFrame.lBox get]
     if { $logic == "and" } {
 	set insert "sancp.${target} & ${decimalFlag} = ${decimalFlag}"
     } elseif { $logic == "not" } {
 	set insert "sancp.${target} & ${decimalFlag} = 0"
-    } else { 
+    } else {
 	set insert "sancp.${target} = ${decimalFlag}"
     }
-    
+
     $currentWin insert insert $insert
-}	
+}
 
 proc typeChange {} {
     global SELECTEDTABLE whereBoxList
@@ -416,7 +416,7 @@ proc typeChange {} {
     }
 
     set tableType [$mainFrame.qFrame.qTypeBox get]
-    
+
     if { $tableType == "event" } {
 	set SELECTEDTABLE "event"
     } elseif { $tableType == "sessions" } {
@@ -426,8 +426,8 @@ proc typeChange {} {
     } elseif { $tableType == "pads" } {
 	set SELECTEDTABLE "pads"
     }
-    
-    
+
+
     # return $tableSelected
 }
 
@@ -435,7 +435,7 @@ proc typeChange {} {
 #  InvokeQryBuild:  Call this proc if you need QueryBuilder to run stand-alone.
 #     Calls DBQryRequest or SSNQryRequest after QryBuild is done
 proc InvokeQryBuild { tableSelected whereTmpList } {
-    
+
     global SELECTEDTABLE
 
     set tmpWhereStatement [QryBuild $tableSelected $whereTmpList]
@@ -483,7 +483,7 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
 	wm deiconify $ipAddressWin
 	return
     }
-    
+
     set xy [winfo pointerxy .]
     toplevel $ipAddressWin
     wm title $ipAddressWin "IP Address Builder"
@@ -493,7 +493,7 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
     set ipBox [entryfield $mainFrame.ipBox -textbackground white -textfont ourFixedFont \
 		-labeltext "Enter IP Address/Net" -command "set RETURN_FLAG_IP 1"]
     set srcdstBox [radiobox $mainFrame.srcdstToggle -orient horizontal]
-    $srcdstBox add src -text "Src" 
+    $srcdstBox add src -text "Src"
     $srcdstBox add dst -text "Dst"
     $srcdstBox add src2dst -text "Src To Dst"
     $srcdstBox select 0
@@ -527,17 +527,17 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
 	destroy $ipAddressWin
 	return
     }
-    
+
     # Check that the content is in valid format and store it in varibles
     set fullip [$ipBox get]
     set iplist [ValidateIPAddress $fullip]
 
-    if { $iplist==0 } { 
+    if { $iplist==0 } {
 	ErrorMessage "Error.  Invalid IP Address"
 	    destroy $ipAddressWin
 	    IPAddress2SQL $caller
     }
-    
+
     if { $caller != "builder" } {
 	set SELECTEDTABLE [$tableBox get]
     }
@@ -552,15 +552,15 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
             set inserttext "${SELECTEDTABLE}.src_ip = INET_ATON('[lindex $iplist 0]') AND ${SELECTEDTABLE}.dst_ip = INET_ATON('[lindex $iplist 0]')"
         }
 
-    } else { 
+    } else {
 
         set networknumber [lindex $iplist 2]
         set bcastaddress [lindex $iplist 3]
         # find the decimal values for the ip network and broadcast addresses
         set decNetwork [InetAtoN $networknumber]
         set decBcast [InetAtoN $bcastaddress]
-    
-        # build the ip part of the query.  It will look the same no matter what table we are working with. 
+
+        # build the ip part of the query.  It will look the same no matter what table we are working with.
         if { $qryType == "src" } {
 	    set inserttext "${SELECTEDTABLE}.src_ip BETWEEN ${decNetwork} AND ${decBcast} "
         } elseif { $qryType  == "dst" } {
@@ -569,13 +569,13 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
 	    set inserttext "(${SELECTEDTABLE}.dst_ip BETWEEN ${decNetwork} AND ${decBcast} \
 		    OR ${SELECTEDTABLE}.src_ip BETWEEN ${decNetwork} AND ${decBcast}) "
         }
-    
+
         # do something depending on who called us
 
     }
     if { $caller == "builder" } {
 	$currentWin insert insert $inserttext
-	destroy $ipAddressWin 
+	destroy $ipAddressWin
 	return
     } elseif { $caller == "menu" } {
 
@@ -599,7 +599,7 @@ proc IPAddress2SQL { caller {parameter {NULL}} } {
 	    } elseif { $SELECTEDTABLE == "sancp" } {
 		SancpQueryRequest $SELECTEDTABLE [list $tmpWhere]
 	    }
-	} 
+	}
     }
     return
 }

@@ -3,7 +3,7 @@
 # Load up the access lists.
 proc LoadAccessFile { filename } {
   global CLIENT_ACCESS_LIST SENSOR_ACCESS_LIST
-  LogMessage "Loading access list: $filename" 
+  LogMessage "Loading access list: $filename"
   set CANYFLAG 0
   set SANYFLAG 0
   for_file line $filename {
@@ -14,7 +14,7 @@ proc LoadAccessFile { filename } {
         if { $ipaddr == "ANY" || $ipaddr == "any" } {
           set CANYFLAG 1
           set CLIENT_ACCESS_LIST ANY
-          LogMessage "Client access list set to ALLOW ANY." 
+          LogMessage "Client access list set to ALLOW ANY."
         } else {
           LogMessage "Adding client to access list: $ipaddr"
           lappend CLIENT_ACCESS_LIST $ipaddr
@@ -24,7 +24,7 @@ proc LoadAccessFile { filename } {
         if { $ipaddr == "ANY" || $ipaddr == "any" } {
           set SANYFLAG 1
           set SENSOR_ACCESS_LIST ANY
-          LogMessage "Sensor access list set to ALLOW ANY." 
+          LogMessage "Sensor access list set to ALLOW ANY."
         } else {
           LogMessage "Adding sensor to access list: $ipaddr"
           lappend SENSOR_ACCESS_LIST $ipaddr
@@ -40,7 +40,7 @@ proc LoadAccessFile { filename } {
   if {![info exists SENSOR_ACCESS_LIST] || $SENSOR_ACCESS_LIST == "" } {
     ErrorMessage "ERROR: No sensor access lists found in $filename."
   }
-                                                                                                                                                       
+
 }
 
 proc ValidateSensorAccess { ipaddr } {
@@ -104,7 +104,7 @@ proc AddUser { userName } {
         exit
 
     }
- 
+
     # See if the DB we want to use exists
     if { [catch {mysqluse $MAIN_DB_SOCKETID $DBNAME} noDBError] } {
 
@@ -115,7 +115,7 @@ proc AddUser { userName } {
 
     # Make sure we aren't adding a dupe.
     set dupeCheck [FlatDBQuery "SELECT username FROM user_info WHERE username='$userName'"]
-    if { $dupeCheck != "" } { 
+    if { $dupeCheck != "" } {
 
         puts "ERROR: User \'$userName\' already exists."
         return
@@ -308,7 +308,7 @@ proc ValidUserPassword { username password } {
         set tmpSalt [string range $userHash 0 1]
         set tmpHash [string range $userHash 2 end]
 
-    } else { 
+    } else {
 
         # Username did not match
         return 0
@@ -317,7 +317,7 @@ proc ValidUserPassword { username password } {
 
     # Hash the user provided password with salt
     set hashPasswd [::sha1::sha1 ${password}${tmpSalt}]
- 
+
     # Compare the two hashes
     if { $hashPasswd != $tmpHash } {
 
@@ -361,13 +361,13 @@ proc ValidateUser { socketID username password {type {raw socket}} } {
         set ws 0
 
     } else {
-    
+
         set ws 1
 
     }
 
     if { [ValidUserPassword $username $password] } {
-    
+
         # Get a the userid from the db and update the userIDArray
         set userIDArray($socketID) [GetUserID $username]
 

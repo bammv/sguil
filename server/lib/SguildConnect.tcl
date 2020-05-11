@@ -5,11 +5,11 @@
 #
 proc ClientConnect { socketID IPAddr port } {
 
-    global socketInfo VERSION 
+    global socketInfo VERSION
     #global CLIENT_PIDS
 
     LogMessage "Client Connect: $IPAddr $port $socketID"
-  
+
     # Check the client access list
     if { ![ValidateClientAccess $IPAddr] } {
 
@@ -22,7 +22,7 @@ proc ClientConnect { socketID IPAddr port } {
 
     # Valid client
     LogMessage "Valid client access: $IPAddr"
-    
+
     set socketInfo($socketID) [list $IPAddr $port]
     fconfigure $socketID -buffering line
     fileevent $socketID readable [list ClientCmdRcvd $socketID]
@@ -44,7 +44,7 @@ proc ForkClient { socketID IPAddr port } {
 
     global socketInfo VERSION
 
-    if { [set childPid [fork]] == 0 } { 
+    if { [set childPid [fork]] == 0 } {
 
         # In the child now
         LogMessage "Valid client access: $IPAddr"
@@ -88,7 +88,7 @@ proc ClientVersionCheck { socketID clientVersion } {
         LogMessage "ERROR: $results"
         close $socketID
         ClientExitClose $socketID
-  } 
+  }
 
 }
 
@@ -125,7 +125,7 @@ proc AgentVersionCheck { socketID agentVersion } {
   global VERSION AGENT_VERSION KEY PEM
 
   if { $agentVersion != $AGENT_VERSION } {
-    catch {close $socketID} 
+    catch {close $socketID}
     LogMessage "ERROR: Agent connect denied - mismatched versions"
     LogMessage "AGENT VERSION: $agentVersion"
     LogMessage "SERVER VERSION: $VERSION"
@@ -143,7 +143,7 @@ proc AgentVersionCheck { socketID agentVersion } {
         LogMessage "ERROR: $results"
         close $socketID
         ClientExitClose $socketID
-  } 
+  }
 
 }
 
@@ -169,19 +169,19 @@ proc CleanUpDisconnectedAgent { socketID } {
     global agentSocketArray agentSensorNameArray validSensorSockets
     global agentStatusList agentSocketInfo
 
-    # Remove the agent socket from the valid (registered) list. 
+    # Remove the agent socket from the valid (registered) list.
     if [info exists validSensorSockets] {
         set validSensorSockets [ldelete $validSensorSockets $socketID]
     }
 
     if { [array exists agentSocketInfo] && [info exists agentSocketInfo($socketID)] } {
-  
+
         set sid [lindex $agentSocketInfo($socketID) 0]
         if { [array exists agentStatusList] && [info exists agentStatusList($sid)] } {
 
             set agentStatusList($sid) [lreplace $agentStatusList($sid) 4 4 0 ]
 
-        } 
+        }
 
         unset agentSocketInfo($socketID)
 
@@ -211,7 +211,7 @@ proc CheckLoginStatus { socketID IPAddr port } {
     global socketInfo
 
     if { [array exists socketInfo] && [info exists socketInfo($socketID)] } {
- 
+
         # Check to make sure the socket is being used by the same dst ip and port
         if { [lindex $socketInfo($socketID) 0] == "$IPAddr" && [lindex $socketInfo($socketID) 1] == "$port" } {
 

@@ -1,22 +1,22 @@
 # $Id: qrylib.tcl,v 1.41 2008/05/01 19:15:59 bamm Exp $ #
 #
 # QueryRequest is called thru various drop downs.
-# It's job is to massage the data into the meat of 
+# It's job is to massage the data into the meat of
 # a WHERE statement, pass the info on to the QryBuilder
 # and finally call DBQueryRequest or SsnQueryRequest.
 #
 proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}}} {
 
-    global CUR_SEL_PANE 
+    global CUR_SEL_PANE
 
     # Example sancp UNION
     # (
     #
-    #   SELECT sensor.hostname, sancp.sancpid, sancp.start_time as datetime, sancp.end_time, 
+    #   SELECT sensor.hostname, sancp.sancpid, sancp.start_time as datetime, sancp.end_time,
     #          INET_NTOA(sancp.src_ip), sancp.src_port, INET_NTOA(sancp.dst_ip), sancp.dst_port,
     #          sancp.ip_proto, sancp.src_pkts, sancp.src_bytes, sancp.dst_pkts, sancp.dst_bytes
     #   FROM sancp
-    #   IGNORE INDEX (p_key) 
+    #   IGNORE INDEX (p_key)
     #   INNER JOIN sensor ON sancp.sid=sensor.sid
     #   WHERE sancp.start_time > '2005-08-02' AND sancp.src_ip = INET_ATON('82.96.96.3')
     #
@@ -30,7 +30,7 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
     #   INNER JOIN sensor ON sancp.sid=sensor.sid
     #   WHERE sancp.start_time > '2005-08-02' AND sancp.dst_ip = INET_ATON('82.96.96.3')
     #
-    # ) 
+    # )
     #
     # ORDER BY datetime
     # LIMIT 500;
@@ -45,14 +45,14 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 	    set globalWhere "WHERE event.status = 0 AND "
 	} else {
 	    set globalWhere "WHERE $tableName.timestamp > '$eventtimestamp' AND "
-	}   
+	}
 
     } elseif { $tableName == "pads" } {
 
-        if { $build == "build" } { 
-            set globalWhere "WHERE $tableName.timestamp > $eventtimestamp AND " 
-        } else { 
-            set globalWhere "WHERE " 
+        if { $build == "build" } {
+            set globalWhere "WHERE $tableName.timestamp > $eventtimestamp AND "
+        } else {
+            set globalWhere "WHERE "
         }
 
     } else {
@@ -63,7 +63,7 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
                 set starttime [clock scan "30 min ago" -base [clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,starttime]]]
             } elseif { $CUR_SEL_PANE(type) == "SGUIL_HTTP" } {
                 set starttime [clock scan "30 min ago" -base [[clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,@timestamp]]]
-            } elseif { $CUR_SEL_PANE(type) == "SGUIL_SSN" } { 
+            } elseif { $CUR_SEL_PANE(type) == "SGUIL_SSN" } {
                 set starttime [clock scan "30 min ago" -base [[clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,start_time]]]
             } else {
                 set starttime [clock scan "30 min ago" -base [clock scan [$CUR_SEL_PANE(name) getcells $selectedIndex,date]]]
@@ -78,7 +78,7 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 
 	    set globalWhere "WHERE $tableName.start_time > '$ssntimestamp' AND "
 
-	}  
+	}
 
     }
 
@@ -228,7 +228,7 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 	    DBQueryRequest $tableName $whereStatement $winTitle
 
 	} else {
- 
+
 	    DBQueryRequest $tableName $whereStatement
 
 	}
@@ -241,7 +241,7 @@ proc QueryRequest { tableName queryType { incidentCat {NULL} } { build {"build"}
 
 	SancpQueryRequest $tableName $whereStatement
 
-    } elseif { $tableName == "pads" } { 
+    } elseif { $tableName == "pads" } {
 
         PadsQueryRequest $tableName $whereStatement
 
@@ -303,7 +303,7 @@ proc DBQueryRequest { selectedTable whereList {winTitle {none} } } {
     global CONNECTED SELECT_LIMIT
 
     if {!$CONNECTED} {ErrorMessage "Not connected to sguild. Query aborted."; return}
-  
+
     set COLUMNS "event.status, event.priority, sensor.hostname, \
      event.timestamp as datetime, event.sid, event.cid, event.signature,\
      INET_NTOA(event.src_ip), INET_NTOA(event.dst_ip), event.ip_proto,\
@@ -348,10 +348,10 @@ proc DBQueryRequest { selectedTable whereList {winTitle {none} } } {
 
     # Union queries have a llength > 0
     if { [llength $queries] > 1 } {
- 
+
         set tmpQry [join $queries " ) UNION ( "]
         set fQuery "( $tmpQry ) ORDER BY datetime, src_port ASC LIMIT $SELECT_LIMIT"
-    
+
     } else {
 
         set fQuery "[lindex $queries 0] ORDER BY datetime, src_port ASC LIMIT $SELECT_LIMIT"
@@ -471,15 +471,15 @@ proc EditQuery { tableName whereList } {
 
     if { $tableName == "event" } {
 
-        DBQueryRequest $tableName $whereList 
+        DBQueryRequest $tableName $whereList
 
     } elseif { $tableName == "sessions" } {
 
-	SsnQueryRequest $tableName $whereList 
+	SsnQueryRequest $tableName $whereList
 
     } elseif { $tableName == "sancp" } {
 
-	SancpQueryRequest $tableName $whereList 
+	SancpQueryRequest $tableName $whereList
 
     }
 

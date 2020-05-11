@@ -76,7 +76,7 @@ proc ShowDBTables {} {
     toplevel $tableWin
     wm title $tableWin "Table Descriptions"
     set tableSelMenu [optionmenu $tableWin.tableSelMenu\
-      -labeltext "Table Name:" -command "DisplayTableColumns $tableWin.tableSelMenu"] 
+      -labeltext "Table Name:" -command "DisplayTableColumns $tableWin.tableSelMenu"]
 
     foreach tableName $tableList {
 
@@ -126,7 +126,7 @@ proc CreateTableListBox { winName columnList } {
 
     pack $tbl -side left -fill both -expand true
     pack $sb -side right -fill y
-   
+
     foreach column $columnList {
         $tbl insert end $column
     }
@@ -233,7 +233,7 @@ proc InsertIPHdr { data } {
   global srcIPHdrFrame dstIPHdrFrame verIPHdrFrame hdrLenIPHdrFrame
   global tosIPHdrFrame lenIPHdrFrame idIPHdrFrame flagsIPHdrFrame
   global offsetIPHdrFrame ttlIPHdrFrame chksumIPHdrFrame
-  
+
   $srcIPHdrFrame.text insert 0.0 [lindex $data 0]
   $dstIPHdrFrame.text insert 0.0 [lindex $data 1]
   $verIPHdrFrame.text insert 0.0 [lindex $data 2]
@@ -314,7 +314,7 @@ proc InsertTcpHdr { data ports} {
   $windowTcpHdrFrame.text insert 0.0 [lindex $data 5]
   $urpTcpHdrFrame.text insert 0.0 [lindex $data 6]
   $tcpchksumTcpHdrFrame.text insert 0.0 [lindex $data 7]
-  
+
 }
 proc InsertUdpHdr { data ports } {
   global sPortUdpHdrFrame dPortUdpHdrFrame udplenUdpHdrFrame udpchksumUdpHdrFrame
@@ -332,12 +332,12 @@ proc InsertIcmpHdr { data pldata } {
   $chksumIcmpHdrFrame.text insert 0.0 [lindex $data 2]
   $idIcmpHdrFrame.text insert 0.0 [lindex $data 3]
   $seqIcmpHdrFrame.text insert 0.0 [lindex $data 4]
-  
+
   # If the ICMP packet is a dest unreachable, redirect or a time exceeded,
   # check to see if it is network, host, port unreachable or admin prohibited or filtered
   # then show some other stuff
     global protoIcmpDecodeFrame sipIcmpDecodeFrame sportIcmpDecodeFrame dipIcmpDecodeFrame dportIcmpDecodeFrame gipIcmpDecodeFrame
-    
+
     set ICMPList [DecodeICMP [lindex $data 0] [lindex $data 1] $pldata]
     if { $ICMPList != "NA" } {
 	$gipIcmpDecodeFrame.text insert 0.0 [lindex $ICMPList 0]
@@ -346,11 +346,11 @@ proc InsertIcmpHdr { data pldata } {
 	$dipIcmpDecodeFrame.text insert 0.0 [lindex $ICMPList 3]
 	$sportIcmpDecodeFrame.text insert 0.0 [lindex $ICMPList 4]
 	$dportIcmpDecodeFrame.text insert 0.0 [lindex $ICMPList 5]
-	
+
 	pack $icmpDecodeFrame -after $icmpHdrFrame -fill x
     } else {
 	pack forget $icmpDecodeFrame
-    }	    
+    }
 }
 
 proc InsertGenericDetail { hexData } {
@@ -445,15 +445,15 @@ proc InsertPadsBanner { data } {
 proc InsertPayloadData { data } {
   global dataText dataHex dataSearchButton sfpDataFrame
   set payload [lindex $data 0]
-  if {[lindex $data 0] == ""} { 
+  if {[lindex $data 0] == ""} {
     $dataText insert 0.0 "None."
-    $dataHex insert 0.0 "None."  
+    $dataHex insert 0.0 "None."
   } elseif { [string range $payload 0 15] == "5072696F72697479" } {
       set SFPList [DecodeSFPPayload $payload]
       $sfpDataFrame.prioritySpfDataFrame.text insert end [lindex $SFPList 0]
       $sfpDataFrame.connectionsSpfDataFrame.text insert end [lindex $SFPList 1]
       $sfpDataFrame.ipCountSpfDataFrame.text insert end [lindex $SFPList 2]
-      $sfpDataFrame.ipRangeSpfDataFrame.text insert end [lindex $SFPList 3] 
+      $sfpDataFrame.ipRangeSpfDataFrame.text insert end [lindex $SFPList 3]
       $sfpDataFrame.protoCountSpfDataFrame.text insert end [lindex $SFPList 4]
       $sfpDataFrame.protoRangeSpfDataFrame.text insert end [lindex $SFPList 5]
   } else {
@@ -473,7 +473,7 @@ proc InsertPayloadData { data } {
       }
       set asciiStr "$asciiStr$currentChar"
       if { $counter == 32 } {
-	$dataHex insert end "$hexStr\n"  
+	$dataHex insert end "$hexStr\n"
         $dataText insert end "$asciiStr\n"
         set hexStr ""
         set asciiStr ""
@@ -493,7 +493,7 @@ proc InsertPayloadData { data } {
 #
 proc UnSelectPacketOptions { } {
 
-    global displayPacketButton displayRuleButton 
+    global displayPacketButton displayRuleButton
     global padsDisplayButton displayPSButton
 
     $displayPacketButton deselect
@@ -507,7 +507,7 @@ proc UnSelectPacketOptions { } {
 
     ClearPadsData
     $padsDisplayButton deselect
-  
+
 }
 
 #
@@ -561,7 +561,7 @@ proc WheelDataScroll { delta winName source } {
 
 
 proc InfoMessage { message } {
-    
+
     global DEBUG
 
     if {$DEBUG} { puts $message }
@@ -602,25 +602,25 @@ proc SearchData {} {
 		lappend textinds [$searchWidget index "1.0 +$index chars"]
 	    }
 	}
-    }    
+    }
     set i 0
     # puts $textinds
-    if { [llength $textinds] == 0 } { 
+    if { [llength $textinds] == 0 } {
 	InfoMessage "Search string $searchtext not found."
-	return 
+	return
     }
 
     while {$i < [llength $textinds] } {
 	$searchWidget tag add highlight [lindex $textinds $i] "[lindex $textinds [expr $i + 1]] + 1 chars"
-    set i [expr $i + 2] 
+    set i [expr $i + 2]
     }
-    
+
     $searchWidget tag configure highlight -background yellow
     $searchWidget see [lindex $textinds 0]
 }
 proc ShowHideSearch { } {
     global dataSearchFrame packetFrame dataFrame
-   
+
     if {[winfo ismapped $dataSearchFrame] == 0 } {
 	pack forget $dataFrame
 	pack $dataSearchFrame -side bottom -anchor s -fill x -expand false
@@ -667,7 +667,7 @@ proc LaunchPassChange {} {
     global USERNAME OLDPASS NEWPASS1 NEWPASS2
 
     set passChangeWin .passChangeWin
-  
+
     # If the win exists, pop it to the front
     if [winfo exists $passChangeWin] {
 
@@ -698,7 +698,7 @@ proc LaunchPassChange {} {
     set buttons [buttonbox $passChangeWin.b]
     $buttons add ok -text "Submit" -command "ChangePass; destroy $passChangeWin"
     $buttons add exit -text "Cancel" -command "destroy $passChangeWin"
-   
+
     pack $inputFrame -fill both -expand true -side top
     pack $buttons -side top
 
@@ -724,7 +724,7 @@ proc ChangePass {} {
     }
 
     SendToSguild [list ChangePass $USERNAME $OLDPASS $NEWPASS1]
- 
+
 }
 
 proc PassChange { status passwd } {

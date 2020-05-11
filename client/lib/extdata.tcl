@@ -48,7 +48,7 @@ proc GetRuleInfo {} {
 }
 
 proc ClearRuleText {} {
- 
+
     global ruleText
 
     $ruleText component text configure -state normal
@@ -58,7 +58,7 @@ proc ClearRuleText {} {
 }
 proc InsertRuleData { ruleData } {
 
-    global ruleText 
+    global ruleText
 
     $ruleText component text configure -state normal
 
@@ -126,8 +126,8 @@ proc InsertRuleData { ruleData } {
 proc DisplayReference { win start length } {
 
     global BROWSER_PATH sid_ref
-    
-    if { ![info exists BROWSER_PATH] } { 
+
+    if { ![info exists BROWSER_PATH] } {
         ErrorMessage "Error: BROWSER_PATH is NOT defined."
         return
     }
@@ -144,11 +144,11 @@ proc DisplayReference { win start length } {
     set type ""
     if ![regexp {^reference:\s*(.*?),(.*?);} $ref match type content] {
 
-        # Not a reference, maybe sid. 
+        # Not a reference, maybe sid.
         if [regexp {^(sid):\s*([0-9]*);} $ref match type content] { set foo bar }
 
     }
- 
+
      switch -exact -- $type {
 
         url        { exec $BROWSER_PATH $content & }
@@ -157,7 +157,7 @@ proc DisplayReference { win start length } {
         nessus     { exec $BROWSER_PATH http://cgi.nessus.org/plugins/dump.php3?id=$content & }
         mcafee     { exec $BROWSER_PATH http://vil.nai.com/vil/content/v_$content & }
         arachnids  { InfoMessage "ArachNIDS references are no long supported." }
-        sid        { 
+        sid        {
                      set f 0
                      foreach a [array names sid_ref] {
                          set min [lindex $sid_ref($a) 1]
@@ -165,7 +165,7 @@ proc DisplayReference { win start length } {
                          set uri "[lindex $sid_ref($a) 0]$content"
                          if { $content >= $min && $content <= $max } { exec $BROWSER_PATH $uri; set f 1; break }
                      }
-                     if { !$f } { InfoMessage "Unable to find url for sid $content. Check your sguil.conf." } 
+                     if { !$f } { InfoMessage "Unable to find url for sid $content. Check your sguil.conf." }
         }
         default    { InfoMessage "Unknown reference in rule: $ref" }
 
@@ -210,7 +210,7 @@ proc GetDshieldPort { arg } {
     global DEBUG BROWSER_PATH CUR_SEL_PANE ACTIVE_EVENT MULTI_SELECT
 
     if { $ACTIVE_EVENT && !$MULTI_SELECT} {
- 
+
         set selectedIndex [$CUR_SEL_PANE(name) curselection]
 
         if { $arg == "srcport" } {
@@ -295,13 +295,13 @@ proc GetWhoisData {} {
         update
         set selectedIndex [$CUR_SEL_PANE(name) curselection]
 
-        if { $CUR_SEL_PANE(type) == "PADS" } { 
+        if { $CUR_SEL_PANE(type) == "PADS" } {
 
             set ip [$CUR_SEL_PANE(name) getcells $selectedIndex,ip]
 
-        } elseif { $CUR_SEL_PANE(type) == "SGUIL_HTTP" || $CUR_SEL_PANE(type) == "SGUIL_SSN" } { 
-      
-            if { $WHOISLIST == "srcip" } { 
+        } elseif { $CUR_SEL_PANE(type) == "SGUIL_HTTP" || $CUR_SEL_PANE(type) == "SGUIL_SSN" } {
+
+            if { $WHOISLIST == "srcip" } {
 
                 set ip [$CUR_SEL_PANE(name) getcells $selectedIndex,src_ip]
 
@@ -379,16 +379,16 @@ proc GetHostbyName { hostname } {
 
     if { $EXT_DNS } {
 
-        if { ![info exists EXT_DNS_SERVER] } { 
+        if { ![info exists EXT_DNS_SERVER] } {
 
             ErrorMessage "An external name server has not been configured in sgu
-il.conf. Resolution aborted." 
+il.conf. Resolution aborted."
             return
 
         } else {
 	    set nameserver $EXT_DNS_SERVER
 
-	    if { [info exists HOME_DOMAINS] } { 
+	    if { [info exists HOME_DOMAINS] } {
 		# Loop through HOME_DOMAINS.  If lookup domain matches
 		# any of these home domains, use the locally configured
 		# nameserver
@@ -440,16 +440,16 @@ proc GetHostbyAddr { ip } {
 
     if { $EXT_DNS } {
 
-        if { ![info exists EXT_DNS_SERVER] } { 
+        if { ![info exists EXT_DNS_SERVER] } {
 
-            ErrorMessage "An external name server has not been configured in sguil.conf. Resolution aborted." 
+            ErrorMessage "An external name server has not been configured in sguil.conf. Resolution aborted."
             return
 
         } else {
 
             set nameserver $EXT_DNS_SERVER
 
-            if { [info exists HOME_NET] } { 
+            if { [info exists HOME_NET] } {
 
                 # Loop thru HOME_NET. If ip matches any networks than use a the locally configured
                 # name server
@@ -464,7 +464,7 @@ proc GetHostbyAddr { ip } {
 
         }
 
-    } else { 
+    } else {
 
         set nameserver local
 
@@ -507,7 +507,7 @@ proc ClearDNSText {} {
 
     }
 
-} 
+}
 
 proc InsertDNSData { srcIP srcName dstIP dstName} {
 
@@ -548,7 +548,7 @@ proc CreateXscriptWin { winName } {
     $winName.sText tag configure hdrTag -foreground black -background "#00FFFF"
     $winName.sText tag configure srcTag -foreground blue
     $winName.sText tag configure dstTag -foreground red
-    
+
     # Text box for debug
     # Hide the ST in a frame to easily pack/unpack
     set df [frame $winName.df]
@@ -557,8 +557,8 @@ proc CreateXscriptWin { winName } {
 
     # Interaction buttons
     set termButtonFrame [frame $winName.termButtonsFrame]
-    button $termButtonFrame.searchButton -text "Search" -command "SearchDialog $winName" 
-    button $termButtonFrame.abortButton -text "Abort " -command "AbortXscript $winName" 
+    button $termButtonFrame.searchButton -text "Search" -command "SearchDialog $winName"
+    button $termButtonFrame.abortButton -text "Abort " -command "AbortXscript $winName"
     button $termButtonFrame.closeButton -text "Close" -command "CleanupXscriptWin $winName"
     pack $termButtonFrame.searchButton $termButtonFrame.abortButton $termButtonFrame.closeButton \
      -side left -padx 0 -expand true
@@ -598,7 +598,7 @@ proc SearchDialog { winName } {
         wm title $dg "$winName - Search"
 
     }
-    
+
     $dg activate
 
 }
@@ -635,13 +635,13 @@ proc XscriptMainMsg { winName type data } {
      default { $winName.df.debug component text insert end "Unknown: $type $data.\n" }
   }
 }
-  
+
 proc InsertXscriptData { winName state data } {
   if { $state == "HDR" } {
     $winName.sText component text insert end "$data\n" hdrTag
   } elseif { $state == "SRC" } {
     $winName.sText component text insert end "$state: $data\n" srcTag
-  } elseif { $state == "DST" } { 
+  } elseif { $state == "DST" } {
     $winName.sText component text insert end "$state: $data\n" dstTag
   } elseif { $state == "ERROR" } {
     puts "data: $data"
@@ -651,7 +651,7 @@ proc InsertXscriptData { winName state data } {
   } else {
     $winName.df.debug component text insert end "$data\n"
     $winName.df.debug see end
-  } 
+  }
 }
 proc XscriptDebugMsg { winName data } {
     if [winfo exists $winName] {
@@ -714,7 +714,7 @@ proc PcapCopyFinished { fileName outfileID dataSocketID bytes {error {}} } {
 
     }
 
-    
+
     eval exec $WIRESHARK_PATH -n -r $fileName &
 
     InfoMessage\
@@ -769,7 +769,7 @@ proc GetXscript { type force } {
     if {!$ACTIVE_EVENT} {return}
 
     set selectedIndex [$CUR_SEL_PANE(name) curselection]
-  
+
     if { $CUR_SEL_PANE(format) == "SGUIL_HTTP" || $CUR_SEL_PANE(format) == "SGUIL_SSN"} {
 
         set sensorID [$CUR_SEL_PANE(name) getcells $selectedIndex,net_name]
@@ -779,7 +779,7 @@ proc GetXscript { type force } {
         set srcPort [$CUR_SEL_PANE(name) getcells $selectedIndex,src_port]
         set dstIP [$CUR_SEL_PANE(name) getcells $selectedIndex,dst_ip]
         set dstPort [$CUR_SEL_PANE(name) getcells $selectedIndex,dst_port]
-       
+
         if { $CUR_SEL_PANE(format) == "SGUIL_HTTP" } {
 
             set proto 6
@@ -860,7 +860,7 @@ proc GetXscript { type force } {
         if {$DEBUG} {
             puts "Xscript Request sent: [list $sensor $sensorID $xscriptWinName $timestamp $srcIP $srcPort $dstIP $dstPort $force]"
         }
-  
+
     } elseif { $type == "wireshark" } {
 
         # If WIRESHARK_PATH isn't set use the default location /usr/sbin/wireshark
@@ -891,8 +891,8 @@ proc CopyDone { socketID tmpFileID tmpFile bytes {error {}} } {
   close $tmpFileID
   close $socketID
   if {$DEBUG} {puts "Bytes Transfered: $bytes"}
-  if { $bytes == 0 } { 
-    ErrorMessage "No data available." 
+  if { $bytes == 0 } {
+    ErrorMessage "No data available."
     file delete $tmpFileID
   } else {
     eval exec $WIRESHARK_PATH -n -r $tmpFile &
@@ -943,7 +943,7 @@ proc NewSnortStats { statsList } {
     foreach row $statsList {
 
         $snortStatsTable insert end [ParseSnortStatsLine $row]
-        
+
     }
 
 }
@@ -979,7 +979,7 @@ proc ParseSnortStatsLine { stats } {
     }
 
 
-    # Add /sec 
+    # Add /sec
     foreach i [list 4 8] {
 
         if { [lindex $stats $i] != "N/A" } {
@@ -1013,13 +1013,13 @@ proc UpdateSnortStats { stats } {
     }
     # And what our last sort was on
     set sortColumn [$snortStatsTable sortcolumn]
-    if { $sortColumn >= 0 } { 
+    if { $sortColumn >= 0 } {
         set sortOrder [$snortStatsTable sortorder]
         $snortStatsTable sortbycolumn $sortColumn -$sortOrder
     }
- 
+
 }
- 
+
 proc SensorStatusUpdate { statusList } {
 
     global sensorStatusTable
@@ -1069,7 +1069,7 @@ proc SensorStatusUpdate { statusList } {
             $sensorStatusTable cellconfigure $match,agentStatus -window "CreateStatusLabel [lindex $tmpList $agentStatusIndex]"
 
         } else {
-          
+
             $sensorStatusTable insert end $tmpList
             $sensorStatusTable cellconfigure end,agentStatus -window "CreateStatusLabel [lindex $tmpList $agentStatusIndex]"
             #$sensorStatusTable cellconfigure end,sensorBY -window "CreateStatusLabel [lindex $tmpList $sensorBYIndex]"

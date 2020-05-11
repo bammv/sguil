@@ -6,7 +6,7 @@
 proc ClientCmdRcvd { socketID } {
 
     global clientList validSockets GLOBAL_QRY_LIST REPORT_QRY_LIST
-                                                                                                            
+
     if { [eof $socketID] || [catch {gets $socketID data}] || [catch {llength $data} tmpLen] } {
 
         if { [info exists tmpLen] } {
@@ -19,16 +19,16 @@ proc ClientCmdRcvd { socketID } {
         # Socket closed
         catch {close $socketID}
         ClientExitClose $socketID
-        LogMessage "Socket $socketID closed" 
+        LogMessage "Socket $socketID closed"
 
     } else {
 
         # Don't display the user passwds
         if { [regexp ^ValidateUser $data] } {
-         
+
             InfoMessage "Client Command Received: [lrange $data 0 1] ********"
 
-        } elseif { [lindex $data 0] == "ChangePass" } { 
+        } elseif { [lindex $data 0] == "ChangePass" } {
 
             InfoMessage "Client Command Received: [lrange $data 0 1] ******** ********"
 
@@ -125,7 +125,7 @@ proc ClientCmdRcvd { socketID } {
       VersionInfo         { ClientVersionCheck $socketID [lindex $data 1] }
 
       QuickScript         { $clientCmd $socketID [lindex $data 1] }
- 
+
       ChangePass          { $clientCmd $socketID [lindex $data 1] [lindex $data 2] [lindex $data 3] }
 
       AutoCatRequest      { $clientCmd $socketID [lrange $data 1 end] }
@@ -151,7 +151,7 @@ proc ClientCmdRcvd { socketID } {
 proc ClientExitClose { socketID } {
 
   global clientList clientMonitorSockets validSockets socketInfo sensorUsers
-  global userIDArray selectedEvent eventSocketList 
+  global userIDArray selectedEvent eventSocketList
 
 
   if { [info exists socketInfo($socketID)] } {
@@ -190,23 +190,23 @@ proc ClientExitClose { socketID } {
 
 proc UserMsgRcvd { socketID userMsg } {
   global socketInfo clientList userIDArray selectedEvent
-                                                                                                            
+
   #set userMsg [lindex $userMsg 0]
-                                                                                                            
+
   # Simple command stuff.
   # Who returns a list of connected users
   if { $userMsg == "who" } {
      catch {SendSocket $socketID [list UserMessage sguild "== Connected Users =="]}
-     foreach client $clientList { 
+     foreach client $clientList {
        set uinfo "Username: [lindex $socketInfo($client) 2] -- User ID: $userIDArray($client) -- "
-       if { [array exists selectedEvent] && [info exists selectedEvent($client)] } { 
+       if { [array exists selectedEvent] && [info exists selectedEvent($client)] } {
          append uinfo "Selected Event: $selectedEvent($client)"
        } else {
          append uinfo "Selected Event: none"
        }
        catch {SendSocket $socketID [list UserMessage sguild $uinfo]}
      }
-  } elseif { $userMsg == "autocats" } { 
+  } elseif { $userMsg == "autocats" } {
     set c1 7
     set c2 80
     catch {SendSocket $socketID [list UserMessage sguild "+-[string repeat - $c1]-+-[string repeat - $c2]-+"]}
@@ -218,7 +218,7 @@ proc UserMsgRcvd { socketID userMsg } {
       }
       catch {SendSocket $socketID [list UserMessage sguild "+-[string repeat - $c1]-+-[string repeat - $c2]-+"]}
     }
-  } elseif { $userMsg == "healthcheck" } { 
+  } elseif { $userMsg == "healthcheck" } {
     #SensorAgentsHealthCheck 1
     catch {SendSocket $socketID [list UserMessage sguild "Command healthcheck depreciated."]}
   } else {
@@ -234,7 +234,7 @@ proc GetCorrelatedEvents { socketID eid winName {requestType {raw}} } {
     catch {SendSocket $socketID\
      [list InsertQueryResults $winName [eval FormatStdToQuery $eventIDArray($eid)]]}
   }
-                                                                                                            
+
   if { [info exists correlatedEventArray($eid)] } {
     foreach row $correlatedEventArray($eid) {
       catch {SendSocket $socketID [list InsertQueryResults $winName [eval FormatStdToQuery $row]]}
@@ -263,7 +263,7 @@ proc SendDBInfo { socketID } {
 proc RuleRequest { socketID event_id sensor genID sigID sigRev } {
 
     global RULESDIR
-                                                                                                            
+
     set RULEFOUND 0
     set ruleDir $RULESDIR/$sensor
 
@@ -294,7 +294,7 @@ proc RuleRequest { socketID event_id sensor genID sigID sigRev } {
         }
 
     } else {
-  
+
         set data "Could not find $ruleDir."
 
     }
@@ -343,7 +343,7 @@ proc GetIPData { socketID sid cid } {
     ip_flags, ip_off, ip_ttl, ip_csum\
    FROM event\
    WHERE sid=$sid and cid=$cid"
-                                                                                                            
+
   set queryResults [FlatDBQuery $query]
   catch {SendSocket $socketID [list InsertIPHdr $queryResults]} tmpError
 }
@@ -361,27 +361,27 @@ proc GetIcmpData { socketID sid cid } {
    "SELECT event.icmp_type, event.icmp_code, icmphdr.icmp_csum, icmphdr.icmp_id, icmphdr.icmp_seq\
    FROM event, icmphdr\
    WHERE event.sid=icmphdr.sid AND event.cid=icmphdr.cid AND event.sid=$sid AND event.cid=$cid"
-                                                                                                            
+
   set queryResults [FlatDBQuery $query]
-                                                                                                            
+
   set query\
    "SELECT data_payload FROM data WHERE sid=$sid and cid=$cid"
-                                                                                                            
+
   set plqueryResults [FlatDBQuery $query]
-                                                                                                            
+
   catch {SendSocket $socketID [list InsertIcmpHdr $queryResults $plqueryResults]} tmpError
 }
 proc GetPayloadData { socketID sid cid } {
   set query\
    "SELECT data_payload FROM data WHERE sid=$sid and cid=$cid"
-                                                                                                            
+
   set queryResults [FlatDBQuery $query]
   catch {SendSocket $socketID [list InsertPayloadData $queryResults]} tmpError
 }
 proc GetUdpData { socketID sid cid } {
   set query\
    "SELECT udp_len, udp_csum FROM udphdr WHERE sid=$sid and cid=$cid"
-                                                                                                            
+
   set queryResults [FlatDBQuery $query]
   set portQuery [FlatDBQuery "SELECT src_port, dst_port FROM event WHERE sid=$sid AND cid=$cid"]
   catch {SendSocket $socketID [list InsertUdpHdr $queryResults $portQuery]} tmpError
@@ -399,7 +399,7 @@ proc GetOpenPorts { socketID sid cid } {
     set query\
 	"SELECT unified_event_id FROM event WHERE sid=$sid and cid=$cid"
     set event_id [lindex [FlatDBQuery $query] 0]
-    if { $event_id == "" } { 
+    if { $event_id == "" } {
 	catch {SendSocket $socketID [list InsertOpenPortsData DONE]} tmpError
 	return
     }
@@ -420,15 +420,15 @@ proc MonitorSensors { socketID ClientSensorList } {
 
     global clientList clientMonitorSockets socketInfo sensorUsers sensorList
     global snortStatsArray
-   
+
 
     set userName [lindex $socketInfo($socketID) 2]
 
-    if {[lsearch -exact $clientList $socketID] < 0} { 
+    if {[lsearch -exact $clientList $socketID] < 0} {
 	LogMessage "$socketID added to clientList"
 	lappend clientList $socketID
     }
-    # Find this socketID in other sensors and delete it 
+    # Find this socketID in other sensors and delete it
     foreach sensor $sensorList {
 	if [info exists clientMonitorSockets($sensor)] {
             if {[lsearch -exact $clientMonitorSockets($sensor) $socketID] >= 0} {
@@ -459,10 +459,10 @@ proc MonitorSensors { socketID ClientSensorList } {
 
         catch { SendSocket $socketID [list NewSnortStats $tmpList] } tmpError
 
-    }   
+    }
 
 }
-                                                                                                            
+
 proc SendEscalatedEvents { socketID } {
   global escalateIDList escalateArray
   if [info exists escalateIDList] {
@@ -479,7 +479,7 @@ proc SendCurrentEvents { socketID } {
 
     global eventIDArray eventIDList clientMonitorSockets eventIDCountArray
     global sidNetNameMap userIDArray selectedEvent
-                                                                                                                       
+
     if { [info exists eventIDList] && [llength $eventIDList] > 0 } {
 
         foreach eventID $eventIDList {
@@ -489,7 +489,7 @@ proc SendCurrentEvents { socketID } {
             if { [info exists clientMonitorSockets($netName)] } {
 
                 if { [lsearch -exact $clientMonitorSockets($netName) $socketID] >= 0} {
-                    InfoMessage "Sending client $socketID: InsertEvent $eventIDArray($eventID) $eventIDCountArray($eventID)" 
+                    InfoMessage "Sending client $socketID: InsertEvent $eventIDArray($eventID) $eventIDCountArray($eventID)"
                     catch {SendSocket $socketID [list InsertEvent "$eventIDArray($eventID) $eventIDCountArray($eventID)"]}
                 }
             }
@@ -513,7 +513,7 @@ proc UnSelectEvent { socketID oldEventID userID } {
 
     if { ![info exists eventSocketList($oldEventID)] } { return }
 
-    if { ![info exists eventIDArray($oldEventID)] } { 
+    if { ![info exists eventIDArray($oldEventID)] } {
         set priority 1
     } else {
         set priority [lindex $eventIDArray($oldEventID) 1]
@@ -526,7 +526,7 @@ proc UnSelectEvent { socketID oldEventID userID } {
         if { [lsearch -exact $eventSocketList($oldEventID) $socketID] == 0 } {
 
             set newOwner $userIDArray([lindex $eventSocketList($oldEventID) 1])
-        
+
             foreach client $clientList {
 
                 catch {SendSocket $client [list UserSelectedEvent $selectedEvent($socketID) $newOwner]}

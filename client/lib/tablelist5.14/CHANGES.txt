@@ -123,7 +123,7 @@ What was new in Tablelist 5.12?
 
 5. The visibility of the horizontal separator placed just below the last
    tablelist row if the value of the "-showseparators" option is true
-   and that of the "-fullseparators" option is false, can now be 
+   and that of the "-fullseparators" option is false, can now be
    controlled with the aid of the new "-showhorizseparator"
    configuration option (thanks to Martyn Smith for his proposal).
 
@@ -429,7 +429,7 @@ What was new in Tablelist 5.4?
 1. Added the "-populatecommand" configuration option, used by the
    "searchcolumn" subcommand to insert child items on demand before
    checking whether they contain the specified pattern.
-   
+
 2. Added the "-autoscan" configuration option, which can be used to
    deactivate the automatic scrolling triggered by leaving the
    tablelist window with mouse button 1 down, in order to avoid any
@@ -671,7 +671,7 @@ What was new in Tablelist 4.11?
 
 2.  Added the virtual events <<TablelistColHiddenStateChanged>> and
     <<TablelistRowHiddenStateChanged>>, generated after toggling the
-    hidden state of a column or row, respectively (thanks to Jeff 
+    hidden state of a column or row, respectively (thanks to Jeff
     Godfrey for his proposal).
 
 3.  Besides with <Button-3>, the optimal column width can now be set
@@ -1035,7 +1035,7 @@ What was new in Tablelist 4.3?
    "sortbycolumnlist", "sortcolumnlist", and "sortorderlist", as well
    as of the new command "tablelist::addToSortColumns".  The latter is
    designed to be specified as the value of the new widget and column
-   configuration option "-labelcommand2", whose value is invoked on 
+   configuration option "-labelcommand2", whose value is invoked on
    <Shift-Button-1> events.  Multi-column sorting is visualized by
    means of multiple sort arrows, which are displayed together with the
    corresponding sort ranks.  (Thanks to Harold Campbell for proposing
@@ -1249,7 +1249,7 @@ What was new in Tablelist 3.8?
 1. New configuration option "-forceeditendcommand", controlling the
    invocation of the script corresponding to the value of the
    "-editendcommand" option (thanks to Nestor Patino for his proposal).
- 
+
 2. New subcommands "getcells" and "windowpath" (thanks to Jeff Godfrey
    and Mike Collins for their proposals).
 

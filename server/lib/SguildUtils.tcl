@@ -57,11 +57,11 @@ proc HupTrapped {} {
 }
 
 proc IntTrapped {} {
- 
+
     global clientList DEBUG
 
     if { $DEBUG > 0 } { puts "Rcvd INT signal. Closing all client sockets." }
-    
+
     foreach socketID $clientList {
 
         catch {close $socketID}
@@ -112,7 +112,7 @@ proc GetHostbyAddr { ip } {
 }
 
 # ValidateIPAddress:  Verifies that a string fits a.b.c.d/n CIDR format.
-#                     the / notation is optional. 
+#                     the / notation is optional.
 #                     returns a list with the following elements or 0 if the syntax is invalid:
 #                     { ipaddress } { maskbits } { networknumber } { broadcastaddress }
 #                     for example:
@@ -121,11 +121,11 @@ proc GetHostbyAddr { ip } {
 proc ValidateIPAddress { fullip } {
 
     set valid 0
-    
+
     set valid [regexp "^((\\d{1,3})\.(\\d{1,3})\.(\\d{1,3})\.(\\d{1,3}))(/)?(\\d{1,2})?$" \
 	    $fullip foo ipaddress oct1 oct2 oct3 oct4 slash maskbits]
     if { !$valid } { return 0 }
-    
+
     if { $oct1 < 0 || $oct1 > 255 } { set valid 0 }
     if { $oct2 < 0 || $oct2 > 255 } { set valid 0 }
     if { $oct3 < 0 || $oct3 > 255 } { set valid 0 }
@@ -136,7 +136,7 @@ proc ValidateIPAddress { fullip } {
     # if the bitmask is 32 or absent, return the ip address as the network number
     if { $maskbits=="" || $maskbits == 32 } {
 	set iplist [list $ipaddress 32 $ipaddress $ipaddress]
-    } else { 
+    } else {
 	if { $maskbits > 23 } {
 	    set hostbits [expr 32 - $maskbits]
 	    set hostmask [expr pow(2,$hostbits)]
@@ -228,7 +228,7 @@ proc LoadEmailConfig { fileName } {
 
         if { ![regexp {^#} $line] && ![regexp {^$} $line] && ![regexp {^\s+$} $line] } {
 
-            if { [llength $line] != 3 || [lindex $line 0] != "set" } { 
+            if { [llength $line] != 3 || [lindex $line 0] != "set" } {
 
                 ErrorMessage "Error at line $i in $fileName: $line"
 
@@ -238,11 +238,11 @@ proc LoadEmailConfig { fileName } {
 
                     ErrorMessage "Error parsing line $i in $fileName: $line\n\t$evalError"
 
-                } 
+                }
 
             }
 
-        } 
+        }
 
     }
 

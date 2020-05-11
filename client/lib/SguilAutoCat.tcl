@@ -29,7 +29,7 @@ proc AutoCatBldr { erase sensor sip sport dip dport proto sig status } {
 
     set bf [frame $autoBldWin.bf -background #dcdcec -borderwidth 1]
 
-   
+
     set eraseEntry [ iwidgets::entryfield $bf.time \
       -labeltext "Expire Time" \
       -labelpos n \
@@ -130,21 +130,21 @@ proc AutoCatBldr { erase sensor sip sport dip dport proto sig status } {
     pack $h -side top -fill both -expand true
     pack $bb -side top
 
-    foreach value [list erase sensor sip sport dip dport proto sig status] { 
+    foreach value [list erase sensor sip sport dip dport proto sig status] {
 
         eval $${value}Entry insert 0 $$value
 
     }
 
     vwait autocat(state)
-   
+
     if { $autocat(state) == "submit" } {
 
-        ACConvertTime $eraseEntry 
+        ACConvertTime $eraseEntry
         ACIPNormalize $sipEntry
         ACIPNormalize $dipEntry
 
-       foreach value [list erase sensor sip sport dip dport proto sig status comment] { 
+       foreach value [list erase sensor sip sport dip dport proto sig status comment] {
 
             set $value [eval $${value}Entry get]
 
@@ -163,7 +163,7 @@ proc AutoCatBldr { erase sensor sip sport dip dport proto sig status } {
             InfoMessage "Autocat rule sent to server."
 
         }
- 
+
     } else {
 
         destroy $autoBldWin
@@ -172,7 +172,7 @@ proc AutoCatBldr { erase sensor sip sport dip dport proto sig status } {
 
 }
 
-proc AutoCatFromEvent {} { 
+proc AutoCatFromEvent {} {
 
     global ACTIVE_EVENT MULTI_SELECT CUR_SEL_PANE
 
@@ -187,12 +187,12 @@ proc AutoCatFromEvent {} {
         set proto [$CUR_SEL_PANE(name) getcells $selectedIndex,ipproto]
         set sig [$CUR_SEL_PANE(name) getcells $selectedIndex,event]
 
-        AutoCatBldr {1 day} $sensor $sip $sport $dip $dport $proto $sig 1 
+        AutoCatBldr {1 day} $sensor $sip $sport $dip $dport $proto $sig 1
 
     }
 
 
-} 
+}
 
 proc UpdateACText { name } {
 
@@ -202,7 +202,7 @@ proc UpdateACText { name } {
 
     switch -exact -- $name {
 
-        erase   { set msgtxt "Time (YYYY-MM-DD HH:MM:SS) this autocat rule expires or \"none\".\nStrings like '2 days' or '48 hours' will be converted." } 
+        erase   { set msgtxt "Time (YYYY-MM-DD HH:MM:SS) this autocat rule expires or \"none\".\nStrings like '2 days' or '48 hours' will be converted." }
         sensor  { set msgtxt "Enter a sensor name or any" }
         sip     { set msgtxt "Source IP address or CIDR (192.168.1.2 or 192.168.1.0/24 or 127/8) or any" }
         sport   { set msgtxt "Source port or any" }
@@ -222,7 +222,7 @@ proc UpdateACText { name } {
         comment  { set msgtxt "Add a comment for this rule." }
         default { return }
 
-    } 
+    }
 
     $winName configure -text $msgtxt
 }
@@ -231,7 +231,7 @@ proc ACConvertTime { winName } {
 
     set erase [$winName get]
 
-    if { $erase != "none" && $erase != "NONE" } { 
+    if { $erase != "none" && $erase != "NONE" } {
 
         if { [catch {clock scan $erase} secs] } {
 
@@ -253,7 +253,7 @@ proc ACIPNormalize { winName } {
 
     set ip [$winName get]
 
-    if { $ip != "any" && $ip != "ANY" } { 
+    if { $ip != "any" && $ip != "ANY" } {
 
         if { [catch {ip::normalize $ip} ip] } {
 
@@ -277,27 +277,27 @@ proc ValidateAutoCat { erase sensor sip sport dip dport proto sig status comment
 
         return -code error "Timestamp is not formatted correctly."
 
-    } 
+    }
 
     if { $sip != "any" && $sip != "ANY" && [ip::version $sip] != 4 } { return -code error "Source IP is invalid." }
 
     if { $sensor == "" } { return -code error "Sensor cannot be left blank" }
 
-    if { $sport != "any" && $sport != "ANY" && [string is integer $sport] && ($sport < 0 || $sport > 65535) } { 
+    if { $sport != "any" && $sport != "ANY" && [string is integer $sport] && ($sport < 0 || $sport > 65535) } {
         return -code error "Source Port is invalid."
     }
-    
+
     if { $dip != "any" && $dip != "ANY" && [ip::version $dip] != 4 } { return -code error "Destination IP is invalid." }
 
-    if { $dport != "any" && $dport != "ANY" && ($dport < 0 || $dport > 65535) } { 
+    if { $dport != "any" && $dport != "ANY" && ($dport < 0 || $dport > 65535) } {
         return -code error "Destination Port is invalid."
     }
 
-    if { $proto != "any" && $proto != "ANY" && ($proto < 0 || $proto > 255) } { 
+    if { $proto != "any" && $proto != "ANY" && ($proto < 0 || $proto > 255) } {
         return -code error "IP Protocol \"$proto\" is invalid."
     }
 
-    if { ![string is integer -strict $status] || $status < 1 } { 
+    if { ![string is integer -strict $status] || $status < 1 } {
        return -code error "An invalid status was provided"
     }
 
@@ -309,9 +309,9 @@ proc LaunchAutoCatViewer {} {
 
     set winName .acViewer
 
-    if { ![winfo exists $winName] } { 
+    if { ![winfo exists $winName] } {
 
-        CreateAutoCatViewer $winName 
+        CreateAutoCatViewer $winName
 
     } else {
 
@@ -448,7 +448,7 @@ proc ChangeAutoCatStatus { tbl row col text} {
 
 }
 
-proc InsertAutoCat { r } { 
+proc InsertAutoCat { r } {
 
     set winName .acViewer
     set aceFrame $winName.frame
@@ -459,7 +459,7 @@ proc InsertAutoCat { r } {
     # Y ==1 N == 0
     if { [lindex $r 0] == "Y" || [lindex $r 0] == "y" } { set r [lreplace $r 0 0 1] } else { set r [lreplace $r 0 0 0] }
     # Map nulls to "none" or "any"
-    if { [lindex $r 2] == "" } { set r [lreplace $r 2 2 "none"] } 
+    if { [lindex $r 2] == "" } { set r [lreplace $r 2 2 "none"] }
     if { [lindex $r 13] == "" } { set r [lreplace $r 13 13 "none"] }
     for {set i 2}  {$i < 13} {incr i} { if { [lindex $r $i] == "" } { set r [lreplace $r $i $i "any"] } }
 

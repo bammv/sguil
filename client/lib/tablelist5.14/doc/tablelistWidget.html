@@ -1630,7 +1630,7 @@ proc myColorizeCmd {tbl body key row col tabIdx1 tabIdx2 inStripe selected} { ..
         the use of some other tag configuration options (particularly
         <code><b>-elide</b></code> and <code><b>-font</b></code>) can cause
         conflicts with the way Tablelist renders the elements, thus giving rise
-        to various layout problems within the body of your tablelist widget!<p> 
+        to various layout problems within the body of your tablelist widget!<p>
       </blockquote>
     </dd>
 
@@ -6029,7 +6029,7 @@ proc updateWindow {tbl row col w args} {
       <a href="http://wiki.tcl.tk/36708">TkDND Tutorial</a> by Georgios
       Petasis.&nbsp; For the following example it is strongly recommended to
       use TkDND version 2.7 or later, which can be downloaded from the location
-      
+
       <blockquote>
         <address>
           <a href=
@@ -6104,7 +6104,7 @@ proc tblDropOverCmd {dropTarget dragSrc event rootX rootY op dataType data} {
             return 2 ;<i># refuse the drop and re-invoke the callback on motion events</i>
         }
     }
-    
+
     global place row
     set y [expr {$rootY - [winfo rooty $tbl]}]
     foreach {place row} [$tbl <a href="#targetmarkpos">targetmarkpos</a> $y] {}

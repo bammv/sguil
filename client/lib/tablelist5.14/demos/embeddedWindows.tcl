@@ -31,7 +31,7 @@ image create photo openImg -file [file join $dir open.gif]
 # dynamic-width columns and interactive sort capability
 #
 set tf .tf
-frame $tf -class ScrollArea 
+frame $tf -class ScrollArea
 set tbl $tf.tbl
 set vsb $tf.vsb
 tablelist::tablelist $tbl \
@@ -131,7 +131,7 @@ proc viewFile {tbl key} {
     # Create a vertically scrolled text widget as a grandchild of the toplevel
     #
     set tf $top.tf
-    frame $tf -class ScrollArea 
+    frame $tf -class ScrollArea
     set txt $tf.txt
     set vsb $tf.vsb
     text $txt -background white -font TkFixedFont -setgrid yes \

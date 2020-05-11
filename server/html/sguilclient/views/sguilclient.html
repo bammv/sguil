@@ -49,7 +49,7 @@
         <md-tabs layout-fill md-selected="selectedMainTab" md-autoselect md-border-bottom class="md-primary md-hue-1">
             <md-tab ng-repeat="tab in mainTabs" md-on-select="newTabSelected(tab.title, tab.type)">
                 <md-tab-label>
-                    {{tab.title}} 
+                    {{tab.title}}
                     <a ng-if="tab.close" ng-click="removeQuery($index,tab)">
                         <md-icon md-svg-src="images/ic_cancel_24px.svg"></md-icon>
                         <md-tooltip md-direction="bottom">Close Tab</md-tooltip>
@@ -151,7 +151,7 @@
                               <input ng-model="eventinfo.msg" type="text" ng-keyup="$event.keyCode == 13 && sendMsg()">
                             </md-input-container>
                         </md-content>
-                    </div>   
+                    </div>
                     </div>
                   </md-tab>
                   <md-tab label="Log">
@@ -224,7 +224,7 @@
                         <div id="eventSignature" style="font-family:monospace;font-size:12px;"></div>
                     </md-content>
                 </div>
-                
+
                 <div layout="column" flex="55">
                 <md-content>
                 <div layout="row" flex="100">
@@ -239,7 +239,7 @@
                     </div>
 
                     <md-divider></md-divider>
-                
+
                     <div layout="column" style="width:30%">
                         <md-toolbar layout="row" class="md-hue-1 md-small">
                             <div class="md-toolbar-tools">
@@ -262,7 +262,7 @@
             <md-dialog layout-padding>
                 <form class="form-signin" name="form" ng-submit="login()" role="form">
                     <img src="images/sguil_logo_h.gif">
-                    <br /><br /> 
+                    <br /><br />
                     <div class="form-group">
                         <label for="username">Username</label>
                         <i class="fa fa-key"></i>
@@ -279,7 +279,7 @@
                         <button type="submit" ng-disabled="form.$invalid || dataLoading" class="btn btn-danger">Login</button>
                         <img ng-if="dataLoading" src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA=="/>
                     </div>
-                    <br /><br /> 
+                    <br /><br />
                     <div ng-show="error" class="alert alert-danger">{{error}}</div>
                 </form>
             </md-dialog>
@@ -324,7 +324,7 @@
                     <section layout="row" layout-sm="column" layout-align="center center" layout-wrap>
                           <md-button class="md-raised md-primary" ng-click="monitor()">Monitor</md-button>
                     </section>
-                </div>            
+                </div>
             </md-dialog>
         </div>
     </div>
@@ -337,7 +337,7 @@
                         <h2>Event History - {{ selectedRow }}</h2>
                     </div>
                 </md-toolbar>
-          
+
                 <div id="history-table" class="md-dialog-content"></div>
             </md-dialog>
         </div>
@@ -354,7 +354,7 @@
                 <md-button class="md-small" ng-click="showHistory($event)">History</md-button>
             </md-menu-item>
         </nav>
-    
+
         <nav id="ip-menu" class="context-menu">
             <md-menu-item class="md-small">
                 <md-button class="md-small" ng-click="prepEventSearchDialog($event, selectedFieldName)">Search Events</md-button>
@@ -366,19 +366,19 @@
                 <md-button class="md-small" ng-click="webLookup(selectedFieldName)">TCPIPUtils Lookup</md-button>
             </md-menu-item>
         </nav>
-    
+
         <nav id="signature-menu" class="context-menu">
             <md-menu-item class="md-small">
                 <md-button class="md-small" ng-click="showEventSearchDialog($event, 'signature')">Search Events</md-button>
             </md-menu-item>
         </nav>
-    
+
         <nav id="count-menu" class="context-menu">
             <md-menu-item class="md-small">
                 <md-button class="md-small" ng-click="getCorrelatedEvents()">View Correlated Events</md-button>
             </md-menu-item>
         </nav>
-    
+
         <nav id="priority-menu" class="context-menu">
             <md-menu-item class="md-small">
                 <md-button class="md-small" ng-click="updateEventStatus('1')">Update to NA</md-button>
