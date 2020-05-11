@@ -39,8 +39,8 @@ proc GetAutoCatList {} {
 
 # Send a list of autocats to a requesting client
 proc SendAutoCatList { socketID } {
-    
-    foreach r [GetAutoCatList] { catch {SendSocket $socketID [list InsertAutoCat $r]} } 
+
+    foreach r [GetAutoCatList] { catch {SendSocket $socketID [list InsertAutoCat $r]} }
     catch {SendSocket $socketID [list InsertAutoCat end]} tmpError
 
 }
@@ -70,14 +70,14 @@ proc ProcessAutoCat { line } {
         if { $cTimeSecs > [clock seconds] } {
 
             # Invoke the rule
-            AddAutoCatRule $rid [lrange $line 2 end] 
+            AddAutoCatRule $rid [lrange $line 2 end]
 
             # Set up the removal
             set DELAY [expr ($cTimeSecs - [clock seconds]) * 1000]
             after $DELAY RemoveAutoCatRule $rid
 
         } else {
- 
+
             # Disable the autocat rule
             RemoveAutoCatRule $rid
 
@@ -85,7 +85,7 @@ proc ProcessAutoCat { line } {
 
     } else {
 
-        AddAutoCatRule [lindex $line 0] [lrange $line 2 end] 
+        AddAutoCatRule [lindex $line 0] [lrange $line 2 end]
 
     }
 
@@ -200,12 +200,12 @@ proc AddAutoCatRule { rid rList } {
 	    set tmpVar [list [InetAtoN [lindex $ipList 2]] [InetAtoN [lindex $ipList 3]]]
 
 	}
-	
+
 	# add the match var to the rule list
 	lappend acRules($rid) [list $dIndex $tmpVar]
 
         incr i
-	    
+
     }
 
     # Define the status matches are updated to
@@ -259,7 +259,7 @@ proc AutoCat { data } {
 	if { $MATCH } {
 	    InfoMessage "AUTO MARKING EVENT AS : $acCat($rid)"
 	    UpdateDBStatus [lindex $data 3] [lindex $data 4] [lindex $data 5] [lindex $data 6] [GetCurrentTimeStamp] $AUTOID $acCat($rid)
-	    InsertHistory [lindex $data 5] [lindex $data 6] $AUTOID [GetCurrentTimeStamp] $acCat($rid) $acComment($rid) 
+	    InsertHistory [lindex $data 5] [lindex $data 6] $AUTOID [GetCurrentTimeStamp] $acCat($rid) $acComment($rid)
 	    return 1
 	}
     }
@@ -278,7 +278,7 @@ proc AutoCatRequest { clientSocketID ruleList } {
     }
 
     set i 0
-    foreach t [list erase sensorname src_ip src_port dst_ip dst_port ip_proto signature status comment] { 
+    foreach t [list erase sensorname src_ip src_port dst_ip dst_port ip_proto signature status comment] {
 
         set v [lindex $ruleList $i]
 
@@ -324,7 +324,7 @@ proc AutoCatRequest { clientSocketID ruleList } {
         catch {SendSocket $clientSocketID [list ErrorMessage "Error inserting autocat rule: $rid"] 1} tmpError
 
     } else {
-        
+
         catch {SendSocket $clientSocketID [list InfoMessage "AutoCat rule $rid successfully implemented."]} tmpError
 
     }

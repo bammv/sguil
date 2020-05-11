@@ -5,8 +5,8 @@ proc EmailEvent { dataList } {
     global SMTP_SERVER EMAIL_RCPT_TO EMAIL_FROM EMAIL_SUBJECT EMAIL_MSG
 
     # dataList
-    # 0 1 trojan-activity sensorname {2007-07-05 15:06:30} 1 1710072 
-    # {BLEEDING-EDGE Malware MyWebSearch Toolbar Posting Activity Report} 
+    # 0 1 trojan-activity sensorname {2007-07-05 15:06:30} 1 1710072
+    # {BLEEDING-EDGE Malware MyWebSearch Toolbar Posting Activity Report}
     # 192.168.1.1 10.1.1.1 6 2665 80 1 2003617 1 629 629 1
 
     # These will be used for substitutions as configged by the user in

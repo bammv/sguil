@@ -16,10 +16,10 @@ proc ClientSocketTimeOut { host port timeout } {
 
 proc GetServerFromRef { line } {
 
-    
+
     # Defaults
     set refPort 43
-    set refName "arin.whos.net" 
+    set refName "arin.whos.net"
 
     # Referer should be a whois URL.
     regexp {whois://(.*)} $line match tmpRef
@@ -32,7 +32,7 @@ proc GetServerFromRef { line } {
     if { [llength $tmpSplit] > 1 } { regexp {([0-9]+)} [lindex $tmpSplit 1] match refPort }
 
     return [list $refName $refPort]
-    
+
 }
 
 proc SimpleWhois { ipAddr } {
@@ -45,11 +45,11 @@ proc SimpleWhois { ipAddr } {
   set nicSrvr "whois.arin.net"
   set rPort 43
   if {$DEBUG} {puts "Whois request: $ipAddr"}
-  
+
   # Connect to arin first.
   if [catch {ClientSocketTimeOut $nicSrvr $rPort 10000} socketID] {
     return "{ERROR: $socketID}"
-  } 
+  }
   fconfigure $socketID -buffering line
   if [catch {puts $socketID $ipAddr} tmpPutsError] {
     catch {close $socketID} tmpError
@@ -64,7 +64,7 @@ proc SimpleWhois { ipAddr } {
   set newNicSrvr $nicSrvr
 
   # Loop thru and see if we see something that looks like a referer
-  # Thanks to all the different proxy tools that already did the 
+  # Thanks to all the different proxy tools that already did the
   # work for these regexps :)
   foreach line $results {
     switch -regexp -- $line {
@@ -106,7 +106,7 @@ proc SimpleWhois { ipAddr } {
   if { $nicSrvr != $newNicSrvr } {
     if [catch {ClientSocketTimeOut $newNicSrvr $rPort 10000} socketID] {
       return "{ERROR: $socketID}"
-    } 
+    }
     fconfigure $socketID -buffering line
     if [ catch { puts $socketID $ipAddr } sError] {
       close $socketID
@@ -118,11 +118,11 @@ proc SimpleWhois { ipAddr } {
       lappend results $data
     }
     catch {close $socketID} tmpError
-  } else { 
+  } else {
     # Check to see if we can drill down further from query results like:
-    #SBC Internet Services - Southwest SBIS-SBIS-5BLK (NET-66-136-0-0-1) 
+    #SBC Internet Services - Southwest SBIS-SBIS-5BLK (NET-66-136-0-0-1)
     #                              66.136.0.0 - 66.143.255.255
-    #ROBERT LEVIN SBC-06614002515229 (NET-66-140-25-152-1) 
+    #ROBERT LEVIN SBC-06614002515229 (NET-66-140-25-152-1)
     #                              66.140.25.152 - 66.140.25.159
     # ARIN WHOIS database, last updated 2003-06-01 21:05
     # Enter ? for additional hints on searching ARIN's WHOIS database.

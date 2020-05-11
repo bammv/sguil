@@ -19,7 +19,7 @@ proc ReportBuilder { socketID type sid cid } {
                 "select udphdr.udp_len, udphdr.udp_csum, event.src_port, event.dst_port\
                 FROM udphdr, event\
                 WHERE event.sid = udphdr.sid and event.cid=udphdr.cid and event.sid=$sid and event.cid = $cid"
-                                                                                                     
+
             QueryDB $socketID {REPORT UDP} $query
         }
         ICMP {
@@ -28,7 +28,7 @@ proc ReportBuilder { socketID type sid cid } {
                 FROM event, icmphdr, data\
                 WHERE event.sid=icmphdr.sid AND event.cid=icmphdr.cid\
                 AND event.sid=data.sid AND event.cid=data.cid AND event.sid=$sid AND event.cid=$cid"
-                                                                                                     
+
             QueryDB $socketID {REPORT ICMP} $query
         }
         PAYLOAD {
@@ -43,7 +43,7 @@ proc ReportBuilder { socketID type sid cid } {
                 ip_flags, ip_off, ip_ttl, ip_csum\
                 FROM event\
                 WHERE sid=$sid and cid=$cid"
-                                                                                                     
+
             QueryDB $socketID {REPORT IP} $query
        }
        BUILDER {
@@ -51,7 +51,7 @@ proc ReportBuilder { socketID type sid cid } {
             set stop 0
             for {set cIndex 0} { $stop != 1 } {incr cIndex} {
                 if { [regexp -start $scanindex {(.*?)\|\|.*?\|\|.*?\|\|(.*?)\|\|.*?\|\|} $REPORT_QRY_LIST match name sql ] } {
-                                                                                                     
+
                     if { $name == $sid } { set stop 1 }
                     regexp -indices -start $scanindex {.*?\|\|.*?\|\|.*?\|\|.*?\|\|.*?\|(\|)} $REPORT_QRY_LIST match endindex
                     set scanindex [expr [lindex $endindex 1] + 1]
@@ -70,20 +70,20 @@ proc ReportBuilder { socketID type sid cid } {
             # Macro replacements
             regsub -all "%%STARTTIME%%" $sql "'${timestart}'" sql
             regsub -all "%%ENDTIME%%" $sql "'${timeend}'" sql
-                                                                                                     
+
             set sensormacro "\( sensor.net_name = '[lindex $sensor 0]' "
             for { set i 1 } { $i < [llength $sensor] } { incr i } {
                 set sensormacro "${sensormacro} OR sensor.net_name = '[lindex $sensor $i]' "
             }
             set sensormacro "${sensormacro} \)"
             regsub -all "%%SENSORS%%" $sql $sensormacro sql
-                                                                                                     
+
             QueryDB $socketID {REPORT BUILDER} $sql
         }
 	NESSUS {
             set ip $sid
 	    set query "SELECT * FROM nessus WHERE ip = '$ip'"
-            
+
             QueryDB $socketID {REPORT NESSUS} $query
 	}
 	NESSUS_DATA {

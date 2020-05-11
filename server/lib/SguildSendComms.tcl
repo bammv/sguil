@@ -33,7 +33,7 @@ proc SendSocket { socketID command } {
     }
 
 }
-                                                                                                     
+
 #
 # SendEvent: Send events to connected clients
 #

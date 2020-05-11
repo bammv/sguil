@@ -16,7 +16,7 @@ angular.module('compile', [])
               // NOTE: we only compile .childNodes so that
               // we don't get into infinite loop compiling ourselves
               $compile(element.contents())(scope);
-                
+
               // Use Angular's un-watch feature to ensure compilation only happens once.
               ensureCompileRunsOnce();
             }

@@ -10,7 +10,7 @@ exec wish "$0" "$@"
 
 # Copyright (C) 2002-2018 Robert (Bamm) Visscher <bamm@sguil.net>
 #
-# This program is distributed under the terms of version 3 of the 
+# This program is distributed under the terms of version 3 of the
 # GNU Public License.  See LICENSE for further details.
 #
 # This program is distributed in the hope that it will be useful,
@@ -153,7 +153,7 @@ set LASTINDEXSELECTED 1
 set MONITORFLAG 0
 set BUSY 0
 set REPORTNUM 0
-set CUR_SEL_FRAME(name) 0 
+set CUR_SEL_FRAME(name) 0
 set COUNTER 0
 set SEARCHFRAME 1
 set SELECT_LIMIT 1000
@@ -187,7 +187,7 @@ proc ServerCommandRcvd { socketID } {
     if {$DEBUG} {puts "Server Command Recieved: $data"}
 
     set serverCmd [lindex $data 0]
-   
+
     switch -exact -- $serverCmd {
       SensorStatusUpdate { $serverCmd [lindex $data 1] }
       NewSnortStats { $serverCmd [lindex $data 1] }
@@ -233,7 +233,7 @@ proc ServerCommandRcvd { socketID } {
       UserUnSelectedEvent { $serverCmd [lindex $data 1] [lindex $data 2] }
       default { puts "Unrecognized command from $socketID: $data" }
     }
-  } 
+  }
 }
 
 proc ConnectToSguild {} {
@@ -245,10 +245,10 @@ proc ConnectToSguild {} {
   } else {
     set CONNECTED 1
     fconfigure $socketID -buffering line
- 
+
     # Version checking
     set tmpVERSION "$VERSION OPENSSL ENABLED"
-          
+
     if [catch {gets $socketID} serverVersion] {
       puts "ERROR: $serverVersion"
       catch {close $socketID}
@@ -301,10 +301,10 @@ proc ReconnectToSguild {} {
     while { $USERID == "INVALID" } {
       set PASSWD ""
       ErrorMessage "Invalid USERNAME and/or PASSWORD"
-      GetUserName 
+      GetUserName
       SendToSguild [list ValidateUser $USERNAME $PASSWD]
       set USERID [lindex [gets $socketID] 1]
-    } 
+    }
     set CONNECTED 1
     ClearAllEventLists
     fileevent $socketID readable [list ServerCommandRcvd $socketID]
@@ -317,7 +317,7 @@ proc ReconnectToSguild {} {
 }
 proc ChangeSensors {} {
     global CONNECTED USERNAME PASSWD socketID monitorList
-	
+
     ClearAllEventLists
     SendToSguild "SendSensorList"
     tkwait variable MONITORFLAG
@@ -326,7 +326,7 @@ proc ChangeSensors {} {
     SendToSguild "SendEscalatedEvents"
     SendToSguild "SendGlobalQryList"
     SendToSguild "SendReportQryList"
- 
+
 }
 proc SendToSguild { data } {
   global socketID CONNECTED
@@ -381,7 +381,7 @@ proc UserMessage { user userMsg } {
 
       # BOING!
       #bell
-      $detailTabs pageconfigure 4 -foreground red 
+      $detailTabs pageconfigure 4 -foreground red
 
     } else {
 
@@ -420,7 +420,7 @@ proc GetComment {} {
     set comment [[.comment.e component entry] get]
   } else {
     set comment ""
-  } 
+  }
   destroy .comment
   return $comment
 }
@@ -439,7 +439,7 @@ proc ValidateEvent { status {c_flag {0}} } {
 
     }
 
-  
+
     # Hourglass
     Working
 
@@ -467,13 +467,13 @@ proc ValidateEvent { status {c_flag {0}} } {
             lappend tmpDeletedEIDList $eventID
             unset sigIDListMap($eventID)
             unset generatorListMap($eventID)
-  
+
         }
-    
+
         update
 
         set MULTI_SELECT 0
-        if { [info exists selectedIndex] && $selectedIndex != "" } { 
+        if { [info exists selectedIndex] && $selectedIndex != "" } {
 
             SelectNextEvent $win $selectedIndex
 
@@ -509,7 +509,7 @@ proc InsertSystemInfoMsg { sensorName msg } {
     # Change label to red if we add data when it's not being viewed
     if { [$detailTabs view] != 2 } {
 
-      $detailTabs pageconfigure 3 -foreground red 
+      $detailTabs pageconfigure 3 -foreground red
 
     } else {
 
@@ -557,13 +557,13 @@ proc GetColorByPriority { priority } {
     }
     incr x
   }
-  
+
   return $rtColor
 }
 
 #
 # DeleteEventID: Called when server sends the DeleteEventID cmd
-#                This is ugly right now. 
+#                This is ugly right now.
 #
 proc DeleteEventID { eventID } {
 
@@ -574,7 +574,7 @@ proc DeleteEventID { eventID } {
     if { [info exists correlateArray($eventID)] } {
 
         foreach event $correlateArray($eventID) {
- 
+
             if { [info exists eventArray($event)] } { unset eventArray($event) }
 
         }
@@ -656,10 +656,10 @@ proc IncrEvent { data } {
     set eidMatch [lsearch -exact [$paneName getcolumns alertID] $eid]
     if { $eidMatch >= 0 } {
 
-        # Change the count value 
+        # Change the count value
         $paneName cellconfigure $eidMatch,count -text $count
 
-    } 
+    }
 
 }
 
@@ -710,7 +710,7 @@ proc InsertEventQueryResults { paneName results } {
     set sensor [lindex $results 2]
     set dateTime [lindex $results 3]
     set eventID [join [lrange $results 4 5] .]
-    set message [lindex $results 6] 
+    set message [lindex $results 6]
     set srcIP [lindex $results 7]
     set dstIP [lindex $results 8]
     set protocol [lindex $results 9]
@@ -726,7 +726,7 @@ proc InsertEventQueryResults { paneName results } {
 }
 
 proc InsertEscalatedEvent { data } {
- 
+
     global CAT escalateFrame RT_SORT
 
     set statusName ES
@@ -734,7 +734,7 @@ proc InsertEscalatedEvent { data } {
     set sensor [lindex $data 3]
     set dateTime [lindex $data 4]
     set eventID [join [lrange $data 5 6] .]
-    set message [lindex $data 7] 
+    set message [lindex $data 7]
     set srcIP [lindex $data 8]
     set dstIP [lindex $data 9]
     set protocol [lindex $data 10]
@@ -753,7 +753,7 @@ proc InsertEscalatedEvent { data } {
 
 }
 proc InsertSessionQueryResults { paneName results } {
- 
+
     if { $results == "done" } { [winfo parent $paneName] configure -cursor left_ptr; return }
     set tmpList [lreplace $results 1 2 "[lindex $results 1].[lindex $results 2]"]
     $paneName insert end $tmpList
@@ -767,7 +767,7 @@ proc InsertPadsQueryResults { paneName results } {
     # Put the sid and id together to create the unique id.
     set tmpList [lreplace $results 1 2 "[lindex $results 1].[lindex $results 2]"]
     $paneName insert end $tmpList
-    
+
 }
 
 proc EventStatusLabel { color status tableName row col win } {
@@ -797,7 +797,7 @@ proc DisplayEvent { paneName status priority count sensor dateTime eventID messa
                     dstIP proto srcPort dstPort statusColor genID sigID sigRev } {
 
     global generatorListMap sigIDListMap
-  
+
     $paneName insert end [list $priority $count $sensor $eventID $dateTime $srcIP $srcPort $dstIP $dstPort $proto $message]
     $paneName cellconfigure end,status -window "EventStatusLabel [list $statusColor $status]"
 
@@ -855,7 +855,7 @@ proc DisplayPacketHdr { proto } {
 	}
 
 	pack $newHdr -after $ipHdrFrame -fill x
-	
+
 	set DISPLAYEDHDR $newHdr
 
     }
@@ -887,7 +887,7 @@ proc ClearPadsData {} {
 
 proc ClearGenericDetail {} {
 
-    global genericText 
+    global genericText
 
     $genericText clear
 
@@ -903,7 +903,7 @@ proc DisplayPadsBanner {} {
 
         if {!$CONNECTED} {
             ErrorMessage "Not connected to sguild. Cannot request pads banner data."
-            return 
+            return
         }
 
         set selectedIndex [$CUR_SEL_PANE(name) curselection]
@@ -928,7 +928,7 @@ proc DisplayGenericDetail {} {
 
         if {!$CONNECTED} {
             ErrorMessage "Not connected to sguild. Cannot request detail."
-            return 
+            return
         }
 
         set selectedIndex [$CUR_SEL_PANE(name) curselection]
@@ -954,7 +954,7 @@ proc DisplayPortscanData {} {
 
         if {!$CONNECTED} {
             ErrorMessage "Not connected to sguild. Cannot request portscan data."
-            return 
+            return
         }
 
         $psMaxRows configure -state normal
@@ -970,14 +970,14 @@ proc DisplayPortscanData {} {
         $psMaxRows configure -state disabled
 
     }
-    
+
 }
 
 proc InsertPSData { data } {
 
     global portscanTable portscanDataFrame
 
-    if { $data == "DONE" } { 
+    if { $data == "DONE" } {
 
         $portscanDataFrame configure -cursor left_ptr
         return
@@ -990,7 +990,7 @@ proc InsertPSData { data } {
 
 proc InsertOpenPortsData { data } {
     global sfpOPDataFrame
-    if { $data == "DONE" } { 
+    if { $data == "DONE" } {
 	    $sfpOPDataFrame configure -cursor left_ptr
 	    return
     }
@@ -1008,7 +1008,7 @@ proc InsertOpenPortsData { data } {
 		    set currentChar [format "%c" $intValue]
 		}
 		set asciiPayload "${asciiPayload}${currentChar}"
-	    
+
 	    }
 	    if [regexp "Open Port: (\\d*)"  $asciiPayload fullmatch PortNumber] {
 		    $sfpOPDataFrame.sfpOPDataText insert end "${dstIP}:${PortNumber}\n"
@@ -1046,7 +1046,7 @@ proc GetPacketInfo {} {
           SendToSguild [list GetUdpData $sid $cid]
 
         } elseif { $protocol == "1" } {
- 
+
           SendToSguild [list GetIcmpData $sid $cid]
 
         } elseif { $protocol == "255" } {
@@ -1058,7 +1058,7 @@ proc GetPacketInfo {} {
 
           SendToSguild [list GetTcpData $sid $cid]
 
-        } 
+        }
 
         SendToSguild [list GetPayloadData $sid $cid]
     }
@@ -1110,10 +1110,10 @@ proc DeleteTab { eventTabs tabName } {
 
     global ACTIVE_EVENT CUR_SEL_PANE
 
-    # If the currenttab had the selected index then we need to let things no that 
+    # If the currenttab had the selected index then we need to let things no that
     # no event is active anymore
     #if [regexp "^$tabName" $CUR_SEL_PANE(name)] { set ACTIVE_EVENT 0 }
-  
+
     set totalTabs [llength [$eventTabs childsite]]
     set tabIndex [lsearch -exact [$eventTabs childsite] $tabName]
 
@@ -1123,12 +1123,12 @@ proc DeleteTab { eventTabs tabName } {
 
         $eventTabs select $tabIndex
 
-    } else { 
+    } else {
 
         if { $tabIndex == 2 } {
 
             $eventTabs select 0
- 
+
         } else {
 
             $eventTabs select [expr $tabIndex - 1]
@@ -1199,7 +1199,7 @@ proc CreatePadsLists { baseFrame } {
 
         global BUSY
 
-        if { $BUSY } { bell; break } 
+        if { $BUSY } { bell; break }
 
         foreach {tablelist::W tablelist::x tablelist::y} \
             [tablelist::convEventFields %W %x %y] {}
@@ -1318,7 +1318,7 @@ proc SortRTPane { win } {
 }
 
 proc SetSortType { rtpane win columnIndex } {
-    
+
     global RT_SORT RT_SORT_COLUMN RT_SORT_ORDER
 
     ::tablelist::sortByColumn $win $columnIndex
@@ -1402,11 +1402,11 @@ proc CreateEventLists { baseFrame {movable {1}} {rtpane {0}} } {
     bind $bindWin <Button1-Motion> { global BUSY; if { $BUSY } { break } }
 
     # Left button was released on a list.
-    bind $bindWin <ButtonRelease-1> { 
+    bind $bindWin <ButtonRelease-1> {
 
         global BUSY
 
-        if { $BUSY } { break } 
+        if { $BUSY } { break }
 
         foreach {tablelist::W tablelist::x tablelist::y} \
             [tablelist::convEventFields %W %x %y] {}
@@ -1456,7 +1456,7 @@ proc CreateEventLists { baseFrame {movable {1}} {rtpane {0}} } {
 
     return $currentPane
 
-} 
+}
 
 proc LaunchRightClickMenu { win x y cellWin } {
 
@@ -1468,15 +1468,15 @@ proc LaunchRightClickMenu { win x y cellWin } {
 
     set labelName [$win labelpath $nColumn]
     set tmpX [winfo rootx $labelName]
-    if { $CUR_SEL_PANE(type) == "EVENT" } { 
+    if { $CUR_SEL_PANE(type) == "EVENT" } {
         set tmpY [expr [winfo rooty $cellWin]+[lindex [$win bbox $nIndex] 1]-1]
     } else {
-        set tmpY [expr [winfo rooty $cellWin]+[lindex [$win bbox $nIndex] 1]-7] 
+        set tmpY [expr [winfo rooty $cellWin]+[lindex [$win bbox $nIndex] 1]-7]
     }
 
     set columnName [lindex [$win columnconfigure $nColumn -name] 4]
- 
-    if { $CUR_SEL_PANE(type) == "PADS" } { 
+
+    if { $CUR_SEL_PANE(type) == "PADS" } {
 
         switch -exact $columnName {
 
@@ -1485,7 +1485,7 @@ proc LaunchRightClickMenu { win x y cellWin } {
 
         }
 
-    } else { 
+    } else {
 
         switch -exact $columnName {
 
@@ -1532,7 +1532,7 @@ proc ManualSelectRow { win x y } {
     set nIndex [$win nearest $y]
     $win selection clear 0 end
     $win selection set $nIndex
-    
+
 }
 
 proc SelectSessionPane { win type format } {
@@ -1545,7 +1545,7 @@ proc SelectSessionPane { win type format } {
     set CUR_SEL_PANE(format) $format
     set ACTIVE_EVENT 1
     # Session panes are single select only
-    set MULTI_SELECT 0  
+    set MULTI_SELECT 0
     set selectedIndex [$win curselection]
 
     UnSelectPacketOptions
@@ -1587,7 +1587,7 @@ proc SelectPadsPane { win type format } {
     set CUR_SEL_PANE(format) $format
     set ACTIVE_EVENT 1
     # Pads panes are single select only
-    set MULTI_SELECT 0  
+    set MULTI_SELECT 0
     set selectedIndex [$win curselection]
 
     if { $selectedIndex == "" } { return }
@@ -1652,7 +1652,7 @@ proc SelectEventPane { win type format } {
         set CUR_SEL_EVENT $eventID
 
         # If win is a rt pane, send selected eventID to other clients via sguild
-        foreach rtPane [array names rtPaneArray] { 
+        foreach rtPane [array names rtPaneArray] {
 
             if { $rtPaneArray($rtPane) == $win } { SendToSguild [list UserSelectedEvent $eventID $USERID] }
 
@@ -1663,7 +1663,7 @@ proc SelectEventPane { win type format } {
         set sigRev [lindex $sigIDListMap($eventID) 1]
 
         # Snort uses a gen id of less than 1000
-        if { $genID < 1000 } { 
+        if { $genID < 1000 } {
 
             # Look for the old portscan preproc alerts
             if { [regexp "^spp_portscan:" [$win getcells $selectedIndex,event]] } {
@@ -1680,7 +1680,7 @@ proc SelectEventPane { win type format } {
             } else {
 
                 if { $DISPLAYEDDETAIL != $packetDataFrame } {
-    
+
                     pack forget $DISPLAYEDDETAIL
                     pack $packetDataFrame -fill both -expand true
                     set DISPLAYEDDETAIL $packetDataFrame
@@ -1862,13 +1862,13 @@ proc CreateSensorCheckButton { winName sensorName userList } {
   set i 0
   foreach user $userList {
     label $cframe.user${i}${user} -text "$user" -foreground darkred -background white
-    pack $cframe.user${i}${user} -side top -fill x 
+    pack $cframe.user${i}${user} -side top -fill x
     incr i
   }
   pack $cframe -side left -padx 10 -pady 10 -anchor n
 }
 #
-# SensorList: Rcvd a list of sensors from the server. Select which ones we 
+# SensorList: Rcvd a list of sensors from the server. Select which ones we
 #             want to monitor.
 #
 proc SensorList { sensorList } {
@@ -1911,7 +1911,7 @@ proc SensorList { sensorList } {
         CreateSensorCheckButton $currentFrame $sensorName [lrange $sensorNameUsers 1 end]
         set i 1
       }
-  
+
     }
     pack $currentFrame -side top -fill x
   } else {
@@ -1947,7 +1947,7 @@ proc MonitorSensors { winName } {
   destroy $winName
 }
 proc SelectAllSensors {} {
-    global cbList selectAllButton 
+    global cbList selectAllButton
     # Change the SelectAllButton to a Unselect all Button
     $selectAllButton configure -text "UnSelect All" -command "UnSelectAllSensors"
     foreach cb $cbList {
@@ -1965,7 +1965,7 @@ proc UnSelectAllSensors {} {
 
 proc GetEventHistory {} {
 
-    global ACTIVE_EVENT CUR_SEL_PANE socketID 
+    global ACTIVE_EVENT CUR_SEL_PANE socketID
 
     if {$CUR_SEL_PANE(type) != "EVENT"} {
 
@@ -2055,7 +2055,7 @@ proc InsertHistoryResults { winName results } {
 #                   correctly (set varName value). Returns 1 if good.
 #
 proc CheckLineFormat { line } {
-    
+
     set RETURN 1
 
     # Right now we just check the length and for "set".
@@ -2112,8 +2112,8 @@ if { ![info exists CONF_FILE] } {
 }
 set i 0
 if { [info exists CONF_FILE] } {
-  # Parse the config file. Currently the only option is to 
-  # create a variable using 'set varName value' 
+  # Parse the config file. Currently the only option is to
+  # create a variable using 'set varName value'
   for_file line $CONF_FILE {
     incr i
     if { ![regexp ^# $line] && ![regexp ^$ $line] } {
@@ -2166,7 +2166,7 @@ if { [file exists $FONTFILE] } {
             set ES_PROFILE(host) [lindex $fontLine 1]
             set ES_PROFILE(user) [lindex $fontLine 2]
             set ES_PROFILE(auth) [lindex $fontLine 3]
-   
+
         } else {
 
             eval font create [lindex $fontLine 0] [lrange $fontLine 1 end]
@@ -2288,7 +2288,7 @@ set topFrame [frame .topFrame]
   set reportMenu [menubutton $topFrame.reportMenu -text Reports -underline 0 -menu $topFrame.reportMenu.menu]
   set soundFrame [frame $topFrame.soundFrame]
     set soundLabel [label $soundFrame.label -text "  Sound:"]
-    set soundStatus [label $soundFrame.status -text "Off" -foreground red] 
+    set soundStatus [label $soundFrame.status -text "Off" -foreground red]
     pack $soundLabel $soundStatus -side left
   set serverNameFrame [frame $topFrame.serverNameFrame]
     set serverNameLabel [label $serverNameFrame.label -text "  ServerName:"]
@@ -2296,11 +2296,11 @@ set topFrame [frame .topFrame]
     pack $serverNameLabel $serverNameText -side left
   set userNameFrame [frame $topFrame.userNameFrame]
     set userNameLabel [label $userNameFrame.label -text "  UserName:"]
-    set userNameText [label $userNameFrame.unText -text "Not Logged In" -foreground red] 
+    set userNameText [label $userNameFrame.unText -text "Not Logged In" -foreground red]
     pack $userNameLabel $userNameText -side left
   set userIDFrame [frame $topFrame.userIDFrame]
     set userIDLabel [label $userIDFrame.label -text "  UserID:"]
-    set userIDText [label $userIDFrame.uidText -text "*" -foreground red] 
+    set userIDText [label $userIDFrame.uidText -text "*" -foreground red]
     pack $userIDLabel $userIDText -side left
   pack $fileMenu $queryMenu $reportMenu $soundFrame\
    $serverNameFrame $userNameFrame $userIDFrame -side left
@@ -2311,9 +2311,9 @@ set topFrame [frame .topFrame]
   }
   set fileList [menu $fileMenu.menu -tearoff 0]
     $fileList add command -label "AutoCat" -command { AutoCatBldr none any any any any any any any 1 }
-    $fileList add command -label "AutoCat Viewer" -command LaunchAutoCatViewer  
-    $fileList add command -label "Display Incident Categories" -command DisplayIncidentCats  
-    $fileList add command -label "Change Password" -command LaunchPassChange  
+    $fileList add command -label "AutoCat Viewer" -command LaunchAutoCatViewer
+    $fileList add command -label "Display Incident Categories" -command DisplayIncidentCats
+    $fileList add command -label "Change Password" -command LaunchPassChange
     $fileList add command -label "Sleep (Ctrl-s)" -command "GoToSleep"
     $fileList add command -label "Change Monitored Network(s)" -command "ChangeSensors"
     $fileList add cascade -label "Change Font" -menu $fileList.font
@@ -2384,7 +2384,7 @@ $eventTabs select 0
 set realtimeEventPanes [panedwindow [$eventTabs childsite 0].realtimeEventPanes]
 set i 0
 while { $i < $RTPANES } {
-  
+
     $realtimeEventPanes add RealTimePane$i -margin 5
     set realtimePane$i [$realtimeEventPanes childsite $i]
     set currentPane [eval CreateEventLists \$realtimePane$i 0 1]
@@ -2527,7 +2527,7 @@ pack $sensorStatusUpdateInterval $sensorStatusUpdateButton -side left
 pack $sensorStatusTableFrame -side top -fill both -expand true
 pack $sensorStatusUpdateFrame -side bottom -anchor e
 
-if { ![info exists STATUS_UPDATE] || $STATUS_UPDATE == "" } { set STATUS_UPDATE 15 } 
+if { ![info exists STATUS_UPDATE] || $STATUS_UPDATE == "" } { set STATUS_UPDATE 15 }
 
 #
 # Snort Status Tab
@@ -2710,7 +2710,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
         -update 0 \
         -linkcommand OpenHREF \
       ]
-      pack $genericDisplayButton -side top 
+      pack $genericDisplayButton -side top
       pack $genericText -side bottom -fill both -expand true
       pack $padsBannerFrame -side bottom -fill both -expand true
 
@@ -2734,12 +2734,12 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
       set portscanTable $portscanLabelListFrame.tablelist
       set portscanScroll $portscanLabelListFrame.scroll
       tablelist::tablelist $portscanTable  \
-          -columns {10 "Sensor"     left    
-                    18 "Time Stamp" center  
-                    15 "Src IP"     left    
-                    6  "S Port"     left    
-                    15 "Dst IP"     left    
-                    6  "D Port"     left    
+          -columns {10 "Sensor"     left
+                    18 "Time Stamp" center
+                    15 "Src IP"     left
+                    6  "S Port"     left
+                    15 "Dst IP"     left
+                    6  "D Port"     left
                     15 "Scan Info"  left}  \
           -stretch all \
           -movablecolumns 0 \
@@ -2827,7 +2827,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
         a session contains one of the above flags, then it will be logged\
         as so. The above does NOT mean each flag was seen in ONE packet."]
       pack $sancpFlagsFrame $sancpTxtInfo -side top -pady 10
-      
+
     #
     # Event/Packet Detail
     #
@@ -2849,7 +2849,7 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
     pack $ruleButtonFrame -side top -fill x
     pack $ruleText -side top -fill both -expand true
     pack $ruleFrame -side top -fill both -expand true
-    
+
     set packetFrame [frame [$packetDataFrame childsite 1].packetFrame -background black -borderwidth 1]
     ################ IP HEADER #############################
     set ipHdrFrame [frame $packetFrame.ipHdrFrame -background black -borderwidth 1]
@@ -3017,11 +3017,11 @@ set detailDataFrame [frame [$detailPane childsite 1].packetDataFrame]
 	  set dataSearchButton [button $dataSearchFrame.dataSearchButton -state disabled -text "Search Packet Payload"\
 	    -command "SearchData"]
 	  set dataSearchType [radiobox $dataSearchFrame.dataSearchType -orient horizontal -labelpos e -borderwidth 0]
-	    $dataSearchType add $dataHex -text "Hex" 
+	    $dataSearchType add $dataHex -text "Hex"
 	    $dataSearchType add $dataText -text "Text"
 	    $dataSearchType select $dataText
 	  set dataSearchCaseCheck [checkbutton $dataSearchFrame.dataSearchCaseCheck -variable dataSearchCase -text "NoCase"]
-  	  
+
 	  pack $dataSearchText $dataSearchButton $dataSearchType $dataSearchCaseCheck -side left -fill x
      set dataFrameMenu [menu $dataFrame.dataFrameMenu -tearoff 0]
        $dataFrameMenu add command -label "Show/Hide Search Frame"\
@@ -3095,7 +3095,7 @@ foreach { currentMenu subcommand } { .ipQueryMenu.quickMenu "quick" .ipQueryMenu
         -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
     menu $currentMenu.padsMenu -tearoff 0 -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
         -activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND
-    
+
     $currentMenu.eventMenu add command -label "Query SrcIP" -command "QueryRequest event srcip normal $subcommand"
     $currentMenu.eventMenu add command -label "Query DstIP" -command "QueryRequest event dstip normal $subcommand"
     $currentMenu.eventMenu add command -label "Query Src To Dst" -command "QueryRequest event src2dst normal $subcommand"
@@ -3110,10 +3110,10 @@ foreach { currentMenu subcommand } { .ipQueryMenu.quickMenu "quick" .ipQueryMenu
     $currentMenu.sancpMenu add command -label "Query Src To Dst/1 Hour" -command "QueryRequest sancp src2dst hour $subcommand"
 }
 
-$ipQueryMenu.quickMenu.padsMenu add command -label "Query Src IP" -command "QueryRequest pads srcip normal quick"   
-$ipQueryMenu.quickMenu.padsMenu add command -label "Query Dst IP" -command "QueryRequest pads dstip normal quick"   
-$ipQueryMenu.advancedMenu.padsMenu add command -label "Query Src IP" -command "QueryRequest pads srcip normal build"   
-$ipQueryMenu.advancedMenu.padsMenu add command -label "Query Dst IP" -command "QueryRequest pads dstip normal build"   
+$ipQueryMenu.quickMenu.padsMenu add command -label "Query Src IP" -command "QueryRequest pads srcip normal quick"
+$ipQueryMenu.quickMenu.padsMenu add command -label "Query Dst IP" -command "QueryRequest pads dstip normal quick"
+$ipQueryMenu.advancedMenu.padsMenu add command -label "Query Src IP" -command "QueryRequest pads srcip normal build"
+$ipQueryMenu.advancedMenu.padsMenu add command -label "Query Dst IP" -command "QueryRequest pads dstip normal build"
 
 $ipQueryMenu.dshieldIPMenu add command -label "SrcIP" -command "GetDshieldIP srcip"
 $ipQueryMenu.dshieldIPMenu add command -label "DstIP" -command "GetDshieldIP dstip"
@@ -3206,7 +3206,7 @@ $statusMenu add cascade -label "Advanced Query" -menu $statusMenu.advancedQueryM
 
 foreach { currentMenu subcommand } { .statusMenu.quickQueryMenu quick .statusMenu.advancedQueryMenu build } {
     menu $currentMenu -background $SELECTBACKGROUND -foreground $SELECTFOREGROUND \
-	-activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND -tearoff 0 
+	-activeforeground $SELECTBACKGROUND -activebackground $SELECTFOREGROUND -tearoff 0
 
       foreach v [lsort [array names CAT]] {
 
@@ -3289,7 +3289,7 @@ if { $tcl_platform(platform) == "windows" } {
 # Space selects the active event.  Used when navigating using ctrl-arrow
 # Globally grabbing the space bar is bad :)  Bammkkkk
 #bind . <Control-Key-space> {
-#    if {$CUR_SEL_PANE(type) == "EVENT"} { 
+#    if {$CUR_SEL_PANE(type) == "EVENT"} {
 #      set activeIndex [$CUR_SEL_PANE(name).eventIDFrame.list index active]
 #      CtrlSelect $CUR_SEL_PANE(name).eventIDFrame.list $activeIndex
 #    }
@@ -3311,7 +3311,7 @@ if { $tcl_platform(platform) == "windows" } {
 #bind . <Control-Key-Down> {
 #    set activeIndex [$CUR_SEL_PANE(name).eventIDFrame.list index active]
 #    set listSize [$CUR_SEL_PANE(name).eventIDFrame.list size]
-#    if { $activeIndex != [expr $listSize - 1] } { 
+#    if { $activeIndex != [expr $listSize - 1] } {
 #	    $CUR_SEL_PANE(name).eventIDFrame.list activate [expr $activeIndex + 1]
 #	    foreach childWin [winfo children $CUR_SEL_PANE(name)] {
 #		if { [winfo name $childWin] != "scroll" } {
@@ -3332,9 +3332,9 @@ if { $tcl_platform(platform) == "windows" } {
 #bind . <Shift-Key-Down> {
 #    set activeIndex [$CUR_SEL_PANE(name).eventIDFrame.list index active]
 #    set listSize [$CUR_SEL_PANE(name).eventIDFrame.list size]
-#    if { $activeIndex != [expr $listSize - 1] } { 
+#    if { $activeIndex != [expr $listSize - 1] } {
 #	    $CUR_SEL_PANE(name).eventIDFrame.list activate [expr $activeIndex + 1]
-#	    ShiftSelect $CUR_SEL_PANE(name).eventIDFrame.list [expr $activeIndex + 1]  
+#	    ShiftSelect $CUR_SEL_PANE(name).eventIDFrame.list [expr $activeIndex + 1]
 #	}
 #}
 
@@ -3380,13 +3380,13 @@ while {$CONNECTED == 0} {
         GetUserName
 
     } else {
- 
+
         set CONNECTED 1
         break
 
-    } 
+    }
 
-} 
+}
 
 # Puts the last selected host at the beginning
 set SERVERHOST [linsert [ldelete $SERVERHOST $SERVERHOSTSELECTED] 0 $SERVERHOSTSELECTED]
@@ -3413,13 +3413,13 @@ while { $USERID == "INVALID" } {
         } else {
             set CONNECTED 1
             break
-        } 
+        }
     }
     set msg [list ValidateUser $USERNAME $PASSWD]
     if [catch {puts $socketID $msg} tmpError] { ErrorMessage "Fatal: $tmpError" }
     set USERID [lindex [gets $socketID] 1]
 
-} 
+}
 
 wm title . "$VERSION - Connected To $SERVERHOSTSELECTED"
 fileevent $socketID readable [list ServerCommandRcvd $socketID]

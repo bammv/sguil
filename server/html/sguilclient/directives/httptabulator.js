@@ -4,7 +4,7 @@ angular.module('httpTabulatorModule', [])
     return {
         restrict: 'E',
         replace: true,
-        scope: { 
+        scope: {
             httpclick: '&',
             eventrightclick: '&',
             iprightclick: '&',
@@ -24,7 +24,7 @@ angular.module('httpTabulatorModule', [])
                     {title:"Flow ID", field:"flow_id", align:"left", sorter:"number", sortable:true, editable:false, visible:true,
                         cellContext:function(e, cell){ scope.eventrightclick({arg1: cell.getData(), arg2: e, arg3: scope.inputId});}
                     },
-                    {title:"timestamp", field:"timestamp", align:"left", sorter:"date", sortable:true, editable:false, visible:true, 
+                    {title:"timestamp", field:"timestamp", align:"left", sorter:"date", sortable:true, editable:false, visible:true,
                         mutator:function(value, data, type, mutatorParams, cell){
                             var timestamp = $filter('date')(new Date(value), 'yyyy-MM-dd HH:mm:ss', 'UTC/GMT');
                             return timestamp;
@@ -45,14 +45,14 @@ angular.module('httpTabulatorModule', [])
                     {title:"User Agent", field:"http.http_user_agent", align:"left", sorter:"string", sortable:true, editable:false, visible:true},
                     {title:"Content Type", field:"http.http_content_type", align:"left", sorter:"string", sortable:true, editable:false, visible:true},
                     {title:"Status", field:"http.status", align:"right", sorter:"number", sortable:true, editable:false, visible:true},
-                ],                
+                ],
 
                 rowClick:function(e, row){
                     scope.httpclick({arg1: row.getData(), arg2: row.getPosition(true)});
                 },
 
             });
-            
+
             angular.extend(scope.httpoptions, {
                 httpselectrow: function(tname, data){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
@@ -60,12 +60,12 @@ angular.module('httpTabulatorModule', [])
                 },
                 httpgetselecteddata: function(tname){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
-                    var data = myElement.tabulator("getSelectedData"); 
+                    var data = myElement.tabulator("getSelectedData");
                     return data;
                 },
                 httpsetdata: function(tname, data){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
-                    myElement.tabulator("setData", data); 
+                    myElement.tabulator("setData", data);
                 },
                 httpaddrow: function(tname, data){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
@@ -74,12 +74,12 @@ angular.module('httpTabulatorModule', [])
                 httpgetdata: function(tname){
                     var data = "";
                     var myElement = angular.element( document.querySelector('#' + tname) );
-                    data = myElement.tabulator("getData"); 
+                    data = myElement.tabulator("getData");
                     return data;
                 },
                 httpgetselecteddata: function(tname){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
-                    var data = myElement.tabulator("getSelectedData"); 
+                    var data = myElement.tabulator("getSelectedData");
                     return data;
                 },
                 httpdownload: function(tname, filename){

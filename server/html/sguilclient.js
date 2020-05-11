@@ -14,7 +14,7 @@ angular.module('SguilClient', [
     'compile',
     'ui.grid'
 ])
- 
+
 .config(function($mdThemingProvider) {
     $mdThemingProvider.theme('blue-grey', 'default')
       .primaryPalette('blue')
@@ -37,7 +37,7 @@ angular.module('SguilClient', [
             templateUrl: 'sguilclient/views/logout.html',
             hideMenus: true
         })
- 
+
         .when('/sguilclient', {
             controller: 'MainConsoleController',
             templateUrl: 'sguilclient/views/sguilclient.html'
@@ -45,7 +45,7 @@ angular.module('SguilClient', [
 
         .otherwise({ redirectTo: '/sguilclient' });
 }])
- 
+
 .run(['$rootScope', '$location',
 
     function ($rootScope, $location) {
@@ -53,9 +53,9 @@ angular.module('SguilClient', [
         $rootScope.urlscheme = {};
         $rootScope.connected = 0;
         $rootScope.loggedin = 0;
-        
+
         /*
-        The default assumes all pieces are installed on the same 
+        The default assumes all pieces are installed on the same
         host with elastic fronted by an https proxy on port 8443
         */
         var host = $location.host();

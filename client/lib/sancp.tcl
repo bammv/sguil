@@ -1,4 +1,4 @@
-# $Id: sancp.tcl,v 1.14 2008/04/09 04:20:52 bamm Exp $ 
+# $Id: sancp.tcl,v 1.14 2008/04/09 04:20:52 bamm Exp $
 #
 # Build a sancp query tab and send the query to sguild.
 #
@@ -16,7 +16,7 @@ proc SancpQueryRequest { selectedTable whereList } {
     foreach whereStatement $whereList {
 
         lappend queries "SELECT $COLUMNS FROM sancp IGNORE INDEX (p_key) \
-                         INNER JOIN sensor ON sancp.sid=sensor.sid $whereStatement" 
+                         INNER JOIN sensor ON sancp.sid=sensor.sid $whereStatement"
 
     }
 
@@ -115,9 +115,9 @@ proc GetSancpData {} {
 proc ClearSancpFlags {} {
 
     global r2SrcSancpFrame r1SrcSancpFrame urgSrcSancpFrame ackSrcSancpFrame
-    global pshSrcSancpFrame rstSrcSancpFrame synSrcSancpFrame finSrcSancpFrame 
+    global pshSrcSancpFrame rstSrcSancpFrame synSrcSancpFrame finSrcSancpFrame
     global r2dstSancpFrame r1dstSancpFrame urgdstSancpFrame ackdstSancpFrame
-    global pshdstSancpFrame rstdstSancpFrame syndstSancpFrame findstSancpFrame 
+    global pshdstSancpFrame rstdstSancpFrame syndstSancpFrame findstSancpFrame
 
     foreach frameName [list SrcSancpFrame.text dstSancpFrame.text] {
 
@@ -136,10 +136,10 @@ proc ClearSancpFlags {} {
 proc InsertSancpFlags { flagsList } {
 
     global r2SrcSancpFrame r1SrcSancpFrame urgSrcSancpFrame ackSrcSancpFrame
-    global pshSrcSancpFrame rstSrcSancpFrame synSrcSancpFrame finSrcSancpFrame 
+    global pshSrcSancpFrame rstSrcSancpFrame synSrcSancpFrame finSrcSancpFrame
     global r2dstSancpFrame r1dstSancpFrame urgdstSancpFrame ackdstSancpFrame
-    global pshdstSancpFrame rstdstSancpFrame syndstSancpFrame findstSancpFrame 
-  
+    global pshdstSancpFrame rstdstSancpFrame syndstSancpFrame findstSancpFrame
+
     set frameName SrcSancpFrame.text
     set srcFlags [lindex $flagsList 0]
     set dstFlags [lindex $flagsList 1]
@@ -162,7 +162,7 @@ proc InsertSancpFlags { flagsList } {
         if { $flags & 32 } { set urgFlag X }
         if { $flags & 64 } { set r0Flag X }
         if { $flags & 128 } { set r1Flag X }
-    
+
         eval \$r2$frameName insert 0.0 $r1Flag
         eval \$r1$frameName insert 0.0 $r0Flag
         eval \$urg$frameName insert 0.0 $urgFlag
@@ -171,11 +171,11 @@ proc InsertSancpFlags { flagsList } {
         eval \$rst$frameName insert 0.0 $rstFlag
         eval \$syn$frameName insert 0.0 $synFlag
         eval \$fin$frameName insert 0.0 $finFlag
-  
+
         set frameName dstSancpFrame.text
 
     }
-    
+
 
     # Now you can clicky-clicky
     Idle

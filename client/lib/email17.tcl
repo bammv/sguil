@@ -262,7 +262,7 @@ proc ::EMail::Continue { token index args } {
                   puts "** Attachment fail: $file"
                 }
               }
-            }      
+            }
             puts $state(sock) "--$state(Boundry)--\n"
           } else {
             puts $state(sock) "\n$state(Message)\n"
@@ -308,7 +308,7 @@ proc ::EMail::Continue { token index args } {
 
 # ------------------------------------------------- EMail::Send ----
 # EMail::Send ToList CCList BCCList Subject Message options
-#   Send the 
+#   Send the
 proc ::EMail::Send { ToList CCList BCCList Subject Message args } {
   variable Version
   variable debug
@@ -427,19 +427,19 @@ proc ::EMail::Send { ToList CCList BCCList Subject Message args } {
     if {$state(-timeout) > 0} {
       set state(after) [after $state(-timeout) [list EMail::Reset $token timeout]]
     }
-  
+
     # Send data in cr-lf format, but accept any line terminators
-  
+
     fconfigure $state(sock) -translation {auto crlf} -buffersize $state(-blocksize)
-  
+
     # The following is disallowed in safe interpreters, but the socket
     # is already in non-blocking mode in that case.
-  
+
     catch {fconfigure $state(sock) -blocking off}
     set state(Status)      "opening"
     set state(GoodCode)   "220"
     fileevent $state(sock) readable [list EMail::Event $token]
-  
+
     if {! [info exists state(-command)]} {
       Wait $token
     }
@@ -476,7 +476,7 @@ proc ::EMail::Wait { EMailToken } {
     }
     set EMailTemp [lindex $EMailCompleteList 0]
     set EMailCompleteList [lrange $EMailCompleteList 1 end]
-    return $EMailTemp      
+    return $EMailTemp
   } else {
     if {(![info exist EMailWaitFlags($EMailToken)]) || ($EMailWaitFlags($EMailToken) != 1)} {
       if {$debug} then {
@@ -493,7 +493,7 @@ proc ::EMail::Wait { EMailToken } {
 }
 
 # ---------------------------------------------------- EMail::Query ---
-#  EMail::Query     Token 
+#  EMail::Query     Token
 #
 proc ::EMail::Query { token } {
   variable $token
@@ -507,7 +507,7 @@ proc ::EMail::Query { token } {
 }
 
 # ---------------------------------------------------- EMail::Addresses ---
-#  EMail::Addresses     Token 
+#  EMail::Addresses     Token
 #
 proc ::EMail::Addresses { token } {
   variable $token
@@ -521,7 +521,7 @@ proc ::EMail::Addresses { token } {
 }
 
 # ---------------------------------------------------- EMail::InvalidAddresses ---
-#  EMail::InvalidAddresses     Token 
+#  EMail::InvalidAddresses     Token
 #
 proc ::EMail::InvalidAddresses { token } {
   variable $token
@@ -535,7 +535,7 @@ proc ::EMail::InvalidAddresses { token } {
 }
 
 # ---------------------------------------------------- EMail::GetError ---
-#  EMail::GetError     Token 
+#  EMail::GetError     Token
 #
 proc ::EMail::GetError { token } {
   variable $token
@@ -549,7 +549,7 @@ proc ::EMail::GetError { token } {
 }
 
 # ---------------------------------------------------- EMail::Discard ---
-#  EMail::Discard     Token 
+#  EMail::Discard     Token
 #
 proc ::EMail::Discard { token } {
   variable EMailWaitFlags

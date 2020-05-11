@@ -4,7 +4,7 @@ angular.module('flowTabulatorModule', [])
     return {
         restrict: 'E',
         replace: true,
-        scope: { 
+        scope: {
             flowclick: '&',
             eventrightclick: '&',
             iprightclick: '&',
@@ -26,13 +26,13 @@ angular.module('flowTabulatorModule', [])
                     },
                     {title:"State", field:"flow.state", align:"left", sorter:"string", sortable:true, editable:false, visible:true},
                     {title:"Alerted", field:"flow.alerted", align:"left", sorter:"string", sortable:true, editable:false, visible:true},
-                    {title:"Flow Start", field:"flow.start", align:"center", sorter:"date", sortable:true, editable:false, visible:true, 
+                    {title:"Flow Start", field:"flow.start", align:"center", sorter:"date", sortable:true, editable:false, visible:true,
                         mutator:function(value, data, type, mutatorParams, cell){
                             var timestamp = $filter('date')(new Date(value), 'yyyy-MM-dd HH:mm:ss', 'UTC/GMT');
                             return timestamp;
                         }
                     },
-                    {title:"Flow End", field:"flow.end", align:"center", sorter:"date", sortable:true, editable:false, visible:true, 
+                    {title:"Flow End", field:"flow.end", align:"center", sorter:"date", sortable:true, editable:false, visible:true,
                         mutator:function(value, data, type, mutatorParams, cell){
                             var timestamp = $filter('date')(new Date(value), 'yyyy-MM-dd HH:mm:ss', 'UTC/GMT');
                             return timestamp;
@@ -52,14 +52,14 @@ angular.module('flowTabulatorModule', [])
                     {title:"SBytes", field:"flow.bytes_toserver", sorter:"number",visible:true, editable:false, align:"right"},
                     {title:"DPkts", field:"flow.pkts_toclient", sorter:"number",visible:true, editable:false, align:"right"},
                     {title:"DBytes", field:"flow.bytes_toclient", sorter:"number",visible:true, editable:false, align:"right"}
-                ],                
+                ],
 
                 rowClick:function(e, row){
                     scope.flowclick({arg1: row.getData(), arg2: row.getPosition(true)});
                 },
 
             });
-            
+
             angular.extend(scope.flowoptions, {
                 flowselectrow: function(tname, data){
                     //console.log('Selecting: ' + data);
@@ -68,12 +68,12 @@ angular.module('flowTabulatorModule', [])
                 },
                 flowgetselecteddata: function(tname){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
-                    var data = myElement.tabulator("getSelectedData"); 
+                    var data = myElement.tabulator("getSelectedData");
                     return data;
                 },
                 flowsetdata: function(tname, data){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
-                    myElement.tabulator("setData", data); 
+                    myElement.tabulator("setData", data);
                 },
                 flowaddrow: function(tname, data){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
@@ -82,12 +82,12 @@ angular.module('flowTabulatorModule', [])
                 flowgetdata: function(tname){
                     var data = "";
                     var myElement = angular.element( document.querySelector('#' + tname) );
-                    data = myElement.tabulator("getData"); 
+                    data = myElement.tabulator("getData");
                     return data;
                 },
                 flowgetselecteddata: function(tname){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
-                    var data = myElement.tabulator("getSelectedData"); 
+                    var data = myElement.tabulator("getSelectedData");
                     return data;
                 },
                 flowdownload: function(tname, filename){

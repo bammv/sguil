@@ -1,4 +1,4 @@
-proc wsLiveCB {client_socket type_of_event {data_received {}}} { 
+proc wsLiveCB {client_socket type_of_event {data_received {}}} {
 
     global clientWebSockets DEBUG
 
@@ -9,12 +9,12 @@ proc wsLiveCB {client_socket type_of_event {data_received {}}} {
     #type_of_event: $type_of_event
     #data_received: $data_received\n"
 
-    switch $type_of_event { 
+    switch $type_of_event {
         connect { SguildWebSocketConnect $client_socket $type_of_event $data_received}
-        disconnect { 
+        disconnect {
             SguildWebSocketDisconnect $client_socket
-        } 
-        text { 
+        }
+        text {
             SguildWebSocketMsgRcvd $client_socket $data_received
         }
         binary {}
@@ -59,17 +59,17 @@ proc SguildSendWebSocket { socketID msg } {
         DeleteEventIDList 	{ foreach v [lindex $msg 1] { lappend values [json::write string $v] } }
         InsertEvent 		{ foreach v [lindex $msg 1] { lappend values [json::write string $v] } }
         InsertEscalatedEvent 	{ foreach v [lindex $msg 1] { lappend values [json::write string $v] } }
-        InsertQueryResults 	{ 
+        InsertQueryResults 	{
                                     lappend values [json::write string [lindex $msg 1]]
-                                    foreach v [lindex $msg 2] { lappend values [json::write string $v] } 
+                                    foreach v [lindex $msg 2] { lappend values [json::write string $v] }
                                 }
         InsertHistoryResults	{
                                     lappend values [json::write string [lindex $msg 1]]
-                                    foreach v [lindex $msg 2] { lappend values [json::write string $v] } 
+                                    foreach v [lindex $msg 2] { lappend values [json::write string $v] }
                                 }
         SensorList 		{
             			    set v [lrange $msg 1 end]
-            			    foreach i $v { 
+            			    foreach i $v {
                 			    set o [lindex $i 0]
                 			    set str {}
                 			    foreach s [lindex $i 1] { lappend str [json::write string $s] }
@@ -78,14 +78,14 @@ proc SguildSendWebSocket { socketID msg } {
         		  	}
         default { foreach v [lrange $msg 1 end] { lappend values [json::write string $v] } }
 
-    } 
+    }
 
     # The array is our list of "args"
     set a [json::write array {*}$values]
     # The object name is our command
     set o [json::write object $objectName $a]
 
-    if { [catch {::websocket::send $socketID text "$o"} sendError] } { 
+    if { [catch {::websocket::send $socketID text "$o"} sendError] } {
 
         return -code error -errorinfo $sendError
 

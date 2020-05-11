@@ -4,7 +4,7 @@
 
                              Csaba Nemethi
 
-                       csaba.nemethi@t-online.de 
+                       csaba.nemethi@t-online.de
 
 
 What is Tablelist?

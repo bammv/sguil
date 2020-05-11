@@ -83,7 +83,7 @@ proc DeleteEventIDList { socketID status comment eidList } {
 
     global eventIDArray eventIDList clientList escalateArray escalateIDList
     global userIDArray correlatedEventArray eventIDCountArray
-                                                                                                            
+
     foreach socket $clientList {
 
         # Sending a DeleteEventID to the originating client allows us
@@ -94,13 +94,13 @@ proc DeleteEventIDList { socketID status comment eidList } {
         catch {SendSocket $socket [list DeleteEventIDList $eidList]} tmpError
 
     }
-                                                                                                            
+
     # First we need to split up the update based on uniques sids
     # because doing a WHERE sid=foo and cid IN (bar, blah) is
     # much faster than a bunch of ORs.
-                                                                                                            
+
     foreach eventID $eidList {
-                                                                                                            
+
         # Grab the sid and cid from the current event ID
         set tmpSid [lindex [split $eventID .] 0]
         set tmpCid [lindex [split $eventID .] 1]
@@ -124,13 +124,13 @@ proc DeleteEventIDList { socketID status comment eidList } {
 
         # Create a list of cids associated with each event table
         lappend tmpCidList($tmpEventTable) $tmpCid
-                                                                                                            
+
         # Delete from the escalate list
         if { [info exists escalateIDList] } {set escalateIDList [ldelete $escalateIDList $eventID]}
-                                                                                                            
+
         # tmp list of eids we are updating
         lappend tmpEidList $eventID
-                                                                                                            
+
         # loop through the parents array and add all the sids/cids to the UPDATE
         if [info exists correlatedEventArray($eventID)] {
 
@@ -146,17 +146,17 @@ proc DeleteEventIDList { socketID status comment eidList } {
                     set sensorName [lindex $row 3]
                     set tmpDate [clock format [clock scan [lindex $row 4]] -gmt true -format "%Y%m%d"]
                     set tmpEventTable "event_${sensorName}_${tmpDate}"
-      
+
                     if { ![info exists sensorSid($tmpEventTable)] } { set sensorSid($tmpEventTable) $tmpSid }
-  
+
                     lappend tmpCidList($tmpEventTable) $tmpCid
-                                                                                                              
+
                     if { [info exists escalateIDList] } {
-      
+
                         set escalateIDList [ldelete $escalateIDList "$tmpSid.$tmpCid"]
-      
+
                     }
-                                                                                                            
+
                     # Tmp list of eids
                     lappend tmpEidList "$tmpSid.$tmpCid"
 
@@ -167,10 +167,10 @@ proc DeleteEventIDList { socketID status comment eidList } {
         }
 
     }
-                                                                                                            
+
     # Unique out dupes
     set tmpEidList [lsort -unique $tmpEidList]
-                                                                                                            
+
     # Number of events we should be updating
     set eidListSize [llength $tmpEidList]
 
@@ -208,7 +208,7 @@ proc DeleteEventIDList { socketID status comment eidList } {
         if [info exists eventIDList] { set eventIDList [ldelete $eventIDList $tmpEid] }
 
     }
-                                                                                                            
+
     # Finally we update the event table.
     set totalUpdates 0
     set tmpUpdated 0
@@ -255,7 +255,7 @@ proc DeleteEventIDList { socketID status comment eidList } {
 proc DeleteEventID { socketID eventID status } {
   global eventIDArray eventIDList clientList escalateArray escalateIDList
   global userIDArray
-                                                                                                            
+
   foreach socket $clientList {
     # See comments in DeleteEventIDList
     catch {SendSocket $socket [list DeleteEventID $eventID]} tmpError
@@ -280,16 +280,16 @@ proc DeleteEventID { socketID eventID status } {
 proc CorrelateEvent { sid srcip msg {event_id {NULL}} {event_ref {NULL}} } {
     global eventIDArray eventIDList eventIDCountArray SENSOR_AGGREGATION_ON correlatedEventIDArray
     set MATCH 0
-    
+
     # Loop thru the RTEVENTS for a match on srcip msg
     if {$SENSOR_AGGREGATION_ON} {
         # Match alerts from just this sensor (sid)
-        set tmpList [array names eventIDArray ${sid}.*] 
+        set tmpList [array names eventIDArray ${sid}.*]
     } else {
         # Match alerts from any sensor
         set tmpList $eventIDList
     }
-    
+
     foreach rteid $tmpList {
 	# This checks to see if we have a matching srcip and alert message.  Skip Open Port Messages, we deal with them below.
 	if { [lindex $eventIDArray($rteid) 8] == $srcip && [lindex $eventIDArray($rteid) 7] == $msg && $msg != "portscan: Open Port" }  {
@@ -297,7 +297,7 @@ proc CorrelateEvent { sid srcip msg {event_id {NULL}} {event_ref {NULL}} } {
 	    set MATCH $rteid
 	    break
 	}
-	
+
 	if { $msg == "portscan: Open Port" && [regexp "^portscan:" [lindex $eventIDArray($rteid) 7]] } {
 	    if { [lindex $eventIDArray($rteid) 15] == $event_ref } {
 		set MATCH $rteid

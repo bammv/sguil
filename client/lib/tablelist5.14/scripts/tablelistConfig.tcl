@@ -103,12 +103,12 @@ proc tablelist::extendConfigSpecs {} {
 	# array configSpecs and initialize some tree resources
 	#
 	if {[string compare [getCurrentTheme] "tileqt"] == 0} {
-	    tileqt_kdeStyleChangeNotification 
+	    tileqt_kdeStyleChangeNotification
 	}
 	setThemeDefaults
 	variable themeDefaults
 	set treeStyle $themeDefaults(-treestyle)
-	${treeStyle}TreeImgs 
+	${treeStyle}TreeImgs
 	variable maxIndentDepths
 	set maxIndentDepths($treeStyle) 0
 
@@ -334,7 +334,7 @@ proc tablelist::extendConfigSpecs {} {
 	lappend configSpecs(-arrowstyle)		$arrowStyle
 	if {$::tk_version >= 8.3} {
 	    lappend configSpecs(-treestyle)		$treeStyle
-	    ${treeStyle}TreeImgs 
+	    ${treeStyle}TreeImgs
 	    variable maxIndentDepths
 	    set maxIndentDepths($treeStyle) 0
 	}
@@ -1157,7 +1157,7 @@ proc tablelist::doConfig {win opt val} {
 		    set oldStyle $data($opt)
 		    set treeCol $data(treeCol)
 		    if {[string compare $newStyle $oldStyle] != 0} {
-			${newStyle}TreeImgs 
+			${newStyle}TreeImgs
 			variable maxIndentDepths
 			if {![info exists maxIndentDepths($newStyle)]} {
 			    set maxIndentDepths($newStyle) 0
@@ -1333,7 +1333,7 @@ proc tablelist::doColConfig {col win opt val} {
 		    }
 		}
 	    }
-	    if {$pixels != 0} {	
+	    if {$pixels != 0} {
 		incr pixels $data($col-delta)
 	    }
 	    set alignment [lindex $data(colList) [expr {2*$col + 1}]]
@@ -1524,7 +1524,7 @@ proc tablelist::doColConfig {col win opt val} {
 		    }
 		}
 	    }
-	    if {$pixels != 0} {	
+	    if {$pixels != 0} {
 		incr pixels $data($col-delta)
 	    }
 	    adjustLabel $win $col $pixels $alignment

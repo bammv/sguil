@@ -22,7 +22,7 @@ proc ProcessPadsAsset { dataList } {
 
     set results [MysqlSelect $tmpQuery]
 
-    if { [llength $results] == 0 } { 
+    if { [llength $results] == 0 } {
 
         # New Asset
         set sensorName [lindex $dataList 0]
@@ -44,7 +44,7 @@ proc ProcessPadsAsset { dataList } {
             LogMessage "Error inserting PADS data: $insertError"
             ProcessPadsAsset $dataList
             return
-            
+
         }
 
         # Send RT Alert
@@ -55,7 +55,7 @@ proc ProcessPadsAsset { dataList } {
 
         # Check to see if asset has changed
         set lastApp [lindex [lindex $results 0] 1]
- 
+
         if { $app != $lastApp } {
 
             # Asset changed
@@ -81,7 +81,7 @@ proc ProcessPadsAsset { dataList } {
                 LogMessage "Error inserting PADS data: $insertError"
                 ProcessPadsAsset $dataList
                 return
-            
+
             }
 
             # Send RT Alert
@@ -121,7 +121,7 @@ proc AlertAsset { type sensorName sid aid timestamp intTime s_inetIP s_intIP d_i
         set sig_id 3
         set rev_id 1
     }
-    
+
 
     if [catch {InsertEventHdr $tablePrefix $sid $aid $aid $aid $timestamp $msg $generator_id $sig_id $rev_id \
                $timestamp 5 $type 0 $s_intIP $d_intIP $ip_proto {} {} {} {} {} {} {} \
@@ -131,7 +131,7 @@ proc AlertAsset { type sensorName sid aid timestamp intTime s_inetIP s_intIP d_i
         ErrorMessage "ERROR: While inserting event info: $tmpError"
 
     }
-    
+
     # Send RT Event
     # RTEvent|st|priority|class_type|hostname|timestamp|sid|cid|msg|srcip|dstip|ipproto|srcport|dstport|sig_id|rev|u_event_id|u_event_ref
     EventRcvd [list 0 5 new-asset $sensorName $timestamp $sid $aid $msg \
@@ -143,7 +143,7 @@ proc AlertAsset { type sensorName sid aid timestamp intTime s_inetIP s_intIP d_i
 proc InsertAsset { sensorName sid aid timestamp intIP service port ip_proto app hex_payload } {
 
     set tmpQuery "INSERT INTO pads (hostname, sid, asset_id, timestamp, ip, service, port, ip_proto, application, hex_payload) \
-                  VALUES ('$sensorName', '$sid', '$aid', '$timestamp', '$intIP', '$service', '$port', '$ip_proto', '[MysqlEscapeString $app]', '$hex_payload')" 
+                  VALUES ('$sensorName', '$sid', '$aid', '$timestamp', '$intIP', '$service', '$port', '$ip_proto', '[MysqlEscapeString $app]', '$hex_payload')"
 
     if { [catch {SafeMysqlExec $tmpQuery} tmpError] } {
 
@@ -182,7 +182,7 @@ proc GetAssetData { socketID sid asset_id } {
 #        ip_proto              TINYINT UNSIGNED NOT NULL,         \
 #        application           VARCHAR(255)     NOT NULL          \
 #        )"
-#        
+#
 #
 #    mysqlexec $MAIN_DB_SOCKETID $createQuery
 #    lappend mergeTableListArray(pads) $tableName

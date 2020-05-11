@@ -37,7 +37,7 @@ md-button.md-xsmall{
   min-height: 23px !important;
   min-width: 46px !important;
   font-size: 10px !important;
-  line-height: 0px; 
+  line-height: 0px;
 }
 
 table.flowtable {
@@ -69,7 +69,7 @@ md-checkbox.md-checkbox-small .md-icon {
     padding: 0px 0px;
     vertical-align: middle !important;
  }
-  
+
 md-checkbox.md-checkbox-small .md-label {
     margin-left: 25px;
     vertical-align: middle !important;
@@ -121,7 +121,7 @@ md-toolbar.md-xsmall .md-toolbar-tools {
     font-size: 14px;
     height: 24px;
     min-height: 24px;
-    max-height: 24px; 
+    max-height: 24px;
 }
 
 .md-tab > md-icon {
@@ -174,7 +174,7 @@ md-menu-item.md-small {
       margin-top: auto;
       margin-bottom: auto; }
     md-menu-item > .md-button .md-ripple-container {
-      border-radius: inherit; 
+      border-radius: inherit;
 }
 
 md-button.md-small {

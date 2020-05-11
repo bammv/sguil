@@ -3,7 +3,7 @@
 proc ForkLoader {} {
 
     global sguildReadPipe sguildWritePipe
-    global loaderdReadPipe loaderdWritePipe 
+    global loaderdReadPipe loaderdWritePipe
 
     # Prep things for the fork
     InitLoaderd
@@ -27,7 +27,7 @@ proc ForkLoader {} {
             fconfigure $pipeID -buffering line
             # Set up our comms cmds here
             if { [eof $pipeID] || [catch {gets $pipeID data}] } {
-  
+
                 # Pipe died
                 exit
 
@@ -37,12 +37,12 @@ proc ForkLoader {} {
                 set cmd [lindex $data 0]
                 # Here the cmds the loaderd knows
                 switch -exact -- $cmd {
-  
+
                     LoadSancpFile  { LoadSancpFile [lindex $data 1] [lindex $data 2] [lindex $data 3] }
                     default        { LogMessage "Unknown command received from sguild: $cmd" }
 
                 }
-  
+
             }
 
         }
@@ -65,7 +65,7 @@ proc ForkLoader {} {
             fconfigure $pipeID -buffering line
             # Set up our comms cmds here
             if { [eof $pipeID] || [catch {gets $pipeID data}] } {
-  
+
                 # Pipe died
                 catch {close $pipeID}
                 # For now we just die.
@@ -77,7 +77,7 @@ proc ForkLoader {} {
                 set cmd [lindex $data 0]
                 # Here the cmds the sguild gets from loaderd
                 switch -exact -- $cmd {
-  
+
                     ConfirmSancpFile    { ConfirmSancpFile [lindex $data 1] [lindex $data 2] }
                     default             { LogMessage "Unknown command received from loaderd: $cmd" }
 
@@ -145,7 +145,7 @@ proc CreateSancpMergeTable { dbSocketID } {
 
     # Drop table if exists first
     mysqlexec $dbSocketID "DROP TABLE IF EXISTS sancp"
-    
+
     # Clean up our list for the query
     foreach table $mergeTableListArray(sancp) {
         lappend tmpTables "`$table`"
@@ -203,14 +203,14 @@ proc InitLoaderd {} {
 
     # Get a list of current sancp tables
     set mergeTableListArray(sancp) [mysqlsel $LOADERD_DB_ID {SHOW TABLES LIKE 'sancp_%'} -list]
-    
+
     #LogMessage "loaderd: sancp tables: $mergeTableListArray(sancp)"
     #set todaysDate [clock format [clock scan today] -gmt true -format "%Y%m%d"]
     # Check to see if we have a sancp table for today
     #if { [lsearch -exact $mergeTableListArray(sancp) "sancp_$todaysDate"] < 0 } {
     #    CreateNewSancpTable $todaysDate
     #}
-    
+
     # Check to see if sancp table exist
     if { [mysqlsel $LOADERD_DB_ID {SHOW TABLES LIKE 'sancp'} -list] == "" } {
         # Create sancp merge table if we have a list of sancp tables.
@@ -253,7 +253,7 @@ proc LoadFile { fileName table } {
 
         LogMessage "ERROR: loaderd: $execResults"
 
-        if { ![file exists ${TMP_LOAD_DIR}/failed] } { 
+        if { ![file exists ${TMP_LOAD_DIR}/failed] } {
 
             # Attempt to create it
             if { [catch {file mkdir ${TMP_LOAD_DIR}/failed} err] } {
@@ -293,7 +293,7 @@ proc LoadSancpFile { sensor filename date } {
         CreateNewSancpTable $tableName
     }
 
-    LoadFile $filename $tableName 
+    LoadFile $filename $tableName
     file delete $filename
 
     if [catch {flush $loaderdWritePipe} tmpError] {
@@ -306,7 +306,7 @@ proc CheckLoaderDir {} {
 
     global TMP_LOAD_DIR
 
-    if { ![file exists $TMP_LOAD_DIR] } { 
+    if { ![file exists $TMP_LOAD_DIR] } {
 
         # Attempt to create it
         if { [catch {file mkdir $TMP_LOAD_DIR} err] } {
@@ -328,5 +328,5 @@ proc CheckLoaderDir {} {
     }
 
     after 5000 CheckLoaderDir
- 
+
 }

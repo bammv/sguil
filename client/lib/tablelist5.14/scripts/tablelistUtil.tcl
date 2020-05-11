@@ -1080,7 +1080,7 @@ proc tablelist::getListWidth {win list font} {
 #------------------------------------------------------------------------------
 # tablelist::joinList
 #
-# Returns the string formed by joining together with "\n" the strings obtained 
+# Returns the string formed by joining together with "\n" the strings obtained
 # by applying strRange to the elements of the given list, with the specified
 # arguments.
 #------------------------------------------------------------------------------
@@ -2273,7 +2273,7 @@ proc tablelist::setupColumns {win columns createLabels} {
 	set treeCol $data(-treecolumn)
 	adjustColIndex $win treeCol
 	set data(treeCol) $treeCol
-	if {$data(colCount) != 0} { 
+	if {$data(colCount) != 0} {
 	    set data(-treecolumn) $treeCol
 	}
     }
@@ -2340,7 +2340,7 @@ proc tablelist::createSeps win {
     # TablelistBody in the list of binding tags of the horizontal separator
     #
     bindtags $w [lreplace [bindtags $w] 1 1 $data(bodyTag) TablelistBody]
-    
+
     adjustSepsWhenIdle $win
 }
 
@@ -2873,7 +2873,7 @@ proc tablelist::adjustLabel {win col pixels alignment} {
 		set text [join $lines "\n"]
 		$w-tl configure -text $text
 		$w-il configure -width $imageWidth
-	    } elseif {$imageWidth + $spacePixels <= $pixels} {	
+	    } elseif {$imageWidth + $spacePixels <= $pixels} {
 		set data($col-isSnipped) 1
 		set text $spaces		;# can't display the orig. text
 		$w-tl configure -text $text

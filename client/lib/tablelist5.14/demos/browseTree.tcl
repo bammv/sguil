@@ -414,7 +414,7 @@ proc demo::refreshView {w tbl} {
 
 #------------------------------------------------------------------------------
 # demo::restoreExpandedStates
-#   
+#
 # Expands those children of the parent identified by nodeIdx that display the
 # data of child widgets whose path names are the names of the elements of the
 # array specified by the last argument.

@@ -1,9 +1,9 @@
 # Preprocess query requests from the right click menu and then launch the GUI
-# 
+#
 # type of query (Sguil_httplog, Sguil_ssn, etc)
 # default conditions (src_ip, dst_ip, both)
 # Time manipulation (hours ago)
-proc ESQueryRequest { type term { start {} } { end {} } } { 
+proc ESQueryRequest { type term { start {} } { end {} } } {
 
     global CUR_SEL_PANE
 
@@ -12,8 +12,8 @@ proc ESQueryRequest { type term { start {} } { end {} } } {
 
         set src_ip [$CUR_SEL_PANE(name) getcells $i,src_ip]
         set dst_ip [$CUR_SEL_PANE(name) getcells $i,dst_ip]
-        
-        if { $CUR_SEL_PANE(format) == "SGUIL_HTTP" } { 
+
+        if { $CUR_SEL_PANE(format) == "SGUIL_HTTP" } {
 
             set ts [$CUR_SEL_PANE(name) getcells $i,@timestamp]
 
@@ -38,15 +38,15 @@ proc ESQueryRequest { type term { start {} } { end {} } } {
         set end [clock format [clock scan "30 mins" -base [clock scan $ts]] -f "%Y-%m-%d %T"]
 
     }
-    
+
 
     set q ""
 
-    if { $term == "srcip" } { 
+    if { $term == "srcip" } {
 
         set q "src_ip:$src_ip"
 
-    } elseif { $term == "dstip" } { 
+    } elseif { $term == "dstip" } {
 
         set q "dst_ip:$dst_ip"
 
@@ -55,7 +55,7 @@ proc ESQueryRequest { type term { start {} } { end {} } } {
         set q "src_ip:$src_ip AND dst_ip:$dst_ip"
 
     }
-    
+
     ESQueryBuilder $type $q $start $end
 
 }
@@ -81,16 +81,16 @@ proc ESQueryBuilder { type {rawquery {}} {start {}} {end {}} } {
         # Create the win
         toplevel $esb
         wm title $esb "ElasticSearch Query Builder"
- 
+
         # Place the window in a good spot on the screen
         set h [winfo height .]
-        set w [winfo width .] 
+        set w [winfo width .]
         set y [expr (($h / 2) - 200)]
         if { $y < 0 } { set y 0 }
-        set x [expr (($w / 2) - 300)] 
+        set x [expr (($w / 2) - 300)]
         if { $x < 0 } { set x 0 }
         wm geometry $esb +$x+$y
-        
+
         set mFrame [frame $esb.mainFrame -background #dcdcdc -borderwidth 1]
         set qFrame [frame $mFrame.queryFrame]
 
@@ -187,7 +187,7 @@ proc ESQueryBuilder { type {rawquery {}} {start {}} {end {}} } {
         pack $qFrame -side top -fill both -expand true
         pack $ES_QUERY(json) -side top -fill both -expand true
         pack $bFrame -side top -expand false
-        
+
         pack $mFrame -side top -fill both -expand true
 
         UpdateESQuery
@@ -217,7 +217,7 @@ proc UpdateESQuery {} {
 
     #json::write indented 0
 
-    if { $ES_QUERY(start) != "now" } { 
+    if { $ES_QUERY(start) != "now" } {
 
         set stime "[clock scan $ES_QUERY(start) -gmt true]000"
 
@@ -227,13 +227,13 @@ proc UpdateESQuery {} {
 
     }
 
-    if  { $ES_QUERY(end) != "now" } { 
+    if  { $ES_QUERY(end) != "now" } {
 
        set etime "[clock scan $ES_QUERY(end) -gmt true]000"
 
     } else {
 
-        set etime [json::write string now] 
+        set etime [json::write string now]
 
     }
 
@@ -249,7 +249,7 @@ proc UpdateESQuery {} {
 
     }
 
-   
+
 
     # The query part
     set q [json::write object query_string [json::write object query [json::write string $query]]]
@@ -294,7 +294,7 @@ proc PrepESQuery { type query rawquery start end } {
     $eventTabs select end
 
     # Build the multi lists
-    if { $type == "Sguil_httplog" } { 
+    if { $type == "Sguil_httplog" } {
 
         CreateESHttpLists $queryFrame
 
@@ -371,12 +371,12 @@ proc ESQuery { type query queryFrame start end } {
     set indexes [join $indexes ,]
 
     set url "$ES_PROFILE(host)/$indexes/_search?pretty"
-   
+
     #puts "DEBUG #### q -> $query"
     #puts "DEBUG #### Making request to $url"
 
-    if { $ES_PROFILE(auth) } { 
-    
+    if { $ES_PROFILE(auth) } {
+
         set authcreds "Basic [base64::encode $ES_PROFILE(user):$ES_PROFILE(pass)]"
         set authhdr [list Authorization $authcreds]
 
@@ -389,7 +389,7 @@ proc ESQuery { type query queryFrame start end } {
     }
 
     lappend cmd "-command" [list QueryFinished $queryFrame $type [lindex $query 0] $start $end]
-  
+
     if { [catch { eval $cmd } tmpError] } {
 
         ErrorMessage $tmpError
@@ -419,11 +419,11 @@ proc QueryFinished { queryFrame type query start end token } {
             set totalhits [dict get $hits total]
 
             set foo 0
-            foreach row [dict get $hits hits] { 
-            
+            foreach row [dict get $hits hits] {
+
                 set id [dict get $row _id]
                 set _source [dict get $row _source]
-                dict with _source { 
+                dict with _source {
 
                     # message @version @timestamp type host src_ip src_port dst_ip dst_port x-fwd-for http_method http_host
                     # uri http_referrer http_user_agent http_accept_language http_status vendor
@@ -432,7 +432,7 @@ proc QueryFinished { queryFrame type query start end token } {
                     regexp {^(\d+-\d+-\d+)T(\d+\:\d+\:\d+)} ${@timestamp} match date time
                     set timestamp "$date $time"
 
-                    if { $type == "Sguil_httplog" } { 
+                    if { $type == "Sguil_httplog" } {
 
                         set rList [list \
                           $host \
@@ -496,11 +496,11 @@ proc QueryFinished { queryFrame type query start end token } {
 
                 #puts "Authentication Required"
                 # Rerun the query if auth is provided
-                if [ESBasicAuth] { 
+                if [ESBasicAuth] {
 
                     ESQuery $type [list $query] $queryFrame $start $end
 
-                } 
+                }
 
             } else {
 
@@ -523,9 +523,9 @@ proc QueryFinished { queryFrame type query start end token } {
         #return -code error $httpError
 
     }
-  
 
-} 
+
+}
 
 proc ESBasicAuth {} {
 
@@ -584,8 +584,8 @@ proc ESBasicAuth {} {
     return $ES_PROFILE(auth)
 
 }
- 
-proc CreateESHttpLists { baseFrame } { 
+
+proc CreateESHttpLists { baseFrame } {
 
     global SCROLL_HOME MiddleButton RightButton
 
@@ -681,7 +681,7 @@ proc CreateESHttpLists { baseFrame } {
     }
 
 }
-proc CreateESSsnLists { baseFrame } { 
+proc CreateESSsnLists { baseFrame } {
 
     global SCROLL_HOME MiddleButton RightButton
 
@@ -899,7 +899,7 @@ proc DisplaySguil_HttpDetail {} {
             set c [$CUR_SEL_PANE(name) findcolumnname $title]
             #if { [$CUR_SEL_PANE(name) isviewable @$i,$c] } { set v 1 } else { set v 0 }
             set v [$CUR_SEL_PANE(name) columncget $title -hide]
- 
+
             $sguil_httpDetailTable insert end [list 1 $title [lindex $data $i]]
 
             # Upate the checkbox
@@ -911,7 +911,7 @@ proc DisplaySguil_HttpDetail {} {
         }
 
     }
-   
+
 }
 
 proc DisplaySguil_SsnDetail {} {
@@ -952,9 +952,9 @@ proc DisplaySguil_SsnDetail {} {
             set c [$CUR_SEL_PANE(name) findcolumnname $title]
             #if { [$CUR_SEL_PANE(name) isviewable @$i,$c] } { set v 1 } else { set v 0 }
             set v [$CUR_SEL_PANE(name) columncget $title -hide]
- 
+
             # Parse out flags if req'd
-            if { $title == "src_flags" || $title == "dst_flags" } { 
+            if { $title == "src_flags" || $title == "dst_flags" } {
 
                 set flags [lindex $data $i]
                 set f ""
@@ -965,7 +965,7 @@ proc DisplaySguil_SsnDetail {} {
                 if { $flags & 16 } { lappend f ACK }
                 if { $flags & 32 } { lappend f URG }
                 if { $flags & 64 } { lappend f R0 }
-                if { $flags & 128 } { lappend f R1 } 
+                if { $flags & 128 } { lappend f R1 }
 
                 $sguil_ssnDetailTable insert end [list 1 $title $f]
 
@@ -984,12 +984,12 @@ proc DisplaySguil_SsnDetail {} {
         }
 
     }
-   
+
 }
 
 proc ChangeESViewStatus { tbl row col text } {
 
-    global ACTIVE_EVENT MULTI_SELECT CUR_SEL_PANE 
+    global ACTIVE_EVENT MULTI_SELECT CUR_SEL_PANE
 
     set img [expr {$text ? "checkedButton" : "uncheckedButton"}]
     $tbl cellconfigure $row,$col -image $img

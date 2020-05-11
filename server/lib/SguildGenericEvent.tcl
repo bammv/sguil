@@ -7,8 +7,8 @@ proc GenericEvent { agentSocketID eventList } {
 
     global agentStatusList
 
-    # Make sure we have the right number of 
-    if { [llength $eventList] != 18 } { 
+    # Make sure we have the right number of
+    if { [llength $eventList] != 18 } {
 
         set errorMsg "ERROR: Invalid length ([llength $eventList]): $eventList"
         # DEBUG Foo
@@ -85,7 +85,7 @@ proc GenericEvent { agentSocketID eventList } {
     }
 
 
-    # Send the agent confirmation 
+    # Send the agent confirmation
     catch {SendSocket $agentSocketID [list ConfirmEvent $alertID]}
 
 }

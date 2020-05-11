@@ -1,7 +1,7 @@
 # $Id: stdquery.tcl,v 1.10 2007/03/17 02:43:37 bamm Exp $ #
 
 # stdquery.tcl launches a popup containing global and user
-# queries. It returns the WHERE clause of the selected 
+# queries. It returns the WHERE clause of the selected
 # query or nothing if no query was selected.
 
 proc StdQuery {} {
@@ -62,22 +62,22 @@ proc StdQuery {} {
 
   pack $listsFrame $detailFrame -side left -fill both -expand true
   pack $mainFrame -side top
-  
+
   tkwait variable RETURN_FLAG1
-    
+
   if { $RETURN_FLAG1 == 0 } { destroy $stdQryWin; return }
   regsub -all {\n} [$whereBox get 0.0 end] {} Std_Qry
- 
 
-  if { $RETURN_FLAG1 == 2 } { 
+
+  if { $RETURN_FLAG1 == 2 } {
       destroy $stdQryWin
-      set whereStatement [QryBuild $STD_QRY_TYPE $Std_Qry] 
+      set whereStatement [QryBuild $STD_QRY_TYPE $Std_Qry]
       if { [lindex $whereStatement 0]=="cancel" } {return}
   }
   if { $RETURN_FLAG1 == 1 } { set whereStatement [list $STD_QRY_TYPE $Std_Qry] }
-  
+
   if { [lindex $whereStatement 0] == "sessions" } {
-    destroy $stdQryWin 
+    destroy $stdQryWin
     SsnQueryRequest [lindex $whereStatement 1]
   } else {
     destroy $stdQryWin
@@ -121,7 +121,7 @@ proc GlobalQuerySelect { listName } {
   set cIndex [$listName curselection]
   $commentBox insert end $gComment($cIndex)
   $whereBox insert end $gWhere($cIndex)
-  set STD_QRY_TYPE $gType($cIndex)  
+  set STD_QRY_TYPE $gType($cIndex)
 }
 proc UserQuerySelect { listName } {
   global USER_QRY_LIST commentBox whereBox uWhere uComment uType uIndex STD_QRY_TYPE
@@ -131,7 +131,7 @@ proc UserQuerySelect { listName } {
   #puts "||$uIndex||"
   $commentBox insert end $uComment($uIndex)
   $whereBox insert end $uWhere($uIndex)
-  set STD_QRY_TYPE $uType($uIndex)  
+  set STD_QRY_TYPE $uType($uIndex)
 }
 proc ReadQryFile {} {
     global USER_QRY_FILE USER_QRY_LIST
@@ -142,21 +142,21 @@ proc ReadQryFile {} {
 		lappend USER_QRY_LIST $userQry
 	    }
 	}
-    } 
+    }
 }
 
 proc UpdateQryType { win } {
   global STD_QRY_TYPE
-    
+
   set STD_QRY_TYPE [$win get]
- 
+
 }
 proc UserQryWiz {type stdQryWin} {
-  
+
   set NEW_QUERY ""
     if {$type == "Edit"} {
 	if { [string trim [$stdQryWin.mFrame.lFrame.uList getcurselection]] == ""} {
-	  
+
 	    InfoMessage "Please Select a User Query to Edit"
 	    return
 	}
@@ -167,7 +167,7 @@ proc UserQryWiz {type stdQryWin} {
   set win [toplevel .userQryWiz]
   wm title $win "$type User Query"
   wm geometry $win +[lindex $xy 0]+[lindex $xy 1]
-  
+
   set frame1 [frame $win.frame1]
   set typeWin [optionmenu $frame1.om -labeltext "Type:" -command "UpdateQryType $frame1.om"]
   $typeWin insert end event
@@ -186,7 +186,7 @@ proc UserQryWiz {type stdQryWin} {
       $winBB add okay -text "Save" -command "SaveUserQry $type $win $stdQryWin"
       $winBB add qryBld -text "Query Builder" -command "InvokeQryBld $win"
       $winBB add cancel -text "Cancel" -command "destroy $win"
-  
+
   # if this is an edit, preload the info from the selected query into the window
   if { $type == "Edit"} {
       global uWhere uType uName uComment uIndex
@@ -195,7 +195,7 @@ proc UserQryWiz {type stdQryWin} {
       $commentWin insert end $uComment($uIndex)
       $whereBox insert end $uWhere($uIndex)
   }
-      
+
   pack $frame1 $commentWin $whereBox $winBB -side top -fill both -expand true
 
   tkwait window $win
@@ -203,10 +203,10 @@ proc UserQryWiz {type stdQryWin} {
 }
 
 proc InvokeQryBld { win } {
-    
+
     set whereTmp [$win.wBox get 0.0 end]
     set tableName [$win.frame1.om get]
-    set whereTmp [string trim $whereTmp]   
+    set whereTmp [string trim $whereTmp]
     if {$whereTmp == ""} {
 	set whereTmp "empty"
     }
@@ -222,12 +222,12 @@ proc SaveUserQry {type win stdQryWin} {
     global USER_QRY_FILE USER_QRY_LIST uIndex
     set newName [$win.frame1.ef get]
 
-    # Build the string to add/edit into the list 
+    # Build the string to add/edit into the list
     regsub -all {\n} [$win.cBox get 0.0 end] {} newComment
     regsub -all {\n} [$win.wBox get 0.0 end] {} newWhere
     set newTable [$win.frame1.om get]
     set newQry "$newName||$newComment||$newWhere||$newTable"
-    
+
     if { $type == "Add"} {
 	lappend USER_QRY_LIST $newQry
     } else {
@@ -239,17 +239,17 @@ proc SaveUserQry {type win stdQryWin} {
 
     destroy $win
     # refresh the list from the file.
-    InsertUserQueries $stdQryWin.mFrame.lFrame.uList	
+    InsertUserQueries $stdQryWin.mFrame.lFrame.uList
     # refresh the selected User Query
     catch {$stdQryWin.mFrame.lFrame.uList component listbox selection set $uIndex}
-   
-}    
+
+}
 
 proc DelQry {stdQryWin} {
     global USER_QRY_LIST uIndex
-    
+
     if { [string trim [$stdQryWin.mFrame.lFrame.uList getcurselection]] == ""} {
-	  
+
             tk_messageBox -type ok -icon info -parent $stdQryWin\
              -message "Please Select a User Query to Delete"
 	    return

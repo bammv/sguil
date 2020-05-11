@@ -5,7 +5,7 @@ angular.module('tabulatorModule', [])
     return {
         restrict: 'E',
         replace: true,
-        scope: { 
+        scope: {
             rowclick: '&',
             eventrightclick: '&',
             countrightclick: '&',
@@ -25,7 +25,7 @@ angular.module('tabulatorModule', [])
                 selectable: 1,
                 //pagination:"local",
                 //progressiveRender:true,
-                //progressiveRenderSize:50, 
+                //progressiveRenderSize:50,
                 columns:[ //Define Table Columns
                     //{formatter:transcriptIcon, width:40, align:"center", onContext:function(e, cell, val, data){ transcriptMenu(e, cell, val, data)}},
                     {title:"", width:10,field:"priority", align:"center", sorter:"string", sortable:true, editable:false, formatter:function(cell, formatterParams){
@@ -36,8 +36,8 @@ angular.module('tabulatorModule', [])
                       var data = cell.getData();
 
                       switch (data.status) {
-                          case '0': 
-                              p = 'RT'; 
+                          case '0':
+                              p = 'RT';
                               switch (value) {
                                   case '1': color = 'red'; break;
                                   case '2': color = 'orange'; break;
@@ -90,14 +90,14 @@ angular.module('tabulatorModule', [])
                     {title:"signature_id", field:"signature_id", visible:false},
                     {title:"rev", field:"rev", visible:false},
                     {title:"flowid", field:"flowid", visible:false}
-                ],                
+                ],
 
                 rowClick:function(e, row){
                     scope.rowclick({arg1: row.getData(), arg2: row.getPosition(true)});
                 },
 
             });
-                
+
             angular.extend(scope.eventoptions, {
                 selectrow: function(tname, data){
                     //console.log('Selecting: ' + data);
@@ -105,28 +105,28 @@ angular.module('tabulatorModule', [])
                     myElement.tabulator("selectRow", data);
                 },
                 redraw: function(data){
-                    el.tabulator("redraw"); 
+                    el.tabulator("redraw");
                 },
                 getselecteddata: function(tname){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
-                    var data = myElement.tabulator("getSelectedData"); 
+                    var data = myElement.tabulator("getSelectedData");
                     return data;
                 },
                 getrow: function(tname, index){
                     var myElement = angular.element( document.querySelector('#' + tname) );
-                    var data = myElement.tabulator("getRow", index); 
+                    var data = myElement.tabulator("getRow", index);
                     return data;
                 },
                 getdata: function(tname){
                     var data = "";
                     var myElement = angular.element( document.querySelector('#' + tname) );
-                    data = myElement.tabulator("getData"); 
+                    data = myElement.tabulator("getData");
                     return data;
                 },
                 getrowposition: function(tname, index){
                     var data = "";
                     var myElement = angular.element( document.querySelector('#' + tname) );
-                    var position = myElement.tabulator("getRowPosition", index, true); 
+                    var position = myElement.tabulator("getRowPosition", index, true);
                     return position;
                 },
                 addrow: function(tname, data){
@@ -137,12 +137,12 @@ angular.module('tabulatorModule', [])
                     var myTables = ['rtevents', 'escalated'];
                     for (var i in myTables) {
                         var myElement = angular.element( document.querySelector( '#' + myTables[i] ) );
-                        myElement.tabulator("deleteRow", data); 
+                        myElement.tabulator("deleteRow", data);
                     }
                 },
                 updaterow: function(tname, id, data){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
-                    myElement.tabulator("updateRow", id, data); 
+                    myElement.tabulator("updateRow", id, data);
                 },
                 rowreformat: function(tname, id){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
@@ -151,11 +151,11 @@ angular.module('tabulatorModule', [])
                 },
                 setdata: function(tname, data){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
-                    myElement.tabulator("setData", data); 
+                    myElement.tabulator("setData", data);
                 },
                 setsort: function(tname, column, dir){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );
-                    myElement.tabulator("setSort", column, dir); 
+                    myElement.tabulator("setSort", column, dir);
                 },
                 download: function(tname, filename){
                     var myElement = angular.element( document.querySelector( '#' + tname ) );

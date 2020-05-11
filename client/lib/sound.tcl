@@ -8,13 +8,13 @@ proc LoadSoundTransforms { fileName } {
 
         # Filter out commented and empty lines
         if { ![regexp ^# $line] && ![regexp ^$ $line] } {
-  
-            if { [llength $line] == 2 } { 
-    
+
+            if { [llength $line] == 2 } {
+
                 set transforms([lindex $line 0]) [lindex $line 1]
-    
+
             } else {
-    
+
                 InfoMessage "Error at line $i in $fileName: $line"
 
             }
@@ -63,15 +63,15 @@ proc TurnSoundOn { sndButton } {
     }
 }
 proc ConnectToFestival {} {
-    global DEBUG FESTIVAL_PATH 
+    global DEBUG FESTIVAL_PATH
 
     # Check to see if festival is already running.
     if [ catch { socket localhost 1314 } festSocketID ] {
         # Festival isn't running check to see if we have a path to the bin.
         if { [ file exists $FESTIVAL_PATH ] && [ file executable $FESTIVAL_PATH ] } {
             # If so, start it
-            catch { eval exec $FESTIVAL_PATH --server & } startUpMsg 
-            
+            catch { eval exec $FESTIVAL_PATH --server & } startUpMsg
+
             # Festival should be started now.
             # Wait 1 and try and reconnect.
             after 1000
@@ -96,8 +96,8 @@ proc Speak { msg } {
     global SOUND_SRVR FESTIVAL_ID SOUND transforms
 
     if { [array exists transforms] } {
-        foreach pat [array names transforms] { 
-            regsub $pat $msg $transforms($pat) msg 
+        foreach pat [array names transforms] {
+            regsub $pat $msg $transforms($pat) msg
         }
     }
 
@@ -115,7 +115,7 @@ proc Speak { msg } {
                   deactivated."
                 set SOUND 0
             }
-            
+
         } else {
             flush $FESTIVAL_ID
         }
